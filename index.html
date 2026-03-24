@@ -64,6 +64,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .btn-primary:active { opacity: 0.8; }
 .btn-secondary { width: 100%; padding: 11px; background: transparent; color: #1a1a18; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; font-family: inherit; }
 .divider { font-size: 11px; color: #aaa; margin: 14px 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.card-toggle { cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+.card-toggle .divider-arrow { font-size: 10px; transition: transform 0.2s; display: inline-block; color: #aaa; }
+.card-toggle.collapsed .divider-arrow { transform: rotate(-90deg); }
+.settings-collapsible { overflow: hidden; transition: max-height 0.25s ease; max-height: 0; }
 .empty { font-size: 13px; color: #aaa; padding: 8px 0; }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 13px; padding: 10px 20px; border-radius: 20px; display: none; z-index: 99; white-space: nowrap; font-family: inherit; }
 .toast.show { display: block; }
@@ -755,91 +759,115 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="divider" style="margin-top:0">Dropdowns &amp; lists</div>
 
     <div class="card">
-      <div class="card-title">Fridge &amp; freezer units</div>
-      <div id="settings-fridge-list"></div>
-      <div class="add-row"><input type="text" id="add-fridge" placeholder="Add unit name…"><button class="btn-add" onclick="addItem('fridgeUnits','add-fridge','settings-fridge-list')">Add</button></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-fridge')">Fridge &amp; freezer units <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-fridge">
+        <div id="settings-fridge-list"></div>
+        <div class="add-row"><input type="text" id="add-fridge" placeholder="Add unit name…"><button class="btn-add" onclick="addItem('fridgeUnits','add-fridge','settings-fridge-list')">Add</button></div>
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Suppliers</div>
-      <div id="settings-supplier-list"></div>
-      <div class="add-row"><input type="text" id="add-supplier" placeholder="Add supplier…"><button class="btn-add" onclick="addItem('suppliers','add-supplier','settings-supplier-list')">Add</button></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-suppliers')">Suppliers <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-suppliers">
+        <div id="settings-supplier-list"></div>
+        <div class="add-row"><input type="text" id="add-supplier" placeholder="Add supplier…"><button class="btn-add" onclick="addItem('suppliers','add-supplier','settings-supplier-list')">Add</button></div>
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Cleaning tasks</div>
-      <div id="settings-cleaning-list"></div>
-      <div class="add-row"><input type="text" id="add-cleaning" placeholder="Add task…"><button class="btn-add" onclick="addItem('cleaningTasks','add-cleaning','settings-cleaning-list')">Add</button></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-cleaning')">Cleaning tasks <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-cleaning">
+        <div id="settings-cleaning-list"></div>
+        <div class="add-row"><input type="text" id="add-cleaning" placeholder="Add task…"><button class="btn-add" onclick="addItem('cleaningTasks','add-cleaning','settings-cleaning-list')">Add</button></div>
+      </div>
     </div>
     <div class="card">
-      <div class="card-title">Staff names</div>
-      <div id="settings-staff-list"></div>
-      <div class="add-row"><input type="text" id="add-staff" placeholder="Add name…"><button class="btn-add" onclick="addItem('staff','add-staff','settings-staff-list')">Add</button></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-staff')">Staff names <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-staff">
+        <div id="settings-staff-list"></div>
+        <div class="add-row"><input type="text" id="add-staff" placeholder="Add name…"><button class="btn-add" onclick="addItem('staff','add-staff','settings-staff-list')">Add</button></div>
+      </div>
     </div>
 
     <div class="divider">Temperature thresholds</div>
     <div class="info-box" style="margin-bottom:12px">These thresholds control when a reading is marked OK, Warning, or Failed. Changes take effect immediately for new records.</div>
 
     <div class="card">
-      <div class="card-title">Fridge temperatures</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-fridge-warn" step="0.5" placeholder="5"></div>
-        <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-fridge-fail" step="0.5" placeholder="8"></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-fridge')">Fridge temperatures <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-fridge">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-fridge-warn" step="0.5" placeholder="5"></div>
+          <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-fridge-fail" step="0.5" placeholder="8"></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Freezer temperatures</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-freezer-warn" step="0.5" placeholder="-18"></div>
-        <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-freezer-fail" step="0.5" placeholder="-12"></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-freezer')">Freezer temperatures <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-freezer">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-freezer-warn" step="0.5" placeholder="-18"></div>
+          <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-freezer-fail" step="0.5" placeholder="-12"></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Cooked food (minimum core temp)</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn below (°C)</label><input class="form-input" type="number" id="thresh-cooking-warn" step="0.5" placeholder="75"></div>
-        <div class="form-group"><label class="form-label">Fail below (°C)</label><input class="form-input" type="number" id="thresh-cooking-fail" step="0.5" placeholder="75"></div>
-      </div>
-      <div class="info-box" style="margin-top:8px;margin-bottom:0">Set warn and fail to the same value for a hard pass/fail with no warning zone.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Reheating (minimum core temp)</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn below (°C)</label><input class="form-input" type="number" id="thresh-reheat-warn" step="0.5" placeholder="75"></div>
-        <div class="form-group"><label class="form-label">Fail below (°C)</label><input class="form-input" type="number" id="thresh-reheat-fail" step="0.5" placeholder="75"></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-cooking')">Cooked food (minimum core temp) <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-cooking">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn below (°C)</label><input class="form-input" type="number" id="thresh-cooking-warn" step="0.5" placeholder="75"></div>
+          <div class="form-group"><label class="form-label">Fail below (°C)</label><input class="form-input" type="number" id="thresh-cooking-fail" step="0.5" placeholder="75"></div>
+        </div>
+        <div class="info-box" style="margin-top:8px;margin-bottom:0">Set warn and fail to the same value for a hard pass/fail with no warning zone.</div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Cooling (end temperature target)</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-cooling-warn" step="0.5" placeholder="5"></div>
-        <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-cooling-fail" step="0.5" placeholder="8"></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-reheat')">Reheating (minimum core temp) <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-reheat">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn below (°C)</label><input class="form-input" type="number" id="thresh-reheat-warn" step="0.5" placeholder="75"></div>
+          <div class="form-group"><label class="form-label">Fail below (°C)</label><input class="form-input" type="number" id="thresh-reheat-fail" step="0.5" placeholder="75"></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Delivery temperature</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-delivery-warn" step="0.5" placeholder="5"></div>
-        <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-delivery-fail" step="0.5" placeholder="8"></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-cooling')">Cooling (end temperature target) <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-cooling">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-cooling-warn" step="0.5" placeholder="5"></div>
+          <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-cooling-fail" step="0.5" placeholder="8"></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Delivery — chilled items</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-chilled-warn" step="0.5" placeholder="5"></div>
-        <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-chilled-fail" step="0.5" placeholder="8"></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-delivery')">Delivery temperature <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-delivery">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-delivery-warn" step="0.5" placeholder="5"></div>
+          <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-delivery-fail" step="0.5" placeholder="8"></div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Delivery — frozen items</div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-frozen-warn" step="0.5" placeholder="-18"></div>
-        <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-frozen-fail" step="0.5" placeholder="-12"></div>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-chilled')">Delivery — chilled items <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-chilled">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-chilled-warn" step="0.5" placeholder="5"></div>
+          <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-chilled-fail" step="0.5" placeholder="8"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-thresh-frozen')">Delivery — frozen items <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-thresh-frozen">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" id="thresh-frozen-warn" step="0.5" placeholder="-18"></div>
+          <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" id="thresh-frozen-fail" step="0.5" placeholder="-12"></div>
+        </div>
       </div>
     </div>
 
@@ -847,35 +875,41 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
     <div class="divider">Opening check items</div>
     <div class="card">
-      <div class="card-title">Opening checks</div>
-      <div id="settings-opening-list"></div>
-      <div class="add-row">
-        <input type="text" id="add-opening-label" placeholder="Check item…">
-        <button class="btn-add" onclick="addChecklistItem('opening')">Add</button>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-opening')">Opening checks <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-opening">
+        <div id="settings-opening-list"></div>
+        <div class="add-row">
+          <input type="text" id="add-opening-label" placeholder="Check item…">
+          <button class="btn-add" onclick="addChecklistItem('opening')">Add</button>
+        </div>
+        <input type="text" id="add-opening-note" class="form-input" placeholder="Hint / note (optional)" style="margin-top:8px;font-size:13px">
       </div>
-      <input type="text" id="add-opening-note" class="form-input" placeholder="Hint / note (optional)" style="margin-top:8px;font-size:13px">
     </div>
 
     <div class="divider">Closing check items</div>
     <div class="card">
-      <div class="card-title">Closing checks</div>
-      <div id="settings-closing-list"></div>
-      <div class="add-row">
-        <input type="text" id="add-closing-label" placeholder="Check item…">
-        <button class="btn-add" onclick="addChecklistItem('closing')">Add</button>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-closing')">Closing checks <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-closing">
+        <div id="settings-closing-list"></div>
+        <div class="add-row">
+          <input type="text" id="add-closing-label" placeholder="Check item…">
+          <button class="btn-add" onclick="addChecklistItem('closing')">Add</button>
+        </div>
+        <input type="text" id="add-closing-note" class="form-input" placeholder="Hint / note (optional)" style="margin-top:8px;font-size:13px">
       </div>
-      <input type="text" id="add-closing-note" class="form-input" placeholder="Hint / note (optional)" style="margin-top:8px;font-size:13px">
     </div>
 
     <div class="divider">Cross-contamination check items</div>
     <div class="card">
-      <div class="card-title">Cross-contamination controls</div>
-      <div id="settings-crosscontam-list"></div>
-      <div class="add-row">
-        <input type="text" id="add-crosscontam-label" placeholder="Check item…">
-        <button class="btn-add" onclick="addChecklistItem('crosscontam')">Add</button>
+      <div class="card-title card-toggle collapsed" onclick="toggleSettingsSection('sec-crosscontam')">Cross-contamination controls <span class="divider-arrow">▼</span></div>
+      <div class="settings-collapsible" id="sec-crosscontam">
+        <div id="settings-crosscontam-list"></div>
+        <div class="add-row">
+          <input type="text" id="add-crosscontam-label" placeholder="Check item…">
+          <button class="btn-add" onclick="addChecklistItem('crosscontam')">Add</button>
+        </div>
+        <input type="text" id="add-crosscontam-note" class="form-input" placeholder="Hint / note (optional)" style="margin-top:8px;font-size:13px">
       </div>
-      <input type="text" id="add-crosscontam-note" class="form-input" placeholder="Hint / note (optional)" style="margin-top:8px;font-size:13px">
     </div>
 
   </div>
@@ -1105,8 +1139,27 @@ function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); 
 
 var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Job & location',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials'};
 
+var _homeScrollPos = 0;
+
+function toggleSettingsSection(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var toggle = el.previousElementSibling;
+  if (!toggle) return;
+  var isCollapsed = toggle.classList.contains('collapsed');
+  if (isCollapsed) {
+    toggle.classList.remove('collapsed');
+    el.style.maxHeight = el.scrollHeight + 'px';
+    setTimeout(function(){ el.style.maxHeight = 'none'; }, 260);
+  } else {
+    el.style.maxHeight = el.scrollHeight + 'px';
+    requestAnimationFrame(function(){ el.style.maxHeight = '0'; });
+    toggle.classList.add('collapsed');
+  }
+}
 function goHome(){ showTab('home'); }
 function showTab(name) {
+  if(name !== 'home') _homeScrollPos = window.scrollY || window.pageYOffset || 0;
   document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
   document.getElementById('tab-home').style.display=name==='home'?'block':'none';
   if(name!=='home') document.getElementById('tab-'+name).classList.add('active');
@@ -1120,6 +1173,8 @@ function showTab(name) {
   if(name==='credentials') renderCredentials();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
   updateDashboard();
+  if(name === 'home') { var pos = _homeScrollPos; requestAnimationFrame(function(){ window.scrollTo(0, pos); }); }
+  else { window.scrollTo(0, 0); }
 }
 
 function toast(msg,ok) {
