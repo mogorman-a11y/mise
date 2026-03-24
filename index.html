@@ -713,6 +713,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
       <div class="form-group"><label class="form-label">Issuing body / provider</label><input class="form-input" type="text" id="cred-issuer" placeholder="e.g. Highfield Qualifications"></div>
       <div class="form-group"><label class="form-label">Certificate / reference number</label><input class="form-input" type="text" id="cred-ref" placeholder="e.g. HFL-2024-88421"></div>
+      <div class="form-group">
+        <label class="form-label">Certificate scan or photo (optional)</label>
+        <input type="file" id="cred-photo" accept="image/*" style="display:none" onchange="previewCredPhoto(this)">
+        <button type="button" class="btn-secondary" style="margin-top:0" onclick="document.getElementById('cred-photo').click()">📎 Scan or upload certificate</button>
+        <div id="cred-photo-preview" style="margin-top:10px;display:none">
+          <img id="cred-photo-img" style="width:100%;border-radius:8px;border:1px solid #e5e4de" src="" alt="Certificate">
+          <button type="button" class="btn-secondary" style="margin-top:6px;font-size:12px;padding:7px" onclick="clearCredPhoto()">Remove image</button>
+        </div>
+      </div>
       <button class="btn-primary" onclick="logCredential()">Save credential</button>
     </div>
     <div class="divider">Credentials &amp; expiry dates</div>
@@ -1759,15 +1768,25 @@ function logCredential() {
   var daysLeft = Math.floor((new Date(expiry) - new Date()) / (1000*60*60*24));
   var status = daysLeft < 0 ? 'fail' : daysLeft < 30 ? 'warn' : 'ok';
   var msg = daysLeft < 0 ? 'Expired '+Math.abs(daysLeft)+' days ago' : daysLeft < 30 ? 'Expires in '+daysLeft+' days' : 'Valid — expires '+new Date(expiry).toLocaleDateString('en-GB');
+  var photoImg = document.getElementById('cred-photo-img');
+  var photo = photoImg.src && photoImg.src !== window.location.href ? photoImg.src : '';
   var stored = loadCredentials();
-  stored.push({credType:type, issued:issued, expiry:expiry, issuer:issuer, ref:ref, status:status, msg:msg, saved:todayStr()});
+  stored.push({credType:type, issued:issued, expiry:expiry, issuer:issuer, ref:ref, photo:photo, status:status, msg:msg, saved:todayStr()});
   saveCredentials(stored);
   document.getElementById('cred-issued').value=''; document.getElementById('cred-expiry').value='';
   document.getElementById('cred-issuer').value=''; document.getElementById('cred-ref').value='';
+  clearCredPhoto();
   renderCredentials(); updateDashboard();
   if(status==='ok')toast('Saved — '+type); else if(status==='warn')toast('Warning — '+type+' expiring soon','warn'); else toast('Alert — '+type+' has expired',false);
 }
 
+function previewCredPhoto(input) {
+  if (!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e) { document.getElementById('cred-photo-img').src = e.target.result; document.getElementById('cred-photo-preview').style.display = 'block'; };
+  reader.readAsDataURL(input.files[0]);
+}
+function clearCredPhoto() { document.getElementById('cred-photo').value=''; document.getElementById('cred-photo-img').src=''; document.getElementById('cred-photo-preview').style.display='none'; }
 function saveCredentials(list) { try { localStorage.setItem('haccp_credentials', JSON.stringify(list)); } catch(e){} }
 function loadCredentials() { try { var r=localStorage.getItem('haccp_credentials'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
@@ -1782,10 +1801,12 @@ function renderCredentials() {
     cr.msg = daysLeft < 0 ? 'Expired '+Math.abs(daysLeft)+' days ago' : daysLeft < 30 ? 'Expires in '+daysLeft+' days' : 'Valid — expires '+new Date(cr.expiry).toLocaleDateString('en-GB');
   });
   c.innerHTML = list.map(function(cr, i) {
+    var photoHtml = cr.photo ? '<div style="margin-top:6px"><img src="'+cr.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>' : '';
     return '<div class="log-row" style="align-items:flex-start"><div style="flex:1">'+
       '<div class="log-name">'+cr.credType+'</div>'+
       '<div class="log-time">'+cr.msg+'</div>'+
       (cr.issuer?'<div class="log-time">'+cr.issuer+(cr.ref?' · '+cr.ref:'')+'</div>':'')+
+      photoHtml+
     '</div>'+statusBadge(cr.status)+
     '<button onclick="removeCredential('+i+')" style="background:none;border:none;color:#A32D2D;font-size:16px;cursor:pointer;padding:4px 0 4px 8px">&times;</button></div>';
   }).join('');
