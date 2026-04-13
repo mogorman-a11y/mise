@@ -1,0 +1,18 @@
+# Environment variables — never commit these
+.env.local
+.env
+
+# macOS
+.DS_Store
+
+# Vercel
+.vercel
+
+# Claude Code
+.claude/
+
+# Business documents
+*.pdf
+
+# Private chef variant (managed separately)
+haccp-app PC.html

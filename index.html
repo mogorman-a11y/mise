@@ -4,6 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Mise</title>
+
+<!-- PWA meta tags (Step 7) -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2d6e4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Mise">
+
+<!-- Supabase client (required by supabase.js, auth.js, sync.js, subscription.js) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; }
@@ -2028,6 +2038,26 @@ renderChecklists();
 initPrivateChefMode();
 showTab('home');
 renderAllSections();
+</script>
+
+<!-- Mise production modules — loaded after app script so they can wrap/extend it -->
+<script src="supabase.js"></script>
+<script src="auth.js"></script>
+<script src="sync.js"></script>
+<script src="subscription.js"></script>
+
+<!-- Kick off auth — must run after all modules above are loaded -->
+<script>
+  Mise.auth.init();
+</script>
+
+<!-- Service worker registration (Step 7 — PWA) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(err) {
+      console.warn('[Mise] SW registration failed:', err);
+    });
+  }
 </script>
 </body>
 </html>
