@@ -1610,7 +1610,10 @@ function buildDayBlock(dateStr,recs,isToday) {
         '<div class="day-stat"><div class="day-stat-num" style="color:#888">'+recs.length+'</div><div class="day-stat-label">Total</div></div>'+
       '</div>'+
       (recs.length?bodyRows:'<div class="empty" style="padding:8px 0">No records yet.</div>')+
-      '<button class="btn-secondary" style="margin-top:10px" onclick="exportDay(\''+dateStr+'\')">Export this day</button>'+
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button class="btn-secondary" onclick="exportDay(\''+dateStr+'\')">Export .txt</button>'+
+        '<button class="btn-primary" onclick="exportDayPDF(\''+dateStr+'\')">Export PDF</button>'+
+      '</div>'+
     '</div>'+
   '</div>';
 }
@@ -1645,6 +1648,117 @@ function buildExport(dateLabel,recs,filename) {
   }).filter(Boolean).join('\n');
   var blob=new Blob([header+sections],{type:'text/plain'});
   var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); toast('Report exported');
+}
+
+function exportDayPDF(dateStr) {
+  var recs = dateStr === TODAY ? records : getDayRecords(dateStr);
+  buildPDFExport(fmtDate(dateStr), recs);
+}
+
+function buildPDFExport(dateLabel, recs) {
+  var ok = recs.filter(function(r){return r.status==='ok';}).length;
+  var warn = recs.filter(function(r){return r.status==='warn';}).length;
+  var fail = recs.filter(function(r){return r.status==='fail';}).length;
+
+  var typeHeadings = {
+    fridge:'Fridge Temperatures', cooking:'Cooked Food Temperatures', cooling:'Cooling Records',
+    reheating:'Reheating Records', delivery:'Delivery Checks', cleaning:'Cleaning Records',
+    probe:'Probe Calibration', pest:'Pest Control', illness:'Staff Illness',
+    opening:'Opening Checks', closing:'Closing Checks', crosscontam:'Cross-Contamination',
+    job:'Job Details', kitchenassess:'Kitchen Assessment', allergen:'Allergen Log',
+    transport:'Transport Temperatures', mobileset:'Mobile Setup'
+  };
+
+  function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+
+  function statusStyle(s) {
+    if(s==='ok') return 'color:#2a6000;font-weight:600';
+    if(s==='warn') return 'color:#854F0B;font-weight:600';
+    return 'color:#A32D2D;font-weight:600';
+  }
+
+  function statusLabel(s) {
+    return s==='ok' ? 'OK' : s==='warn' ? 'Warning' : 'Failed';
+  }
+
+  function detailsFor(r) {
+    var parts = [];
+    if(r.type==='fridge') { parts.push(esc(r.unit)); if(r.temp!==undefined&&r.temp!=='') parts.push(esc(r.temp)+'°C'); if(r.by) parts.push('By: '+esc(r.by)); if(r.notes) parts.push(esc(r.notes)); }
+    else if(r.type==='cooking') { parts.push(esc(r.food)); if(r.temp!==undefined&&r.temp!=='') parts.push(esc(r.temp)+'°C'); if(r.chef) parts.push('Chef: '+esc(r.chef)); }
+    else if(r.type==='cooling') { parts.push(esc(r.food)); if(r.startTemp!==undefined) parts.push(esc(r.startTemp)+'°C → '+esc(r.endTemp)+'°C'); if(r.method) parts.push('Method: '+esc(r.method)); if(r.by) parts.push('By: '+esc(r.by)); }
+    else if(r.type==='reheating') { parts.push(esc(r.food)); if(r.temp!==undefined&&r.temp!=='') parts.push(esc(r.temp)+'°C'); if(r.chef) parts.push('Chef: '+esc(r.chef)); if(r.notes) parts.push(esc(r.notes)); }
+    else if(r.type==='delivery') { parts.push(esc(r.supplier)); if(r.temp!==undefined&&r.temp!=='') parts.push(esc(r.temp)+'°C'); if(r.condition) parts.push('Condition: '+esc(r.condition)); if(r.by) parts.push('Received by: '+esc(r.by)); if(r.invoice) parts.push('Invoice: '+esc(r.invoice)); }
+    else if(r.type==='cleaning') { parts.push(esc(r.task)); if(r.chem) parts.push('Chemical: '+esc(r.chem)); if(r.by) parts.push('By: '+esc(r.by)); }
+    else if(r.type==='probe') { parts.push('Probe: '+esc(r.probeId)); if(r.reading!==undefined&&r.reading!=='') parts.push('Reading: '+esc(r.reading)+'°C'); if(r.result) parts.push('Result: '+esc(r.result)); if(r.by) parts.push('By: '+esc(r.by)); }
+    else if(r.type==='pest') { parts.push(esc(r.pestType)); if(r.location) parts.push('Location: '+esc(r.location)); if(r.action) parts.push('Action: '+esc(r.action)); if(r.by) parts.push('By: '+esc(r.by)); }
+    else if(r.type==='illness') { parts.push(esc(r.staff)); if(r.illnessType) parts.push(esc(r.illnessType)); if(r.symptoms) parts.push('Symptoms: '+esc(r.symptoms)); }
+    else if(r.type==='opening'||r.type==='closing'||r.type==='crosscontam') { if(r.by) parts.push('By: '+esc(r.by)); if(r.notes) parts.push(esc(r.notes)); parts.push(esc(r.msg)); }
+    else if(r.type==='job') { if(r.client) parts.push('Client: '+esc(r.client)); if(r.location) parts.push(esc(r.location)); if(r.jobType) parts.push(esc(r.jobType)); if(r.covers) parts.push(esc(r.covers)+' covers'); }
+    else if(r.type==='kitchenassess') { if(r.client) parts.push('Client: '+esc(r.client)); if(r.fridgeTemp!==undefined&&r.fridgeTemp!=='') parts.push('Fridge: '+esc(r.fridgeTemp)+'°C'); if(r.condition) parts.push('Condition: '+esc(r.condition)); }
+    else if(r.type==='allergen') { if(r.client) parts.push('Client: '+esc(r.client)); if(r.dish) parts.push('Dish: '+esc(r.dish)); if(r.allergens&&r.allergens.length) parts.push('Allergens: '+r.allergens.map(esc).join(', ')); }
+    else if(r.type==='transport') { parts.push(esc(r.food)); if(r.destination) parts.push('To: '+esc(r.destination)); if(r.startTemp!==undefined) parts.push(esc(r.startTemp)+'°C → '+esc(r.endTemp)+'°C'); if(r.method) parts.push('Method: '+esc(r.method)); }
+    else { parts.push(esc(r.msg)); }
+    return parts.filter(Boolean).join(' &nbsp;·&nbsp; ');
+  }
+
+  var sectionsHtml = ALL_TYPES.map(function(t) {
+    var tr = recs.filter(function(r){return r.type===t;});
+    if(!tr.length) return '';
+    var heading = typeHeadings[t] || t;
+    var rows = tr.map(function(r) {
+      return '<tr>'
+        +'<td style="white-space:nowrap;padding:6px 10px;border-bottom:1px solid #eee;color:#555;font-size:13px">'+esc(r.time||r.date||'')+'</td>'
+        +'<td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:13px">'+detailsFor(r)+'</td>'
+        +'<td style="white-space:nowrap;padding:6px 10px;border-bottom:1px solid #eee;font-size:13px;'+statusStyle(r.status)+'">'+statusLabel(r.status)+'</td>'
+        +'</tr>';
+    }).join('');
+    return '<div style="margin-bottom:24px;page-break-inside:avoid">'
+      +'<div style="font-size:12px;font-weight:700;letter-spacing:0.08em;color:#555;text-transform:uppercase;border-bottom:2px solid #3B6D11;padding-bottom:4px;margin-bottom:0">'+esc(heading)+'</div>'
+      +'<table style="width:100%;border-collapse:collapse"><thead>'
+      +'<tr style="background:#f8f8f8"><th style="text-align:left;padding:6px 10px;font-size:11px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Time</th>'
+      +'<th style="text-align:left;padding:6px 10px;font-size:11px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Details</th>'
+      +'<th style="text-align:left;padding:6px 10px;font-size:11px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Status</th></tr>'
+      +'</thead><tbody>'+rows+'</tbody></table></div>';
+  }).filter(Boolean).join('');
+
+  var now = new Date();
+  var genTime = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+    +'<title>HACCP Daily Log — '+esc(dateLabel)+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#222;background:#fff;padding:24px}'
+    +'@media print{'
+    +'@page{size:A4;margin:18mm 18mm 18mm 18mm}'
+    +'.no-print{display:none!important}'
+    +'body{padding:0}'
+    +'}'
+    +'</style>'
+    +'</head><body>'
+    // Header
+    +'<div style="border-bottom:3px solid #3B6D11;padding-bottom:12px;margin-bottom:18px">'
+    +'<div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#3B6D11;font-weight:700;margin-bottom:4px">HACCP Daily Log</div>'
+    +'<div style="font-size:22px;font-weight:700;color:#222">'+esc(dateLabel)+'</div>'
+    +'<div style="font-size:12px;color:#888;margin-top:2px">Generated '+esc(genTime)+'</div>'
+    +'</div>'
+    // Summary
+    +'<div style="display:flex;gap:24px;margin-bottom:24px;padding:12px 16px;background:#f8f8f8;border-radius:6px">'
+    +'<div><span style="font-size:22px;font-weight:700;color:#3B6D11">'+ok+'</span><span style="font-size:12px;color:#555;margin-left:5px">OK</span></div>'
+    +'<div><span style="font-size:22px;font-weight:700;color:#854F0B">'+warn+'</span><span style="font-size:12px;color:#555;margin-left:5px">Warning</span></div>'
+    +'<div><span style="font-size:22px;font-weight:700;color:#A32D2D">'+fail+'</span><span style="font-size:12px;color:#555;margin-left:5px">Failed</span></div>'
+    +'<div><span style="font-size:22px;font-weight:700;color:#888">'+recs.length+'</span><span style="font-size:12px;color:#555;margin-left:5px">Total</span></div>'
+    +'</div>'
+    // Sections
+    +(sectionsHtml || '<p style="color:#888;font-size:14px">No records for this day.</p>')
+    // Footer
+    +'<div style="margin-top:32px;padding-top:12px;border-top:1px solid #eee;font-size:11px;color:#aaa">This record was generated by the Mise HACCP app.</div>'
+    +'<script>window.onload=function(){window.print();};window.onafterprint=function(){window.close();};<\/script>'
+    +'</body></html>';
+
+  var w = window.open('','_blank','width=800,height=900');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { toast('Allow pop-ups to export PDF'); }
 }
 
 // --- PRIVATE CHEF MODE ---
