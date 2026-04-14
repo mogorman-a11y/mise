@@ -229,6 +229,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="tile-label">Staff illness</div>
         <div class="tile-sub" id="sub-illness">No records yet</div>
       </div>
+      <!-- EHO INSPECTION MODE — full-width branded tile -->
+      <div class="tile tile-wide" onclick="showTab('inspector')" style="background:#2D7A3A;border-color:#2D7A3A">
+        <div class="tile-wide-inner">
+          <span class="tile-icon-sm">🔍</span>
+          <div style="flex:1">
+            <div class="tile-label" style="color:#fff">EHO Inspection View</div>
+            <div class="tile-sub" style="color:rgba(255,255,255,0.75)">Tap before an inspection</div>
+          </div>
+          <span id="inspector-badge" style="font-size:11px;font-weight:700;padding:4px 10px;background:rgba(255,255,255,0.2);border-radius:20px;color:#fff;white-space:nowrap;flex-shrink:0">READY</span>
+        </div>
+      </div>
       <div class="tile tile-wide" onclick="showTab('records')">
         <div class="tile-wide-inner">
           <span class="tile-icon-sm">📋</span>
@@ -746,6 +757,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- RECORDS -->
   <div id="tab-records" class="section">
     <div id="records-list"></div>
+  </div>
+
+  <!-- EHO INSPECTION VIEW — content rendered by renderInspector() -->
+  <div id="tab-inspector" class="section">
+    <div id="inspector-content"></div>
   </div>
 
   <!-- SETTINGS -->
@@ -1367,7 +1383,7 @@ function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
-var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Job & location',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal'};
+var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Job & location',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
 
 var _homeScrollPos = 0;
 
@@ -1397,10 +1413,11 @@ function showTab(name) {
   var headerLogo=document.getElementById('header-logo');
   if(headerLogo) headerLogo.style.display=name==='home'?'none':'block';
   document.getElementById('header-title').textContent=name==='home'?'Veriqo':titles[name];
-  if(name==='records') renderRecords();
-  if(name==='settings') renderAllSettingsLists();
+  if(name==='records')   renderRecords();
+  if(name==='settings')  renderAllSettingsLists();
   if(name==='suppliers') renderSuppliersLog();
   if(name==='credentials') renderCredentials();
+  if(name==='inspector') renderInspector();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
   updateDashboard();
   if(name === 'home') { var pos = _homeScrollPos; requestAnimationFrame(function(){ window.scrollTo(0, pos); }); }
@@ -2324,39 +2341,68 @@ async function saveProfile() {
   var logoImg  = document.getElementById('profile-logo-img');
   var logo     = logoImg.src && logoImg.src !== window.location.href ? logoImg.src : '';
 
-  // Update in-memory profile so PDF export picks it up immediately
+  // Update in-memory profile so PDF export and inspector view pick it up immediately
   window.Mise = window.Mise || {};
   window.Mise.profile = window.Mise.profile || {};
   window.Mise.profile.business_name = business;
   window.Mise.profile.chef_name     = chefname;
   window.Mise.profile.logo          = logo;
 
-  // Save to Supabase if signed in
+  // Always save to localStorage as a fast local cache — survives page refreshes
+  // on the same browser even if Supabase is slow or unreachable
+  try {
+    localStorage.setItem('veriqo_profile', JSON.stringify({
+      business_name: business,
+      chef_name:     chefname,
+      logo:          logo
+    }));
+  } catch(e) { /* ignore storage quota errors */ }
+
+  // Save to Supabase so it syncs across all devices / browsers
   try {
     var result = await supabaseClient.auth.getUser();
     var user = result.data && result.data.user;
     if (user) {
-      await supabaseClient.from('profiles').update({
+      // Use upsert so this works even if the profile row is missing for any reason
+      var { error } = await supabaseClient.from('profiles').upsert({
+        id:            user.id,
         business_name: business,
         chef_name:     chefname,
         logo:          logo,
         updated_at:    new Date().toISOString()
-      }).eq('id', user.id);
+      });
+      if (error) {
+        console.error('[Veriqo] saveProfile Supabase error:', error.message);
+        toast('Saved locally — cloud sync failed', 'warn');
+        return;
+      }
     }
   } catch(e) {
-    console.warn('[Mise] saveProfile error:', e.message);
+    console.warn('[Veriqo] saveProfile error:', e.message);
+    toast('Saved locally — cloud sync failed', 'warn');
+    return;
   }
 
   // Show confirmation
   var msg = document.getElementById('profile-save-msg');
-  msg.style.display = 'block';
-  setTimeout(function(){ msg.style.display = 'none'; }, 2000);
-  toast('Profile saved');
+  if (msg) { msg.style.display = 'block'; setTimeout(function(){ msg.style.display = 'none'; }, 2000); }
+  toast('Profile saved ✓');
 }
 
 function loadProfileUI() {
-  // Populate the profile card fields from window.Mise.profile if available
+  // Populate the profile card fields from window.Mise.profile (Supabase) if available.
+  // Fall back to the localStorage cache so the fields are never empty on reload.
   var profile = (window.Mise && window.Mise.profile) || {};
+
+  // If Supabase hasn't returned data yet, merge in the localStorage cache
+  if (!profile.business_name && !profile.chef_name && !profile.logo) {
+    try {
+      var cached = JSON.parse(localStorage.getItem('veriqo_profile') || '{}');
+      // Supabase data takes precedence when present; cache fills any gaps
+      profile = Object.assign({}, cached, profile);
+    } catch(e) { /* malformed JSON — ignore */ }
+  }
+
   var bEl = document.getElementById('profile-business');
   var cEl = document.getElementById('profile-chefname');
   if (bEl && profile.business_name) bEl.value = profile.business_name;
@@ -2366,6 +2412,209 @@ function loadProfileUI() {
     var pre = document.getElementById('profile-logo-preview');
     if (img && pre) { img.src = profile.logo; pre.style.display = 'block'; }
   }
+}
+
+// ── renderInspector ──────────────────────────────────────────────────────────
+// EHO Inspection Mode — one-tap inspector-ready view.
+// Shows a summary header, any outstanding / failed checks, and a
+// full chronological timeline of today's records. Includes a PDF export button.
+function renderInspector() {
+  var container = document.getElementById('inspector-content');
+  if (!container) return;
+
+  // Pull today's records and profile
+  var recs    = records.slice();
+  var profile = (window.Mise && window.Mise.profile) || {};
+
+  // Also check localStorage cache in case Supabase profile hasn't loaded yet
+  if (!profile.business_name && !profile.chef_name) {
+    try { var _c = JSON.parse(localStorage.getItem('veriqo_profile')||'{}'); profile = Object.assign({}, _c, profile); } catch(e) {}
+  }
+
+  var businessName = profile.business_name || '';
+  var now  = new Date();
+  var hour = now.getHours();
+
+  // ── Count statuses ────────────────────────────────────────────────────────
+  var ok   = recs.filter(function(r){ return r.status==='ok';   }).length;
+  var warn = recs.filter(function(r){ return r.status==='warn'; }).length;
+  var fail = recs.filter(function(r){ return r.status==='fail'; }).length;
+
+  // ── Update badge on home tile ─────────────────────────────────────────────
+  var badge = document.getElementById('inspector-badge');
+  if (badge) {
+    if (fail > 0) { badge.textContent = fail + ' FAILED'; badge.style.background = 'rgba(163,45,45,0.85)'; }
+    else if (warn > 0) { badge.textContent = warn + ' WARN'; badge.style.background = 'rgba(133,79,11,0.75)'; }
+    else { badge.textContent = 'READY'; badge.style.background = 'rgba(255,255,255,0.2)'; }
+  }
+
+  // ── Outstanding check detection ───────────────────────────────────────────
+  // Which record types have been logged today?
+  var loggedTypes = {};
+  recs.forEach(function(r){ loggedTypes[r.type] = true; });
+
+  // Expected checks for a typical kitchen HACCP file
+  var EXPECTED = [
+    { type:'opening',     icon:'☀️',  label:'Opening checks' },
+    { type:'fridge',      icon:'🌡️', label:'Fridge temperature check' },
+    { type:'crosscontam', icon:'🔵',  label:'Cross-contamination check' },
+    { type:'closing',     icon:'🌙',  label:'Closing checks' }
+  ];
+
+  var missing = EXPECTED.filter(function(c) {
+    if (c.type === 'closing' && hour < 16) return false; // only nag after 4pm
+    return !loggedTypes[c.type];
+  });
+
+  var failures = recs.filter(function(r){ return r.status === 'fail'; });
+
+  // ── Timeline icons and status styles ─────────────────────────────────────
+  var TYPE_ICONS = {
+    opening:'☀️', closing:'🌙', fridge:'🌡️', cooking:'🍳',
+    cooling:'❄️', reheating:'♨️', delivery:'📦', cleaning:'🧹',
+    crosscontam:'🔵', probe:'🔬', pest:'🐀', illness:'🤒',
+    job:'📍', kitchenassess:'🏠', allergen:'⚠️', transport:'🚗',
+    mobileset:'📱', credentials:'📋'
+  };
+  var STATUS_STYLE = {
+    ok:   'background:#EAF3DE;color:#2D7A3A',
+    warn: 'background:#FAEEDA;color:#854F0B',
+    fail: 'background:#FCEBEB;color:#A32D2D'
+  };
+  var STATUS_LABEL = { ok:'OK', warn:'Warning', fail:'Failed' };
+
+  // Brief plain-text detail for each record type (for timeline rows)
+  function _detail(r) {
+    var d = '';
+    if (r.type==='fridge')     d = (r.unit||'') + (r.temp!==undefined&&r.temp!==''?' · '+r.temp+'°C':'');
+    else if (r.type==='cooking')    d = (r.food||'') + (r.temp!==undefined&&r.temp!==''?' · '+r.temp+'°C':'');
+    else if (r.type==='cooling')    d = (r.food||'') + (r.startTemp!==undefined?' · '+r.startTemp+'→'+r.endTemp+'°C':'');
+    else if (r.type==='reheating')  d = (r.food||'') + (r.temp!==undefined&&r.temp!==''?' · '+r.temp+'°C':'');
+    else if (r.type==='delivery')   d = (r.supplier||'') + (r.temp!==undefined&&r.temp!==''?' · '+r.temp+'°C':'');
+    else if (r.type==='cleaning')   d = (r.task||'') + (r.by?' · '+r.by:'');
+    else if (r.type==='probe')      d = (r.probeId||'') + (r.reading!==undefined&&r.reading!==''?' · '+r.reading+'°C':'');
+    else if (r.type==='pest')       d = (r.pestType||'') + (r.location?' · '+r.location:'');
+    else if (r.type==='illness')    d = (r.staff||'') + (r.illnessType?' · '+r.illnessType:'');
+    else if (r.type==='opening'||r.type==='closing'||r.type==='crosscontam') d = r.msg||'';
+    else if (r.type==='job')        d = (r.client||'') + (r.jobType?' · '+r.jobType:'');
+    else if (r.type==='allergen')   d = (r.dish||'') + (r.allergens&&r.allergens.length?' · '+r.allergens.join(', '):'');
+    else if (r.type==='transport')  d = (r.food||'') + (r.destination?' → '+r.destination:'');
+    else d = r.msg||'';
+    return d;
+  }
+
+  function _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // Sort records chronologically by time string
+  var sorted = recs.slice().sort(function(a,b){ return (a.time||'').localeCompare(b.time||''); });
+
+  // ── Build HTML ─────────────────────────────────────────────────────────────
+  var html = '';
+
+  // ── Header card: business, date, counts, PDF button ──────────────────────
+  html += '<div class="card" style="margin-bottom:12px">'
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">'
+    +   '<div>'
+    +     (businessName ? '<div style="font-size:17px;font-weight:700;color:#1a1a18">'+_esc(businessName)+'</div>' : '')
+    +     '<div style="font-size:13px;color:#888;margin-top:2px">'+_esc(fmtDate(TODAY))+'</div>'
+    +     '<div style="font-size:12px;color:#aaa;margin-top:1px">'+recs.length+' record'+(recs.length!==1?'s':'')+' logged today</div>'
+    +   '</div>'
+    +   '<div style="text-align:right;flex-shrink:0;margin-left:12px">'
+    +     '<div style="font-size:10px;font-weight:700;letter-spacing:0.1em;color:#2D7A3A">VERIQO</div>'
+    +     '<div style="font-size:10px;color:#aaa">Inspection Ready</div>'
+    +   '</div>'
+    + '</div>'
+    // Status counts
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
+    +   '<div style="text-align:center;padding:10px 4px;background:#EAF3DE;border-radius:8px">'
+    +     '<div style="font-size:24px;font-weight:700;color:#2D7A3A">'+ok+'</div>'
+    +     '<div style="font-size:10px;font-weight:700;color:#2D7A3A;letter-spacing:0.05em">OK</div>'
+    +   '</div>'
+    +   '<div style="text-align:center;padding:10px 4px;background:#FAEEDA;border-radius:8px">'
+    +     '<div style="font-size:24px;font-weight:700;color:#854F0B">'+warn+'</div>'
+    +     '<div style="font-size:10px;font-weight:700;color:#854F0B;letter-spacing:0.05em">WARNING</div>'
+    +   '</div>'
+    +   '<div style="text-align:center;padding:10px 4px;background:'+(fail>0?'#FCEBEB':'#f5f4f0')+';border-radius:8px">'
+    +     '<div style="font-size:24px;font-weight:700;color:'+(fail>0?'#A32D2D':'#bbb')+'">'+fail+'</div>'
+    +     '<div style="font-size:10px;font-weight:700;color:'+(fail>0?'#A32D2D':'#bbb')+';letter-spacing:0.05em">FAILED</div>'
+    +   '</div>'
+    + '</div>'
+    // PDF export button
+    + '<button onclick="exportDayPDF(\''+TODAY+'\')" style="width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">📄 Export PDF report</button>'
+    + '</div>';
+
+  // ── Outstanding / missing checks card ─────────────────────────────────────
+  if (missing.length > 0 || failures.length > 0) {
+    html += '<div class="card" style="margin-bottom:12px;border-color:#fde68a">'
+      + '<div class="card-title" style="color:#854F0B">⚠️ Outstanding checks</div>';
+
+    // Missing expected records — each has a "Log now →" quick-action button
+    missing.forEach(function(c) {
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f5f4f0">'
+        +   '<div style="display:flex;align-items:center;gap:10px">'
+        +     '<span style="font-size:20px;flex-shrink:0">'+c.icon+'</span>'
+        +     '<div>'
+        +       '<div style="font-size:14px;font-weight:600;color:#1a1a18">'+_esc(c.label)+'</div>'
+        +       '<div style="font-size:12px;color:#888">Not yet logged today</div>'
+        +     '</div>'
+        +   '</div>'
+        +   '<button onclick="showTab(\''+c.type+'\')" style="padding:7px 13px;background:#1a1a18;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">Log now →</button>'
+        + '</div>';
+    });
+
+    // Failed records — highlight with detail so they can be addressed
+    failures.forEach(function(r) {
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f5f4f0">'
+        +   '<span style="font-size:20px;flex-shrink:0">❌</span>'
+        +   '<div style="min-width:0">'
+        +     '<div style="font-size:14px;font-weight:600;color:#A32D2D">Failed: '+_esc(titles[r.type]||r.type)+'</div>'
+        +     '<div style="font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(r.time?r.time+' · ':'')+_esc(_detail(r))+'</div>'
+        +   '</div>'
+        + '</div>';
+    });
+
+    html += '</div>';
+
+  } else if (recs.length > 0) {
+    // All expected checks done and no failures
+    html += '<div class="card" style="margin-bottom:12px;background:#f0fdf4;border-color:#bbf7d0">'
+      + '<div style="display:flex;align-items:center;gap:12px;padding:4px 0">'
+      +   '<span style="font-size:28px">✅</span>'
+      +   '<div>'
+      +     '<div style="font-size:15px;font-weight:700;color:#2D7A3A">All checks completed</div>'
+      +     '<div style="font-size:12px;color:#888;margin-top:2px">No outstanding items — inspection ready</div>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  // ── Chronological timeline card ───────────────────────────────────────────
+  html += '<div class="card" style="margin-bottom:12px">'
+    + '<div class="card-title">Today\'s timeline</div>';
+
+  if (sorted.length === 0) {
+    html += '<div style="color:#bbb;font-size:14px;text-align:center;padding:20px 0">No records logged today yet.<br><span style="font-size:12px">Tap any tile on the home screen to start logging.</span></div>';
+  } else {
+    sorted.forEach(function(r) {
+      var icon   = TYPE_ICONS[r.type] || '📝';
+      var detail = _detail(r);
+      var sStyle = STATUS_STYLE[r.status] || 'background:#f0f0ec;color:#888';
+      var sLabel = STATUS_LABEL[r.status] || '';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f5f4f0">'
+        +   '<div style="font-size:11px;color:#aaa;font-weight:600;min-width:34px;flex-shrink:0;font-variant-numeric:tabular-nums">'+_esc(r.time||'')+'</div>'
+        +   '<span style="font-size:18px;flex-shrink:0">'+icon+'</span>'
+        +   '<div style="flex:1;min-width:0">'
+        +     '<div style="font-size:13px;font-weight:600;color:#1a1a18">'+_esc(titles[r.type]||r.type)+'</div>'
+        +     (detail ? '<div style="font-size:11px;color:#888;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+_esc(detail)+'</div>' : '')
+        +   '</div>'
+        +   (sLabel ? '<span style="font-size:10px;font-weight:700;padding:3px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;'+sStyle+'">'+_esc(sLabel)+'</span>' : '')
+        + '</div>';
+    });
+  }
+
+  html += '</div>';
+
+  container.innerHTML = html;
 }
 
 // --- INIT ---
