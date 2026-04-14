@@ -953,7 +953,188 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
     </div>
 
+    <!-- SUPPORT & LEGAL LINKS -->
+    <div class="divider" style="margin-top:24px">Support &amp; legal</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+      <button onclick="showTab('help')"
+        style="width:100%;padding:13px 16px;background:#fff;border:1px solid #e5e4de;border-radius:10px;font-size:14px;font-weight:600;color:#1a1a18;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;text-align:left">
+        <span>❓ Help &amp; getting started</span><span style="color:#bbb;font-size:16px">›</span>
+      </button>
+      <button onclick="showTab('legal')"
+        style="width:100%;padding:13px 16px;background:#fff;border:1px solid #e5e4de;border-radius:10px;font-size:14px;font-weight:600;color:#1a1a18;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;text-align:left">
+        <span>🔒 Privacy &amp; legal</span><span style="color:#bbb;font-size:16px">›</span>
+      </button>
+    </div>
+
   </div>
+
+  <!-- HELP PAGE -->
+  <div id="tab-help" class="section">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Getting started</div>
+      <div style="font-size:14px;color:#444;line-height:1.6">
+        <p style="margin-bottom:10px">Veriqo is your digital HACCP system. Every record you log is saved to the cloud and ready to show an inspector at any time.</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="background:#2D7A3A;color:#fff;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span>
+            <span><strong>Set up your profile</strong> — go to Settings and add your business name, your name, and an optional logo. These appear on every PDF export.</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="background:#2D7A3A;color:#fff;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span>
+            <span><strong>Log records throughout the day</strong> — tap any tile on the home screen to log temperatures, checks, deliveries, cleaning, and more.</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="background:#2D7A3A;color:#fff;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
+            <span><strong>Export a PDF</strong> — tap Records, find any day, and hit Export PDF to get a formatted report ready for your HACCP file or an inspector.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Your records</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>All records are saved automatically as you log them. They are stored on your device <em>and</em> backed up to the cloud, so you never lose data if you change phone or clear your browser.</p>
+        <p>The <strong>Records</strong> tab shows every day you have logged. Tap a day to expand it, or use Export PDF to download a formatted report for that day.</p>
+        <p>The home screen summary shows today's counts — green OK, amber warning, red failed. Tap any stat to jump to that record type.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Temperature logs</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Log fridge, freezer, cooking, cooling, reheating, and delivery temperatures. Veriqo uses UK Food Standards Agency guidelines by default:</p>
+        <div style="background:#f5f4f0;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.7">
+          <div>🟢 <strong>Fridge:</strong> below 5 °C — OK</div>
+          <div>🟡 <strong>Fridge:</strong> 5–8 °C — Warning</div>
+          <div>🔴 <strong>Fridge:</strong> above 8 °C — Failed</div>
+          <div style="margin-top:6px">🟢 <strong>Cooked food:</strong> 75 °C+ — OK</div>
+          <div>🔴 <strong>Cooked food:</strong> below 75 °C — Failed</div>
+        </div>
+        <p>You can adjust all thresholds in Settings under <em>Temperature thresholds</em>.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">PDF exports</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Tap <strong>Records</strong>, expand any day, then tap <strong>Export PDF</strong>. A formatted report opens — use your device's share or print option to save it or send it.</p>
+        <p>On iPhone, tap the share icon in Safari and choose <em>Save to Files</em> or <em>Print</em>. On Android, use the browser menu to print and select <em>Save as PDF</em>.</p>
+        <p>PDFs include your business name, logo (if set), the date, a summary of OK/Warning/Failed counts, and a full table of every record for that day.</p>
+        <p style="color:#2D7A3A;font-weight:600">PDF export is always available, even if your trial has ended.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Private chef mode</div>
+      <div style="font-size:14px;color:#444;line-height:1.6">
+        <p>Turn on <strong>Private chef mode</strong> in Settings to unlock extra record types: job logging, kitchen assessments, allergen logs, transport temperature checks, mobile setup, and credentials. Designed for chefs working in clients' homes.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Account &amp; subscription</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>You can sign in with your email address or with Google. Your data is tied to your account and syncs across all devices you sign in to.</p>
+        <p>Veriqo is free to use during the trial period. When the trial ends you can subscribe to keep full access. Your records and PDF exports remain available regardless.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-title">Contact &amp; support</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <p>Got a question, found a bug, or want to request a feature?</p>
+        <a href="mailto:hello@getveriqo.co.uk"
+          style="display:inline-flex;align-items:center;gap:8px;padding:11px 14px;background:#f5f4f0;border:1px solid #e5e4de;border-radius:8px;font-size:14px;font-weight:600;color:#2D7A3A;text-decoration:none">
+          ✉️ hello@getveriqo.co.uk
+        </a>
+        <p style="font-size:12px;color:#aaa;margin-top:4px">We aim to reply within one working day.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGAL PAGE -->
+  <div id="tab-legal" class="section">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">About Veriqo</div>
+      <div style="font-size:14px;color:#444;line-height:1.6">
+        <p>Veriqo is a product of <strong>Mise Labs</strong>. We build tools for food professionals.</p>
+        <p style="margin-top:8px">Questions or concerns? Email us at <a href="mailto:hello@getveriqo.co.uk" style="color:#2D7A3A;font-weight:600;text-decoration:none">hello@getveriqo.co.uk</a></p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Privacy — what we collect</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>We collect only what is needed to run the service:</p>
+        <div style="background:#f5f4f0;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">
+          <div>📧 <strong>Email address</strong> — to identify your account</div>
+          <div>🏢 <strong>Business name &amp; your name</strong> — shown on PDF exports</div>
+          <div>🌡️ <strong>HACCP records</strong> — temperature logs, checklists, and other records you create</div>
+          <div>🖼️ <strong>Logo</strong> — if you upload one, stored with your profile</div>
+        </div>
+        <p>We do <strong>not</strong> sell your data. We do not use it for advertising. We do not share it with third parties except Supabase (our cloud database provider, based in the EU).</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">How your data is stored</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Your records are stored in two places: on your device (in your browser's local storage) and in our cloud database (Supabase, EU servers). Both copies are protected — only you can access your own records.</p>
+        <p>We use row-level security so no other user can read your data, even if they know your user ID.</p>
+        <p>Data is retained for as long as your account is active. You can request deletion at any time by emailing <a href="mailto:hello@getveriqo.co.uk" style="color:#2D7A3A;text-decoration:none;font-weight:600">hello@getveriqo.co.uk</a>.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Your rights (UK GDPR)</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <p>Under UK data protection law you have the right to:</p>
+        <div style="background:#f5f4f0;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">
+          <div>• Access the data we hold about you</div>
+          <div>• Correct inaccurate data</div>
+          <div>• Request deletion of your data</div>
+          <div>• Export your data (your HACCP records are exportable as PDFs at any time)</div>
+          <div>• Object to processing</div>
+        </div>
+        <p>To exercise any of these rights, email <a href="mailto:hello@getveriqo.co.uk" style="color:#2D7A3A;text-decoration:none;font-weight:600">hello@getveriqo.co.uk</a>.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Terms of use</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>By using Veriqo you agree to these terms:</p>
+        <div style="background:#f5f4f0;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">
+          <div>• Veriqo is a record-keeping tool. It does not replace professional food safety advice or formal HACCP training.</div>
+          <div>• You are responsible for ensuring your records are accurate and complete.</div>
+          <div>• Do not use Veriqo to store sensitive personal data beyond what is needed for food safety records.</div>
+          <div>• We may update these terms. Continued use of the app means you accept any changes.</div>
+        </div>
+        <p>Veriqo is provided in good faith. Mise Labs accepts no liability for losses arising from inaccurate records or reliance on the app as a sole compliance method.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Cookies &amp; tracking</div>
+      <div style="font-size:14px;color:#444;line-height:1.6">
+        <p>Veriqo uses browser local storage and session cookies only to keep you signed in and to save your settings. We do not use advertising cookies or third-party analytics.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-title">Contact</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <p>Veriqo is a product of Mise Labs.</p>
+        <a href="mailto:hello@getveriqo.co.uk"
+          style="display:inline-flex;align-items:center;gap:8px;padding:11px 14px;background:#f5f4f0;border:1px solid #e5e4de;border-radius:8px;font-size:14px;font-weight:600;color:#2D7A3A;text-decoration:none">
+          ✉️ hello@getveriqo.co.uk
+        </a>
+        <p style="font-size:12px;color:#aaa;margin-top:4px">Last updated: April 2026</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 <div class="toast" id="toast"></div>
 
@@ -1186,7 +1367,7 @@ function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
-var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Job & location',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials'};
+var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Job & location',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal'};
 
 var _homeScrollPos = 0;
 
