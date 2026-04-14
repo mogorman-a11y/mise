@@ -17,7 +17,7 @@ window.Mise.subscription = (function () {
     try {
       var result = await supabaseClient
         .from('profiles')
-        .select('subscription_status, trial_ends_at, business_name, chef_name, stripe_customer_id')
+        .select('subscription_status, trial_ends_at, business_name, chef_name, stripe_customer_id, logo')
         .eq('id', userId)
         .single();
 
@@ -35,7 +35,7 @@ window.Mise.subscription = (function () {
         });
         result = await supabaseClient
           .from('profiles')
-          .select('subscription_status, trial_ends_at, business_name, chef_name, stripe_customer_id')
+          .select('subscription_status, trial_ends_at, business_name, chef_name, stripe_customer_id, logo')
           .eq('id', userId)
           .single();
       }

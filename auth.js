@@ -257,11 +257,13 @@ window.Mise.auth = (function () {
     }
 
     // Re-render app with synced data
-    if (typeof loadSettings      === 'function') loadSettings();
+    if (typeof loadSettings       === 'function') loadSettings();
     if (typeof populateAllSelects === 'function') populateAllSelects();
-    if (typeof renderChecklists  === 'function') renderChecklists();
-    if (typeof renderAllSections === 'function') renderAllSections();
-    if (typeof updateDashboard   === 'function') updateDashboard();
+    if (typeof renderChecklists   === 'function') renderChecklists();
+    if (typeof renderAllSections  === 'function') renderAllSections();
+    if (typeof updateDashboard    === 'function') updateDashboard();
+    // Populate profile card in Settings with saved name/logo
+    if (typeof loadProfileUI      === 'function') loadProfileUI();
   }
 
   // ── internal: showAuthScreen ───────────────────────────────────────────────
