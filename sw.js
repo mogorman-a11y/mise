@@ -5,19 +5,19 @@
 //   Supabase API calls          → network-first (sync when online, skip offline)
 //   Everything else             → network with cache fallback
 
-const CACHE = 'mise-v1';
+const CACHE = 'mise-v3';
 
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/supabase.js',
-  '/auth.js',
-  '/sync.js',
-  '/subscription.js',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/apple-touch-icon.png'
+  './',
+  './index.html',
+  './supabase.js',
+  './auth.js',
+  './sync.js',
+  './subscription.js',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/apple-touch-icon.png'
 ];
 
 // ── Install ────────────────────────────────────────────────────────────────

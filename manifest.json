@@ -2,20 +2,21 @@
   "name": "Mise — HACCP Compliance",
   "short_name": "Mise",
   "description": "Kitchen food safety and HACCP compliance tracker",
-  "start_url": "/",
+  "start_url": "/mise/",
+  "scope": "/mise/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f5f4f0",
   "theme_color": "#1a1a18",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
