@@ -2358,28 +2358,31 @@ async function saveProfile() {
     }));
   } catch(e) { /* ignore storage quota errors */ }
 
-  // Save to Supabase so it syncs across all devices / browsers
+  // Save to Supabase so the profile syncs across all devices / browsers.
+  // Uses update().eq() not upsert() — the profile row is always created by
+  // subscription.js on first login, so INSERT is never needed and avoids
+  // potential RLS conflicts. updated_at is omitted to avoid column-missing errors.
   try {
-    var result = await supabaseClient.auth.getUser();
-    var user = result.data && result.data.user;
-    if (user) {
-      // Use upsert so this works even if the profile row is missing for any reason
-      var { error } = await supabaseClient.from('profiles').upsert({
-        id:            user.id,
-        business_name: business,
-        chef_name:     chefname,
-        logo:          logo,
-        updated_at:    new Date().toISOString()
-      });
-      if (error) {
-        console.error('[Veriqo] saveProfile Supabase error:', error.message);
-        toast('Saved locally — cloud sync failed', 'warn');
-        return;
-      }
+    var userResult = await supabaseClient.auth.getUser();
+    var user = userResult.data && userResult.data.user;
+    if (!user) {
+      // Not signed in — localStorage save above is all we can do
+      toast('Saved locally (not signed in)', 'warn');
+      return;
+    }
+    var { error } = await supabaseClient
+      .from('profiles')
+      .update({ business_name: business, chef_name: chefname, logo: logo })
+      .eq('id', user.id);
+    if (error) {
+      // Show the real Supabase error so it can be diagnosed
+      console.error('[Veriqo] saveProfile Supabase error:', error);
+      toast('Cloud save failed: ' + error.message, false);
+      return;
     }
   } catch(e) {
-    console.warn('[Veriqo] saveProfile error:', e.message);
-    toast('Saved locally — cloud sync failed', 'warn');
+    console.warn('[Veriqo] saveProfile exception:', e.message);
+    toast('Cloud save failed — check connection', false);
     return;
   }
 
