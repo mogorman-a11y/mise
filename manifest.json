@@ -1,13 +1,13 @@
 {
-  "name": "Mise — HACCP Compliance",
-  "short_name": "Mise",
-  "description": "Kitchen food safety and HACCP compliance tracker",
+  "name": "Veriqo",
+  "short_name": "Veriqo",
+  "description": "Food Safety. Inspection Ready.",
   "start_url": "/mise/",
   "scope": "/mise/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5f4f0",
-  "theme_color": "#1a1a18",
+  "background_color": "#1B3A5C",
+  "theme_color": "#2D7A3A",
   "icons": [
     {
       "src": "icons/icon-192.png",

@@ -25,8 +25,8 @@ window.Mise.auth = (function () {
       +     '<line x1="22" y1="76" x2="78" y2="76" stroke="#fff" stroke-width="9" stroke-linecap="round"/>'
       +   '</svg>'
       +   '<div>'
-      +     '<div style="font-size:26px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Mise</div>'
-      +     '<div style="font-size:13px;color:#888;margin-top:1px">HACCP Food Safety</div>'
+      +     '<div style="font-size:26px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Veriqo</div>'
+      +     '<div style="font-size:13px;color:#888;margin-top:1px">Food Safety. Inspection Ready.</div>'
       +   '</div>'
       + '</div>'
 
@@ -58,7 +58,7 @@ window.Mise.auth = (function () {
 
       // Submit
       +   '<button id="auth-submit" onclick="Mise.auth._submit()" '
-      +     'style="width:100%;padding:14px;background:#3B6D11;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px">Sign in</button>'
+      +     'style="width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px">Sign in</button>'
 
       // Forgot password (sign-in only)
       +   '<div id="auth-forgot-row" style="text-align:center;margin-top:11px">'
@@ -105,7 +105,7 @@ window.Mise.auth = (function () {
         return;
       }
     } catch (e) {
-      console.warn('[Mise] getSession error:', e);
+      console.warn('[Veriqo] getSession error:', e);
     }
 
     // No session — auth screen stays. Listen for OAuth redirect callbacks.
@@ -313,7 +313,7 @@ window.Mise.auth = (function () {
       subscription_status: 'trial',
       trial_ends_at: trialEnds
     });
-    if (result.error) console.warn('[Mise] createProfile error:', result.error.message);
+    if (result.error) console.warn('[Veriqo] createProfile error:', result.error.message);
   }
 
   // ── internal: message helpers ──────────────────────────────────────────────

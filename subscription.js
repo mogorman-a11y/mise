@@ -41,7 +41,7 @@ window.Mise.subscription = (function () {
       }
 
       if (result.error) {
-        console.warn('[Mise] Could not read profile:', result.error.message);
+        console.warn('[Veriqo] Could not read profile:', result.error.message);
         return; // fail open — let the user in if we can't check
       }
 
@@ -61,7 +61,7 @@ window.Mise.subscription = (function () {
       }
 
     } catch (err) {
-      console.warn('[Mise] Subscription check error:', err.message);
+      console.warn('[Veriqo] Subscription check error:', err.message);
       // Fail open — don't lock out users if Supabase is unreachable
     }
   }
@@ -89,8 +89,8 @@ window.Mise.subscription = (function () {
       +     '<line x1="22" y1="76" x2="78" y2="76" stroke="#fff" stroke-width="9" stroke-linecap="round"/>'
       +   '</svg>'
       +   '<div>'
-      +     '<div style="font-size:26px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Mise</div>'
-      +     '<div style="font-size:13px;color:#888;margin-top:1px">HACCP Food Safety</div>'
+      +     '<div style="font-size:26px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Veriqo</div>'
+      +     '<div style="font-size:13px;color:#2D7A3A;margin-top:1px;font-weight:600">Food Safety. Inspection Ready.</div>'
       +   '</div>'
       + '</div>'
 
@@ -101,7 +101,7 @@ window.Mise.subscription = (function () {
 
       // Headline
       + '<div style="font-size:24px;font-weight:700;color:#1a1a18;letter-spacing:-0.3px;margin-bottom:10px;line-height:1.3">Keep your kitchen compliant</div>'
-      + '<div style="font-size:15px;color:#555;line-height:1.6;margin-bottom:24px">Mise gives you a complete digital HACCP system — temperature logs, checklists, cleaning records, allergen tracking, and PDF reports ready for inspection.</div>'
+      + '<div style="font-size:15px;color:#555;line-height:1.6;margin-bottom:24px">Veriqo gives you a complete digital HACCP system — temperature logs, checklists, cleaning records, allergen tracking, and PDF reports ready for inspection.</div>'
 
       // Feature list
       + '<div style="background:#fff;border:1px solid #e5e4de;border-radius:14px;padding:16px 18px;margin-bottom:24px">'
@@ -122,7 +122,7 @@ window.Mise.subscription = (function () {
 
       // Subscribe button
       + '<button onclick="Mise.subscription.startCheckout()" id="paywall-subscribe-btn" '
-      +   'style="width:100%;padding:16px;background:#3B6D11;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px">Subscribe now</button>'
+      +   'style="width:100%;padding:16px;background:#2D7A3A;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px">Subscribe now</button>'
 
       // Export records link — always available
       + '<div style="text-align:center">'
@@ -166,7 +166,7 @@ window.Mise.subscription = (function () {
       window.location.href = data.url;
 
     } catch (err) {
-      console.error('[Mise] Checkout error:', err);
+      console.error('[Veriqo] Checkout error:', err);
       if (btn) { btn.textContent = 'Subscribe now'; btn.disabled = false; }
       // toast() is defined in index.html
       if (typeof toast === 'function') toast('Checkout not available yet — coming soon', false);
@@ -196,7 +196,7 @@ window.Mise.subscription = (function () {
     banner.id = 'trial-banner';
     banner.style.cssText = 'background:#fef9ec;border-bottom:1px solid #fde68a;padding:7px 16px;font-size:12px;color:#92400e;display:flex;align-items:center;justify-content:space-between;max-width:430px;margin:0 auto;width:100%';
     banner.innerHTML = '<span>' + (daysLeft <= 0 ? 'Trial expired' : daysLeft + ' day' + (daysLeft > 1 ? 's' : '') + ' left in trial') + '</span>'
-      + '<button onclick="Mise.subscription.startCheckout()" style="background:#3B6D11;color:#fff;border:none;border-radius:5px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">Subscribe</button>';
+      + '<button onclick="Mise.subscription.startCheckout()" style="background:#2D7A3A;color:#fff;border:none;border-radius:5px;padding:3px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">Subscribe</button>';
 
     // Insert after the sticky header
     header.insertAdjacentElement('afterend', banner);

@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Mise</title>
+<title>Veriqo</title>
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1a1a18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Mise">
+<meta name="apple-mobile-web-app-title" content="Veriqo">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
 <!-- Supabase client (required by supabase.js, auth.js, sync.js, subscription.js) -->
@@ -40,7 +40,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .tile-label { font-size: 15px; font-weight: 600; color: #1a1a18; }
 .tile-sub { font-size: 12px; color: #888; margin-top: 4px; }
 .tile-badge { position: absolute; top: 12px; right: 12px; min-width: 22px; height: 22px; border-radius: 11px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
-.tile-badge.ok { background: #EAF3DE; color: #3B6D11; }
+.tile-badge.ok { background: #EAF3DE; color: #2D7A3A; }
 .tile-badge.warn { background: #FAEEDA; color: #854F0B; }
 .tile-badge.fail { background: #FCEBEB; color: #A32D2D; }
 .tile-badge.none { display: none; }
@@ -58,7 +58,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .card { background: #fff; border: 1px solid #e5e4de; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 .card-title { font-size: 11px; font-weight: 600; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
 .alert-badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 600; margin-left: 6px; white-space: nowrap; }
-.badge-ok { background: #EAF3DE; color: #3B6D11; }
+.badge-ok { background: #EAF3DE; color: #2D7A3A; }
 .badge-warn { background: #FAEEDA; color: #854F0B; }
 .badge-fail { background: #FCEBEB; color: #A32D2D; }
 .badge-miss { background: #f1efe8; color: #5f5e5a; }
@@ -120,7 +120,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <path d="M22 76 L22 28 L50 56 L78 28 L78 76" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
         <line x1="22" y1="76" x2="78" y2="76" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
       </svg>
-      <h1 id="header-title">Mise</h1>
+      <h1 id="header-title">Veriqo</h1>
       <p id="header-date" style="margin-top:0;margin-left:auto"></p>
     </div>
   </div>
@@ -134,12 +134,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <line x1="22" y1="76" x2="78" y2="76" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
       </svg>
       <div>
-        <div style="font-size:24px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Mise</div>
-        <div style="font-size:13px;color:#888;margin-top:2px">Your kitchen. Under control.</div>
+        <div style="font-size:24px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Veriqo</div>
+        <div style="font-size:13px;color:#888;margin-top:2px">Food Safety. Inspection Ready.</div>
       </div>
     </div>
     <div class="summary-row">
-      <div class="stat" onclick="showFilter('ok')"><div class="stat-num" id="stat-ok" style="color:#3B6D11">0</div><div class="stat-label">OK</div></div>
+      <div class="stat" onclick="showFilter('ok')"><div class="stat-num" id="stat-ok" style="color:#2D7A3A">0</div><div class="stat-label">OK</div></div>
       <div class="stat" onclick="showFilter('warn')"><div class="stat-num" id="stat-warn" style="color:#854F0B">0</div><div class="stat-label">Warning</div></div>
       <div class="stat" onclick="showFilter('fail')"><div class="stat-num" id="stat-fail" style="color:#A32D2D">0</div><div class="stat-label">Failed</div></div>
       <div class="stat" onclick="showFilter('all')"><div class="stat-num" id="stat-total" style="color:#888">0</div><div class="stat-label">Total</div></div>
@@ -776,8 +776,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
             <input type="file" id="profile-logo-input" accept="image/*" onchange="previewProfileLogo(this)" style="display:none">
           </label>
         </div>
-        <button onclick="saveProfile()" style="padding:11px;background:#3B6D11;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Save profile</button>
-        <div id="profile-save-msg" style="display:none;font-size:12px;color:#3B6D11;text-align:center">Saved ✓</div>
+        <button onclick="saveProfile()" style="padding:11px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Save profile</button>
+        <div id="profile-save-msg" style="display:none;font-size:12px;color:#2D7A3A;text-align:center">Saved ✓</div>
       </div>
     </div>
 
@@ -1215,7 +1215,7 @@ function showTab(name) {
   document.getElementById('back-btn').style.display=name==='home'?'none':'block';
   var headerLogo=document.getElementById('header-logo');
   if(headerLogo) headerLogo.style.display=name==='home'?'none':'block';
-  document.getElementById('header-title').textContent=name==='home'?'Mise':titles[name];
+  document.getElementById('header-title').textContent=name==='home'?'Veriqo':titles[name];
   if(name==='records') renderRecords();
   if(name==='settings') renderAllSettingsLists();
   if(name==='suppliers') renderSuppliersLog();
@@ -1229,7 +1229,7 @@ function showTab(name) {
 function toast(msg,ok) {
   var t=document.getElementById('toast');
   t.textContent=msg;
-  t.style.background=ok===false?'#A32D2D':(ok==='warn'?'#854F0B':'#3B6D11');
+  t.style.background=ok===false?'#A32D2D':(ok==='warn'?'#854F0B':'#2D7A3A');
   t.style.color=ok===false?'#FCEBEB':(ok==='warn'?'#FAEEDA':'#EAF3DE');
   t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2800);
 }
@@ -1542,7 +1542,7 @@ function refreshFilterPanel(status) {
   var listEl=document.getElementById('filter-list');
   if(!listEl)return;
   var filtered=status==='all'?records.slice():records.filter(function(r){return r.status===status;});
-  var colors={ok:'#3B6D11',warn:'#854F0B',fail:'#A32D2D'};
+  var colors={ok:'#2D7A3A',warn:'#854F0B',fail:'#A32D2D'};
   if(!filtered.length){
     listEl.innerHTML='<div class="empty">No records in this category today.</div>';
   } else {
@@ -1653,7 +1653,7 @@ function buildDayBlock(dateStr,recs,isToday) {
     '</div>'+
     '<div class="day-block-body'+(isToday?' open':'')+'" id="day-'+dateStr+'">'+
       '<div class="day-stat-row">'+
-        '<div class="day-stat"><div class="day-stat-num" style="color:#3B6D11">'+ok+'</div><div class="day-stat-label">OK</div></div>'+
+        '<div class="day-stat"><div class="day-stat-num" style="color:#2D7A3A">'+ok+'</div><div class="day-stat-label">OK</div></div>'+
         '<div class="day-stat"><div class="day-stat-num" style="color:#854F0B">'+warn+'</div><div class="day-stat-label">Warn</div></div>'+
         '<div class="day-stat"><div class="day-stat-num" style="color:#A32D2D">'+fail+'</div><div class="day-stat-label">Failed</div></div>'+
         '<div class="day-stat"><div class="day-stat-num" style="color:#888">'+recs.length+'</div><div class="day-stat-label">Total</div></div>'+
@@ -1721,7 +1721,7 @@ function buildPDFExport(dateLabel, recs) {
   function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
 
   function statusStyle(s) {
-    if(s==='ok') return 'color:#2a6000;font-weight:600';
+    if(s==='ok') return 'color:#2D7A3A;font-weight:600';
     if(s==='warn') return 'color:#854F0B;font-weight:600';
     return 'color:#A32D2D;font-weight:600';
   }
@@ -1762,7 +1762,7 @@ function buildPDFExport(dateLabel, recs) {
         +'</tr>';
     }).join('');
     return '<div style="margin-bottom:24px;page-break-inside:avoid">'
-      +'<div style="font-size:12px;font-weight:700;letter-spacing:0.08em;color:#555;text-transform:uppercase;border-bottom:2px solid #3B6D11;padding-bottom:4px;margin-bottom:0">'+esc(heading)+'</div>'
+      +'<div style="font-size:12px;font-weight:700;letter-spacing:0.08em;color:#555;text-transform:uppercase;border-bottom:2px solid #2D7A3A;padding-bottom:4px;margin-bottom:0">'+esc(heading)+'</div>'
       +'<table style="width:100%;border-collapse:collapse"><thead>'
       +'<tr style="background:#f8f8f8"><th style="text-align:left;padding:6px 10px;font-size:11px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Time</th>'
       +'<th style="text-align:left;padding:6px 10px;font-size:11px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Details</th>'
@@ -1792,7 +1792,7 @@ function buildPDFExport(dateLabel, recs) {
     +'*{box-sizing:border-box;margin:0;padding:0}'
     +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#222;background:#fff;padding:24px}'
     +'.toolbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #eee;padding:10px 0 10px;margin:-24px -24px 20px;padding-left:24px;display:flex;gap:10px;align-items:center}'
-    +'.btn-pdf{background:#3B6D11;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer}'
+    +'.btn-pdf{background:#2D7A3A;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer}'
     +'.btn-close{background:#f0f0f0;color:#444;border:none;border-radius:6px;padding:9px 14px;font-size:14px;cursor:pointer}'
     +'@media print{'
     +'@page{size:A4;margin:18mm 18mm 18mm 18mm}'
@@ -1808,24 +1808,25 @@ function buildPDFExport(dateLabel, recs) {
     +'<button class="btn-close" onclick="window.close()">Close</button>'
     +'</div>'
     // Header — logo + business name + chef name
-    +'<div style="border-bottom:3px solid #3B6D11;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'
+    +'<div style="border-bottom:3px solid #2D7A3A;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'
     +  '<div style="display:flex;align-items:center;gap:14px">'
     +    (profile.logo ? '<img src="'+profile.logo+'" alt="" style="max-height:56px;max-width:140px;object-fit:contain;border-radius:4px">' : '')
     +    '<div>'
-    +      '<div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#3B6D11;font-weight:700;margin-bottom:4px">HACCP Daily Log</div>'
+    +      '<div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#2D7A3A;font-weight:700;margin-bottom:4px">HACCP Daily Log</div>'
     +      '<div style="font-size:22px;font-weight:700;color:#222">'+esc(dateLabel)+'</div>'
     +      (businessName ? '<div style="font-size:14px;color:#444;margin-top:3px;font-weight:600">'+esc(businessName)+'</div>' : '')
     +      (chefName     ? '<div style="font-size:12px;color:#888;margin-top:1px">'+esc(chefName)+'</div>' : '')
     +    '</div>'
     +  '</div>'
     +  '<div style="text-align:right;flex-shrink:0">'
-    +    '<div style="font-size:11px;color:#aaa">Ref: '+esc(refNum)+'</div>'
+    +    '<div style="font-size:12px;font-weight:700;color:#2D7A3A;letter-spacing:0.02em">Veriqo by Mise</div>'
+    +    '<div style="font-size:11px;color:#aaa;margin-top:3px">Ref: '+esc(refNum)+'</div>'
     +    '<div style="font-size:11px;color:#aaa;margin-top:2px">'+esc(genDate)+' · '+esc(genTime)+'</div>'
     +  '</div>'
     +'</div>'
     // Summary row
     +'<div style="display:flex;gap:24px;margin-bottom:24px;padding:12px 16px;background:#f8f8f8;border-radius:6px">'
-    +'<div><span style="font-size:22px;font-weight:700;color:#3B6D11">'+ok+'</span><span style="font-size:12px;color:#555;margin-left:5px">OK</span></div>'
+    +'<div><span style="font-size:22px;font-weight:700;color:#2D7A3A">'+ok+'</span><span style="font-size:12px;color:#555;margin-left:5px">OK</span></div>'
     +'<div><span style="font-size:22px;font-weight:700;color:#854F0B">'+warn+'</span><span style="font-size:12px;color:#555;margin-left:5px">Warning</span></div>'
     +'<div><span style="font-size:22px;font-weight:700;color:#A32D2D">'+fail+'</span><span style="font-size:12px;color:#555;margin-left:5px">Failed</span></div>'
     +'<div><span style="font-size:22px;font-weight:700;color:#888">'+recs.length+'</span><span style="font-size:12px;color:#555;margin-left:5px">Total</span></div>'
@@ -1834,7 +1835,7 @@ function buildPDFExport(dateLabel, recs) {
     +(sectionsHtml || '<p style="color:#888;font-size:14px">No records for this day.</p>')
     // Footer
     +'<div style="margin-top:32px;padding-top:12px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">'
-    +  '<span style="font-size:11px;color:#aaa">Generated by Mise HACCP · '+esc(genDate)+' at '+esc(genTime)+'</span>'
+    +  '<span style="font-size:11px;color:#aaa">Generated by Veriqo — Food Safety. Inspection Ready. &nbsp;|&nbsp; '+esc(genDate)+' at '+esc(genTime)+'</span>'
     +  '<span style="font-size:11px;color:#ccc">Ref: '+esc(refNum)+'</span>'
     +'</div>'
     +'</body></html>';

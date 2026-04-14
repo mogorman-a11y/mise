@@ -5,7 +5,7 @@
 //   Supabase API calls          → network-first (sync when online, skip offline)
 //   Everything else             → network with cache fallback
 
-const CACHE = 'mise-v3';
+const CACHE = 'veriqo-v1';
 
 const APP_SHELL = [
   './',
