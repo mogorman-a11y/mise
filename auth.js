@@ -246,10 +246,17 @@ window.Mise.auth = (function () {
     hideAuthScreen();
     _injectAccountCard(user);
 
-    // Step 3: Mise.sync.loadAll(user.id)  — loads records from Supabase
+    // Pull records + settings from Supabase, hydrate localStorage, then re-render
+    if (window.Mise && window.Mise.sync) {
+      await Mise.sync.loadAll(user.id);
+    }
+
     // Step 4: Mise.subscription.check(user.id)  — shows paywall if needed
 
-    // Re-render with current (localStorage) data until Step 3 is wired
+    // Re-render app with synced data
+    if (typeof loadSettings      === 'function') loadSettings();
+    if (typeof populateAllSelects === 'function') populateAllSelects();
+    if (typeof renderChecklists  === 'function') renderChecklists();
     if (typeof renderAllSections === 'function') renderAllSections();
     if (typeof updateDashboard   === 'function') updateDashboard();
   }

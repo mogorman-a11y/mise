@@ -1001,7 +1001,11 @@ function loadSettings() {
   CHECKLISTS.closing   = settings['checklist_closing'];
   CHECKLISTS.crosscontam = settings['checklist_crosscontam'];
 }
-function saveSettings() { try { localStorage.setItem('haccp_settings',JSON.stringify(settings)); } catch(e){} }
+function saveSettings() {
+  try { localStorage.setItem('haccp_settings',JSON.stringify(settings)); } catch(e){}
+  // Cloud sync — mirror to Supabase
+  if (window.Mise && window.Mise.sync) Mise.sync.saveSettings(settings);
+}
 
 function populateSelect(elId, listKey) {
   var el=document.getElementById(elId); if(!el)return;
@@ -1136,7 +1140,11 @@ document.getElementById('header-date').textContent = fmtDate();
 ['fridge-time','cook-time','cool-start-time','cool-end-time','reheat-time','del-time','clean-time'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=now(); });
 ['probe-date','pest-date','illness-date'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=todayStr(); });
 
-function saveToday() { try { localStorage.setItem('haccp_'+TODAY,JSON.stringify(records)); } catch(e){} }
+function saveToday() {
+  try { localStorage.setItem('haccp_'+TODAY,JSON.stringify(records)); } catch(e){}
+  // Cloud sync — mirror to Supabase so data persists across devices
+  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(TODAY, records);
+}
 function loadToday() { try { var r=localStorage.getItem('haccp_'+TODAY); records=r?JSON.parse(r):[]; } catch(e){ records=[]; } }
 function getAllDays() {
   var days=[];
