@@ -1387,7 +1387,7 @@ function saveToday() {
 function loadToday() { try { var r=localStorage.getItem('haccp_'+TODAY); records=r?JSON.parse(r):[]; } catch(e){ records=[]; } }
 function getAllDays() {
   var days=[];
-  try { for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('haccp_')===0&&k!=='haccp_settings'&&k!=='haccp_suppliers'){ days.push(k.replace('haccp_','')); } } } catch(e){}
+  try { for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('haccp_')===0&&k!=='haccp_settings'&&k!=='haccp_suppliers'&&k!=='haccp_credentials'){ days.push(k.replace('haccp_','')); } } } catch(e){}
   return days.sort().reverse();
 }
 function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return r?JSON.parse(r):[]; } catch(e){ return []; } }

@@ -263,6 +263,10 @@ window.Mise.auth = (function () {
 
     // Re-render app with synced data
     if (typeof loadSettings       === 'function') loadSettings();
+    // Reload today's records from localStorage — _pullRecords() resets the in-memory
+    // records array to what Supabase returned; if the table was empty (e.g. just created)
+    // that would clear all local records from view until the next save.
+    if (typeof loadToday          === 'function') loadToday();
     if (typeof populateAllSelects === 'function') populateAllSelects();
     if (typeof renderChecklists   === 'function') renderChecklists();
     if (typeof renderAllSections  === 'function') renderAllSections();
