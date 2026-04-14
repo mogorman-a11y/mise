@@ -2622,7 +2622,287 @@ function renderInspector() {
 
   html += '</div>';
 
+  // ── Date range PDF download card ────────────────────────────────────────
+  var _sevenAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
+  var _btnStyle = 'padding:7px 13px;background:#f0f0ec;border:1px solid #e5e4de;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#1a1a18';
+  var _inputStyle = 'width:100%;padding:9px 10px;border:1px solid #e5e4de;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1a1a18;-webkit-appearance:none';
+
+  html += '<div class="card" style="margin-bottom:24px">'
+    + '<div class="card-title">📅 Download date range</div>'
+    + '<div style="font-size:13px;color:#888;line-height:1.5;margin-bottom:12px">Export a single PDF covering multiple days — ideal for showing an inspector a full week or month of records.</div>'
+    // Quick preset buttons
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'
+    +   '<button onclick="setInspectorRange(7)"  style="'+_btnStyle+'">Last 7 days</button>'
+    +   '<button onclick="setInspectorRange(30)" style="'+_btnStyle+'">Last 30 days</button>'
+    +   '<button onclick="setInspectorRange(90)" style="'+_btnStyle+'">Last 3 months</button>'
+    + '</div>'
+    // Date pickers
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+    +   '<div>'
+    +     '<div style="font-size:12px;color:#888;margin-bottom:4px;font-weight:600">From</div>'
+    +     '<input type="date" id="range-from" value="'+_sevenAgo+'" max="'+TODAY+'" style="'+_inputStyle+'">'
+    +   '</div>'
+    +   '<div>'
+    +     '<div style="font-size:12px;color:#888;margin-bottom:4px;font-weight:600">To</div>'
+    +     '<input type="date" id="range-to" value="'+TODAY+'" max="'+TODAY+'" style="'+_inputStyle+'">'
+    +   '</div>'
+    + '</div>'
+    + '<button onclick="downloadRangePDF()" id="range-pdf-btn" style="width:100%;padding:14px;background:#1a1a18;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">📄 Download range PDF</button>'
+    + '</div>';
+
   container.innerHTML = html;
+}
+
+// ── setInspectorRange ──────────────────────────────────────────────────────
+// Fills the date range pickers in the inspector view with a preset range.
+function setInspectorRange(days) {
+  var from = document.getElementById('range-from');
+  var to   = document.getElementById('range-to');
+  if (!from || !to) return;
+  to.value   = TODAY;
+  from.value = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
+}
+
+// ── downloadRangePDF ───────────────────────────────────────────────────────
+// Reads the date inputs and kicks off a multi-day PDF download.
+function downloadRangePDF() {
+  var from = document.getElementById('range-from');
+  var to   = document.getElementById('range-to');
+  if (!from || !to || !from.value || !to.value) { toast('Please select a date range', false); return; }
+  if (from.value > to.value) { toast('Start date must be before end date', false); return; }
+  var btn = document.getElementById('range-pdf-btn');
+  if (btn) { btn.textContent = 'Building PDF…'; btn.disabled = true; }
+  // Small delay so the UI updates before blocking PDF build
+  setTimeout(function() {
+    buildMultiDayPDF(from.value, to.value);
+    if (btn) { btn.textContent = '📄 Download range PDF'; btn.disabled = false; }
+  }, 60);
+}
+
+// ── buildMultiDayPDF ───────────────────────────────────────────────────────
+// Generates a single PDF covering every day in the selected range.
+// Structure: cover page with summary table, then one section per day.
+// Uses Blob URL so it works on iOS Safari (window.open blocked in async).
+function buildMultiDayPDF(startDateStr, endDateStr) {
+
+  // ── Shared helpers ───────────────────────────────────────────────────────
+  function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+  function statusStyle(s) {
+    if(s==='ok')   return 'color:#2D7A3A;font-weight:600';
+    if(s==='warn') return 'color:#854F0B;font-weight:600';
+    return 'color:#A32D2D;font-weight:700';
+  }
+  function statusLabel(s) { return s==='ok'?'OK':s==='warn'?'Warning':s==='fail'?'Failed':'—'; }
+  function detailsFor(r) {
+    var p=[];
+    if(r.type==='fridge'){p.push(esc(r.unit));if(r.temp!==undefined&&r.temp!=='')p.push(esc(r.temp)+'°C');if(r.by)p.push('By: '+esc(r.by));}
+    else if(r.type==='cooking'){p.push(esc(r.food));if(r.temp!==undefined&&r.temp!=='')p.push(esc(r.temp)+'°C');if(r.chef)p.push('Chef: '+esc(r.chef));}
+    else if(r.type==='cooling'){p.push(esc(r.food));if(r.startTemp!==undefined)p.push(esc(r.startTemp)+'°C → '+esc(r.endTemp)+'°C');if(r.method)p.push('Method: '+esc(r.method));if(r.by)p.push('By: '+esc(r.by));}
+    else if(r.type==='reheating'){p.push(esc(r.food));if(r.temp!==undefined&&r.temp!=='')p.push(esc(r.temp)+'°C');if(r.chef)p.push('Chef: '+esc(r.chef));}
+    else if(r.type==='delivery'){p.push(esc(r.supplier));if(r.temp!==undefined&&r.temp!=='')p.push(esc(r.temp)+'°C');if(r.condition)p.push('Condition: '+esc(r.condition));if(r.by)p.push('Received by: '+esc(r.by));if(r.invoice)p.push('Invoice: '+esc(r.invoice));}
+    else if(r.type==='cleaning'){p.push(esc(r.task));if(r.chem)p.push('Chemical: '+esc(r.chem));if(r.by)p.push('By: '+esc(r.by));}
+    else if(r.type==='probe'){p.push('Probe: '+esc(r.probeId));if(r.reading!==undefined&&r.reading!=='')p.push('Reading: '+esc(r.reading)+'°C');if(r.result)p.push('Result: '+esc(r.result));if(r.by)p.push('By: '+esc(r.by));}
+    else if(r.type==='pest'){p.push(esc(r.pestType));if(r.location)p.push('Location: '+esc(r.location));if(r.action)p.push('Action: '+esc(r.action));if(r.by)p.push('By: '+esc(r.by));}
+    else if(r.type==='illness'){p.push(esc(r.staff));if(r.illnessType)p.push(esc(r.illnessType));if(r.symptoms)p.push('Symptoms: '+esc(r.symptoms));}
+    else if(r.type==='opening'||r.type==='closing'||r.type==='crosscontam'){if(r.by)p.push('By: '+esc(r.by));if(r.notes)p.push(esc(r.notes));p.push(esc(r.msg));}
+    else if(r.type==='job'){if(r.client)p.push('Client: '+esc(r.client));if(r.location)p.push(esc(r.location));if(r.jobType)p.push(esc(r.jobType));if(r.covers)p.push(esc(r.covers)+' covers');}
+    else if(r.type==='kitchenassess'){if(r.client)p.push('Client: '+esc(r.client));if(r.fridgeTemp!==undefined&&r.fridgeTemp!=='')p.push('Fridge: '+esc(r.fridgeTemp)+'°C');if(r.condition)p.push('Condition: '+esc(r.condition));}
+    else if(r.type==='allergen'){if(r.client)p.push('Client: '+esc(r.client));if(r.dish)p.push('Dish: '+esc(r.dish));if(r.allergens&&r.allergens.length)p.push('Allergens: '+r.allergens.map(esc).join(', '));}
+    else if(r.type==='transport'){p.push(esc(r.food));if(r.destination)p.push('To: '+esc(r.destination));if(r.startTemp!==undefined)p.push(esc(r.startTemp)+'°C → '+esc(r.endTemp)+'°C');}
+    else{p.push(esc(r.msg));}
+    return p.filter(Boolean).join(' &nbsp;·&nbsp; ');
+  }
+  var typeHeadings = {
+    fridge:'Fridge Temperatures', cooking:'Cooked Food Temperatures', cooling:'Cooling Records',
+    reheating:'Reheating Records', delivery:'Delivery Checks', cleaning:'Cleaning Records',
+    probe:'Probe Calibration', pest:'Pest Control', illness:'Staff Illness',
+    opening:'Opening Checks', closing:'Closing Checks', crosscontam:'Cross-Contamination',
+    job:'Job Details', kitchenassess:'Kitchen Assessment', allergen:'Allergen Log',
+    transport:'Transport Temperatures', mobileset:'Mobile Setup'
+  };
+
+  // ── Collect records for every day in the range ───────────────────────────
+  var days = [];
+  var cur = new Date(startDateStr + 'T12:00:00');
+  var end = new Date(endDateStr   + 'T12:00:00');
+  while (cur <= end) { days.push(cur.toISOString().slice(0,10)); cur.setDate(cur.getDate()+1); }
+
+  if (days.length > 93) { toast('Maximum range is 3 months', false); return; }
+
+  var dayData = days.map(function(d) {
+    var recs = d === TODAY ? records.slice() : getDayRecords(d);
+    return { dateStr: d, label: fmtDate(d), recs: recs };
+  });
+
+  var daysWithData = dayData.filter(function(d){ return d.recs.length > 0; });
+  if (daysWithData.length === 0) { toast('No records found in that date range', false); return; }
+
+  // ── Overall summary counts ────────────────────────────────────────────────
+  var totalRecs = 0, totalOk = 0, totalWarn = 0, totalFail = 0;
+  daysWithData.forEach(function(d) {
+    totalRecs += d.recs.length;
+    totalOk   += d.recs.filter(function(r){return r.status==='ok';}).length;
+    totalWarn += d.recs.filter(function(r){return r.status==='warn';}).length;
+    totalFail += d.recs.filter(function(r){return r.status==='fail';}).length;
+  });
+
+  // ── Profile ───────────────────────────────────────────────────────────────
+  var profile = (window.Mise && window.Mise.profile) || {};
+  try { if (!profile.business_name) { var _c = JSON.parse(localStorage.getItem('veriqo_profile')||'{}'); profile = Object.assign({}, _c, profile); } } catch(e) {}
+  var businessName = profile.business_name || '';
+  var chefName     = profile.chef_name     || '';
+
+  var now        = new Date();
+  var genDateStr = now.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
+  var genTimeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  var rangeLabel = fmtDate(startDateStr) + ' — ' + fmtDate(endDateStr);
+  var refNum     = startDateStr.replace(/-/g,'') + '_' + endDateStr.replace(/-/g,'');
+
+  // ── Build one section per day ─────────────────────────────────────────────
+  function buildDaySection(d, isFirst) {
+    var ok   = d.recs.filter(function(r){return r.status==='ok';}).length;
+    var warn = d.recs.filter(function(r){return r.status==='warn';}).length;
+    var fail = d.recs.filter(function(r){return r.status==='fail';}).length;
+
+    var sec = '<div style="'+(isFirst?'':'page-break-before:always;')+'margin-bottom:0;padding-bottom:0">';
+
+    // Day header bar
+    sec += '<div style="border-bottom:2px solid #2D7A3A;padding-bottom:8px;margin-bottom:14px;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+      + '<div style="font-size:17px;font-weight:700;color:#1a1a18">'+esc(d.label)+'</div>'
+      + '<div style="display:flex;gap:14px;font-size:12px;flex-shrink:0">'
+      +   '<span style="color:#2D7A3A;font-weight:700">'+ok+' OK</span>'
+      +   '<span style="color:#854F0B;font-weight:700">'+warn+' Warning</span>'
+      +   '<span style="color:'+(fail>0?'#A32D2D':'#bbb')+';font-weight:700">'+fail+' Failed</span>'
+      +   '<span style="color:#888">'+d.recs.length+' records</span>'
+      + '</div>'
+      + '</div>';
+
+    // Record tables grouped by type
+    var dayContent = ALL_TYPES.map(function(t) {
+      var tr = d.recs.filter(function(r){return r.type===t;});
+      if (!tr.length) return '';
+      var rows = tr.map(function(r){
+        return '<tr>'
+          +'<td style="white-space:nowrap;padding:5px 8px;border-bottom:1px solid #eee;color:#555;font-size:12px">'+esc(r.time||'')+'</td>'
+          +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:12px">'+detailsFor(r)+'</td>'
+          +'<td style="white-space:nowrap;padding:5px 8px;border-bottom:1px solid #eee;font-size:12px;'+statusStyle(r.status)+'">'+statusLabel(r.status)+'</td>'
+          +'</tr>';
+      }).join('');
+      return '<div style="margin-bottom:16px;page-break-inside:avoid">'
+        +'<div style="font-size:10px;font-weight:700;letter-spacing:0.08em;color:#555;text-transform:uppercase;border-bottom:1px solid #2D7A3A;padding-bottom:3px;margin-bottom:0">'+esc(typeHeadings[t]||t)+'</div>'
+        +'<table style="width:100%;border-collapse:collapse"><thead>'
+        +'<tr style="background:#f8f8f8">'
+        +'<th style="text-align:left;padding:5px 8px;font-size:10px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Time</th>'
+        +'<th style="text-align:left;padding:5px 8px;font-size:10px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Details</th>'
+        +'<th style="text-align:left;padding:5px 8px;font-size:10px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Status</th>'
+        +'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+    }).filter(Boolean).join('');
+
+    sec += (dayContent || '<p style="color:#bbb;font-size:13px;padding:8px 0">No records logged this day.</p>');
+    sec += '</div>';
+    return sec;
+  }
+
+  // ── Assemble complete HTML document ───────────────────────────────────────
+  var daySections = daysWithData.map(function(d, i){ return buildDaySection(d, i===0); }).join('');
+
+  // Daily summary table rows (one row per day with data)
+  var summaryRows = daysWithData.map(function(d) {
+    var ok   = d.recs.filter(function(r){return r.status==='ok';}).length;
+    var warn = d.recs.filter(function(r){return r.status==='warn';}).length;
+    var fail = d.recs.filter(function(r){return r.status==='fail';}).length;
+    var rowBg = fail > 0 ? '#fff8f8' : warn > 0 ? '#fffdf4' : '#fff';
+    return '<tr style="background:'+rowBg+'">'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:12px;font-weight:600">'+esc(d.label)+'</td>'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:12px;text-align:center">'+d.recs.length+'</td>'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:12px;text-align:center;color:#2D7A3A;font-weight:600">'+ok+'</td>'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:12px;text-align:center;color:#854F0B;font-weight:600">'+warn+'</td>'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;font-size:12px;text-align:center;color:'+(fail>0?'#A32D2D':'#bbb')+';font-weight:700">'+fail+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+    +'<title>HACCP Records — '+esc(rangeLabel)+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#222;background:#fff;padding:24px}'
+    +'.toolbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #eee;padding:10px 0;margin:-24px -24px 20px;padding-left:24px;display:flex;gap:10px;align-items:center}'
+    +'.btn-pdf{background:#2D7A3A;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer}'
+    +'.btn-close{background:#f0f0f0;color:#444;border:none;border-radius:6px;padding:9px 14px;font-size:14px;cursor:pointer}'
+    +'@media print{'
+    +'@page{size:A4;margin:15mm 15mm 15mm 15mm}'
+    +'.no-print{display:none!important}'
+    +'body{padding:0}'
+    +'}'
+    +'</style>'
+    +'</head><body>'
+
+    // Toolbar
+    +'<div class="toolbar no-print">'
+    +'<button class="btn-pdf" onclick="window.print()">Save as PDF</button>'
+    +'<button class="btn-close" onclick="window.close()">Close</button>'
+    +'</div>'
+
+    // Document header
+    +'<div style="border-bottom:3px solid #2D7A3A;padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'
+    +  '<div style="display:flex;align-items:center;gap:14px">'
+    +    (profile.logo ? '<img src="'+profile.logo+'" alt="" style="max-height:52px;max-width:130px;object-fit:contain;border-radius:4px">' : '')
+    +    '<div>'
+    +      '<div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#2D7A3A;font-weight:700;margin-bottom:4px">HACCP Records — Date Range Report</div>'
+    +      '<div style="font-size:20px;font-weight:700;color:#222">'+esc(rangeLabel)+'</div>'
+    +      (businessName ? '<div style="font-size:13px;color:#444;margin-top:3px;font-weight:600">'+esc(businessName)+'</div>' : '')
+    +      (chefName     ? '<div style="font-size:11px;color:#888;margin-top:1px">'+esc(chefName)+'</div>' : '')
+    +    '</div>'
+    +  '</div>'
+    +  '<div style="text-align:right;flex-shrink:0">'
+    +    '<div style="font-size:11px;font-weight:700;color:#2D7A3A">Veriqo by Mise</div>'
+    +    '<div style="font-size:10px;color:#aaa;margin-top:3px">Ref: '+esc(refNum)+'</div>'
+    +    '<div style="font-size:10px;color:#aaa;margin-top:2px">Generated '+esc(genDateStr)+' · '+esc(genTimeStr)+'</div>'
+    +  '</div>'
+    +'</div>'
+
+    // Overall totals strip
+    +'<div style="display:flex;gap:20px;margin-bottom:20px;padding:12px 16px;background:#f8f8f8;border-radius:6px;flex-wrap:wrap">'
+    +'<div><span style="font-size:20px;font-weight:700;color:#1a1a18">'+daysWithData.length+'</span><span style="font-size:11px;color:#555;margin-left:5px">days</span></div>'
+    +'<div><span style="font-size:20px;font-weight:700;color:#888">'+totalRecs+'</span><span style="font-size:11px;color:#555;margin-left:5px">records</span></div>'
+    +'<div><span style="font-size:20px;font-weight:700;color:#2D7A3A">'+totalOk+'</span><span style="font-size:11px;color:#555;margin-left:5px">OK</span></div>'
+    +'<div><span style="font-size:20px;font-weight:700;color:#854F0B">'+totalWarn+'</span><span style="font-size:11px;color:#555;margin-left:5px">Warning</span></div>'
+    +'<div><span style="font-size:20px;font-weight:700;color:'+(totalFail>0?'#A32D2D':'#bbb')+'">'+totalFail+'</span><span style="font-size:11px;color:#555;margin-left:5px">Failed</span></div>'
+    +'</div>'
+
+    // Daily summary table
+    +'<div style="margin-bottom:28px;page-break-inside:avoid">'
+    +'<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;color:#555;text-transform:uppercase;border-bottom:2px solid #2D7A3A;padding-bottom:4px;margin-bottom:0">Daily summary</div>'
+    +'<table style="width:100%;border-collapse:collapse"><thead>'
+    +'<tr style="background:#f8f8f8">'
+    +'<th style="text-align:left;padding:6px 10px;font-size:11px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Date</th>'
+    +'<th style="text-align:center;padding:6px 10px;font-size:11px;color:#888;font-weight:600;border-bottom:1px solid #ddd">Records</th>'
+    +'<th style="text-align:center;padding:6px 10px;font-size:11px;color:#2D7A3A;font-weight:600;border-bottom:1px solid #ddd">OK</th>'
+    +'<th style="text-align:center;padding:6px 10px;font-size:11px;color:#854F0B;font-weight:600;border-bottom:1px solid #ddd">Warning</th>'
+    +'<th style="text-align:center;padding:6px 10px;font-size:11px;color:#A32D2D;font-weight:600;border-bottom:1px solid #ddd">Failed</th>'
+    +'</tr></thead><tbody>'+summaryRows+'</tbody></table>'
+    +'</div>'
+
+    // Per-day detailed sections
+    + daySections
+
+    // Footer
+    +'<div style="margin-top:32px;padding-top:12px;border-top:1px solid #eee;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">'
+    +  '<span style="font-size:10px;color:#aaa">Generated by Veriqo — Food Safety. Inspection Ready. &nbsp;|&nbsp; '+esc(genDateStr)+' at '+esc(genTimeStr)+'</span>'
+    +  '<span style="font-size:10px;color:#ccc">Ref: '+esc(refNum)+'</span>'
+    +'</div>'
+    +'</body></html>';
+
+  // Blob URL approach — works on iOS Safari where window.open() is blocked
+  var blob = new Blob([html], {type:'text/html'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
 }
 
 // --- INIT ---
