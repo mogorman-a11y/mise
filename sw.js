@@ -1,16 +1,12 @@
 // sw.js — Service Worker (PWA offline support)
 // ─────────────────────────────────────────────
-// Step 7 will fully implement offline caching and background sync.
-// This skeleton registers cleanly without breaking the app.
-//
-// In Step 7 this will:
-//   - Cache the app shell on install (index.html + all JS files)
-//   - Serve cached shell when offline
-//   - Queue HACCP records created offline and sync when back online
+// Strategy:
+//   App shell (HTML + JS files) → cache-first (loads instantly offline)
+//   Supabase API calls          → network-first (sync when online, skip offline)
+//   Everything else             → network with cache fallback
 
-const CACHE_NAME = 'mise-v1';
+const CACHE = 'mise-v1';
 
-// App shell files to cache on install (Step 7)
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -18,28 +14,76 @@ const APP_SHELL = [
   '/auth.js',
   '/sync.js',
   '/subscription.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png'
 ];
 
+// ── Install ────────────────────────────────────────────────────────────────
+// Pre-cache the app shell so it loads offline from the very first visit.
 self.addEventListener('install', function (event) {
-  // TODO (Step 7): pre-cache app shell
-  // event.waitUntil(
-  //   caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL))
-  // );
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE).then(function (cache) {
+      return cache.addAll(APP_SHELL);
+    }).then(function () {
+      return self.skipWaiting(); // activate immediately without waiting for old SW to die
+    })
+  );
 });
 
+// ── Activate ───────────────────────────────────────────────────────────────
+// Delete old caches so stale files don't linger after an update.
 self.addEventListener('activate', function (event) {
-  // TODO (Step 7): delete old caches when a new SW version deploys
-  // event.waitUntil(
-  //   caches.keys().then(keys =>
-  //     Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-  //   )
-  // );
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then(function (keys) {
+      return Promise.all(
+        keys.filter(function (k) { return k !== CACHE; })
+            .map(function (k) { return caches.delete(k); })
+      );
+    }).then(function () {
+      return clients.claim(); // take control of all open tabs immediately
+    })
+  );
 });
 
+// ── Fetch ──────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', function (event) {
-  // TODO (Step 7): cache-first for app shell, network-first for Supabase API calls
-  // For now all requests pass through to the network unchanged
+  var url = event.request.url;
+
+  // Let Supabase and Stripe requests go straight to network — don't cache API calls
+  if (url.includes('supabase.co') || url.includes('stripe.com') || url.includes('cdn.jsdelivr.net')) {
+    return; // fall through to normal network fetch
+  }
+
+  // For navigation requests (loading the page) and app shell assets: cache-first
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      caches.match(event.request).then(function (cached) {
+        if (cached) {
+          // Return cached version immediately, but also refresh cache in background
+          var networkFetch = fetch(event.request).then(function (response) {
+            if (response && response.status === 200) {
+              var clone = response.clone();
+              caches.open(CACHE).then(function (cache) { cache.put(event.request, clone); });
+            }
+            return response;
+          }).catch(function () {});
+          return cached;
+        }
+
+        // Not in cache — fetch from network and cache it
+        return fetch(event.request).then(function (response) {
+          if (response && response.status === 200) {
+            var clone = response.clone();
+            caches.open(CACHE).then(function (cache) { cache.put(event.request, clone); });
+          }
+          return response;
+        }).catch(function () {
+          // Offline and not cached — return the cached index.html as fallback
+          return caches.match('/index.html');
+        });
+      })
+    );
+  }
 });
