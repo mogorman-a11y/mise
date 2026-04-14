@@ -149,6 +149,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div style="font-size:13px;color:#2D7A3A;margin-top:2px;font-weight:600">Food Safety. Inspection Ready.</div>
       </div>
     </div>
+    <!-- INSTALL BANNER — shown when not yet saved as an app -->
+    <div id="install-banner" style="display:none;background:#f0f8f1;border:1px solid #b8dfbf;border-radius:10px;padding:12px 14px;margin-bottom:16px;align-items:flex-start;gap:10px">
+      <span style="font-size:22px;flex-shrink:0">📲</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:4px">Add Veriqo to your home screen</div>
+        <div id="install-banner-body" style="font-size:13px;color:#555;line-height:1.5"></div>
+      </div>
+      <button onclick="dismissInstallBanner()" style="background:none;border:none;color:#bbb;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>
+    </div>
+
     <div class="summary-row">
       <div class="stat" onclick="showFilter('ok')"><div class="stat-num" id="stat-ok" style="color:#2D7A3A">0</div><div class="stat-label">OK</div></div>
       <div class="stat" onclick="showFilter('warn')"><div class="stat-num" id="stat-warn" style="color:#854F0B">0</div><div class="stat-label">Warning</div></div>
@@ -997,6 +1007,74 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <!-- HELP PAGE -->
   <div id="tab-help" class="section">
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Save as an app</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:14px">
+        <p>Veriqo works best saved to your home screen — it opens full-screen like a native app, loads faster, and works offline.</p>
+
+        <!-- iPhone / iPad -->
+        <div style="background:#f5f4f0;border-radius:10px;padding:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <svg width="18" height="18" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="56" height="56" rx="12" fill="#000"/><rect x="14" y="6" width="28" height="44" rx="4" fill="#fff"/><circle cx="28" cy="46" r="2.5" fill="#ddd"/></svg>
+            <span style="font-size:13px;font-weight:700;color:#1a1a18">iPhone &amp; iPad — Safari only</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1a1a18;color:#fff;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span>
+              <span>Open <strong>mogorman-a11y.github.io/mise/</strong> in <strong>Safari</strong> — Chrome &amp; Firefox on iPhone cannot install apps</span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1a1a18;color:#fff;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span>
+              <span>Tap the <strong>Share button</strong> at the bottom of the screen — the icon looks like a box with an arrow pointing up:
+                <span style="display:inline-flex;align-items:center;justify-content:center;border:2px solid #1a1a18;border-radius:6px;width:26px;height:28px;margin-left:4px;flex-shrink:0;vertical-align:middle">
+                  <svg width="13" height="16" viewBox="0 0 13 16" fill="none"><path d="M6.5 1v9M3.5 4l3-3 3 3" stroke="#1a1a18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 7v7h11V7" stroke="#1a1a18" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1a1a18;color:#fff;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
+              <span>Scroll down in the share sheet and tap <strong>Add to Home Screen</strong>
+                <span style="display:inline-block;background:#fff;border:1px solid #ddd;border-radius:5px;padding:1px 7px;font-size:12px;margin-left:4px;color:#1a1a18">＋ Add to Home Screen</span>
+              </span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1a1a18;color:#fff;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</span>
+              <span>Tap <strong>Add</strong> in the top-right — Veriqo appears on your home screen with its own icon</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Android -->
+        <div style="background:#f5f4f0;border-radius:10px;padding:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <svg width="18" height="18" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="56" height="56" rx="12" fill="#3DDC84"/><path d="M14 38c0-7.7 6.3-14 14-14s14 6.3 14 14" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><circle cx="21" cy="26" r="2.5" fill="#fff"/><circle cx="35" cy="26" r="2.5" fill="#fff"/><line x1="20" y1="20" x2="16" y2="15" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><line x1="36" y1="20" x2="40" y2="15" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+            <span style="font-size:13px;font-weight:700;color:#1a1a18">Android — Chrome</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span>
+              <span>Open Veriqo in <strong>Chrome</strong></span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span>
+              <span>Tap the <strong>three-dot menu</strong> <span style="display:inline-block;font-size:16px;font-weight:900;line-height:1;vertical-align:middle;letter-spacing:-1px">⋮</span> in the top-right of Chrome</span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
+              <span>Tap <strong>Add to Home screen</strong> or <strong>Install app</strong> — Chrome may also show a pop-up banner at the bottom of the screen automatically</span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</span>
+              <span>Tap <strong>Install</strong> to confirm</span>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:12px;color:#aaa">Once installed, Veriqo opens full-screen with no browser bar. Your data stays on the device and syncs to the cloud when you sign in.</p>
+      </div>
+    </div>
+
     <div class="card" style="margin-bottom:12px">
       <div class="card-title">Getting started</div>
       <div style="font-size:14px;color:#444;line-height:1.6">
@@ -2028,7 +2106,7 @@ function buildPDFExport(dateLabel, recs) {
     +    '</div>'
     +  '</div>'
     +  '<div style="text-align:right;flex-shrink:0">'
-    +    '<div style="font-size:12px;font-weight:700;color:#2D7A3A;letter-spacing:0.02em">Veriqo by Mise</div>'
+    +    '<div style="font-size:12px;font-weight:700;color:#2D7A3A;letter-spacing:0.02em">Veriqo</div>'
     +    '<div style="font-size:11px;color:#aaa;margin-top:3px">Ref: '+esc(refNum)+'</div>'
     +    '<div style="font-size:11px;color:#aaa;margin-top:2px">'+esc(genDate)+' · '+esc(genTime)+'</div>'
     +  '</div>'
@@ -2901,7 +2979,7 @@ function buildMultiDayPDF(startDateStr, endDateStr) {
     +    '</div>'
     +  '</div>'
     +  '<div style="text-align:right;flex-shrink:0">'
-    +    '<div style="font-size:11px;font-weight:700;color:#2D7A3A">Veriqo by Mise</div>'
+    +    '<div style="font-size:11px;font-weight:700;color:#2D7A3A">Veriqo</div>'
     +    '<div style="font-size:10px;color:#aaa;margin-top:3px">Ref: '+esc(refNum)+'</div>'
     +    '<div style="font-size:10px;color:#aaa;margin-top:2px">Generated '+esc(genDateStr)+' · '+esc(genTimeStr)+'</div>'
     +  '</div>'
@@ -2949,6 +3027,55 @@ function buildMultiDayPDF(startDateStr, endDateStr) {
   document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
 }
+
+// ── Install banner ────────────────────────────────────────────────────────────
+// Android/Chrome: capture the native beforeinstallprompt event so we can
+// trigger it from our own button. iOS: detect Safari + not standalone and
+// show a manual tap-share guide. Neither shows if already installed or dismissed.
+var _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+  _showInstallBanner('android');
+});
+
+function _showInstallBanner(type) {
+  if (localStorage.getItem('veriqo_install_dismissed')) return;
+  if (window.matchMedia('(display-mode: standalone)').matches) return;
+  if (window.navigator.standalone) return;
+  var banner = document.getElementById('install-banner');
+  var body   = document.getElementById('install-banner-body');
+  if (!banner || !body) return;
+  if (type === 'android') {
+    body.innerHTML = '<button onclick="_triggerInstall()" style="margin-top:5px;background:#2D7A3A;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Install app</button>';
+  } else {
+    body.innerHTML = 'Tap the <span style="display:inline-block;border:1.5px solid #555;border-radius:4px;padding:0 4px;font-size:12px;line-height:1.6;font-weight:700">&#8679;</span> <strong>Share</strong> button at the bottom of Safari, then tap <strong>Add to Home Screen</strong>';
+  }
+  banner.style.display = 'flex';
+}
+
+function _triggerInstall() {
+  if (!_deferredInstallPrompt) return;
+  _deferredInstallPrompt.prompt();
+  _deferredInstallPrompt.userChoice.then(function(r) {
+    _deferredInstallPrompt = null;
+    if (r.outcome === 'accepted') dismissInstallBanner();
+  });
+}
+
+function dismissInstallBanner() {
+  var el = document.getElementById('install-banner');
+  if (el) el.style.display = 'none';
+  try { localStorage.setItem('veriqo_install_dismissed', '1'); } catch(e) {}
+}
+
+// iOS: show guide if opened in Safari but not yet added to home screen
+(function() {
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !isStandalone) { setTimeout(function(){ _showInstallBanner('ios'); }, 300); }
+})();
 
 // --- INIT ---
 loadSettings();
