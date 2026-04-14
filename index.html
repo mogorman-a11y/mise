@@ -1532,9 +1532,19 @@ function logChecklist(type) {
   var items = isPCType
     ? (settings['checklist_pc_'+type] || DEFAULT_CHECKLISTS_PC[type].map(function(i,idx){return {id:type[0]+idx,label:i.label,note:i.note};}))
     : CHECKLISTS[type];
+  // Scope checkbox lookups to the type's own container — 'closing' and 'crosscontam'
+  // both generate IDs starting with 'c', so document.getElementById returns the wrong
+  // element for whichever comes second in the DOM. querySelector('[id=...]') on the
+  // specific checklist container fixes this without needing to change stored IDs.
+  var container = document.getElementById(type+'-checklist');
+  function _getChk(id) {
+    return container
+      ? container.querySelector('input[id="chk-'+id+'"]')
+      : document.getElementById('chk-'+id);
+  }
   var checked=[]; var unchecked=[];
   items.forEach(function(item){
-    var el=document.getElementById('chk-'+item.id);
+    var el=_getChk(item.id);
     if(el&&el.checked) checked.push(item.label); else unchecked.push(item.label);
   });
   var byId = type+'-by';
@@ -1545,7 +1555,7 @@ function logChecklist(type) {
   var msg=unchecked.length===0?'All '+items.length+' items confirmed':unchecked.length+' item'+(unchecked.length>1?'s':'')+' not confirmed';
   records.push({type:type,by:by,notes:notes,checked:checked,unchecked:unchecked,time:now(),status:status,msg:msg});
   saveToday();
-  items.forEach(function(item){ var el=document.getElementById('chk-'+item.id); if(el) el.checked=false; });
+  items.forEach(function(item){ var el=_getChk(item.id); if(el) el.checked=false; });
   if (document.getElementById(notesId)) document.getElementById(notesId).value='';
   if (isPCType) renderSection_PC(type); else renderChecklistLog(type);
   updateDashboard();
