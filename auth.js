@@ -251,7 +251,10 @@ window.Mise.auth = (function () {
       await Mise.sync.loadAll(user.id);
     }
 
-    // Step 4: Mise.subscription.check(user.id)  — shows paywall if needed
+    // Check subscription — shows paywall if trial expired or cancelled
+    if (window.Mise && window.Mise.subscription) {
+      await Mise.subscription.check(user.id);
+    }
 
     // Re-render app with synced data
     if (typeof loadSettings      === 'function') loadSettings();
@@ -299,7 +302,8 @@ window.Mise.auth = (function () {
 
   // ── internal: createProfile ────────────────────────────────────────────────
   async function createProfile(user, businessName, chefName) {
-    var trialEnds = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    // Extended trial for beta feedback period — change to 14 days when launching paid
+    var trialEnds = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
     var result = await supabaseClient.from('profiles').insert({
       id: user.id,
       business_name: businessName || '',
