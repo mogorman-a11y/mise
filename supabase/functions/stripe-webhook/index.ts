@@ -37,18 +37,25 @@ Deno.serve(async (req) => {
 
   let event: Stripe.Event;
 
-  try {
-    event = await stripe.webhooks.constructEventAsync(
-      body,
-      sig,
-      Deno.env.get('STRIPE_WEBHOOK_SECRET')!,
-      undefined,
-      Stripe.createSubtleCryptoProvider(),
-    );
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[Veriqo] Webhook signature verification failed:', msg);
-    return new Response(`Webhook error: ${msg}`, { status: 400 });
+  // Try the primary secret first, then fall back to the thin-payload secret.
+  // Stripe's Workbench creates two destinations (snapshot + thin) with different secrets.
+  const secrets = [
+    Deno.env.get('STRIPE_WEBHOOK_SECRET'),
+    Deno.env.get('STRIPE_WEBHOOK_SECRET_THIN'),
+  ].filter(Boolean) as string[];
+
+  let verified = false;
+  for (const secret of secrets) {
+    try {
+      event = await stripe.webhooks.constructEventAsync(body, sig, secret, undefined, Stripe.createSubtleCryptoProvider());
+      verified = true;
+      break;
+    } catch (_) { /* try next */ }
+  }
+
+  if (!verified!) {
+    console.error('[Veriqo] Webhook signature verification failed with all secrets');
+    return new Response('Webhook signature verification failed', { status: 400 });
   }
 
   // ── 2. Handle events ──────────────────────────────────────────────────────
