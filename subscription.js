@@ -195,6 +195,7 @@ window.Mise.subscription = (function () {
           headers: {
             'Content-Type':  'application/json',
             'Authorization': 'Bearer ' + token,
+            'apikey':        SUPABASE_ANON,
           },
           body: JSON.stringify({}),
         }
