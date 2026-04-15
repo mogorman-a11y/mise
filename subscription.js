@@ -202,7 +202,7 @@ window.Mise.subscription = (function () {
       );
 
       var data = await res.json();
-      if (data.error) throw new Error(data.error);
+      if (!res.ok || !data.url) throw new Error(data.error || data.message || 'Could not create checkout session');
 
       // Redirect to Stripe Checkout (hosted page)
       window.location.href = data.url;
