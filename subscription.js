@@ -11,6 +11,18 @@
 window.Mise = window.Mise || {};
 window.Mise.subscription = (function () {
 
+  // ── Post-checkout redirect handling ────────────────────────────────────────
+  // Stripe redirects back to /?checkout=success after a successful payment.
+  // We flag it here (before the async check runs) and show a toast once active.
+  var _pendingSuccess = false;
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('checkout') === 'success') {
+      _pendingSuccess = true;
+      window.history.replaceState({}, '', '/'); // clean the URL immediately
+    }
+  })();
+
   // ── check ──────────────────────────────────────────────────────────────────
   // Called by auth.js after sync. Fetches the user's profile and gates access.
   async function check(userId) {
@@ -56,6 +68,12 @@ window.Mise.subscription = (function () {
       if (status === 'active' || inTrial) {
         hidePaywall();
         _injectTrialBanner(status, trialEnd);
+        if (_pendingSuccess) {
+          _pendingSuccess = false;
+          setTimeout(function () {
+            if (typeof toast === 'function') toast('🎉 Subscription activated — you\'re all set!');
+          }, 600);
+        }
       } else {
         showPaywall(trialEnd);
       }
@@ -127,7 +145,12 @@ window.Mise.subscription = (function () {
 
       // Subscribe button
       + '<button onclick="Mise.subscription.startCheckout()" id="paywall-subscribe-btn" '
-      +   'style="width:100%;padding:16px;background:#2D7A3A;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px">Subscribe now</button>'
+      +   'style="width:100%;padding:16px;background:#2D7A3A;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">Subscribe now — £12/month</button>'
+
+      // Promo code hint
+      + '<div style="text-align:center;margin-bottom:14px">'
+      +   '<span style="font-size:12px;color:#aaa">Have a promo code? Enter it at checkout.</span>'
+      + '</div>'
 
       // Export records link — always available
       + '<div style="text-align:center">'
@@ -152,29 +175,41 @@ window.Mise.subscription = (function () {
   }
 
   // ── startCheckout ──────────────────────────────────────────────────────────
-  // Wired up fully in Step 5. Shows a holding message until then.
+  // Creates a Stripe Checkout session via the Supabase edge function and
+  // redirects the user to the Stripe-hosted payment page.
+  // Promotion codes (100% off for testers) are entered on the Stripe page.
   async function startCheckout() {
     var btn = document.getElementById('paywall-subscribe-btn');
     if (btn) { btn.textContent = 'Setting up checkout…'; btn.disabled = true; }
 
     try {
-      var userResult = await supabaseClient.auth.getUser();
-      var userId = userResult.data.user.id;
+      // Get the current session JWT to authenticate the edge function call
+      var sessionResult = await supabaseClient.auth.getSession();
+      var token = sessionResult.data.session && sessionResult.data.session.access_token;
+      if (!token) throw new Error('Not signed in');
 
-      var res = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId })
-      });
+      var res = await fetch(
+        'https://yixrwyfodipfcbhjcszp.supabase.co/functions/v1/create-checkout',
+        {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': 'Bearer ' + token,
+          },
+          body: JSON.stringify({}),
+        }
+      );
+
       var data = await res.json();
       if (data.error) throw new Error(data.error);
+
+      // Redirect to Stripe Checkout (hosted page)
       window.location.href = data.url;
 
     } catch (err) {
       console.error('[Veriqo] Checkout error:', err);
-      if (btn) { btn.textContent = 'Subscribe now'; btn.disabled = false; }
-      // toast() is defined in index.html
-      if (typeof toast === 'function') toast('Checkout not available yet — coming soon', false);
+      if (btn) { btn.textContent = 'Subscribe now — £12/month'; btn.disabled = false; }
+      if (typeof toast === 'function') toast('Could not start checkout — please try again', false);
     }
   }
 
