@@ -75,22 +75,29 @@ Deno.serve(async (req) => {
 
     // ── Checkout completed → subscription now active ────────────────────────
     case 'checkout.session.completed': {
-      const session = event.data.object as Stripe.CheckoutSession;
-      const userId  = session.metadata?.userId;
-      const subId   = session.subscription as string;
+      const session    = event.data.object as Stripe.CheckoutSession;
+      const userId     = session.metadata?.userId;
+      const customerId = session.customer as string;
+      const subId      = session.subscription as string;
 
-      if (userId && subId) {
-        const sub = await stripe.subscriptions.retrieve(subId);
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            subscription_status:    'active',
-            stripe_subscription_id: subId,
-            current_period_end:     new Date(sub.current_period_end * 1000).toISOString(),
-          })
-          .eq('id', userId);
+      const updateData: Record<string, unknown> = { subscription_status: 'active' };
 
-        if (error) console.error('[Veriqo] checkout.session.completed update error:', error.message);
+      if (subId) {
+        try {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          updateData.stripe_subscription_id = subId;
+          updateData.current_period_end = new Date(sub.current_period_end * 1000).toISOString();
+        } catch (e) { console.warn('[Veriqo] Could not retrieve subscription:', e); }
+      }
+
+      // Primary: update by userId from metadata (snapshot payload)
+      // Fallback: update by stripe_customer_id (thin payload / missing metadata)
+      if (userId) {
+        const { error } = await supabase.from('profiles').update(updateData).eq('id', userId);
+        if (error) console.error('[Veriqo] checkout update by userId error:', error.message);
+      } else if (customerId) {
+        const { error } = await supabase.from('profiles').update(updateData).eq('stripe_customer_id', customerId);
+        if (error) console.error('[Veriqo] checkout update by customerId error:', error.message);
       }
       break;
     }
