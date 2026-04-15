@@ -14,7 +14,7 @@
 //   STRIPE_SECRET_KEY      — sk_live_... (or sk_test_...)
 //   STRIPE_WEBHOOK_SECRET  — whsec_... from the webhook settings page
 
-import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
+import Stripe from 'https://esm.sh/stripe@13.11.0?target=deno&deno-std=0.132.0&no-check';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 Deno.serve(async (req) => {
@@ -42,6 +42,8 @@ Deno.serve(async (req) => {
       body,
       sig,
       Deno.env.get('STRIPE_WEBHOOK_SECRET')!,
+      undefined,
+      Stripe.createSubtleCryptoProvider(),
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
