@@ -55,8 +55,16 @@ window.Mise.auth = (function () {
       // Email + password
       +   '<input id="auth-email" type="email" placeholder="Email address" autocomplete="email" '
       +     'style="width:100%;padding:12px;border:1px solid #e5e4de;border-radius:8px;font-size:15px;margin-bottom:10px;outline:none;font-family:inherit;background:#fff">'
-      +   '<input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" '
-      +     'style="width:100%;padding:12px;border:1px solid #e5e4de;border-radius:8px;font-size:15px;outline:none;font-family:inherit;background:#fff">'
+      +   '<div style="position:relative">'
+      +     '<input id="auth-password" type="password" placeholder="Password" autocomplete="current-password" '
+      +       'style="width:100%;padding:12px 44px 12px 12px;border:1px solid #e5e4de;border-radius:8px;font-size:15px;outline:none;font-family:inherit;background:#fff;box-sizing:border-box">'
+      +     '<button type="button" onclick="Mise.auth._togglePw()" tabindex="-1" '
+      +       'style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:#aaa;display:flex;align-items:center;line-height:1">'
+      +       '<svg id="auth-pw-eye" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      +         '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+      +       '</svg>'
+      +     '</button>'
+      +   '</div>'
 
       // Error/info message
       +   '<div id="auth-msg" style="display:none;border-radius:8px;padding:10px 12px;font-size:13px;margin-top:10px"></div>'
@@ -103,9 +111,18 @@ window.Mise.auth = (function () {
   async function init() {
     showAuthScreen(); // show immediately — removes itself if session found
 
+    // Supabase appends #access_token=...&type=signup to the URL when a user
+    // clicks their email confirmation link — detect it so we can show the
+    // "Email confirmed" screen before dropping them into the app.
+    var _urlFragment = (window.location.hash || '') + (window.location.search || '');
+    var _isEmailConfirm = _urlFragment.includes('type=signup') || _urlFragment.includes('type=email_confirmation');
+
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
+        if (_isEmailConfirm) {
+          await _showEmailConfirmed();
+        }
         await onSignedIn(session.user);
         return;
       }
@@ -116,6 +133,55 @@ window.Mise.auth = (function () {
     // No session — auth screen stays. Listen for OAuth redirect callbacks.
     supabaseClient.auth.onAuthStateChange(async (_event, session) => {
       if (session) { await onSignedIn(session.user); }
+    });
+  }
+
+  // ── _togglePw ──────────────────────────────────────────────────────────────
+  // Toggles the password field between hidden and visible, swapping the eye icon.
+  function _togglePw() {
+    var input = document.getElementById('auth-password');
+    var icon  = document.getElementById('auth-pw-eye');
+    if (!input || !icon) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      // Eye-off (slash through eye) when password is visible
+      icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    } else {
+      input.type = 'password';
+      // Normal eye when password is hidden
+      icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    }
+  }
+
+  // ── _showEmailConfirmed ────────────────────────────────────────────────────
+  // Shown when the user arrives via their email confirmation link.
+  // Displays a brief success screen for 2.5 s then proceeds normally.
+  function _showEmailConfirmed() {
+    return new Promise(function(resolve) {
+      hideAuthScreen();
+      document.body.insertAdjacentHTML('beforeend',
+        '<div id="veriqo-email-confirmed" style="position:fixed;inset:0;background:#f5f4f0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:40px;text-align:center">'
+        + '<div style="width:76px;height:76px;background:#2D7A3A;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:4px">'
+        +   '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        + '</div>'
+        + '<div style="font-size:26px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Email confirmed</div>'
+        + '<div style="font-size:15px;color:#555;max-width:290px;line-height:1.6">Welcome to Veriqo. Setting up your account…</div>'
+        + '<div style="margin-top:8px;width:36px;height:4px;background:#e5e4de;border-radius:2px;overflow:hidden">'
+        +   '<div style="height:100%;background:#2D7A3A;border-radius:2px;animation:veriqo-prog 2.4s linear forwards"></div>'
+        + '</div>'
+        + '<style>@keyframes veriqo-prog{from{width:0}to{width:100%}}</style>'
+        + '</div>'
+      );
+      // Clean up and continue after 2.5 s
+      setTimeout(function() {
+        var el = document.getElementById('veriqo-email-confirmed');
+        if (el) el.remove();
+        // Clear the token hash from the URL so a refresh doesn't re-trigger this
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', window.location.pathname);
+        }
+        resolve();
+      }, 2500);
     });
   }
 
@@ -357,6 +423,6 @@ window.Mise.auth = (function () {
   }
 
   // Expose internal tab/form handlers so onclick attributes in injected HTML can call them
-  return { init, login, signup, loginGoogle, logout, resetPassword, _tab, _submit, _forgot, _google };
+  return { init, login, signup, loginGoogle, logout, resetPassword, _tab, _submit, _forgot, _google, _togglePw };
 
 })();
