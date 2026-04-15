@@ -91,9 +91,11 @@ window.Mise.subscription = (function () {
     var expiredMsg = '';
     if (trialEnd) {
       var daysAgo = Math.floor((Date.now() - trialEnd.getTime()) / (1000 * 60 * 60 * 24));
-      expiredMsg = daysAgo === 0
-        ? 'Your free trial ended today.'
-        : 'Your free trial ended ' + daysAgo + ' day' + (daysAgo > 1 ? 's' : '') + ' ago.';
+      if (daysAgo >= 0) {
+        expiredMsg = daysAgo === 0
+          ? 'Your free trial ended today.'
+          : 'Your free trial ended ' + daysAgo + ' day' + (daysAgo > 1 ? 's' : '') + ' ago.';
+      }
     }
 
     var html = '<div id="mise-paywall" style="position:fixed;inset:0;background:#f5f4f0;z-index:9998;overflow-y:auto;-webkit-overflow-scrolling:touch">'
