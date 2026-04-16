@@ -379,8 +379,7 @@ window.Mise.auth = (function () {
 
   // ── internal: createProfile ────────────────────────────────────────────────
   async function createProfile(user, businessName, chefName) {
-    // Extended trial for beta feedback period — change to 14 days when launching paid
-    var trialEnds = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    var trialEnds = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
     var result = await supabaseClient.from('profiles').insert({
       id: user.id,
       business_name: businessName || '',
