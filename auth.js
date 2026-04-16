@@ -380,6 +380,7 @@ window.Mise.auth = (function () {
   // ── internal: createProfile ────────────────────────────────────────────────
   async function createProfile(user, businessName, chefName) {
     var trialEnds = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+    console.log('[Veriqo DEBUG] createProfile called, trialEnds =', trialEnds);
     var result = await supabaseClient.from('profiles').insert({
       id: user.id,
       business_name: businessName || '',
