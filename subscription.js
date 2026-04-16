@@ -37,7 +37,7 @@ window.Mise.subscription = (function () {
       if (result.error && result.error.code === 'PGRST116') {
         // Create a default profile with a 14-day trial
         // Extended trial for beta feedback period — change to 14 days when launching paid
-        var trialEnds = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        var trialEnds = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
         await supabaseClient.from('profiles').insert({
           id: userId,
           business_name: '',
