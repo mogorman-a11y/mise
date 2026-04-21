@@ -294,6 +294,7 @@ window.Mise.auth = (function () {
 
   // ── logout ─────────────────────────────────────────────────────────────────
   async function logout() {
+    if (window.posthog) posthog.reset();
     await supabaseClient.auth.signOut();
     // Clear in-memory app state
     if (typeof records !== 'undefined') records.length = 0;
@@ -316,6 +317,7 @@ window.Mise.auth = (function () {
   async function onSignedIn(user) {
     hideAuthScreen();
     _injectAccountCard(user);
+    if (window.posthog) posthog.identify(user.id, { email: user.email });
 
     // Pull records + settings from Supabase, hydrate localStorage, then re-render
     if (window.Mise && window.Mise.sync) {
