@@ -138,16 +138,27 @@ window.Mise.subscription = (function () {
       + _featureRow('☁️', 'Synced across all your devices')
       + '</div>'
 
-      // Price
-      + '<div style="text-align:center;margin-bottom:20px">'
-      +   '<span style="font-size:36px;font-weight:700;color:#1a1a18">£12</span>'
-      +   '<span style="font-size:16px;color:#888;margin-left:4px">/ month</span>'
-      +   '<div style="font-size:12px;color:#aaa;margin-top:4px">Cancel any time</div>'
-      + '</div>'
+      // Pricing options
+      + '<div style="display:flex;gap:10px;margin-bottom:20px">'
 
-      // Subscribe button
-      + '<button onclick="Mise.subscription.startCheckout()" id="paywall-subscribe-btn" '
-      +   'style="width:100%;padding:16px;background:#2D7A3A;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">Subscribe now — £12/month</button>'
+      // Monthly card
+      +   '<button onclick="Mise.subscription.startCheckout(\'monthly\')" '
+      +     'style="flex:1;padding:14px 10px;background:#fff;border:2px solid #e5e4de;border-radius:12px;cursor:pointer;font-family:inherit;text-align:center">'
+      +     '<div style="font-size:22px;font-weight:700;color:#1a1a18">£12</div>'
+      +     '<div style="font-size:12px;color:#888;margin-top:2px">per month</div>'
+      +     '<div style="font-size:11px;color:#aaa;margin-top:4px">Cancel any time</div>'
+      +   '</button>'
+
+      // Annual card (highlighted)
+      +   '<button onclick="Mise.subscription.startCheckout(\'annual\')" '
+      +     'style="flex:1;padding:14px 10px;background:#2D7A3A;border:2px solid #2D7A3A;border-radius:12px;cursor:pointer;font-family:inherit;text-align:center;position:relative">'
+      +     '<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#52D05C;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap">2 MONTHS FREE</div>'
+      +     '<div style="font-size:22px;font-weight:700;color:#fff">£120</div>'
+      +     '<div style="font-size:12px;color:rgba(255,255,255,0.8);margin-top:2px">per year</div>'
+      +     '<div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px">£10/month billed annually</div>'
+      +   '</button>'
+
+      + '</div>'
 
       // Promo code hint
       + '<div style="text-align:center;margin-bottom:14px">'
@@ -180,7 +191,8 @@ window.Mise.subscription = (function () {
   // Creates a Stripe Checkout session via the Supabase edge function and
   // redirects the user to the Stripe-hosted payment page.
   // Promotion codes (100% off for testers) are entered on the Stripe page.
-  async function startCheckout() {
+  async function startCheckout(plan) {
+    // Disable whichever button was clicked
     var btn = document.getElementById('paywall-subscribe-btn');
     if (btn) { btn.textContent = 'Setting up checkout…'; btn.disabled = true; }
 
@@ -189,6 +201,10 @@ window.Mise.subscription = (function () {
       var sessionResult = await supabaseClient.auth.getSession();
       var token = sessionResult.data.session && sessionResult.data.session.access_token;
       if (!token) throw new Error('Not signed in');
+
+      var bodyData = plan === 'annual'
+        ? { priceId: 'price_1TPoqwBS8u12Eog08q6nSP6F' }
+        : {};
 
       var res = await fetch(
         'https://yixrwyfodipfcbhjcszp.supabase.co/functions/v1/create-checkout',
@@ -199,7 +215,7 @@ window.Mise.subscription = (function () {
             'Authorization': 'Bearer ' + token,
             'apikey':        SUPABASE_ANON,
           },
-          body: JSON.stringify({}),
+          body: JSON.stringify(bodyData),
         }
       );
 

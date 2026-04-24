@@ -59,6 +59,13 @@ Deno.serve(async (req) => {
     const userId = user.id;
     const email  = user.email!;
 
+    // ── 1b. Determine which price to use ───────────────────────────────────
+    const body = await req.json().catch(() => ({}));
+    const PRICE_MONTHLY = Deno.env.get('STRIPE_PRICE_ID')!;
+    const PRICE_ANNUAL  = Deno.env.get('STRIPE_PRICE_ID_ANNUAL')!;
+    // Only allow known price IDs — reject anything else
+    const priceId = body.priceId === PRICE_ANNUAL ? PRICE_ANNUAL : PRICE_MONTHLY;
+
     // ── 2. Init Stripe ──────────────────────────────────────────────────────
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
       apiVersion: '2024-04-10',
@@ -93,7 +100,7 @@ Deno.serve(async (req) => {
       customer:             customerId,
       payment_method_types: ['card'],
       mode:                 'subscription',
-      line_items:           [{ price: Deno.env.get('STRIPE_PRICE_ID')!, quantity: 1 }],
+      line_items:           [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
       success_url:          'https://getveriqo.co.uk/?checkout=success',
       cancel_url:           'https://getveriqo.co.uk/',
