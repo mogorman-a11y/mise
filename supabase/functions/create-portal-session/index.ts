@@ -54,28 +54,47 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── 2. Look up the Stripe customer ID for this user ────────────────────
+    // ── 2. Init Stripe ─────────────────────────────────────────────────────
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
+      apiVersion: '2024-04-10',
+      httpClient: Stripe.createFetchHttpClient(),
+    });
+
+    // ── 3. Look up or create a Stripe customer for this user ───────────────
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
       .eq('id', user.id)
       .single();
 
-    if (!profile?.stripe_customer_id) {
-      return new Response(JSON.stringify({ error: 'No active subscription found.' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    let customerId: string = profile?.stripe_customer_id ?? '';
+
+    // Validate the stored customer still exists in the current mode
+    // (test→live switches can leave orphaned IDs)
+    if (customerId) {
+      try {
+        await stripe.customers.retrieve(customerId);
+      } catch (_) {
+        console.warn('[Veriqo] Stored customer not found in Stripe, creating new one');
+        customerId = '';
+      }
     }
 
-    // ── 3. Create a Stripe Billing Portal session ──────────────────────────
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-      apiVersion: '2024-04-10',
-      httpClient: Stripe.createFetchHttpClient(),
-    });
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email:    user.email!,
+        metadata: { supabase_user_id: user.id },
+      });
+      customerId = customer.id;
+      await supabase
+        .from('profiles')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', user.id);
+    }
 
+    // ── 4. Create a Stripe Billing Portal session ──────────────────────────
     const session = await stripe.billingPortal.sessions.create({
-      customer:   profile.stripe_customer_id,
+      customer:   customerId,
       return_url: 'https://getveriqo.co.uk/',
     });
 
