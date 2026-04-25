@@ -30,6 +30,7 @@ window.Mise.subscription = (function () {
   // Called by auth.js after sync. Fetches the user's profile and gates access.
   async function check(userId) {
     _userId = userId;
+    window._pushUserId = userId; // used by push notification functions in index.html
     try {
       var result = await supabaseClient
         .from('profiles')

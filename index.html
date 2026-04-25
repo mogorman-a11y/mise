@@ -1309,9 +1309,19 @@ async function _savePushSub(userId, sub) {
 }
 
 async function enablePushReminders() {
-  var profile = window.Mise && window.Mise.profile;
   var userId = window._pushUserId;
-  if (!userId) return 'error';
+  // Fallback: get userId from live session if not yet set
+  if (!userId) {
+    try {
+      var s = await supabaseClient.auth.getSession();
+      userId = s.data.session && s.data.session.user.id;
+      if (userId) window._pushUserId = userId;
+    } catch(e) {}
+  }
+  if (!userId) {
+    if (typeof toast === 'function') toast('Please sign in to enable reminders', false);
+    return 'error';
+  }
   if (Notification.permission !== 'granted') {
     var perm = await Notification.requestPermission();
     if (perm !== 'granted') return 'denied';
