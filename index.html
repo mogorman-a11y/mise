@@ -80,7 +80,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .card-toggle .divider-arrow { font-size: 10px; transition: transform 0.2s; display: inline-block; color: #aaa; }
 .card-toggle.collapsed .divider-arrow { transform: rotate(-90deg); }
 .settings-collapsible { overflow: hidden; transition: max-height 0.25s ease; max-height: 0; }
-.empty { font-size: 13px; color: #aaa; padding: 8px 0; }
+.empty { font-size: 13px; color: #aaa; padding: 8px 0; line-height: 1.5; }
+.info-icon { display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#e8e7e3;border:none;color:#999;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:6px;vertical-align:middle;flex-shrink:0;font-style:normal; }
+.info-icon:active { background:#d8d7d3; }
+.tooltip-bubble { position:fixed;z-index:9800;background:#1a1a18;color:#fff;font-size:12px;line-height:1.55;padding:10px 14px;border-radius:10px;max-width:260px;box-shadow:0 4px 20px rgba(0,0,0,0.25); }
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 13px; padding: 10px 20px; border-radius: 20px; display: none; z-index: 99; white-space: nowrap; font-family: inherit; }
 .toast.show { display: block; }
 .day-block { background: #fff; border: 1px solid #e5e4de; border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
@@ -341,7 +344,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- OPENING CHECKS -->
   <div id="tab-opening" class="section">
     <div class="card">
-      <div class="card-title">Opening checks</div>
+      <div class="card-title">Opening checks <button class="info-icon" onclick="showTooltip(this,'Required at the start of every service. Your inspector will want to see this completed daily — it shows you\'re checking before food prep begins.');event.stopPropagation()">i</button></div>
       <div class="info-box">Complete at the start of each service. All items must be confirmed before food preparation begins.</div>
       <div id="opening-checklist"></div>
       <div class="form-group" style="margin-top:14px"><label class="form-label">Signed by</label><select class="form-input" id="opening-by"></select></div>
@@ -349,13 +352,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logChecklist('opening')">Save opening checks</button>
     </div>
     <div class="divider">Today's opening checks</div>
-    <div id="opening-log"><div class="empty">Not completed today.</div></div>
+    <div id="opening-log"><div class="empty">Not completed today — fill in the checklist above and tap Save opening checks to sign off.</div></div>
   </div>
 
   <!-- CLOSING CHECKS -->
   <div id="tab-closing" class="section">
     <div class="card">
-      <div class="card-title">Closing checks</div>
+      <div class="card-title">Closing checks <button class="info-icon" onclick="showTooltip(this,'Complete at the end of every service. Confirms food is safely stored, equipment switched off, and the kitchen is secure.');event.stopPropagation()">i</button></div>
       <div class="info-box">Complete at the end of each service before leaving the kitchen.</div>
       <div id="closing-checklist"></div>
       <div class="form-group" style="margin-top:14px"><label class="form-label">Signed by</label><select class="form-input" id="closing-by"></select></div>
@@ -363,13 +366,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logChecklist('closing')">Save closing checks</button>
     </div>
     <div class="divider">Today's closing checks</div>
-    <div id="closing-log"><div class="empty">Not completed today.</div></div>
+    <div id="closing-log"><div class="empty">Not completed today — run through the checklist above and tap Save closing checks at the end of service.</div></div>
   </div>
 
   <!-- CROSS-CONTAMINATION -->
   <div id="tab-crosscontam" class="section">
     <div class="card">
-      <div class="card-title">Cross-contamination controls</div>
+      <div class="card-title">Cross-contamination controls <button class="info-icon" onclick="showTooltip(this,'Confirms controls preventing raw meat from contaminating ready-to-eat food are in place. Inspectors look for this as evidence of good hygiene management.');event.stopPropagation()">i</button></div>
       <div class="info-box">Confirm each control is in place. Tick all that apply for today's service.</div>
       <div id="crosscontam-checklist"></div>
       <div class="form-group" style="margin-top:14px"><label class="form-label">Signed by</label><select class="form-input" id="crosscontam-by"></select></div>
@@ -377,13 +380,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logChecklist('crosscontam')">Save cross-contamination check</button>
     </div>
     <div class="divider">Today's checks</div>
-    <div id="crosscontam-log"><div class="empty">Not completed today.</div></div>
+    <div id="crosscontam-log"><div class="empty">Not completed today — confirm your contamination controls are in place and tap Save.</div></div>
   </div>
 
   <!-- FRIDGE TEMPS -->
   <div id="tab-fridge" class="section">
     <div class="card">
-      <div class="card-title">Log fridge / freezer temperature</div>
+      <div class="card-title">Log fridge / freezer temperature <button class="info-icon" onclick="showTooltip(this,'Fridges must stay at or below 8°C, freezers at or below -18°C. Log at least once per service — more often if ambient temperatures are high.');event.stopPropagation()">i</button></div>
       <div class="form-group"><label class="form-label">Unit</label><select class="form-input" id="fridge-unit"></select></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Temperature (°C)</label><input class="form-input" type="number" id="fridge-temp" placeholder="e.g. 4" step="0.1"></div>
@@ -394,13 +397,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logFridge()">Save temperature check</button>
     </div>
     <div class="divider">Today's fridge checks</div>
-    <div id="fridge-log"><div class="empty">No checks logged yet today.</div></div>
+    <div id="fridge-log"><div class="empty">No temperature checks yet today — log each fridge and freezer at least once per service.</div></div>
   </div>
 
   <!-- COOKING -->
   <div id="tab-cooking" class="section">
     <div class="card">
-      <div class="card-title">Log cooked food temperature</div>
+      <div class="card-title">Log cooked food temperature <button class="info-icon" onclick="showTooltip(this,'Poultry, pork and reheated food must reach 75°C at the core. Log every cook — this is one of the most important HACCP records an inspector will check.');event.stopPropagation()">i</button></div>
       <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="cook-food" placeholder="e.g. Chicken breast"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Core temp (°C)</label><input class="form-input" type="number" id="cook-temp" placeholder="e.g. 75" step="0.1"></div>
@@ -410,13 +413,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logCooking()">Save cooking check</button>
     </div>
     <div class="divider">Today's cooking checks</div>
-    <div id="cooking-log"><div class="empty">No checks logged yet today.</div></div>
+    <div id="cooking-log"><div class="empty">No cooking checks yet — record a core temperature for every item you cook.</div></div>
   </div>
 
   <!-- COOLING -->
   <div id="tab-cooling" class="section">
     <div class="card">
-      <div class="card-title">Log cooling record</div>
+      <div class="card-title">Log cooling record <button class="info-icon" onclick="showTooltip(this,'Hot food must cool from 60°C to below 8°C within 90 minutes. Use a blast chiller or ice bath. Log start and end temperatures as evidence.');event.stopPropagation()">i</button></div>
       <div class="info-box">Hot food must cool from 60°C to below 8°C within 90 minutes. Log start and end temperatures.</div>
       <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="cool-food" placeholder="e.g. Chicken stock"></div>
       <div class="form-row">
@@ -436,13 +439,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logCooling()">Save cooling record</button>
     </div>
     <div class="divider">Today's cooling records</div>
-    <div id="cooling-log"><div class="empty">No records yet today.</div></div>
+    <div id="cooling-log"><div class="empty">No cooling records yet — log food that needs to cool safely from hot to chilled.</div></div>
   </div>
 
   <!-- REHEATING -->
   <div id="tab-reheating" class="section">
     <div class="card">
-      <div class="card-title">Log reheating record</div>
+      <div class="card-title">Log reheating record <button class="info-icon" onclick="showTooltip(this,'Food reheated for service must reach 75°C at the core and be served immediately. Never reheat the same food more than once — log every reheat.');event.stopPropagation()">i</button></div>
       <div class="info-box">Food reheated for service must reach a core temperature of 75°C and be served immediately.</div>
       <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="reheat-food" placeholder="e.g. Soup"></div>
       <div class="form-row">
@@ -454,13 +457,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logReheating()">Save reheating record</button>
     </div>
     <div class="divider">Today's reheating records</div>
-    <div id="reheating-log"><div class="empty">No records yet today.</div></div>
+    <div id="reheating-log"><div class="empty">No reheating records yet — log every item you reheat for service.</div></div>
   </div>
 
   <!-- DELIVERY -->
   <div id="tab-delivery" class="section">
     <div class="card">
-      <div class="card-title">Log delivery</div>
+      <div class="card-title">Log delivery <button class="info-icon" onclick="showTooltip(this,'Log the temperature and condition of every delivery on arrival. Reject anything that arrives above safe temperature limits — chilled above 8°C, frozen above -18°C.');event.stopPropagation()">i</button></div>
       <div class="form-group"><label class="form-label">Supplier</label><select class="form-input" id="del-supplier"></select></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Delivery temp (°C)</label><input class="form-input" type="number" id="del-temp" placeholder="e.g. 3" step="0.1"></div>
@@ -498,13 +501,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logDelivery()">Save delivery record</button>
     </div>
     <div class="divider">Today's deliveries</div>
-    <div id="delivery-log"><div class="empty">No deliveries logged yet today.</div></div>
+    <div id="delivery-log"><div class="empty">No deliveries logged yet — record the temperature and condition of each delivery as it arrives.</div></div>
   </div>
 
   <!-- CLEANING -->
   <div id="tab-cleaning" class="section">
     <div class="card">
-      <div class="card-title">Log cleaning task</div>
+      <div class="card-title">Log cleaning task <button class="info-icon" onclick="showTooltip(this,'Inspectors check that your cleaning schedule is signed and dated. Log each task as it\'s completed — add your tasks in Settings so the dropdown is ready.');event.stopPropagation()">i</button></div>
       <div class="form-group"><label class="form-label">Task</label><select class="form-input" id="clean-task"></select></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Completed at</label><input class="form-input" type="time" id="clean-time"></div>
@@ -514,13 +517,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logCleaning()">Save cleaning record</button>
     </div>
     <div class="divider">Today's cleaning checks</div>
-    <div id="cleaning-log"><div class="empty">No cleaning logged yet today.</div></div>
+    <div id="cleaning-log"><div class="empty">No cleaning tasks logged yet — record each task as it's completed.</div></div>
   </div>
 
   <!-- PROBE CALIBRATION -->
   <div id="tab-probe" class="section">
     <div class="card">
-      <div class="card-title">Probe thermometer calibration</div>
+      <div class="card-title">Probe thermometer calibration <button class="info-icon" onclick="showTooltip(this,'Test your probe in iced water — it should read 0°C (±1°C). Required at least weekly. A faulty probe means every temperature record could be wrong.');event.stopPropagation()">i</button></div>
       <div class="info-box">Test probe in iced water — it should read 0°C (±1°C). Recommended weekly. Log the result and any action taken.</div>
       <div class="form-group"><label class="form-label">Probe / thermometer ID</label><input class="form-input" type="text" id="probe-id" placeholder="e.g. Probe 1"></div>
       <div class="form-row">
@@ -534,13 +537,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logProbe()">Save calibration record</button>
     </div>
     <div class="divider">Calibration history</div>
-    <div id="probe-log"><div class="empty">No records yet.</div></div>
+    <div id="probe-log"><div class="empty">No calibration records yet — test your probe in iced water at least once a week.</div></div>
   </div>
 
   <!-- PEST CONTROL -->
   <div id="tab-pest" class="section">
     <div class="card">
-      <div class="card-title">Log pest control record</div>
+      <div class="card-title">Log pest control record <button class="info-icon" onclick="showTooltip(this,'Log all pest sightings, contractor visits and bait station checks. Inspectors look for an active pest log as evidence of ongoing prevention.');event.stopPropagation()">i</button></div>
       <div class="form-group"><label class="form-label">Type of evidence / activity</label>
         <select class="form-input" id="pest-type">
           <option>Routine inspection — no evidence</option>
@@ -561,13 +564,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logPest()">Save pest record</button>
     </div>
     <div class="divider">Pest control records</div>
-    <div id="pest-log"><div class="empty">No records yet.</div></div>
+    <div id="pest-log"><div class="empty">No pest records yet — log routine inspections and any pest activity here to keep an active pest log.</div></div>
   </div>
 
   <!-- STAFF ILLNESS -->
   <div id="tab-illness" class="section">
     <div class="card">
-      <div class="card-title">Log staff illness</div>
+      <div class="card-title">Log staff illness <button class="info-icon" onclick="showTooltip(this,'Staff with D&amp;V symptoms must be stood down from food handling immediately. They must be symptom-free for 48 hours before returning. Log both the stand-down and the return to work.');event.stopPropagation()">i</button></div>
       <div class="info-box">Staff must not handle food if suffering from vomiting, diarrhoea, or similar symptoms. They must be symptom-free for 48 hours before returning.</div>
       <div class="form-group"><label class="form-label">Staff member</label><select class="form-input" id="illness-staff"></select></div>
       <div class="form-group"><label class="form-label">Type</label>
@@ -585,7 +588,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logIllness()">Save illness record</button>
     </div>
     <div class="divider">Illness records</div>
-    <div id="illness-log"><div class="empty">No records yet.</div></div>
+    <div id="illness-log"><div class="empty">No illness records — log if a staff member reports symptoms or returns to work after illness.</div></div>
   </div>
 
   <!-- APPROVED SUPPLIERS -->
@@ -610,7 +613,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logSupplier()">Add to register</button>
     </div>
     <div class="divider">Approved supplier register</div>
-    <div id="suppliers-log"><div class="empty">No suppliers on register yet.</div></div>
+    <div id="suppliers-log"><div class="empty">No approved suppliers yet — add your regulars so they appear in the delivery dropdown.</div></div>
   </div>
 
   <!-- JOB & LOCATION -->
@@ -638,7 +641,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logJob()">Save job details</button>
     </div>
     <div class="divider">Today's job</div>
-    <div id="job-log"><div class="empty">No job logged yet today.</div></div>
+    <div id="job-log"><div class="empty">No job logged yet — add your client and location before service so all today's checks are linked to this job.</div></div>
   </div>
 
   <!-- KITCHEN ASSESSMENT -->
@@ -673,7 +676,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logKitchenAssess()">Save kitchen assessment</button>
     </div>
     <div class="divider">Assessment records</div>
-    <div id="kitchenassess-log"><div class="empty">No assessments logged yet.</div></div>
+    <div id="kitchenassess-log"><div class="empty">No assessments yet — complete a kitchen check before cooking in any client kitchen. It protects you legally if a food safety issue arises.</div></div>
   </div>
 
   <!-- ALLERGEN LOG -->
@@ -698,7 +701,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logAllergen()">Save allergen record</button>
     </div>
     <div class="divider">Allergen records</div>
-    <div id="allergen-log"><div class="empty">No allergen records yet.</div></div>
+    <div id="allergen-log"><div class="empty">No allergen records yet — log the allergens in each dish and confirm you've informed your client.</div></div>
   </div>
 
   <!-- TRANSPORT TEMPS -->
@@ -729,7 +732,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logTransport()">Save transport record</button>
     </div>
     <div class="divider">Transport records</div>
-    <div id="transport-log"><div class="empty">No transport records yet.</div></div>
+    <div id="transport-log"><div class="empty">No transport records yet — log temperatures at departure and arrival for every food delivery to a client.</div></div>
   </div>
 
   <!-- MOBILE SETUP -->
@@ -744,7 +747,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logChecklist('mobileset')">Save setup check</button>
     </div>
     <div class="divider">Setup check records</div>
-    <div id="mobileset-log"><div class="empty">Not completed today.</div></div>
+    <div id="mobileset-log"><div class="empty">Not completed today — run through this checklist before service begins at a client location.</div></div>
   </div>
 
   <!-- CREDENTIALS -->
@@ -782,7 +785,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button class="btn-primary" onclick="logCredential()">Save credential</button>
     </div>
     <div class="divider">Credentials &amp; expiry dates</div>
-    <div id="credentials-log"><div class="empty">No credentials saved yet.</div></div>
+    <div id="credentials-log"><div class="empty">No credentials saved yet — add your food hygiene certificates, insurance and qualifications so you can track expiry dates.</div></div>
   </div>
 
   <!-- RECORDS -->
@@ -1254,6 +1257,37 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Tooltip system ────────────────────────────────────────────────────────────
+var _activeTip = null;
+function showTooltip(btn, text) {
+  if (_activeTip) { _activeTip.remove(); _activeTip = null; }
+  var rect = btn.getBoundingClientRect();
+  var tip = document.createElement('div');
+  tip.className = 'tooltip-bubble';
+  tip.textContent = text;
+  document.body.appendChild(tip);
+  // Position below the icon, clamp to viewport edges
+  var tipWidth = 260;
+  var rawLeft = rect.left;
+  var left = Math.max(10, Math.min(rawLeft, window.innerWidth - tipWidth - 10));
+  var top = rect.bottom + 8;
+  if (top + 120 > window.innerHeight) top = rect.top - 120; // flip up if near bottom
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+  _activeTip = tip;
+  // Dismiss on next click outside
+  setTimeout(function() {
+    function handler(e) {
+      if (!tip.contains(e.target) && e.target !== btn) {
+        tip.remove();
+        if (_activeTip === tip) _activeTip = null;
+        document.removeEventListener('click', handler);
+      }
+    }
+    document.addEventListener('click', handler);
+  }, 50);
+}
+
 var TODAY = new Date().toISOString().slice(0,10);
 var records = [];
 
@@ -1581,7 +1615,7 @@ function logChecklist(type) {
 function renderChecklistLog(type) {
   var recs=records.filter(function(r){return r.type===type;});
   var c=document.getElementById(type+'-log');
-  if(!recs.length){c.innerHTML='<div class="empty">Not completed today.</div>';return;}
+  if(!recs.length){c.innerHTML='<div class="empty">Not signed off yet today — complete the checklist above and save.</div>';return;}
   c.innerHTML=recs.slice().reverse().map(function(r){
     var detail=r.unchecked&&r.unchecked.length?'<div class="log-time" style="color:#A32D2D">Not confirmed: '+r.unchecked.join(', ')+'</div>':'';
     return '<div class="log-row"><div style="flex:1"><div class="log-name">'+r.by+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+detail+'</div>'+statusBadge(r.status)+'</div>';
@@ -1792,7 +1826,7 @@ function logSupplier() {
 }
 function renderSuppliersLog() {
   var list=loadSuppliers(); var c=document.getElementById('suppliers-log');
-  if(!list.length){c.innerHTML='<div class="empty">No suppliers on register yet.</div>';return;}
+  if(!list.length){c.innerHTML='<div class="empty">No approved suppliers yet — add your regulars so they appear in the delivery dropdown.</div>';return;}
   document.getElementById('sub-suppliers').textContent=list.length+' supplier'+(list.length>1?'s':'');
   c.innerHTML=list.map(function(s,i){
     return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+s.name+'</div>'+
@@ -1813,7 +1847,7 @@ function renderSection(type) {
   var ids={fridge:'fridge-log',cooking:'cooking-log',cooling:'cooling-log',reheating:'reheating-log',delivery:'delivery-log',cleaning:'cleaning-log',probe:'probe-log',pest:'pest-log',illness:'illness-log'};
   var c=document.getElementById(ids[type]); if(!c)return;
   var recs=records.filter(function(r){return r.type===type;});
-  if(!recs.length){c.innerHTML='<div class="empty">No records yet.</div>';return;}
+  if(!recs.length){c.innerHTML='<div class="empty">No records logged yet today.</div>';return;}
   c.innerHTML=recs.slice().reverse().map(function(r){
     var label=r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='probe'?r.probeId:r.type==='pest'?r.pestType:r.staff;
     var extra='';
@@ -1911,7 +1945,7 @@ function updateDashboard() {
   document.getElementById('stat-fail').textContent=fail;
   document.getElementById('stat-total').textContent=records.length;
 
-  var subDefaults={fridge:'No checks yet',cooking:'No checks yet',cooling:'No records yet',reheating:'No records yet',delivery:'No records yet',cleaning:'No tasks yet',probe:'Weekly check',pest:'No records yet',illness:'No records yet',opening:'Start of day',closing:'End of day',crosscontam:'Daily check',job:'Log today\'s job',kitchenassess:'Pre-job check',allergen:'Menu & client sign-off',transport:'Food in transit',mobileset:'Temporary kitchen'};
+  var subDefaults={fridge:'Log first temp',cooking:'Log a core temp',cooling:'Nothing cooling yet',reheating:'Nothing reheated yet',delivery:'Log a delivery',cleaning:'No tasks logged yet',probe:'Weekly check',pest:'Log an inspection',illness:'No incidents today',opening:'Start of day',closing:'End of day',crosscontam:'Daily check',job:'Add client & location',kitchenassess:'Pre-job check',allergen:'Dishes & allergens',transport:'Food in transit',mobileset:'Temporary kitchen'};
   ALL_TYPES.forEach(function(t){
     var recs=records.filter(function(r){return r.type===t;});
     var badge=document.getElementById('badge-'+t);
@@ -2373,7 +2407,7 @@ function loadCredentials() { try { var r=localStorage.getItem('haccp_credentials
 function renderCredentials() {
   var list = loadCredentials();
   var c = document.getElementById('credentials-log');
-  if (!list.length) { c.innerHTML='<div class="empty">No credentials saved yet.</div>'; return; }
+  if (!list.length) { c.innerHTML='<div class="empty">No credentials saved yet — add your food hygiene certificates, insurance and qualifications so you can track expiry dates.</div>'; return; }
   // recalculate status live
   list.forEach(function(cr) {
     var daysLeft = Math.floor((new Date(cr.expiry) - new Date()) / (1000*60*60*24));
@@ -2411,7 +2445,7 @@ function renderSection_PC(type) {
   var ids = {job:'job-log', kitchenassess:'kitchenassess-log', allergen:'allergen-log', transport:'transport-log', mobileset:'mobileset-log'};
   var c = document.getElementById(ids[type]); if (!c) return;
   var recs = records.filter(function(r){ return r.type===type; });
-  if (!recs.length) { c.innerHTML='<div class="empty">No records yet.</div>'; return; }
+  if (!recs.length) { c.innerHTML='<div class="empty">No records logged yet today.</div>'; return; }
   c.innerHTML = recs.slice().reverse().map(function(r) {
     var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.by||'';
     var extra = '';

@@ -11,6 +11,9 @@
 window.Mise = window.Mise || {};
 window.Mise.subscription = (function () {
 
+  // ── Module-level state ─────────────────────────────────────────────────────
+  var _userId = null; // set in check(); used by _dismissWelcomeModal
+
   // ── Post-checkout redirect handling ────────────────────────────────────────
   // Stripe redirects back to /?checkout=success after a successful payment.
   // We flag it here (before the async check runs) and show a toast once active.
@@ -26,10 +29,11 @@ window.Mise.subscription = (function () {
   // ── check ──────────────────────────────────────────────────────────────────
   // Called by auth.js after sync. Fetches the user's profile and gates access.
   async function check(userId) {
+    _userId = userId;
     try {
       var result = await supabaseClient
         .from('profiles')
-        .select('subscription_status, trial_ends_at, business_name, chef_name, stripe_customer_id, logo')
+        .select('subscription_status, trial_ends_at, business_name, chef_name, stripe_customer_id, logo, onboarded')
         .eq('id', userId)
         .single();
 
@@ -68,6 +72,10 @@ window.Mise.subscription = (function () {
       if (status === 'active' || inTrial) {
         hidePaywall();
         _injectTrialBanner(status, trialEnd);
+        // Show welcome modal once on first login (profile.onboarded === false)
+        if (!profile.onboarded) {
+          setTimeout(_showWelcomeModal, 500);
+        }
         if (_pendingSuccess) {
           _pendingSuccess = false;
           setTimeout(function () {
@@ -261,6 +269,84 @@ window.Mise.subscription = (function () {
     header.insertAdjacentElement('afterend', banner);
   }
 
+  // ── _showWelcomeModal ──────────────────────────────────────────────────────
+  // Shows a first-run modal explaining the three core concepts of the app.
+  // Dismissed by clicking "Got it" which marks the profile as onboarded in Supabase.
+  function _showWelcomeModal() {
+    if (document.getElementById('mise-welcome')) return;
+
+    var html = '<div id="mise-welcome" style="position:fixed;inset:0;background:rgba(26,26,24,0.55);z-index:9900;display:flex;align-items:center;justify-content:center;padding:20px;-webkit-overflow-scrolling:touch">'
+      + '<div style="background:#f5f4f0;border-radius:20px;max-width:360px;width:100%;padding:32px 24px 28px;box-shadow:0 8px 40px rgba(0,0,0,0.18)">'
+
+      // Logo + heading
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'
+      +   '<svg width="40" height="40" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:10px">'
+      +     '<defs>'
+      +       '<linearGradient id="wbg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1B3A5C"/><stop offset="100%" stop-color="#1B5C72"/></linearGradient>'
+      +       '<linearGradient id="wsg" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient>'
+      +     '</defs>'
+      +     '<rect width="512" height="512" rx="112" fill="url(#wbg)"/>'
+      +     '<path d="M278 82 Q146 112 146 112 L146 295 Q146 388 278 438 Q410 388 410 295 L410 112 Z" fill="#1B5C72"/>'
+      +     '<path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#wsg)"/>'
+      +     '<polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      +   '</svg>'
+      +   '<div>'
+      +     '<div style="font-size:20px;font-weight:700;color:#1a1a18;letter-spacing:-0.3px">Welcome to Veriqo</div>'
+      +     '<div style="font-size:12px;color:#2D7A3A;margin-top:1px;font-weight:600">A few things to know before you start</div>'
+      +   '</div>'
+      + '</div>'
+
+      // Tips
+      + '<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">'
+
+      + '<div style="display:flex;gap:12px;align-items:flex-start">'
+      +   '<span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px">🗒️</span>'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:2px">Log only what happened</div>'
+      +     '<div style="font-size:13px;color:#666;line-height:1.5">You don\'t need to fill every section every day — just record what\'s relevant to today\'s service.</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div style="display:flex;gap:12px;align-items:flex-start">'
+      +   '<span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px">⏭️</span>'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:2px">Skip sections you don\'t use</div>'
+      +     '<div style="font-size:13px;color:#666;line-height:1.5">If cooling, allergens or pest control aren\'t relevant, leave them blank — it won\'t affect your other records.</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div style="display:flex;gap:12px;align-items:flex-start">'
+      +   '<span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px">⚙️</span>'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:2px">Customise everything in Settings</div>'
+      +     '<div style="font-size:13px;color:#666;line-height:1.5">Add your staff names, fridge units and suppliers so the dropdowns are ready when you need them.</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '</div>'
+
+      // Dismiss button
+      + '<button onclick="Mise.subscription._dismissWelcomeModal()" '
+      +   'style="width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Got it, let\'s start →</button>'
+
+      + '</div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+
+  // ── _dismissWelcomeModal ───────────────────────────────────────────────────
+  // Removes the modal and saves the onboarded flag to Supabase so it never shows again.
+  async function _dismissWelcomeModal() {
+    var el = document.getElementById('mise-welcome');
+    if (el) el.remove();
+    if (!_userId) return;
+    try {
+      await supabaseClient.from('profiles').update({ onboarded: true }).eq('id', _userId);
+    } catch (e) {
+      // Silent fail — the worst outcome is the modal shows once more next time
+    }
+  }
+
   // ── _featureRow (internal) ─────────────────────────────────────────────────
   function _featureRow(icon, text) {
     return '<div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f0f0ec">'
@@ -269,6 +355,6 @@ window.Mise.subscription = (function () {
       + '</div>';
   }
 
-  return { check, showPaywall, hidePaywall, startCheckout, _showRecordsOnly };
+  return { check, showPaywall, hidePaywall, startCheckout, _showRecordsOnly, _dismissWelcomeModal };
 
 })();
