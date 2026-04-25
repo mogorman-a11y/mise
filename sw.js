@@ -5,11 +5,11 @@
 //   Supabase API calls          → network-first (sync when online, skip offline)
 //   Everything else             → network with cache fallback
 
-const CACHE = 'veriqo-v3';
+const CACHE = 'veriqo-v4';
 
 const APP_SHELL = [
-  './',
-  './index.html',
+  './app.html',
+  './app',
   './supabase.js',
   './auth.js',
   './sync.js',
@@ -111,7 +111,7 @@ self.addEventListener('fetch', function (event) {
           return response;
         }).catch(function () {
           // Offline and not cached — return the cached index.html as fallback
-          return caches.match('/index.html');
+          return caches.match('/app.html');
         });
       })
     );
