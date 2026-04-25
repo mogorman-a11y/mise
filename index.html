@@ -449,6 +449,59 @@
     .footer-logo span { color: #85e092; }
     .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
     .footer-links a:hover { color: #fff; }
+
+    /* ── Five-star section ────────────────────────────────── */
+    .five-star {
+      background: var(--dark);
+      color: #fff;
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .star-display {
+      font-size: clamp(36px, 7vw, 54px);
+      letter-spacing: 4px;
+      margin-bottom: 20px;
+      line-height: 1;
+    }
+    .five-star .section-label { color: #fbbf24; }
+    .five-star .section-title { color: #fff; margin-left: auto; margin-right: auto; max-width: 700px; }
+    .five-star .section-sub { color: rgba(255,255,255,0.68); margin: 14px auto 52px; text-align: center; max-width: 620px; }
+    .fivestar-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .fivestar-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: left;
+    }
+    .fivestar-card-icon { font-size: 26px; margin-bottom: 14px; }
+    .fivestar-card h3 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .fivestar-card p { font-size: 13px; color: rgba(255,255,255,0.62); line-height: 1.65; }
+    .fivestar-card .pill {
+      display: inline-block;
+      background: #fbbf24;
+      color: #1a1a18;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 9px; border-radius: 20px;
+      margin-bottom: 10px;
+    }
+    .fivestar-cta {
+      margin-top: 48px;
+    }
+    .btn-gold {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fbbf24; color: #1a1a18;
+      padding: 14px 32px; border-radius: 10px;
+      font-size: 16px; font-weight: 700;
+      transition: background .15s, transform .1s;
+    }
+    .btn-gold:hover { background: #f59e0b; transform: translateY(-1px); }
   </style>
 </head>
 <body>
@@ -470,9 +523,9 @@
 
 <!-- ════════════════ HERO ════════════════ -->
 <section class="hero">
-  <div class="hero-badge">🇬🇧 Built for UK food businesses</div>
+  <div class="hero-badge">⭐ Helping UK kitchens achieve 5-star EHO ratings</div>
   <h1>HACCP records.<br><em>Done in seconds.</em></h1>
-  <p class="hero-sub">Replace paper temperature logs with a digital system that keeps you compliant, inspection-ready, and out of trouble — from any device, even offline.</p>
+  <p class="hero-sub">Replace paper temperature logs with a digital system built to satisfy EHO inspectors — keep you compliant, inspection-ready, and on track for a 5-star Food Hygiene Rating.</p>
   <div class="hero-ctas">
     <a href="https://getveriqo.co.uk/app" class="btn-hero">Start 14-day free trial →</a>
     <a href="#how-it-works" class="btn-ghost">See how it works</a>
@@ -489,6 +542,40 @@
     <div class="trust-item">📄 <span><strong>PDF reports</strong> ready for inspectors instantly</span></div>
   </div>
 </div>
+
+<!-- ════════════════ FIVE STAR ════════════════ -->
+<section class="five-star" id="five-star">
+  <div class="container">
+    <div class="star-display">⭐⭐⭐⭐⭐</div>
+    <div class="section-label">Food Hygiene Rating Scheme</div>
+    <div class="section-title">The fastest route to a<br>5-star Food Hygiene Rating</div>
+    <p class="section-sub">EHO inspectors score your kitchen on three areas. The largest — <strong style="color:#fff">Confidence in Management</strong> — is based almost entirely on your food safety records. Veriqo gives inspectors exactly what they need to award you full marks on every visit.</p>
+    <div class="fivestar-grid">
+      <div class="fivestar-card">
+        <div class="pill">Up to 30 points</div>
+        <div class="fivestar-card-icon">📋</div>
+        <h3>Confidence in Management</h3>
+        <p>The single biggest scoring category. Inspectors look for a documented, consistently used food safety system — precisely what Veriqo provides with every daily log.</p>
+      </div>
+      <div class="fivestar-card">
+        <div class="pill">Up to 25 points</div>
+        <div class="fivestar-card-icon">🌡️</div>
+        <h3>Food Hygiene &amp; Safety</h3>
+        <p>Cooking, cooling, storage and probe temperatures — all logged with timestamps and flagged if they breach UK FSA limits. Evidence of control, every single day.</p>
+      </div>
+      <div class="fivestar-card">
+        <div class="pill">Up to 25 points</div>
+        <div class="fivestar-card-icon">🧹</div>
+        <h3>Structure &amp; Cleanliness</h3>
+        <p>Cleaning schedules, pest records and cross-contamination checks — all captured in Veriqo. Show your inspector a complete, dated cleaning history at the touch of a button.</p>
+      </div>
+    </div>
+    <div class="fivestar-cta">
+      <a href="https://getveriqo.co.uk/app" class="btn-gold">Start your free trial — no card needed →</a>
+      <p style="margin-top:14px;font-size:13px;color:rgba(255,255,255,0.35)">14-day free trial &nbsp;·&nbsp; Cancel any time</p>
+    </div>
+  </div>
+</section>
 
 <!-- ════════════════ PROBLEM ════════════════ -->
 <section class="problem" id="problem">
