@@ -47,6 +47,36 @@ self.addEventListener('activate', function (event) {
   );
 });
 
+// ── Push notifications ─────────────────────────────────────────────────────
+// Displays a notification when the server sends a push message.
+self.addEventListener('push', function(event) {
+  var data = {};
+  try { data = event.data ? event.data.json() : {}; } catch(e) {}
+  var title = data.title || 'Veriqo';
+  var options = {
+    body:      data.body  || 'You have pending food safety checks.',
+    icon:      './icons/icon-192.png',
+    badge:     './icons/icon-192.png',
+    tag:       data.tag   || 'veriqo-reminder',
+    renotify:  false,
+    data:      { url: '/' }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Tapping the notification opens/focuses the app.
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
+      for (var i = 0; i < list.length; i++) {
+        if ('focus' in list[i]) return list[i].focus();
+      }
+      if (clients.openWindow) return clients.openWindow('/');
+    })
+  );
+});
+
 // ── Fetch ──────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', function (event) {
   var url = event.request.url;

@@ -831,9 +831,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
     </div>
 
+    <!-- SETUP BANNER — visible only when key dropdowns are empty -->
+    <div id="settings-setup-banner" style="display:none;background:#eaf7ec;border:1px solid #b3dfbe;border-radius:12px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;color:#1a1a18;margin-bottom:5px">👋 Start here</div>
+      <div style="font-size:13px;color:#555;line-height:1.55;margin-bottom:12px">Add your fridge units and staff names before logging. These fill the dropdowns in every form — without them, the forms won't work properly.</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="toggleSettingsSection('sec-fridge');setTimeout(function(){document.getElementById('sec-fridge').scrollIntoView({behavior:'smooth',block:'center'})},270)" style="flex:1;padding:9px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Add fridges →</button>
+        <button onclick="toggleSettingsSection('sec-staff');setTimeout(function(){document.getElementById('sec-staff').scrollIntoView({behavior:'smooth',block:'center'})},270)" style="flex:1;padding:9px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Add staff →</button>
+      </div>
+    </div>
+
     <!-- SUBSCRIPTION CARD — populated by renderSubscriptionCard() on tab open -->
     <div class="card" style="margin-bottom:16px" id="subscription-card">
       <div class="card-title">Subscription</div>
+      <div style="font-size:13px;color:#aaa;padding:4px 0">Loading…</div>
+    </div>
+
+    <!-- REMINDERS CARD — populated by renderRemindersCard() on tab open -->
+    <div class="card" style="margin-bottom:16px" id="reminders-card">
+      <div class="card-title">Daily reminders</div>
       <div style="font-size:13px;color:#aaa;padding:4px 0">Loading…</div>
     </div>
 
@@ -1263,6 +1279,122 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="toast" id="toast"></div>
 
 <script>
+// ── Push notifications & VAPID ────────────────────────────────────────────────
+var VAPID_PUBLIC_KEY = 'BB7GwVMBajkN6LOoUAKwVAayzXxUydfdwfuIMLjz9IeNZrgGeftg8Rn1CWc7WY3c-bC4lxD1PUfGmhs9Mlt3kPs';
+
+function urlBase64ToUint8Array(b64) {
+  var pad = '='.repeat((4 - b64.length % 4) % 4);
+  var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from(Array.from(raw).map(function(c) { return c.charCodeAt(0); }));
+}
+
+async function checkPushStatus() {
+  if (!('Notification' in window) || !('PushManager' in window) || !('serviceWorker' in navigator)) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    return sub ? 'enabled' : 'disabled';
+  } catch(e) { return 'disabled'; }
+}
+
+async function _savePushSub(userId, sub) {
+  var s = sub.toJSON();
+  try {
+    await supabaseClient.from('push_subscriptions').upsert(
+      { user_id: userId, endpoint: s.endpoint, subscription: s },
+      { onConflict: 'endpoint' }
+    );
+  } catch(e) { console.warn('[Veriqo] Push save error', e); }
+}
+
+async function enablePushReminders() {
+  var profile = window.Mise && window.Mise.profile;
+  var userId = window._pushUserId;
+  if (!userId) return 'error';
+  if (Notification.permission !== 'granted') {
+    var perm = await Notification.requestPermission();
+    if (perm !== 'granted') return 'denied';
+  }
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var existing = await reg.pushManager.getSubscription();
+    if (existing) { await _savePushSub(userId, existing); return 'enabled'; }
+    var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+    await _savePushSub(userId, sub);
+    return 'enabled';
+  } catch(e) { console.warn('[Veriqo] Push subscribe error', e); return 'error'; }
+}
+
+async function disablePushReminders() {
+  var userId = window._pushUserId;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      if (userId) await supabaseClient.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+      await sub.unsubscribe();
+    }
+    return 'disabled';
+  } catch(e) { return 'disabled'; }
+}
+
+async function toggleReminder(btn) {
+  btn.disabled = true;
+  var status = await checkPushStatus();
+  var newStatus;
+  if (status === 'enabled') {
+    newStatus = await disablePushReminders();
+    if (typeof toast === 'function') toast('Reminders turned off');
+  } else {
+    newStatus = await enablePushReminders();
+    if (newStatus === 'enabled' && typeof toast === 'function') toast('Reminders enabled ✓');
+    if (newStatus === 'denied' && typeof toast === 'function') toast('Notifications blocked — check your browser settings', false);
+  }
+  await renderRemindersCard();
+  btn.disabled = false;
+}
+
+async function renderRemindersCard() {
+  var card = document.getElementById('reminders-card');
+  if (!card) return;
+  var status = await checkPushStatus();
+
+  var inner;
+  if (status === 'unsupported') {
+    inner = '<div style="font-size:13px;color:#aaa;line-height:1.55;padding:4px 0">'
+      + 'Push reminders aren\'t available in this browser. '
+      + 'For best results, add Veriqo to your home screen on iOS 16.4+ or use Chrome on Android.'
+      + '</div>';
+  } else if (status === 'denied') {
+    inner = '<div style="font-size:13px;color:#555;line-height:1.55;padding:4px 0">'
+      + 'Notifications are blocked. To enable, open your browser settings and allow notifications for this site, then come back here.'
+      + '</div>';
+  } else {
+    var on = status === 'enabled';
+    inner = '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">'
+      + '<div>'
+      +   '<div style="font-size:14px;font-weight:600;color:#1a1a18">Daily reminders</div>'
+      +   '<div style="font-size:12px;color:#888;margin-top:2px">'
+      +     (on ? '9am morning check · 5:30pm closing check' : 'Get a nudge when daily checks are due')
+      +   '</div>'
+      + '</div>'
+      + '<button onclick="toggleReminder(this)" style="position:relative;width:44px;height:26px;border-radius:26px;border:none;cursor:pointer;flex-shrink:0;margin-left:12px;transition:background 0.2s;background:' + (on ? '#2D7A3A' : '#ccc') + '">'
+      +   '<span style="position:absolute;top:3px;left:' + (on ? '21px' : '3px') + ';width:20px;height:20px;background:#fff;border-radius:50%;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></span>'
+      + '</button>'
+      + '</div>';
+  }
+  card.innerHTML = '<div class="card-title">Daily reminders</div>' + inner;
+}
+
+function renderSetupBanner() {
+  var banner = document.getElementById('settings-setup-banner');
+  if (!banner) return;
+  var hasFridge = settings.fridgeUnits && settings.fridgeUnits.length > 0;
+  var hasStaff  = settings.staff && settings.staff.length > 0;
+  banner.style.display = (hasFridge && hasStaff) ? 'none' : 'block';
+}
+
 // ── Tooltip system ────────────────────────────────────────────────────────────
 var _activeTip = null;
 function showTooltip(btn, text) {
@@ -1296,6 +1428,7 @@ function showTooltip(btn, text) {
 
 var TODAY = new Date().toISOString().slice(0,10);
 var records = [];
+window._pushUserId = null; // set after sign-in, used by push functions
 
 var CHECKLISTS = { opening:[], closing:[], crosscontam:[] };
 
@@ -1558,7 +1691,7 @@ function showTab(name) {
   if(headerLogo) headerLogo.style.display=name==='home'?'none':'block';
   document.getElementById('header-title').textContent=name==='home'?'Veriqo':titles[name];
   if(name==='records')   renderRecords();
-  if(name==='settings')  { renderAllSettingsLists(); renderSubscriptionCard(); }
+  if(name==='settings')  { renderAllSettingsLists(); renderSubscriptionCard(); renderRemindersCard(); renderSetupBanner(); }
   if(name==='suppliers') renderSuppliersLog();
   if(name==='credentials') renderCredentials();
   if(name==='inspector') renderInspector();
