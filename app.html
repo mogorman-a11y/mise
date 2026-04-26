@@ -650,7 +650,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </div>
         <button class="btn-secondary" onclick="menuAddDish()" style="margin-top:0">+ Add dish</button>
       </div>
-      <button class="btn-primary" onclick="menuSave()">Save menu</button>
+      <button class="btn-primary" id="menu-save-btn" onclick="menuSave()">Save menu</button>
     </div>
     <div class="divider">Saved menus</div>
     <div id="menu-library-list"><div class="empty">No menus saved yet — create your first menu above.</div></div>
@@ -2589,6 +2589,7 @@ function renderAllergenChecks() {
 // --- MENU LIBRARY ---
 
 var _menuDishes = [];
+var _editingMenuId = null;
 
 function renderMenuDishAllergens() {
   var c = document.getElementById('menu-dish-allergens');
@@ -2651,14 +2652,43 @@ function menuSave() {
   if (!name) { toast('Enter a menu name first', false); return; }
   if (!_menuDishes.length) { toast('Add at least one dish', false); return; }
   if (!settings.savedMenus) settings.savedMenus = [];
-  settings.savedMenus.push({ id: Date.now(), name: name, dishes: _menuDishes.slice() });
+  if (_editingMenuId !== null) {
+    // Update existing menu
+    settings.savedMenus = settings.savedMenus.map(function(m) {
+      return m.id === _editingMenuId ? { id: m.id, name: name, dishes: _menuDishes.slice() } : m;
+    });
+    _editingMenuId = null;
+    var btn = document.getElementById('menu-save-btn');
+    if (btn) btn.textContent = 'Save menu';
+    toast('Menu updated');
+  } else {
+    settings.savedMenus.push({ id: Date.now(), name: name, dishes: _menuDishes.slice() });
+    toast('Menu "' + name + '" saved');
+  }
   saveSettings();
   document.getElementById('menu-name').value = '';
   _menuDishes = [];
   menuRenderDishes();
   renderMenuLibrary();
   custPopulateMenuSelect();
-  toast('Menu "' + name + '" saved');
+}
+
+function menuEdit(id) {
+  var menus = settings.savedMenus || [];
+  var menu = null;
+  menus.forEach(function(m) { if (m.id === id) menu = m; });
+  if (!menu) return;
+  // Load into form
+  document.getElementById('menu-name').value = menu.name;
+  _menuDishes = menu.dishes.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice() }; });
+  menuRenderDishes();
+  _editingMenuId = id;
+  var btn = document.getElementById('menu-save-btn');
+  if (btn) btn.textContent = 'Update menu';
+  // Scroll to top of menu form
+  var tab = document.getElementById('tab-job');
+  if (tab) tab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast('Editing "' + menu.name + '" — make changes and tap Update menu');
 }
 
 function menuDelete(id) {
@@ -2697,7 +2727,10 @@ function renderMenuLibrary() {
             + '</div>';
         }).join('')
       + '</div>'
+      + '<div style="display:flex;gap:6px;align-items:flex-start">'
+      + '<button onclick="menuEdit(' + m.id + ')" style="background:#f0f0ec;border:none;color:#555;font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;cursor:pointer;white-space:nowrap">Edit</button>'
       + '<button onclick="menuDelete(' + m.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
+      + '</div>'
       + '</div></div>';
   }).join('');
 }
@@ -2705,6 +2738,81 @@ function renderMenuLibrary() {
 // --- CUSTOMER JOBS ---
 
 var _custDishes = [];
+var _editingJobIdx = null;  // records[] index of job being edited
+
+function custEditJob(recIdx) {
+  var r = records[recIdx];
+  if (!r || r.type !== 'job') return;
+
+  // Fill customer details
+  var _v = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
+  _v('cust-name',       r.client);
+  _v('cust-address',    r.location);
+  _v('cust-phone',      r.phone);
+  _v('cust-email',      r.email);
+  _v('cust-event-date', r.eventDate);
+  _v('cust-time',       r.time);
+  _v('cust-covers',     r.covers);
+  _v('cust-notes',      r.notes);
+  _v('cust-diet-notes', r.dietNotes);
+
+  // Event type
+  var typeEl = document.getElementById('cust-type');
+  if (typeEl && r.jobType) {
+    for (var i = 0; i < typeEl.options.length; i++) {
+      if (typeEl.options[i].text === r.jobType) { typeEl.selectedIndex = i; break; }
+    }
+  }
+
+  // Allergens
+  ALLERGENS_14.forEach(function(a) {
+    var el = document.getElementById('cal-' + a.replace(/\s+/g,'_'));
+    if (el) el.checked = r.clientAllergens && r.clientAllergens.indexOf(a) !== -1;
+  });
+
+  // Dietary prefs
+  DIETARY_PREFS.forEach(function(p) {
+    var id = 'cdp-' + p.replace(/\s+/g,'_');
+    var el = document.getElementById(id);
+    if (el) { el.checked = r.dietaryPrefs && r.dietaryPrefs.indexOf(p) !== -1; custTogglePref(id); }
+  });
+
+  // Menu — try to match a saved menu by name, else use custom
+  var sel = document.getElementById('cust-menu-select');
+  var customSection = document.getElementById('cust-custom-section');
+  if (sel) {
+    var matchedId = null;
+    if (r.menuName && r.menuName !== 'Custom menu') {
+      var menus = settings.savedMenus || [];
+      menus.forEach(function(m) { if (m.name === r.menuName) matchedId = String(m.id); });
+    }
+    if (matchedId) {
+      sel.value = matchedId;
+      if (customSection) customSection.style.display = 'none';
+      var menus2 = settings.savedMenus || [];
+      menus2.forEach(function(m) { if (String(m.id) === matchedId) custRenderMenuPreview(m.dishes); });
+    } else if (r.menu && r.menu.length) {
+      sel.value = 'custom';
+      if (customSection) customSection.style.display = 'block';
+      _custDishes = r.menu.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice() }; });
+      custRenderCustomDishes();
+    } else {
+      sel.selectedIndex = 0;
+    }
+    custCheckConflicts();
+  }
+
+  // Remove the old record so it gets re-saved cleanly
+  records.splice(recIdx, 1);
+  saveToday();
+  renderSection_PC('customers');
+  updateDashboard();
+
+  // Scroll to top of customers form
+  var tab = document.getElementById('tab-customers');
+  if (tab) tab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  toast('Editing job for ' + r.client + ' — make changes and tap Save customer job');
+}
 
 function renderCustAllergens() {
   var c = document.getElementById('cust-allergens');
@@ -3132,6 +3240,7 @@ function renderSection_PC(type) {
   var recs = records.filter(function(r){ return r.type===renderType; });
   if (!recs.length) { c.innerHTML='<div class="empty">'+(type==='customers'?'No customer jobs logged yet today.':'No records logged yet today.')+'</div>'; return; }
   c.innerHTML = recs.slice().reverse().map(function(r) {
+    var recIdx = records.indexOf(r);
     var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.by||'';
     var extra = '';
     if (r.type==='allergen' && r.allergens && r.allergens.length) extra += '<div class="log-time">'+r.allergens.join(', ')+'</div>';
@@ -3143,6 +3252,7 @@ function renderSection_PC(type) {
       else if (r.menu && r.menu.length) extra += '<div class="log-time">🍽 '+r.menu.length+' dish'+(r.menu.length>1?'es':'')+'</div>';
       if (r.dietaryPrefs&&r.dietaryPrefs.length) extra += '<div class="log-time">'+r.dietaryPrefs.join(', ')+'</div>';
       if (r.conflicts && r.conflicts.length) extra += '<div style="margin-top:4px;font-size:12px;color:#A32D2D;font-weight:600">⚠️ Allergen conflicts: '+r.conflicts.join(', ')+'</div>';
+      extra += '<div style="margin-top:8px"><button onclick="custEditJob('+recIdx+')" style="padding:5px 12px;background:#f0f0ec;border:none;border-radius:7px;font-size:12px;font-weight:600;color:#555;cursor:pointer;font-family:inherit">Edit job</button></div>';
     }
     if (r.photo) extra += '<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>';
     return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
