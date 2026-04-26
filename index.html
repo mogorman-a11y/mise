@@ -1106,7 +1106,7 @@
     msg.className = 'lead-msg';
     msg.textContent = '';
     try {
-      var res = await fetch('https://yixrwyfodipfcbhjcszp.supabase.co/auth/v1/otp', {
+      var res = await fetch('https://yixrwyfodipfcbhjcszp.supabase.co/auth/v1/otp?redirect_to=' + encodeURIComponent('https://getveriqo.co.uk/app'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1114,8 +1114,7 @@
         },
         body: JSON.stringify({
           email: email,
-          create_user: true,
-          options: { emailRedirectTo: 'https://getveriqo.co.uk/app' }
+          create_user: true
         })
       });
       if (res.ok) {
