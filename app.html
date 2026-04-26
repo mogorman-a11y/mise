@@ -3100,6 +3100,40 @@ function renderMenuLibrary() {
 
 // --- CUSTOMER CRM ---
 
+var _expandedCustId = null;
+
+function custToggleEdit(id) {
+  _expandedCustId = (_expandedCustId === id) ? null : id;
+  renderCustomerCRM();
+  if (_expandedCustId) {
+    setTimeout(function() {
+      var el = document.getElementById('crm-edit-' + id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  }
+}
+
+function custSaveEdit(id) {
+  var nameEl = document.getElementById('crm-edit-name-' + id);
+  var name = nameEl ? (nameEl.value || '').trim() : '';
+  if (!name) { toast('Name is required', false); return; }
+  settings.savedCustomers = (settings.savedCustomers || []).map(function(c) {
+    if (c.id !== id) return c;
+    return {
+      id: c.id,
+      name: name,
+      address: (document.getElementById('crm-edit-address-' + id).value || '').trim(),
+      phone:   (document.getElementById('crm-edit-phone-'   + id).value || '').trim(),
+      email:   (document.getElementById('crm-edit-email-'   + id).value || '').trim(),
+      diet:    (document.getElementById('crm-edit-diet-'    + id).value || '').trim()
+    };
+  });
+  saveSettings();
+  _expandedCustId = null;
+  renderCustomerCRM();
+  toast(name + ' updated');
+}
+
 function renderCustomerCRM() {
   var c = document.getElementById('crm-list');
   if (!c) return;
@@ -3109,9 +3143,9 @@ function renderCustomerCRM() {
     return;
   }
   c.innerHTML = customers.map(function(cust) {
-    var mapsUrl = cust.address
-      ? 'https://maps.google.com/?q=' + encodeURIComponent(cust.address)
-      : '';
+    var isEditing = _expandedCustId === cust.id;
+    var mapsUrl = cust.address ? 'https://maps.google.com/?q=' + encodeURIComponent(cust.address) : '';
+
     var phoneHtml = cust.phone
       ? '<a href="tel:'+cust.phone.replace(/\s/g,'')+'" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a18;text-decoration:none;padding:8px 12px;background:#f5f4f0;border-radius:8px;margin:6px 6px 0 0">📞 '+cust.phone+'</a>'
       : '';
@@ -3121,17 +3155,36 @@ function renderCustomerCRM() {
     var mapsHtml = mapsUrl
       ? '<a href="'+mapsUrl+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a18;text-decoration:none;padding:8px 12px;background:#f5f4f0;border-radius:8px;margin:6px 6px 0 0">🗺 Directions</a>'
       : '';
-    return '<div class="card" style="margin-bottom:10px">'
+
+    var editForm = isEditing
+      ? '<div id="crm-edit-' + cust.id + '" style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e4de">'
+        + '<div class="form-group" style="margin-bottom:8px"><input id="crm-edit-name-'    + cust.id + '" class="form-input" type="text"  placeholder="Name"                   value="' + (cust.name    ||'').replace(/"/g,'&quot;') + '"></div>'
+        + '<div class="form-group" style="margin-bottom:8px"><input id="crm-edit-address-' + cust.id + '" class="form-input" type="text"  placeholder="Address"                value="' + (cust.address ||'').replace(/"/g,'&quot;') + '"></div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
+        +   '<input id="crm-edit-phone-' + cust.id + '" class="form-input" type="tel"   placeholder="Phone" value="' + (cust.phone||'').replace(/"/g,'&quot;') + '">'
+        +   '<input id="crm-edit-email-' + cust.id + '" class="form-input" type="email" placeholder="Email" value="' + (cust.email||'').replace(/"/g,'&quot;') + '">'
+        + '</div>'
+        + '<div class="form-group" style="margin-bottom:10px"><input id="crm-edit-diet-' + cust.id + '" class="form-input" type="text" placeholder="Dietary / allergen notes" value="' + (cust.diet||'').replace(/"/g,'&quot;') + '"></div>'
+        + '<div style="display:flex;gap:8px;align-items:center">'
+        + '<button onclick="custSaveEdit(' + cust.id + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
+        + '<button onclick="event.stopPropagation();custToggleEdit(' + cust.id + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
+        + '</div>'
+        + '</div>'
+      : '';
+
+    return '<div class="card" onclick="custToggleEdit(' + cust.id + ')" style="margin-bottom:10px;cursor:pointer;border-color:' + (isEditing ? '#1a1a18' : '#e5e4de') + '">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       +'<div style="flex:1">'
       +'<div style="font-size:15px;font-weight:700;color:#1a1a18">'+cust.name+'</div>'
       +(cust.address?'<div style="font-size:12px;color:#888;margin-top:3px">📍 '+cust.address+'</div>':'')
       +(cust.diet?'<div style="font-size:12px;color:#888;margin-top:3px">⚠️ '+cust.diet+'</div>':'')
-      +((phoneHtml||emailHtml||mapsHtml)?'<div style="display:flex;flex-wrap:wrap">'+phoneHtml+emailHtml+mapsHtml+'</div>':'')
-      +'<button onclick="crmLogJobFor('+cust.id+')" style="display:inline-block;margin-top:10px;padding:7px 14px;background:#1a1a18;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Log a job →</button>'
+      +(!isEditing && (phoneHtml||emailHtml||mapsHtml) ? '<div style="display:flex;flex-wrap:wrap">'+phoneHtml+emailHtml+mapsHtml+'</div>' : '')
+      +(!isEditing ? '<button onclick="event.stopPropagation();crmLogJobFor('+cust.id+')" style="display:inline-block;margin-top:10px;padding:7px 14px;background:#1a1a18;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Log a job →</button>' : '')
       +'</div>'
-      +'<button onclick="deleteCustomer('+cust.id+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
-      +'</div></div>';
+      +'<button onclick="event.stopPropagation();deleteCustomer('+cust.id+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      +'</div>'
+      + editForm
+      +'</div>';
   }).join('');
   // Sync the CRM select dropdown
   populateCustCRMSelect();
