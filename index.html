@@ -550,6 +550,36 @@
       color: var(--green);
     }
 
+    /* ── Hero email form ─────────────────────────────────── */
+    .hero-capture-form { max-width: 480px; margin: 28px auto 0; }
+    .hero-capture-row {
+      display: flex; gap: 8px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 12px;
+      padding: 6px 6px 6px 18px;
+      backdrop-filter: blur(4px);
+    }
+    .hero-capture-row input {
+      flex: 1; background: none; border: none; outline: none;
+      color: #fff; font-size: 15px; font-family: inherit;
+    }
+    .hero-capture-row input::placeholder { color: rgba(255,255,255,0.45); }
+    .hero-capture-row button {
+      background: var(--green); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 12px 20px; font-size: 15px;
+      font-weight: 700; font-family: inherit;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s;
+    }
+    .hero-capture-row button:hover { background: #238a30; }
+    .hero-capture-row button:disabled { opacity: .6; cursor: default; }
+    @media (max-width: 480px) {
+      .hero-capture-row { flex-direction: column; padding: 12px; gap: 8px; }
+      .hero-capture-row input { padding: 4px 0; }
+    }
+
     /* ── Email capture ────────────────────────────────────── */
     .email-capture {
       background: linear-gradient(155deg, #1a1a18 0%, #1f3828 60%, #2a4a30 100%);
@@ -692,9 +722,15 @@
   <div class="hero-badge">⭐ Helping UK kitchens achieve 5-star EHO ratings</div>
   <h1>HACCP records.<br><em>Done in seconds.</em></h1>
   <p class="hero-sub">Replace paper temperature logs with a digital system built to satisfy EHO inspectors — keep you compliant, inspection-ready, and on track for a 5-star Food Hygiene Rating.</p>
-  <div class="hero-ctas">
-    <a href="https://getveriqo.co.uk/app" class="btn-hero" onclick="posthog.capture('cta_clicked',{location:'hero'})">Start 14-day free trial →</a>
-    <a href="#how-it-works" class="btn-ghost">See how it works</a>
+  <form class="hero-capture-form" onsubmit="submitLead(event,'hero')" novalidate>
+    <div class="hero-capture-row">
+      <input type="email" id="hero-email" placeholder="Your work email address" required autocomplete="email">
+      <button type="submit" id="hero-btn">Get started free →</button>
+    </div>
+    <div id="hero-msg" class="lead-msg"></div>
+  </form>
+  <div class="hero-ctas" style="margin-top:14px">
+    <a href="#how-it-works" class="btn-ghost">See how it works ↓</a>
   </div>
   <p class="hero-note">No credit card required &nbsp;·&nbsp; Works offline &nbsp;·&nbsp; Cancel any time</p>
 </section>
@@ -1048,7 +1084,7 @@
     <div class="section-label">Get started free</div>
     <div class="section-title">Try Veriqo free for 14 days</div>
     <p>No credit card. No commitment. Better HACCP records from day one.</p>
-    <form class="capture-form" onsubmit="submitLead(event)">
+    <form class="capture-form" onsubmit="submitLead(event,'bottom')">
       <div class="capture-row">
         <input type="email" id="lead-email" placeholder="Your work email address" required autocomplete="email">
         <button type="submit" id="lead-btn">Start free trial →</button>
@@ -1096,11 +1132,15 @@
   }
 
   // ── Email capture — magic link ────────────────────
-  async function submitLead(e) {
+  // source: 'hero' (top form) or 'bottom' (capture section form)
+  async function submitLead(e, source) {
     e.preventDefault();
-    var btn = document.getElementById('lead-btn');
-    var msg = document.getElementById('lead-msg');
-    var email = document.getElementById('lead-email').value.trim();
+    var isHero = source === 'hero';
+    var btn   = document.getElementById(isHero ? 'hero-btn'   : 'lead-btn');
+    var msg   = document.getElementById(isHero ? 'hero-msg'   : 'lead-msg');
+    var input = document.getElementById(isHero ? 'hero-email' : 'lead-email');
+    var email = input.value.trim();
+    var defaultLabel = isHero ? 'Get started free →' : 'Start free trial →';
     btn.textContent = 'Sending…';
     btn.disabled = true;
     msg.className = 'lead-msg';
@@ -1112,23 +1152,20 @@
           'Content-Type': 'application/json',
           'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeHJ3eWZvZGlwZmNiaGpjc3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODg3MDIsImV4cCI6MjA5MTY2NDcwMn0.nXbnQ5iOxFEM5xWUP-p1a9hNyIlVe0xex0wQxZ9L4UE'
         },
-        body: JSON.stringify({
-          email: email,
-          create_user: true
-        })
+        body: JSON.stringify({ email: email, create_user: true })
       });
       if (res.ok) {
         msg.innerHTML = '✓ Check your inbox — we\'ve sent you a sign-in link.<br><span style="font-size:12px;opacity:.7">Click it to create your free account and start logging.</span>';
         msg.className = 'lead-msg success';
-        document.getElementById('lead-email').value = '';
+        input.value = '';
         btn.textContent = 'Sent ✓';
-        if (window.posthog) posthog.capture('magic_link_sent', { email: email });
+        if (window.posthog) posthog.capture('magic_link_sent', { email: email, source: source || 'bottom' });
         if (window.gtag) gtag('event', 'generate_lead', { value: 1 });
       } else { throw new Error(); }
     } catch(err) {
       msg.textContent = 'Something went wrong — try signing up directly at the app.';
       msg.className = 'lead-msg error';
-      btn.textContent = 'Start free trial →';
+      btn.textContent = defaultLabel;
       btn.disabled = false;
     }
   }
