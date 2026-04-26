@@ -4185,15 +4185,38 @@ function _renderCalDayDetail(dateStr, jobsByDate) {
     html += '<div style="font-size:13px;color:#aaa;margin-bottom:12px">No jobs booked for this day.</div>';
   }
 
-  // Unavailability toggle (only meaningful for non-past dates, but allow removal for past)
+  // Action buttons row
+  html += '<div style="display:flex;gap:8px;margin-top:8px">';
+
+  // Book a job — only show for future/today dates that aren't fully blocked
+  if (!isPast && !unavail) {
+    html += '<button onclick="calBookJob(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#1a1a18;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Book a job</button>';
+  } else if (!isPast && unavail) {
+    html += '<button onclick="calBookJob(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#1a1a18;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Book a job</button>';
+  }
+
+  // Unavailability toggle
   if (unavail) {
-    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="width:100%;padding:11px;background:#FFF0F0;color:#A32D2D;border:1px solid #f5c6c6;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px">✓ Marked unavailable — tap to remove</button>';
-  } else if (!isPast || jobs.length === 0) {
-    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="width:100%;padding:11px;background:#f5f4f0;color:#555;border:1px solid #e5e4de;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">Mark as unavailable</button>';
+    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#FFF0F0;color:#A32D2D;border:1px solid #f5c6c6;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✓ Unavailable — remove</button>';
+  } else if (!isPast) {
+    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#f5f4f0;color:#555;border:1px solid #e5e4de;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Mark unavailable</button>';
   }
 
   html += '</div>';
+  html += '</div>';
   detailEl.innerHTML = html;
+}
+
+function calBookJob(dateStr) {
+  showTab('customers');
+  setTimeout(function() {
+    // Pre-fill the event date in the job form
+    var dateEl = document.getElementById('cust-event-date');
+    if (dateEl) dateEl.value = dateStr;
+    // Scroll to the job form section
+    var divider = document.querySelector('#tab-customers .divider');
+    if (divider) divider.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 180);
 }
 
 // --- PC RENDER ---
