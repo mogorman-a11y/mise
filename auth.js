@@ -73,11 +73,9 @@ window.Mise.auth = (function () {
       +   '<button id="auth-submit" onclick="Mise.auth._submit()" '
       +     'style="width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px">Sign in</button>'
 
-      // Forgot password / magic link (sign-in only)
-      +   '<div id="auth-forgot-row" style="text-align:center;margin-top:11px;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap">'
-      +     '<button onclick="Mise.auth._forgot()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit;padding:0">Forgot password?</button>'
-      +     '<span style="color:#ccc;font-size:12px">&middot;</span>'
-      +     '<button onclick="Mise.auth._magicLink()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit;padding:0">Email me a sign-in link</button>'
+      // Forgot password (sign-in only)
+      +   '<div id="auth-forgot-row" style="text-align:center;margin-top:10px">'
+      +     '<button onclick="Mise.auth._forgot()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer;font-family:inherit;padding:0">Forgot password?</button>'
       +   '</div>'
 
       // Trial note (sign-up only)
@@ -90,6 +88,18 @@ window.Mise.auth = (function () {
       +   '<div style="flex:1;height:1px;background:#e5e4de"></div>'
       +   '<span style="font-size:12px;color:#aaa">or</span>'
       +   '<div style="flex:1;height:1px;background:#e5e4de"></div>'
+      + '</div>'
+
+      // Magic link button (sign-in only — prominent secondary option)
+      + '<div id="auth-magic-row">'
+      + '<button onclick="Mise.auth._magicLink()" id="auth-magic-btn" '
+      +   'style="width:100%;padding:13px;background:#fff;border:1px solid #e5e4de;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit;margin-bottom:10px">'
+      +   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2D7A3A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      +     '<rect x="2" y="4" width="20" height="16" rx="2"/>'
+      +     '<polyline points="2,4 12,13 22,4"/>'
+      +   '</svg>'
+      +   '<span>Email me a sign-in link</span>'
+      + '</button>'
       + '</div>'
 
       // Google button
@@ -196,6 +206,7 @@ window.Mise.auth = (function () {
     document.getElementById('auth-signup-fields').style.display = isSignup ? 'block' : 'none';
     document.getElementById('auth-forgot-row').style.display    = isSignup ? 'none'  : 'block';
     document.getElementById('auth-trial-note').style.display    = isSignup ? 'block' : 'none';
+    document.getElementById('auth-magic-row').style.display     = isSignup ? 'none'  : 'block';
     document.getElementById('auth-submit').textContent          = isSignup ? 'Create account' : 'Sign in';
 
     // Active tab styling
@@ -257,8 +268,8 @@ window.Mise.auth = (function () {
   async function _magicLink() {
     var email = (document.getElementById('auth-email').value || '').trim();
     if (!email) { _setMsg('Enter your email address first.', 'error'); return; }
-    var btn = document.getElementById('auth-submit');
-    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    var btn = document.getElementById('auth-magic-btn');
+    if (btn) { btn.disabled = true; btn.querySelector('span').textContent = 'Sending…'; }
     try {
       var res = await fetch(
         'https://yixrwyfodipfcbhjcszp.supabase.co/auth/v1/otp?redirect_to=' + encodeURIComponent(window.location.origin + '/app'),
@@ -273,10 +284,10 @@ window.Mise.auth = (function () {
       );
       if (!res.ok) throw new Error();
       _setMsg('Sign-in link sent — check your inbox.', 'ok');
+      if (btn) { btn.querySelector('span').textContent = 'Link sent ✓'; }
     } catch (e) {
       _setMsg('Could not send link. Check the email address and try again.', 'error');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = 'Sign in'; }
+      if (btn) { btn.disabled = false; btn.querySelector('span').textContent = 'Email me a sign-in link'; }
     }
   }
 
