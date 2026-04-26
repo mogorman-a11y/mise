@@ -738,7 +738,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="form-group">
         <label class="form-label">Add a menu to this job</label>
         <div style="display:flex;gap:8px;align-items:center">
-          <select class="form-input" id="cust-menu-select" style="flex:1;min-width:0;width:auto;margin:0">
+          <select class="form-input" id="cust-menu-select" style="flex:1 1 0;min-width:0;width:0;margin:0">
             <option value="">— Choose a menu —</option>
             <option value="custom">Custom dishes (build below)</option>
           </select>
@@ -2792,6 +2792,39 @@ function renderSavedDishChips(containerId, addFnName) {
     + '</div>';
 }
 
+var _expandedDishId = null;
+
+function dishToggleEdit(id) {
+  _expandedDishId = (_expandedDishId === id) ? null : id;
+  renderDishLibrary();
+  // Scroll the expanded item into view
+  if (_expandedDishId) {
+    setTimeout(function() {
+      var el = document.getElementById('dish-edit-' + id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  }
+}
+
+function dishSaveEdit(id) {
+  var nameEl = document.getElementById('dish-edit-name-' + id);
+  var name = nameEl ? (nameEl.value || '').trim() : '';
+  if (!name) { toast('Dish name required', false); return; }
+  var allergens = ALLERGENS_14.filter(function(a) {
+    var el = document.getElementById('dish-edit-al-' + id + '-' + a.replace(/\s+/g,'_'));
+    return el && el.checked;
+  });
+  settings.savedDishes = (settings.savedDishes || []).map(function(d) {
+    return d.id === id ? { id: d.id, dish: name, allergens: allergens } : d;
+  });
+  saveSettings();
+  _expandedDishId = null;
+  renderDishLibrary();
+  renderSavedDishChips('menu-dish-chips', 'menuAddFromLibrary');
+  renderSavedDishChips('cust-dish-chips', 'custAddFromLibrary');
+  toast('"' + name + '" updated');
+}
+
 function renderDishLibrary() {
   var c = document.getElementById('dish-library-list');
   if (!c) return;
@@ -2801,14 +2834,35 @@ function renderDishLibrary() {
     return;
   }
   c.innerHTML = dishes.map(function(d) {
-    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:#fff;border:1px solid #e5e4de;border-radius:10px;margin-bottom:8px">'
+    var isEditing = _expandedDishId === d.id;
+    var editForm = isEditing
+      ? '<div id="dish-edit-' + d.id + '" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e4de">'
+        + '<input id="dish-edit-name-' + d.id + '" class="form-input" type="text" value="' + d.dish.replace(/"/g,'&quot;') + '" style="margin-bottom:8px">'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
+        + ALLERGENS_14.map(function(a) {
+            var eid = 'dish-edit-al-' + d.id + '-' + a.replace(/\s+/g,'_');
+            var chk = d.allergens.indexOf(a) !== -1 ? ' checked' : '';
+            return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:2px 0;cursor:pointer">'
+              + '<input type="checkbox" id="' + eid + '"' + chk + ' style="width:14px;height:14px;accent-color:#1a1a18"> ' + a + '</label>';
+          }).join('')
+        + '</div>'
+        + '<div style="display:flex;gap:8px;align-items:center">'
+        + '<button onclick="dishSaveEdit(' + d.id + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
+        + '<button onclick="event.stopPropagation();dishToggleEdit(' + d.id + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
+        + '</div>'
+        + '</div>'
+      : '';
+    return '<div onclick="dishToggleEdit(' + d.id + ')" style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1a1a18':'#e5e4de')+';border-radius:10px;margin-bottom:8px;cursor:pointer">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       + '<div style="flex:1">'
       + '<div style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + '</div>'
       + (d.allergens.length
           ? '<div style="font-size:12px;color:#888;margin-top:2px">' + d.allergens.join(', ') + '</div>'
           : '<div style="font-size:12px;color:#aaa;margin-top:2px">No allergens</div>')
       + '</div>'
-      + '<button onclick="dishDelete(' + d.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      + '<button onclick="event.stopPropagation();dishDelete(' + d.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      + '</div>'
+      + editForm
       + '</div>';
   }).join('');
 }
@@ -2828,7 +2882,7 @@ function renderMenuLibrary() {
         if (allergenSet.indexOf(a) === -1) allergenSet.push(a);
       });
     });
-    return '<div class="card" style="margin-bottom:10px">'
+    return '<div class="card" onclick="menuEdit(' + m.id + ')" style="margin-bottom:10px;cursor:pointer">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       + '<div style="flex:1">'
       + '<div class="card-title" style="margin-bottom:4px">' + m.name + '</div>'
@@ -2840,10 +2894,7 @@ function renderMenuLibrary() {
             + '</div>';
         }).join('')
       + '</div>'
-      + '<div style="display:flex;gap:6px;align-items:flex-start">'
-      + '<button onclick="menuEdit(' + m.id + ')" style="background:#f0f0ec;border:none;color:#555;font-size:12px;font-weight:600;padding:5px 10px;border-radius:7px;cursor:pointer;white-space:nowrap">Edit</button>'
-      + '<button onclick="menuDelete(' + m.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
-      + '</div>'
+      + '<button onclick="event.stopPropagation();menuDelete(' + m.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
       + '</div></div>';
   }).join('');
 }
@@ -3453,10 +3504,10 @@ function renderSection_PC(type) {
       }
       if (r.dietaryPrefs&&r.dietaryPrefs.length) extra += '<div class="log-time">'+r.dietaryPrefs.join(', ')+'</div>';
       if (r.conflicts && r.conflicts.length) extra += '<div style="margin-top:4px;font-size:12px;color:#A32D2D;font-weight:600">⚠️ Allergen conflicts: '+r.conflicts.join(', ')+'</div>';
-      extra += '<div style="margin-top:8px"><button onclick="custEditJob('+recIdx+')" style="padding:5px 12px;background:#f0f0ec;border:none;border-radius:7px;font-size:12px;font-weight:600;color:#555;cursor:pointer;font-family:inherit">Edit job</button></div>';
     }
-    if (r.photo) extra += '<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>';
-    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
+    if (r.photo) extra += '<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="event.stopPropagation();viewPhoto(this.src)"/></div>';
+    var rowClick = (r.type === 'job') ? ' onclick="custEditJob('+recIdx+')" style="align-items:flex-start;cursor:pointer"' : ' style="align-items:flex-start"';
+    return '<div class="log-row"' + rowClick + '><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
   }).join('');
 }
 
