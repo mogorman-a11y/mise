@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- ── Magic link catch — forward Supabase tokens to /app ─────────── -->
+  <script>
+    (function(){
+      var h = window.location.hash, s = window.location.search;
+      if (h.includes('access_token') || s.includes('access_token') ||
+          h.includes('type=magiclink') || s.includes('type=magiclink') ||
+          h.includes('type=signup') || s.includes('type=signup')) {
+        window.location.replace('/app' + s + h);
+      }
+    })();
+  </script>
+
   <!-- ── SEO ──────────────────────────────────────────────────────── -->
   <title>Veriqo — Digital HACCP Records for Professional Kitchens</title>
   <meta name="description" content="Replace paper temperature logs with Veriqo — the HACCP app built for UK professional kitchens. Log fridge temps, cleaning records and food safety checks in seconds. Start free 14-day trial.">

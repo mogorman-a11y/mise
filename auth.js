@@ -115,7 +115,7 @@ window.Mise.auth = (function () {
     // clicks their email confirmation link — detect it so we can show the
     // "Email confirmed" screen before dropping them into the app.
     var _urlFragment = (window.location.hash || '') + (window.location.search || '');
-    var _isEmailConfirm = _urlFragment.includes('type=signup') || _urlFragment.includes('type=email_confirmation');
+    var _isEmailConfirm = _urlFragment.includes('type=signup') || _urlFragment.includes('type=email_confirmation') || _urlFragment.includes('type=magiclink');
 
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
