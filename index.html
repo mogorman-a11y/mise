@@ -1083,31 +1083,36 @@
     if (!wasOpen) item.classList.add('open');
   }
 
-  // ── Email capture form ────────────────────────────
+  // ── Email capture — magic link ────────────────────
   async function submitLead(e) {
     e.preventDefault();
     var btn = document.getElementById('lead-btn');
     var msg = document.getElementById('lead-msg');
     var email = document.getElementById('lead-email').value.trim();
-    btn.textContent = 'Saving…';
+    btn.textContent = 'Sending…';
     btn.disabled = true;
     msg.className = 'lead-msg';
     msg.textContent = '';
     try {
-      var res = await fetch('https://yixrwyfodipfcbhjcszp.supabase.co/functions/v1/capture-lead', {
+      var res = await fetch('https://yixrwyfodipfcbhjcszp.supabase.co/auth/v1/otp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeHJ3eWZvZGlwZmNiaGpjc3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODg3MDIsImV4cCI6MjA5MTY2NDcwMn0.nXbnQ5iOxFEM5xWUP-p1a9hNyIlVe0xex0wQxZ9L4UE'
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeHJ3eWZvZGlwZmNiaGpjc3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODg3MDIsImV4cCI6MjA5MTY2NDcwMn0.nXbnQ5iOxFEM5xWUP-p1a9hNyIlVe0xex0wQxZ9L4UE'
         },
-        body: JSON.stringify({ email: email, source: 'landing_page' })
+        body: JSON.stringify({
+          email: email,
+          create_user: true,
+          options: { emailRedirectTo: 'https://getveriqo.co.uk/app' }
+        })
       });
       if (res.ok) {
-        msg.textContent = '✓ You\'re in! Redirecting to your free trial…';
+        msg.innerHTML = '✓ Check your inbox — we\'ve sent you a sign-in link.<br><span style="font-size:12px;opacity:.7">Click it to create your free account and start logging.</span>';
         msg.className = 'lead-msg success';
-        if (window.posthog) posthog.capture('lead_captured', { email: email });
+        document.getElementById('lead-email').value = '';
+        btn.textContent = 'Sent ✓';
+        if (window.posthog) posthog.capture('magic_link_sent', { email: email });
         if (window.gtag) gtag('event', 'generate_lead', { value: 1 });
-        setTimeout(function() { window.location.href = 'https://getveriqo.co.uk/app'; }, 1800);
       } else { throw new Error(); }
     } catch(err) {
       msg.textContent = 'Something went wrong — try signing up directly at the app.';
