@@ -324,7 +324,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <div class="tile-badge none" id="badge-customers">0</div>
           <div class="tile-icon">👥</div>
           <div class="tile-label">Customers</div>
-          <div class="tile-sub" id="sub-customers">Jobs &amp; allergen check</div>
+          <div class="tile-sub" id="sub-customers">Address book &amp; jobs</div>
         </div>
         <div class="tile" onclick="showTab('kitchenassess')">
           <div class="tile-badge none" id="badge-kitchenassess"></div>
@@ -678,7 +678,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
     <!-- ── CRM section ─────────────────────────────────────── -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:16px;font-weight:700;color:#1a1a18">Customer contacts</div>
+      <div style="font-size:16px;font-weight:700;color:#1a1a18">Address book</div>
       <button onclick="crmToggleAddForm()" class="btn-secondary" style="width:auto;margin:0;padding:7px 14px;font-size:13px">+ Add customer</button>
     </div>
     <!-- Add customer form -->
@@ -1898,7 +1898,7 @@ function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
-var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Customer jobs',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
+var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Clients',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
 
 var _homeScrollPos = 0;
 
@@ -3105,7 +3105,7 @@ function renderCustomerCRM() {
   if (!c) return;
   var customers = settings.savedCustomers || [];
   if (!customers.length) {
-    c.innerHTML = '<div class="empty" style="margin-bottom:8px">No saved customers yet — tap "+ Add customer" to build your client book.</div>';
+    c.innerHTML = '<div class="empty" style="margin-bottom:8px">Address book is empty — tap "+ Add customer" to save your first client. Past clients appear automatically in the job &amp; transport dropdowns.</div>';
     return;
   }
   c.innerHTML = customers.map(function(cust) {
@@ -3175,14 +3175,67 @@ function deleteCustomer(id) {
   if (cust) toast(cust.name + ' removed');
 }
 
+// ── Central address book ────────────────────────────────────────────────────
+// Returns a deduplicated list of all known clients, merging:
+//   1. settings.savedCustomers  (CRM — full data, takes precedence)
+//   2. All historical job records from every stored day
+// Each entry: { key, name, address, phone, email, diet, fromCRM }
+// 'key' is used as the <option value> — 'crm_ID' or 'hist_NAME'
+function getAddressBook() {
+  var book = [];
+  var seen = {};  // normalised name → true
+
+  // 1. CRM contacts first — they have full data
+  (settings.savedCustomers || []).forEach(function(c) {
+    var norm = c.name.trim().toLowerCase();
+    seen[norm] = true;
+    book.push({ key: 'crm_' + c.id, name: c.name, address: c.address || '', phone: c.phone || '', email: c.email || '', diet: c.diet || '', fromCRM: true });
+  });
+
+  // 2. Harvest from today's in-memory records
+  records.forEach(function(r) {
+    if (r.type !== 'job' || !r.client) return;
+    var norm = r.client.trim().toLowerCase();
+    if (seen[norm]) return;
+    seen[norm] = true;
+    book.push({ key: 'hist_' + norm, name: r.client, address: r.location || '', phone: r.phone || '', email: r.email || '', diet: '', fromCRM: false });
+  });
+
+  // 3. Harvest from all historical days in localStorage
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('haccp_') !== 0) continue;
+      if (k === 'haccp_settings' || k === 'haccp_suppliers' || k === 'haccp_credentials') continue;
+      var dayRecs = getDayRecords(k.replace('haccp_', ''));
+      dayRecs.forEach(function(r) {
+        if (r.type !== 'job' || !r.client) return;
+        var norm = r.client.trim().toLowerCase();
+        if (seen[norm]) return;
+        seen[norm] = true;
+        book.push({ key: 'hist_' + norm, name: r.client, address: r.location || '', phone: r.phone || '', email: r.email || '', diet: '', fromCRM: false });
+      });
+    }
+  } catch(e) {}
+
+  // Sort alphabetically
+  book.sort(function(a, b) { return a.name.localeCompare(b.name); });
+  return book;
+}
+
+// Looks up an entry from the address book by key
+function addressBookLookup(key) {
+  return getAddressBook().find(function(e) { return e.key === key; }) || null;
+}
+
 function populateCustCRMSelect() {
   var sel = document.getElementById('cust-crm-select');
   if (!sel) return;
   while (sel.options.length > 2) sel.remove(2);
-  (settings.savedCustomers || []).forEach(function(cust) {
+  getAddressBook().forEach(function(c) {
     var opt = document.createElement('option');
-    opt.value = String(cust.id);
-    opt.textContent = cust.name;
+    opt.value = c.key;
+    opt.textContent = c.name + (c.fromCRM ? '' : ' (past client)');
     sel.appendChild(opt);
   });
 }
@@ -3191,10 +3244,12 @@ function populateTransportCustomerSelect() {
   var sel = document.getElementById('tr-customer-select');
   if (!sel) return;
   while (sel.options.length > 1) sel.remove(1);
-  (settings.savedCustomers || []).forEach(function(cust) {
+  getAddressBook().forEach(function(c) {
     var opt = document.createElement('option');
-    opt.value = String(cust.id);
-    opt.textContent = cust.name + (cust.address ? ' — ' + cust.address.split(',')[0] : '');
+    opt.value = c.key;
+    var label = c.name;
+    if (c.address) label += ' — ' + c.address.split(',')[0];
+    opt.textContent = label;
     sel.appendChild(opt);
   });
 }
@@ -3210,59 +3265,49 @@ function custFillFromCRM() {
     if (preview) preview.style.display = 'none';
     if (manualFields) manualFields.style.display = 'block';
     if (idField) idField.value = '';
-    // Clear the name/address/phone/email fields for manual entry
     ['cust-name','cust-address','cust-phone','cust-email'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
     return;
   }
-  var cust = (settings.savedCustomers || []).find(function(c){ return String(c.id) === val; });
-  if (!cust) return;
-  // Fill hidden fields for logCustomerJob() to read
+  var entry = addressBookLookup(val);
+  if (!entry) return;
+  // Populate the hidden input fields that logCustomerJob() reads
   var _v = function(id,v){ var el=document.getElementById(id); if(el) el.value=v||''; };
-  _v('cust-name',    cust.name);
-  _v('cust-address', cust.address);
-  _v('cust-phone',   cust.phone);
-  _v('cust-email',   cust.email);
-  if (idField) idField.value = String(cust.id);
+  _v('cust-name',    entry.name);
+  _v('cust-address', entry.address);
+  _v('cust-phone',   entry.phone);
+  _v('cust-email',   entry.email);
+  if (idField) idField.value = val;
   // Show preview card
   if (preview) {
     preview.style.display = 'block';
-    document.getElementById('cust-crm-preview-name').textContent = cust.name;
+    document.getElementById('cust-crm-preview-name').textContent = entry.name;
     var info = [];
-    if (cust.address) info.push('📍 ' + cust.address);
-    if (cust.diet)    info.push('⚠️ ' + cust.diet);
+    if (entry.address) info.push('📍 ' + entry.address);
+    if (entry.diet)    info.push('⚠️ ' + entry.diet);
+    if (!entry.fromCRM) info.push('<span style="font-size:11px;color:#aaa">Past client — not yet in address book</span>');
     document.getElementById('cust-crm-preview-info').innerHTML = info.join('<br>');
   }
   if (manualFields) manualFields.style.display = 'none';
 }
 
-function crmLogJobFor(id) {
-  var cust = (settings.savedCustomers || []).find(function(c){ return c.id === id; });
-  if (!cust) return;
-  // Select in dropdown
+function crmLogJobFor(custId) {
+  // Find the CRM entry and select it in the job form dropdown
+  var key = 'crm_' + custId;
   var sel = document.getElementById('cust-crm-select');
-  if (sel) {
-    sel.value = String(cust.id);
-    custFillFromCRM();
-  }
-  // Scroll to the job form
-  var jobForm = document.querySelector('#tab-customers .divider');
-  if (jobForm) jobForm.scrollIntoView({ behavior:'smooth', block:'start' });
-  setTimeout(function(){
-    var dateEl = document.getElementById('cust-event-date');
-    if (dateEl) dateEl.focus();
-  }, 400);
+  if (sel) { sel.value = key; custFillFromCRM(); }
+  // Scroll down to the job form
+  var divider = document.querySelector('#tab-customers .divider');
+  if (divider) divider.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(function(){ var d = document.getElementById('cust-event-date'); if(d) d.focus(); }, 420);
 }
 
 function trFillFromCustomer() {
   var sel = document.getElementById('tr-customer-select');
   if (!sel || !sel.value) return;
-  var cust = (settings.savedCustomers || []).find(function(c){ return String(c.id) === sel.value; });
-  if (!cust) return;
+  var entry = addressBookLookup(sel.value);
+  if (!entry) return;
   var dest = document.getElementById('tr-destination');
-  if (dest) {
-    var label = cust.name + (cust.address ? ' — ' + cust.address.split(',')[0] : '');
-    dest.value = label;
-  }
+  if (dest) dest.value = entry.name + (entry.address ? ' — ' + entry.address.split(',')[0] : '');
 }
 
 // --- CUSTOMER JOBS ---
@@ -3856,7 +3901,7 @@ function renderSection_PC(type) {
   var ids = {job:'job-log', customers:'job-log', kitchenassess:'kitchenassess-log', allergen:'allergen-log', transport:'transport-log', mobileset:'mobileset-log'};
   var c = document.getElementById(ids[type]); if (!c) return;
   var recs = records.filter(function(r){ return r.type===renderType; });
-  if (!recs.length) { c.innerHTML='<div class="empty">'+(type==='customers'?'No customer jobs logged yet today.':'No records logged yet today.')+'</div>'; return; }
+  if (!recs.length) { c.innerHTML='<div class="empty">'+(type==='customers'?'No jobs logged yet today — select a client above to get started.':'No records logged yet today.')+'</div>'; return; }
   c.innerHTML = recs.slice().reverse().map(function(r) {
     var recIdx = records.indexOf(r);
     var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.by||'';
