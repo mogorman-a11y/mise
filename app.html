@@ -316,21 +316,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="tile-grid">
         <div class="tile" onclick="showTab('job')">
           <div class="tile-badge none" id="badge-job">0</div>
-          <div class="tile-icon">📍</div>
-          <div class="tile-label">Job &amp; location</div>
-          <div class="tile-sub" id="sub-job">Log today's job</div>
+          <div class="tile-icon">🍽</div>
+          <div class="tile-label">Menus</div>
+          <div class="tile-sub" id="sub-job">Build &amp; save menus</div>
+        </div>
+        <div class="tile" onclick="showTab('customers')">
+          <div class="tile-badge none" id="badge-customers">0</div>
+          <div class="tile-icon">👥</div>
+          <div class="tile-label">Customers</div>
+          <div class="tile-sub" id="sub-customers">Jobs &amp; allergen check</div>
         </div>
         <div class="tile" onclick="showTab('kitchenassess')">
           <div class="tile-badge none" id="badge-kitchenassess"></div>
           <div class="tile-icon">🏠</div>
           <div class="tile-label">Kitchen assessment</div>
           <div class="tile-sub" id="sub-kitchenassess">Pre-job check</div>
-        </div>
-        <div class="tile" onclick="showTab('allergen')">
-          <div class="tile-badge none" id="badge-allergen">0</div>
-          <div class="tile-icon">⚠️</div>
-          <div class="tile-label">Allergen log</div>
-          <div class="tile-sub" id="sub-allergen">Menu &amp; client sign-off</div>
         </div>
         <div class="tile" onclick="showTab('transport')">
           <div class="tile-badge none" id="badge-transport">0</div>
@@ -629,26 +629,60 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div id="suppliers-log"><div class="empty">No approved suppliers yet — add your regulars so they appear in the delivery dropdown.</div></div>
   </div>
 
-  <!-- JOB & LOCATION -->
+  <!-- MENUS (menu library) -->
   <div id="tab-job" class="section">
+    <div class="card">
+      <div class="card-title">Create a menu</div>
+      <div class="info-box">Save menus here with allergen info for each dish. Apply them to customer jobs for instant allergen conflict checking.</div>
+      <div class="form-group"><label class="form-label">Menu name</label>
+        <input class="form-input" type="text" id="menu-name" placeholder="e.g. Summer 3-course dinner">
+      </div>
+      <!-- Dish builder -->
+      <div style="background:#f8f7f3;border-radius:10px;padding:14px;border:1px solid #e5e4de;margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:10px">Dishes</div>
+        <div id="menu-dishes-list" style="margin-bottom:10px"></div>
+        <div class="form-group" style="margin-bottom:8px">
+          <input class="form-input" type="text" id="menu-dish-name" placeholder="Dish name e.g. Rack of lamb">
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label class="form-label">Allergens in this dish</label>
+          <div id="menu-dish-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div>
+        </div>
+        <button class="btn-secondary" onclick="menuAddDish()" style="margin-top:0">+ Add dish</button>
+      </div>
+      <button class="btn-primary" onclick="menuSave()">Save menu</button>
+    </div>
+    <div class="divider">Saved menus</div>
+    <div id="menu-library-list"><div class="empty">No menus saved yet — create your first menu above.</div></div>
+  </div>
 
-    <!-- Segment nav header -->
-    <div class="card" style="padding-bottom:0;border-radius:12px 12px 0 0;margin-bottom:0">
-      <div class="card-title">Job planner</div>
-      <div style="display:flex;margin:10px -18px 0;border-top:1px solid #f0f0ec">
-        <button id="jseg-btn-details"  onclick="jobSeg('details')"  class="jseg-btn jseg-active">Details</button>
-        <button id="jseg-btn-client"   onclick="jobSeg('client')"   class="jseg-btn">Client</button>
-        <button id="jseg-btn-menu"     onclick="jobSeg('menu')"     class="jseg-btn">Menu</button>
-        <button id="jseg-btn-finance"  onclick="jobSeg('finance')"  class="jseg-btn jseg-last">Finance</button>
+  <!-- CUSTOMERS -->
+  <div id="tab-customers" class="section">
+
+    <!-- Customer details -->
+    <div class="card">
+      <div class="card-title">Customer details</div>
+      <div class="form-group"><label class="form-label">Customer / client name</label>
+        <input class="form-input" type="text" id="cust-name" placeholder="e.g. Henderson Family">
+      </div>
+      <div class="form-group"><label class="form-label">Address</label>
+        <input class="form-input" type="text" id="cust-address" placeholder="e.g. 12 Oak Lane, Oxford, OX1 1AA">
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Phone</label>
+          <input class="form-input" type="tel" id="cust-phone" placeholder="07700 123456">
+        </div>
+        <div class="form-group"><label class="form-label">Email</label>
+          <input class="form-input" type="email" id="cust-email" placeholder="client@email.com">
+        </div>
       </div>
     </div>
 
-    <!-- DETAILS -->
-    <div id="jseg-details" class="card" style="margin-top:0;border-top:none;border-radius:0 0 12px 12px">
-      <div class="form-group"><label class="form-label">Client name</label><input class="form-input" type="text" id="job-client" placeholder="e.g. The Henderson Family"></div>
-      <div class="form-group"><label class="form-label">Location / address</label><input class="form-input" type="text" id="job-location" placeholder="e.g. 12 Oak Lane, Oxford"></div>
+    <!-- Event details -->
+    <div class="card">
+      <div class="card-title">Event details</div>
       <div class="form-group"><label class="form-label">Type of event</label>
-        <select class="form-input" id="job-type">
+        <select class="form-input" id="cust-type">
           <option>Private dinner party</option>
           <option>Weekly meal prep</option>
           <option>Celebration / event</option>
@@ -658,71 +692,71 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         </select>
       </div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">No. of covers</label><input class="form-input" type="number" id="job-covers" placeholder="e.g. 8" min="1"></div>
-        <div class="form-group"><label class="form-label">Service time</label><input class="form-input" type="time" id="job-time"></div>
+        <div class="form-group"><label class="form-label">Event date</label>
+          <input class="form-input" type="date" id="cust-event-date">
+        </div>
+        <div class="form-group"><label class="form-label">Service time</label>
+          <input class="form-input" type="time" id="cust-time">
+        </div>
       </div>
-      <div class="form-group"><label class="form-label">Event date</label><input class="form-input" type="date" id="job-event-date"></div>
-      <div class="form-group"><label class="form-label">Notes</label><input class="form-input" type="text" id="job-notes" placeholder="Any specific requirements?"></div>
-      <button class="btn-secondary" onclick="jobSeg('client')" style="margin-top:4px">Next: Client profile →</button>
+      <div class="form-group"><label class="form-label">Covers</label>
+        <input class="form-input" type="number" id="cust-covers" placeholder="e.g. 8" min="1">
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label>
+        <input class="form-input" type="text" id="cust-notes" placeholder="Any other requirements?">
+      </div>
     </div>
 
-    <!-- CLIENT DIETARY PROFILE -->
-    <div id="jseg-client" class="card" style="display:none;margin-top:0;border-radius:12px">
-      <div class="card-title">Client dietary profile</div>
-      <div class="info-box">Select any allergens the guests must avoid. The app will flag any menu dishes that contain these allergens.</div>
+    <!-- Dietary requirements -->
+    <div class="card">
+      <div class="card-title">Dietary requirements</div>
+      <div class="info-box">Select allergens the guests must avoid. Any menu dish containing these will be flagged red automatically.</div>
       <div class="form-group">
         <label class="form-label">Allergens to avoid</label>
-        <div id="job-client-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"></div>
+        <div id="cust-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Dietary preferences</label>
-        <div id="job-dietary-prefs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+        <div id="cust-dietary-prefs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
       </div>
-      <div class="form-group"><label class="form-label">Additional notes</label><input class="form-input" type="text" id="job-client-notes" placeholder="e.g. One guest is diabetic, host avoids shellfish"></div>
-      <button class="btn-secondary" onclick="jobSeg('menu')" style="margin-top:4px">Next: Build menu →</button>
+      <div class="form-group"><label class="form-label">Additional notes</label>
+        <input class="form-input" type="text" id="cust-diet-notes" placeholder="e.g. One guest is diabetic">
+      </div>
     </div>
 
-    <!-- MENU -->
-    <div id="jseg-menu" class="card" style="display:none;margin-top:0;border-radius:12px">
+    <!-- Menu selection -->
+    <div class="card">
       <div class="card-title">Menu</div>
-      <div id="job-conflict-banner" style="display:none;background:#fde8e8;border:1px solid #f5c6c6;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#A32D2D;line-height:1.5"></div>
-      <div id="job-dishes-list" style="margin-bottom:12px"></div>
-      <!-- Add dish form -->
-      <div style="background:#f8f7f3;border-radius:10px;padding:14px;border:1px solid #e5e4de">
-        <div class="card-title" style="margin-bottom:10px">Add a dish</div>
-        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Dish name</label><input class="form-input" type="text" id="job-dish-name" placeholder="e.g. Smoked salmon blini"></div>
-        <div class="form-group" style="margin-bottom:10px">
-          <label class="form-label">Allergens in this dish</label>
-          <div id="job-dish-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div>
-        </div>
-        <button class="btn-secondary" onclick="jobAddDish()" style="margin-top:0">+ Add to menu</button>
+      <div id="cust-conflict-banner" style="display:none;background:#fde8e8;border:1px solid #f5c6c6;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#A32D2D;line-height:1.5"></div>
+      <div class="form-group">
+        <label class="form-label">Select a saved menu</label>
+        <select class="form-input" id="cust-menu-select" onchange="custMenuChanged()">
+          <option value="">— Choose a menu —</option>
+          <option value="custom">Custom menu (build below)</option>
+        </select>
       </div>
-      <button class="btn-secondary" onclick="jobSeg('finance')" style="margin-top:10px">Next: Financials →</button>
-    </div>
-
-    <!-- FINANCIALS -->
-    <div id="jseg-finance" class="card" style="display:none;margin-top:0;border-radius:12px">
-      <div class="card-title">Financials</div>
-      <div class="form-group"><label class="form-label">Agreed price (£)</label><input class="form-input" type="number" id="job-price" placeholder="e.g. 1200" min="0" step="0.01" oninput="jobUpdateBalance()"></div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Deposit received (£)</label><input class="form-input" type="number" id="job-deposit" placeholder="e.g. 400" min="0" step="0.01" oninput="jobUpdateBalance()"></div>
-        <div class="form-group"><label class="form-label">Deposit date</label><input class="form-input" type="date" id="job-deposit-date"></div>
-      </div>
-      <div id="job-balance-display" style="display:none;background:#f5f4f0;border-radius:8px;padding:12px 14px;margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:#555">Balance outstanding</span>
-          <span id="job-balance-amount" style="font-size:20px;font-weight:700"></span>
+      <!-- Preview of selected menu with conflict highlighting -->
+      <div id="cust-menu-preview"></div>
+      <!-- Custom dish builder -->
+      <div id="cust-custom-section" style="display:none">
+        <div style="background:#f8f7f3;border-radius:10px;padding:14px;border:1px solid #e5e4de">
+          <div class="card-title" style="margin-bottom:10px">Custom dishes</div>
+          <div id="cust-dishes-list" style="margin-bottom:10px"></div>
+          <div class="form-group" style="margin-bottom:8px">
+            <input class="form-input" type="text" id="cust-dish-name" placeholder="Dish name">
+          </div>
+          <div class="form-group" style="margin-bottom:8px">
+            <label class="form-label">Allergens in this dish</label>
+            <div id="cust-dish-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div>
+          </div>
+          <button class="btn-secondary" onclick="custAddDish()" style="margin-top:0">+ Add dish</button>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Balance paid (£)</label><input class="form-input" type="number" id="job-balance-paid" placeholder="0" min="0" step="0.01"></div>
-        <div class="form-group"><label class="form-label">Balance date</label><input class="form-input" type="date" id="job-balance-date"></div>
-      </div>
-      <button class="btn-primary" onclick="logJob()" style="margin-top:4px">Save job</button>
     </div>
 
-    <div class="divider">Saved jobs</div>
-    <div id="job-log"><div class="empty">No jobs logged yet today.</div></div>
+    <button class="btn-primary" onclick="logCustomerJob()">Save customer job</button>
+    <div class="divider">Customer jobs</div>
+    <div id="job-log"><div class="empty">No customer jobs logged yet today.</div></div>
   </div>
 
   <!-- KITCHEN ASSESSMENT -->
@@ -1769,7 +1803,7 @@ function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
-var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Job & location',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
+var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Customer jobs',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
 
 var _homeScrollPos = 0;
 
@@ -2116,7 +2150,7 @@ function renderSection(type) {
 
 function renderAllSections() {
   ['opening','closing','crosscontam','fridge','cooking','cooling','reheating','delivery','cleaning','probe','pest','illness'].forEach(renderSection);
-  if (settings.privateChefMode) { ['job','kitchenassess','allergen','transport','mobileset'].forEach(renderSection_PC); renderCredentials(); }
+  if (settings.privateChefMode) { ['customers','kitchenassess','allergen','transport','mobileset'].forEach(renderSection_PC); renderCredentials(); }
 }
 
 // --- DASHBOARD ---
@@ -2193,7 +2227,7 @@ function updateDashboard() {
   document.getElementById('stat-fail').textContent=fail;
   document.getElementById('stat-total').textContent=records.length;
 
-  var subDefaults={fridge:'Log first temp',cooking:'Log a core temp',cooling:'Nothing cooling yet',reheating:'Nothing reheated yet',delivery:'Log a delivery',cleaning:'No tasks logged yet',probe:'Weekly check',pest:'Log an inspection',illness:'No incidents today',opening:'Start of day',closing:'End of day',crosscontam:'Daily check',job:'Add client & location',kitchenassess:'Pre-job check',allergen:'Dishes & allergens',transport:'Food in transit',mobileset:'Temporary kitchen'};
+  var subDefaults={fridge:'Log first temp',cooking:'Log a core temp',cooling:'Nothing cooling yet',reheating:'Nothing reheated yet',delivery:'Log a delivery',cleaning:'No tasks logged yet',probe:'Weekly check',pest:'Log an inspection',illness:'No incidents today',opening:'Start of day',closing:'End of day',crosscontam:'Daily check',job:'Build & save menus',kitchenassess:'Pre-job check',allergen:'Dishes & allergens',transport:'Food in transit',mobileset:'Temporary kitchen'};
   ALL_TYPES.forEach(function(t){
     var recs=records.filter(function(r){return r.type===t;});
     var badge=document.getElementById('badge-'+t);
@@ -2208,6 +2242,19 @@ function updateDashboard() {
     else if(warns)sub.textContent=warns+' warning · '+recs.length+' total';
     else sub.textContent=recs.length+' record'+(recs.length>1?'s':'')+' — all OK';
   });
+  // Customers tile counts 'job' type records (menu library stores nothing in records)
+  (function(){
+    var jobRecs=records.filter(function(r){return r.type==='job';});
+    var badge=document.getElementById('badge-customers');
+    var sub=document.getElementById('sub-customers');
+    if(!badge||!sub)return;
+    badge.className='tile-badge '+tileBadgeClass(jobRecs);
+    badge.textContent=jobRecs.length;
+    if(!jobRecs.length){sub.textContent='Log a customer job';return;}
+    var warns=jobRecs.filter(function(r){return r.status==='warn';}).length;
+    if(warns)sub.textContent=warns+' allergen conflict'+(warns>1?'s':'')+' · '+jobRecs.length+' total';
+    else sub.textContent=jobRecs.length+' job'+(jobRecs.length>1?'s':'')+' — all OK';
+  })();
 
   var suppCount=loadSuppliers().length;
   document.getElementById('sub-suppliers').textContent=suppCount?suppCount+' supplier'+(suppCount>1?'s':''):'Supplier register';
@@ -2455,11 +2502,10 @@ function buildPDFExport(dateLabel, recs) {
 }
 
 // --- PRIVATE CHEF MODE ---
-var PC_TYPES = ['job','kitchenassess','allergen','transport','mobileset','credentials'];
+var PC_TYPES = ['job','customers','kitchenassess','allergen','transport','mobileset','credentials'];
 
 var ALLERGENS_14 = ['Celery','Cereals containing gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphur dioxide'];
 var DIETARY_PREFS = ['Vegetarian','Vegan','Gluten-free','Dairy-free','Halal','Kosher','Nut-free','Shellfish-free'];
-var _jobDishes = [];
 
 var DEFAULT_CHECKLISTS_PC = {
   kitchenassess: [
@@ -2495,9 +2541,12 @@ function togglePrivateChefMode(on) {
   if (on) {
     renderPCChecklists();
     renderAllergenChecks();
-    renderJobClientAllergens();
-    renderJobDietaryPrefs();
-    renderJobDishAllergens();
+    renderMenuDishAllergens();
+    renderCustAllergens();
+    renderCustDietaryPrefs();
+    renderCustDishAllergens();
+    renderMenuLibrary();
+    custPopulateMenuSelect();
     populateSelect('tr-by','staff');
     populateSelect('ms-by','staff');
   }
@@ -2537,220 +2586,402 @@ function renderAllergenChecks() {
   }).join('');
 }
 
-// --- JOB PLANNER ---
+// --- MENU LIBRARY ---
 
-function jobSeg(name) {
-  ['details','client','menu','finance'].forEach(function(s) {
-    var panel = document.getElementById('jseg-'+s);
-    var btn   = document.getElementById('jseg-btn-'+s);
-    if (panel) panel.style.display = s === name ? 'block' : 'none';
-    if (btn)   { btn.classList.toggle('jseg-active', s === name); }
-  });
-  if (name === 'menu') jobRenderDishes();
-}
+var _menuDishes = [];
 
-function renderJobClientAllergens() {
-  var c = document.getElementById('job-client-allergens');
+function renderMenuDishAllergens() {
+  var c = document.getElementById('menu-dish-allergens');
   if (!c) return;
   c.innerHTML = ALLERGENS_14.map(function(a) {
-    var id = 'jca-' + a.replace(/\s+/g,'_');
-    return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555;padding:4px 0;cursor:pointer">'
-      +'<input type="checkbox" id="'+id+'" style="width:16px;height:16px;accent-color:#A32D2D" onchange="jobRenderDishes()"> '+a+'</label>';
-  }).join('');
-}
-
-function renderJobDietaryPrefs() {
-  var c = document.getElementById('job-dietary-prefs');
-  if (!c) return;
-  c.innerHTML = DIETARY_PREFS.map(function(p) {
-    var id = 'jdp-'+p.replace(/\s+/g,'_');
-    return '<label id="jdp-lbl-'+id+'" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid #ccc;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:#555;background:#fff;transition:all .1s">'
-      +'<input type="checkbox" id="'+id+'" style="display:none" onchange="jobTogglePref(\''+id+'\')"> '+p+'</label>';
-  }).join('');
-}
-
-function jobTogglePref(id) {
-  var inp = document.getElementById(id);
-  var lbl = document.getElementById('jdp-lbl-'+id);
-  if (!inp || !lbl) return;
-  lbl.style.background   = inp.checked ? '#1a1a18' : '#fff';
-  lbl.style.color        = inp.checked ? '#fff'    : '#555';
-  lbl.style.borderColor  = inp.checked ? '#1a1a18' : '#ccc';
-}
-
-function renderJobDishAllergens() {
-  var c = document.getElementById('job-dish-allergens');
-  if (!c) return;
-  c.innerHTML = ALLERGENS_14.map(function(a) {
-    var id = 'jda-'+a.replace(/\s+/g,'_');
+    var id = 'mda-' + a.replace(/\s+/g,'_');
     return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555;padding:3px 0;cursor:pointer">'
-      +'<input type="checkbox" id="'+id+'" style="width:15px;height:15px;accent-color:#1a1a18"> '+a+'</label>';
+      + '<input type="checkbox" id="' + id + '" style="width:15px;height:15px;accent-color:#1a1a18"> ' + a + '</label>';
   }).join('');
 }
 
-function jobGetClientAllergens() {
-  return ALLERGENS_14.filter(function(a) {
-    var el = document.getElementById('jca-'+a.replace(/\s+/g,'_'));
-    return el && el.checked;
-  });
-}
-
-function jobAddDish() {
-  var name = (document.getElementById('job-dish-name').value || '').trim();
+function menuAddDish() {
+  var name = (document.getElementById('menu-dish-name').value || '').trim();
   if (!name) { toast('Enter a dish name first', false); return; }
   var allergens = ALLERGENS_14.filter(function(a) {
-    var el = document.getElementById('jda-'+a.replace(/\s+/g,'_'));
+    var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
-  _jobDishes.push({ dish: name, allergens: allergens });
-  document.getElementById('job-dish-name').value = '';
+  _menuDishes.push({ dish: name, allergens: allergens });
+  document.getElementById('menu-dish-name').value = '';
   ALLERGENS_14.forEach(function(a) {
-    var el = document.getElementById('jda-'+a.replace(/\s+/g,'_'));
+    var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = false;
   });
-  jobRenderDishes();
-  document.getElementById('job-dish-name').focus();
+  menuRenderDishes();
+  document.getElementById('menu-dish-name').focus();
 }
 
-function jobRemoveDish(idx) {
-  _jobDishes.splice(idx, 1);
-  jobRenderDishes();
+function menuRemoveDish(idx) {
+  _menuDishes.splice(idx, 1);
+  menuRenderDishes();
 }
 
-function jobRenderDishes() {
-  var listEl   = document.getElementById('job-dishes-list');
-  var bannerEl = document.getElementById('job-conflict-banner');
-  if (!listEl) return;
-  var clientAl = jobGetClientAllergens();
-
-  // Collect all conflicts across menu
-  var allConflicts = [];
-  _jobDishes.forEach(function(d) {
-    d.allergens.forEach(function(a) {
-      if (clientAl.indexOf(a) !== -1 && allConflicts.indexOf(a) === -1) allConflicts.push(a);
-    });
-  });
-
-  if (bannerEl) {
-    if (allConflicts.length) {
-      bannerEl.style.display = 'block';
-      bannerEl.innerHTML = '⚠️ <strong>Allergen conflict</strong> — your menu contains allergens the client must avoid: <strong>'+allConflicts.join(', ')+'</strong>. Adjust the menu before service.';
-    } else {
-      bannerEl.style.display = 'none';
-    }
-  }
-
-  if (!_jobDishes.length) {
-    listEl.innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:10px 0">No dishes added yet</div>';
+function menuRenderDishes() {
+  var c = document.getElementById('menu-dishes-list');
+  if (!c) return;
+  if (!_menuDishes.length) {
+    c.innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:8px 0">No dishes added yet</div>';
     return;
   }
-
-  listEl.innerHTML = _jobDishes.map(function(d, idx) {
-    var conflicts   = clientAl.filter(function(a) { return d.allergens.indexOf(a) !== -1; });
-    var hasConflict = conflicts.length > 0;
+  c.innerHTML = _menuDishes.map(function(d, idx) {
     var tags = d.allergens.length
       ? d.allergens.map(function(a) {
-          var clash = clientAl.indexOf(a) !== -1;
-          return '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;margin:2px 2px 0 0;background:'+(clash?'#fde8e8':'#f0f0ec')+';color:'+(clash?'#A32D2D':'#555')+'">'+a+'</span>';
+          return '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;margin:2px 2px 0 0;background:#f0f0ec;color:#555">' + a + '</span>';
         }).join('')
       : '<span style="font-size:12px;color:#aaa">No allergens</span>';
-    return '<div style="padding:10px 12px;background:'+(hasConflict?'#fff8f8':'#fafaf8')+';border:1px solid '+(hasConflict?'#f5c6c6':'#e5e4de')+';border-radius:8px;margin-bottom:8px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
-      +'<div style="flex:1">'
-      +'<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:5px">'+(hasConflict?'⚠️ ':'')+d.dish+'</div>'
-      +'<div>'+tags+'</div>'
-      +(hasConflict?'<div style="font-size:11px;color:#A32D2D;margin-top:5px;font-weight:600">Client allergen conflict: '+conflicts.join(', ')+'</div>':'')
-      +'</div>'
-      +'<button onclick="jobRemoveDish('+idx+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
-      +'</div></div>';
+    return '<div style="padding:8px 12px;background:#fff;border:1px solid #e5e4de;border-radius:8px;margin-bottom:6px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      + '<div style="flex:1">'
+      + '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:4px">' + d.dish + '</div>'
+      + '<div>' + tags + '</div>'
+      + '</div>'
+      + '<button onclick="menuRemoveDish(' + idx + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      + '</div></div>';
   }).join('');
 }
 
-function jobUpdateBalance() {
-  var price   = parseFloat(document.getElementById('job-price').value)   || 0;
-  var deposit = parseFloat(document.getElementById('job-deposit').value) || 0;
-  var display = document.getElementById('job-balance-display');
-  var amount  = document.getElementById('job-balance-amount');
-  if (!display || !amount) return;
-  if (price > 0) {
-    var bal = price - deposit;
-    display.style.display  = 'block';
-    amount.textContent     = '£'+bal.toFixed(2);
-    amount.style.color     = bal > 0 ? '#A32D2D' : '#2D7A3A';
-  } else {
-    display.style.display = 'none';
+function menuSave() {
+  var name = (document.getElementById('menu-name').value || '').trim();
+  if (!name) { toast('Enter a menu name first', false); return; }
+  if (!_menuDishes.length) { toast('Add at least one dish', false); return; }
+  if (!settings.savedMenus) settings.savedMenus = [];
+  settings.savedMenus.push({ id: Date.now(), name: name, dishes: _menuDishes.slice() });
+  saveSettings();
+  document.getElementById('menu-name').value = '';
+  _menuDishes = [];
+  menuRenderDishes();
+  renderMenuLibrary();
+  custPopulateMenuSelect();
+  toast('Menu "' + name + '" saved');
+}
+
+function menuDelete(id) {
+  if (!settings.savedMenus) return;
+  settings.savedMenus = settings.savedMenus.filter(function(m) { return m.id !== id; });
+  saveSettings();
+  renderMenuLibrary();
+  custPopulateMenuSelect();
+  toast('Menu deleted');
+}
+
+function renderMenuLibrary() {
+  var c = document.getElementById('menu-library-list');
+  if (!c) return;
+  var menus = settings.savedMenus || [];
+  if (!menus.length) {
+    c.innerHTML = '<div class="empty">No menus saved yet — create your first menu above.</div>';
+    return;
   }
+  c.innerHTML = menus.map(function(m) {
+    var allergenSet = [];
+    m.dishes.forEach(function(d) {
+      d.allergens.forEach(function(a) {
+        if (allergenSet.indexOf(a) === -1) allergenSet.push(a);
+      });
+    });
+    return '<div class="card" style="margin-bottom:10px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      + '<div style="flex:1">'
+      + '<div class="card-title" style="margin-bottom:4px">' + m.name + '</div>'
+      + '<div style="font-size:13px;color:#888;margin-bottom:8px">' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + (allergenSet.length ? ' · Contains: ' + allergenSet.join(', ') : ' · No allergens') + '</div>'
+      + m.dishes.map(function(d) {
+          return '<div style="font-size:13px;color:#555;padding:3px 0;border-bottom:1px solid #f0f0ec">'
+            + '<strong>' + d.dish + '</strong>'
+            + (d.allergens.length ? ' — ' + d.allergens.join(', ') : '')
+            + '</div>';
+        }).join('')
+      + '</div>'
+      + '<button onclick="menuDelete(' + m.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
+      + '</div></div>';
+  }).join('');
+}
+
+// --- CUSTOMER JOBS ---
+
+var _custDishes = [];
+
+function renderCustAllergens() {
+  var c = document.getElementById('cust-allergens');
+  if (!c) return;
+  c.innerHTML = ALLERGENS_14.map(function(a) {
+    var id = 'cal-' + a.replace(/\s+/g,'_');
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555;padding:4px 0;cursor:pointer">'
+      + '<input type="checkbox" id="' + id + '" style="width:16px;height:16px;accent-color:#A32D2D" onchange="custCheckConflicts()"> ' + a + '</label>';
+  }).join('');
+}
+
+function renderCustDietaryPrefs() {
+  var c = document.getElementById('cust-dietary-prefs');
+  if (!c) return;
+  c.innerHTML = DIETARY_PREFS.map(function(p) {
+    var id = 'cdp-' + p.replace(/\s+/g,'_');
+    return '<label id="cdp-lbl-' + id + '" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:1px solid #ccc;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;color:#555;background:#fff;transition:all .1s">'
+      + '<input type="checkbox" id="' + id + '" style="display:none" onchange="custTogglePref(\'' + id + '\')"> ' + p + '</label>';
+  }).join('');
+}
+
+function custTogglePref(id) {
+  var inp = document.getElementById(id);
+  var lbl = document.getElementById('cdp-lbl-' + id);
+  if (!inp || !lbl) return;
+  lbl.style.background  = inp.checked ? '#1a1a18' : '#fff';
+  lbl.style.color       = inp.checked ? '#fff'    : '#555';
+  lbl.style.borderColor = inp.checked ? '#1a1a18' : '#ccc';
+}
+
+function renderCustDishAllergens() {
+  var c = document.getElementById('cust-dish-allergens');
+  if (!c) return;
+  c.innerHTML = ALLERGENS_14.map(function(a) {
+    var id = 'cda-' + a.replace(/\s+/g,'_');
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555;padding:3px 0;cursor:pointer">'
+      + '<input type="checkbox" id="' + id + '" style="width:15px;height:15px;accent-color:#1a1a18"> ' + a + '</label>';
+  }).join('');
+}
+
+function custGetAllergens() {
+  return ALLERGENS_14.filter(function(a) {
+    var el = document.getElementById('cal-' + a.replace(/\s+/g,'_'));
+    return el && el.checked;
+  });
+}
+
+function custPopulateMenuSelect() {
+  var sel = document.getElementById('cust-menu-select');
+  if (!sel) return;
+  var current = sel.value;
+  while (sel.options.length > 2) sel.remove(2);
+  var menus = settings.savedMenus || [];
+  menus.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = String(m.id);
+    opt.textContent = m.name;
+    sel.appendChild(opt);
+  });
+  if (current && sel.querySelector('option[value="' + current + '"]')) sel.value = current;
+}
+
+function custMenuChanged() {
+  var sel = document.getElementById('cust-menu-select');
+  var customSection = document.getElementById('cust-custom-section');
+  if (!sel) return;
+  var val = sel.value;
+  if (val === 'custom') {
+    if (customSection) customSection.style.display = 'block';
+    _custDishes = [];
+    custRenderCustomDishes();
+    custCheckConflicts(_custDishes);
+    custRenderMenuPreview(null);
+  } else if (val === '') {
+    if (customSection) customSection.style.display = 'none';
+    custRenderMenuPreview(null);
+    custCheckConflicts([]);
+  } else {
+    if (customSection) customSection.style.display = 'none';
+    var menus = settings.savedMenus || [];
+    var menu = null;
+    menus.forEach(function(m) { if (String(m.id) === val) menu = m; });
+    if (menu) {
+      custRenderMenuPreview(menu.dishes);
+      custCheckConflicts(menu.dishes);
+    }
+  }
+}
+
+function custRenderMenuPreview(dishes) {
+  var c = document.getElementById('cust-menu-preview');
+  if (!c) return;
+  if (!dishes || !dishes.length) { c.innerHTML = ''; return; }
+  var clientAl = custGetAllergens();
+  c.innerHTML = '<div style="margin-top:4px">'
+    + dishes.map(function(d) {
+        var conflicts = clientAl.filter(function(a) { return d.allergens.indexOf(a) !== -1; });
+        var hasConflict = conflicts.length > 0;
+        var tags = d.allergens.length
+          ? d.allergens.map(function(a) {
+              var clash = clientAl.indexOf(a) !== -1;
+              return '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;margin:2px 2px 0 0;background:'+(clash?'#fde8e8':'#f0f0ec')+';color:'+(clash?'#A32D2D':'#555')+'">' + a + '</span>';
+            }).join('')
+          : '<span style="font-size:12px;color:#aaa">No allergens</span>';
+        return '<div style="padding:8px 12px;background:'+(hasConflict?'#fff8f8':'#fafaf8')+';border:1px solid '+(hasConflict?'#f5c6c6':'#e5e4de')+';border-radius:8px;margin-bottom:6px">'
+          + '<div style="font-size:13px;font-weight:600;color:#1a1a18;margin-bottom:4px">' + (hasConflict ? '⚠️ ' : '') + d.dish + '</div>'
+          + '<div>' + tags + '</div>'
+          + (hasConflict ? '<div style="font-size:11px;color:#A32D2D;margin-top:4px;font-weight:600">Client allergen conflict: ' + conflicts.join(', ') + '</div>' : '')
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+function custCheckConflicts(dishes) {
+  // When called from allergen checkboxes (no args), resolve the current menu
+  if (dishes === undefined) {
+    var sel = document.getElementById('cust-menu-select');
+    var val = sel ? sel.value : '';
+    if (val === 'custom') { dishes = _custDishes; }
+    else if (val) {
+      var menus = settings.savedMenus || [];
+      menus.forEach(function(m) { if (String(m.id) === val) dishes = m.dishes; });
+    }
+    if (!dishes) { dishes = []; }
+    // Also re-render the preview with updated conflict highlighting
+    custRenderMenuPreview(dishes.length ? dishes : null);
+  }
+  var banner = document.getElementById('cust-conflict-banner');
+  if (!banner) return;
+  if (!dishes || !dishes.length) { banner.style.display = 'none'; return; }
+  var clientAl = custGetAllergens();
+  if (!clientAl.length) { banner.style.display = 'none'; return; }
+  var conflicts = [];
+  dishes.forEach(function(d) {
+    d.allergens.forEach(function(a) {
+      if (clientAl.indexOf(a) !== -1 && conflicts.indexOf(a) === -1) conflicts.push(a);
+    });
+  });
+  if (conflicts.length) {
+    banner.style.display = 'block';
+    banner.innerHTML = '⚠️ <strong>Allergen conflict</strong> — this menu contains allergens the client must avoid: <strong>' + conflicts.join(', ') + '</strong>. Review before service.';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function custAddDish() {
+  var name = (document.getElementById('cust-dish-name').value || '').trim();
+  if (!name) { toast('Enter a dish name first', false); return; }
+  var allergens = ALLERGENS_14.filter(function(a) {
+    var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
+    return el && el.checked;
+  });
+  _custDishes.push({ dish: name, allergens: allergens });
+  document.getElementById('cust-dish-name').value = '';
+  ALLERGENS_14.forEach(function(a) {
+    var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
+    if (el) el.checked = false;
+  });
+  custRenderCustomDishes();
+  custCheckConflicts(_custDishes);
+  custRenderMenuPreview(_custDishes);
+  document.getElementById('cust-dish-name').focus();
+}
+
+function custRemoveDish(idx) {
+  _custDishes.splice(idx, 1);
+  custRenderCustomDishes();
+  custCheckConflicts(_custDishes);
+  custRenderMenuPreview(_custDishes);
+}
+
+function custRenderCustomDishes() {
+  var c = document.getElementById('cust-dishes-list');
+  if (!c) return;
+  if (!_custDishes.length) {
+    c.innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:8px 0">No dishes added yet</div>';
+    return;
+  }
+  c.innerHTML = _custDishes.map(function(d, idx) {
+    var tags = d.allergens.length
+      ? d.allergens.map(function(a) {
+          return '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;margin:2px 2px 0 0;background:#f0f0ec;color:#555">' + a + '</span>';
+        }).join('')
+      : '<span style="font-size:12px;color:#aaa">No allergens</span>';
+    return '<div style="padding:8px 12px;background:#fff;border:1px solid #e5e4de;border-radius:8px;margin-bottom:6px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      + '<div style="flex:1">'
+      + '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:4px">' + d.dish + '</div>'
+      + '<div>' + tags + '</div>'
+      + '</div>'
+      + '<button onclick="custRemoveDish(' + idx + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      + '</div></div>';
+  }).join('');
 }
 
 // --- PC LOG FUNCTIONS ---
-function logJob() {
-  var client      = (document.getElementById('job-client').value      || '').trim();
-  var location    = (document.getElementById('job-location').value    || '').trim();
-  var type        =  document.getElementById('job-type').value;
-  var covers      =  document.getElementById('job-covers').value;
-  var time        =  document.getElementById('job-time').value        || new Date().toTimeString().slice(0,5);
-  var eventDate   =  document.getElementById('job-event-date').value;
-  var notes       =  document.getElementById('job-notes').value;
-  var clientNotes =  document.getElementById('job-client-notes').value;
-  var price       = parseFloat(document.getElementById('job-price').value)        || null;
-  var deposit     = parseFloat(document.getElementById('job-deposit').value)      || null;
-  var depositDate =  document.getElementById('job-deposit-date').value;
-  var balPaid     = parseFloat(document.getElementById('job-balance-paid').value) || null;
-  var balDate     =  document.getElementById('job-balance-date').value;
+function logCustomerJob() {
+  var client    = (document.getElementById('cust-name').value    || '').trim();
+  var address   = (document.getElementById('cust-address').value || '').trim();
+  var phone     = (document.getElementById('cust-phone').value   || '').trim();
+  var email     = (document.getElementById('cust-email').value   || '').trim();
+  var type      =  document.getElementById('cust-type').value;
+  var eventDate =  document.getElementById('cust-event-date').value;
+  var time      =  document.getElementById('cust-time').value || now();
+  var covers    =  document.getElementById('cust-covers').value;
+  var notes     =  document.getElementById('cust-notes').value;
+  var dietNotes =  document.getElementById('cust-diet-notes').value;
 
-  if (!client) { toast('Please enter a client name', false); jobSeg('details'); return; }
+  if (!client) { toast('Please enter a client name', false); return; }
 
-  var clientAllergens = jobGetClientAllergens();
+  var clientAllergens = custGetAllergens();
   var dietaryPrefs = DIETARY_PREFS.filter(function(p) {
-    var el = document.getElementById('jdp-'+p.replace(/\s+/g,'_'));
+    var el = document.getElementById('cdp-' + p.replace(/\s+/g,'_'));
     return el && el.checked;
   });
 
-  // Find allergen conflicts
+  var sel = document.getElementById('cust-menu-select');
+  var menuVal = sel ? sel.value : '';
+  var menuName = '';
+  var dishes = [];
+  if (menuVal === 'custom') {
+    menuName = 'Custom menu';
+    dishes = _custDishes.slice();
+  } else if (menuVal) {
+    var menus = settings.savedMenus || [];
+    menus.forEach(function(m) { if (String(m.id) === menuVal) { menuName = m.name; dishes = m.dishes.slice(); } });
+  }
+
   var conflicts = [];
-  _jobDishes.forEach(function(d) {
+  dishes.forEach(function(d) {
     d.allergens.forEach(function(a) {
       if (clientAllergens.indexOf(a) !== -1 && conflicts.indexOf(a) === -1) conflicts.push(a);
     });
   });
 
   var status = conflicts.length ? 'warn' : 'ok';
-  var msg = type + (covers ? ' · '+covers+' covers' : '');
-  if (conflicts.length) msg += ' · ⚠️ '+conflicts.length+' allergen conflict'+(conflicts.length>1?'s':'');
+  var msg = type + (covers ? ' · ' + covers + ' covers' : '') + (menuName ? ' · ' + menuName : '');
+  if (conflicts.length) msg += ' · ⚠️ ' + conflicts.length + ' allergen conflict' + (conflicts.length > 1 ? 's' : '');
 
   records.push({
-    type:'job', client:client, location:location, jobType:type, covers:covers,
-    time:time, eventDate:eventDate, notes:notes,
-    clientAllergens:clientAllergens, dietaryPrefs:dietaryPrefs, clientNotes:clientNotes,
-    menu:_jobDishes.slice(),
-    agreedPrice:price, deposit:deposit, depositDate:depositDate,
-    balancePaid:balPaid, balanceDate:balDate,
-    conflicts:conflicts, status:status, msg:msg
+    type: 'job', client: client, location: address, phone: phone, email: email,
+    jobType: type, covers: covers, time: time, eventDate: eventDate,
+    notes: notes, dietNotes: dietNotes,
+    clientAllergens: clientAllergens, dietaryPrefs: dietaryPrefs,
+    menuName: menuName, menu: dishes,
+    conflicts: conflicts, status: status, msg: msg
   });
   saveToday();
 
-  // Reset all fields
-  ['job-client','job-location','job-covers','job-notes','job-event-date',
-   'job-client-notes','job-price','job-deposit','job-deposit-date',
-   'job-balance-paid','job-balance-date'].forEach(function(id) {
+  ['cust-name','cust-address','cust-phone','cust-email','cust-covers','cust-notes',
+   'cust-diet-notes','cust-event-date','cust-time'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.value = '';
   });
-  document.getElementById('job-type').selectedIndex = 0;
-  document.getElementById('job-time').value = '';
+  document.getElementById('cust-type').selectedIndex = 0;
   ALLERGENS_14.forEach(function(a) {
-    var e1 = document.getElementById('jca-'+a.replace(/\s+/g,'_')); if (e1) e1.checked = false;
-    var e2 = document.getElementById('jda-'+a.replace(/\s+/g,'_')); if (e2) e2.checked = false;
+    var el = document.getElementById('cal-' + a.replace(/\s+/g,'_')); if (el) el.checked = false;
   });
   DIETARY_PREFS.forEach(function(p) {
-    var el = document.getElementById('jdp-'+p.replace(/\s+/g,'_'));
-    if (el) { el.checked = false; jobTogglePref('jdp-'+p.replace(/\s+/g,'_')); }
+    var el = document.getElementById('cdp-' + p.replace(/\s+/g,'_'));
+    if (el) { el.checked = false; custTogglePref('cdp-' + p.replace(/\s+/g,'_')); }
   });
-  _jobDishes = [];
-  var bd = document.getElementById('job-balance-display'); if (bd) bd.style.display = 'none';
-  jobSeg('details');
+  _custDishes = [];
+  if (sel) sel.selectedIndex = 0;
+  var customSection = document.getElementById('cust-custom-section');
+  if (customSection) customSection.style.display = 'none';
+  var preview = document.getElementById('cust-menu-preview');
+  if (preview) preview.innerHTML = '';
+  var banner = document.getElementById('cust-conflict-banner');
+  if (banner) banner.style.display = 'none';
 
-  renderSection('job'); updateDashboard();
-  toast(conflicts.length ? '⚠️ Saved — '+conflicts.length+' allergen conflict'+(conflicts.length>1?'s':'') : 'Saved — job logged for '+client);
+  renderSection_PC('customers');
+  updateDashboard();
+  toast(conflicts.length
+    ? '⚠️ Saved — ' + conflicts.length + ' allergen conflict' + (conflicts.length > 1 ? 's' : '')
+    : 'Saved — job logged for ' + client,
+    conflicts.length ? 'warn' : true);
 }
 
 function previewKaPhoto(input) {
@@ -2894,10 +3125,12 @@ function removeCredential(i) {
 // --- PC RENDER ---
 function renderSection_PC(type) {
   if (type === 'credentials') { renderCredentials(); return; }
-  var ids = {job:'job-log', kitchenassess:'kitchenassess-log', allergen:'allergen-log', transport:'transport-log', mobileset:'mobileset-log'};
+  // 'customers' tab renders job-type records into #job-log
+  var renderType = (type === 'customers') ? 'job' : type;
+  var ids = {job:'job-log', customers:'job-log', kitchenassess:'kitchenassess-log', allergen:'allergen-log', transport:'transport-log', mobileset:'mobileset-log'};
   var c = document.getElementById(ids[type]); if (!c) return;
-  var recs = records.filter(function(r){ return r.type===type; });
-  if (!recs.length) { c.innerHTML='<div class="empty">No records logged yet today.</div>'; return; }
+  var recs = records.filter(function(r){ return r.type===renderType; });
+  if (!recs.length) { c.innerHTML='<div class="empty">'+(type==='customers'?'No customer jobs logged yet today.':'No records logged yet today.')+'</div>'; return; }
   c.innerHTML = recs.slice().reverse().map(function(r) {
     var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.by||'';
     var extra = '';
@@ -2906,12 +3139,10 @@ function renderSection_PC(type) {
     if (r.type==='job') {
       if (r.location)   extra += '<div class="log-time">📍 '+r.location+'</div>';
       if (r.eventDate)  extra += '<div class="log-time">📅 '+new Date(r.eventDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>';
-      if (r.menu && r.menu.length) extra += '<div class="log-time">🍽 '+r.menu.length+' dish'+(r.menu.length>1?'es':'')+(r.dietaryPrefs&&r.dietaryPrefs.length?' · '+r.dietaryPrefs.join(', '):'')+'</div>';
+      if (r.menuName) extra += '<div class="log-time">🍽 ' + r.menuName + (r.menu&&r.menu.length?' ('+r.menu.length+' dish'+(r.menu.length>1?'es':'')+')'  :'') + '</div>';
+      else if (r.menu && r.menu.length) extra += '<div class="log-time">🍽 '+r.menu.length+' dish'+(r.menu.length>1?'es':'')+'</div>';
+      if (r.dietaryPrefs&&r.dietaryPrefs.length) extra += '<div class="log-time">'+r.dietaryPrefs.join(', ')+'</div>';
       if (r.conflicts && r.conflicts.length) extra += '<div style="margin-top:4px;font-size:12px;color:#A32D2D;font-weight:600">⚠️ Allergen conflicts: '+r.conflicts.join(', ')+'</div>';
-      if (r.agreedPrice) {
-        var bal = r.agreedPrice - (r.deposit||0) - (r.balancePaid||0);
-        extra += '<div class="log-time" style="margin-top:2px">💷 £'+r.agreedPrice.toFixed(2)+(r.deposit?' · £'+r.deposit.toFixed(2)+' deposit received':'')+(bal>0?' · <span style="color:#A32D2D">£'+bal.toFixed(2)+' outstanding</span>':' · <span style="color:#2D7A3A">Paid in full</span>')+'</div>';
-      }
     }
     if (r.photo) extra += '<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>';
     return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
