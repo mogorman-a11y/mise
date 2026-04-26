@@ -76,6 +76,12 @@ window.Mise.sync = (function () {
     if (result.error) throw result.error;
     if (!result.data) return;
 
+    // Clear any records left by a previously logged-in user before writing
+    // this user's data — prevents data from a different account bleeding through.
+    Object.keys(localStorage)
+      .filter(function(k){ return k.startsWith('haccp_') && k !== 'haccp_settings'; })
+      .forEach(function(k){ localStorage.removeItem(k); });
+
     result.data.forEach(function (row) {
       // Write each day into localStorage — app reads it with getDayRecords()
       try {

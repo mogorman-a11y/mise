@@ -298,6 +298,10 @@ window.Mise.auth = (function () {
     await supabaseClient.auth.signOut();
     // Clear in-memory app state
     if (typeof records !== 'undefined') records.length = 0;
+    // Clear all local HACCP data so the next login starts clean
+    Object.keys(localStorage)
+      .filter(function(k){ return k.startsWith('haccp_'); })
+      .forEach(function(k){ localStorage.removeItem(k); });
     // Remove the account card from settings
     var el = document.getElementById('mise-account-card');
     if (el) el.remove();
