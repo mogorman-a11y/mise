@@ -640,20 +640,27 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <!-- Dish builder -->
       <div style="background:#f8f7f3;border-radius:10px;padding:14px;border:1px solid #e5e4de;margin-bottom:12px">
         <div class="card-title" style="margin-bottom:10px">Dishes</div>
+        <!-- Saved dish quick-add chips -->
+        <div id="menu-dish-chips" style="margin-bottom:10px"></div>
         <div id="menu-dishes-list" style="margin-bottom:10px"></div>
         <div class="form-group" style="margin-bottom:8px">
           <input class="form-input" type="text" id="menu-dish-name" placeholder="Dish name e.g. Rack of lamb">
         </div>
-        <div class="form-group" style="margin-bottom:8px">
+        <div class="form-group" style="margin-bottom:10px">
           <label class="form-label">Allergens in this dish</label>
           <div id="menu-dish-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div>
         </div>
-        <button class="btn-secondary" onclick="menuAddDish()" style="margin-top:0">+ Add dish</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-secondary" onclick="menuAddDish()" style="flex:1;margin-top:0">+ Add dish</button>
+          <button class="btn-secondary" onclick="menuAddDishAndSave()" style="flex:1;margin-top:0;border-color:#2D7A3A;color:#2D7A3A">+ Save &amp; add</button>
+        </div>
       </div>
       <button class="btn-primary" id="menu-save-btn" onclick="menuSave()">Save menu</button>
     </div>
     <div class="divider">Saved menus</div>
     <div id="menu-library-list"><div class="empty">No menus saved yet — create your first menu above.</div></div>
+    <div class="divider">Saved dishes</div>
+    <div id="dish-library-list"><div class="empty">No saved dishes yet — use "+ Save &amp; add" when building a menu to grow your library.</div></div>
   </div>
 
   <!-- CUSTOMERS -->
@@ -741,15 +748,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div id="cust-custom-section" style="display:none">
         <div style="background:#f8f7f3;border-radius:10px;padding:14px;border:1px solid #e5e4de">
           <div class="card-title" style="margin-bottom:10px">Custom dishes</div>
+          <!-- Saved dish quick-add chips -->
+          <div id="cust-dish-chips" style="margin-bottom:10px"></div>
           <div id="cust-dishes-list" style="margin-bottom:10px"></div>
           <div class="form-group" style="margin-bottom:8px">
             <input class="form-input" type="text" id="cust-dish-name" placeholder="Dish name">
           </div>
-          <div class="form-group" style="margin-bottom:8px">
+          <div class="form-group" style="margin-bottom:10px">
             <label class="form-label">Allergens in this dish</label>
             <div id="cust-dish-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div>
           </div>
-          <button class="btn-secondary" onclick="custAddDish()" style="margin-top:0">+ Add dish</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn-secondary" onclick="custAddDish()" style="flex:1;margin-top:0">+ Add dish</button>
+            <button class="btn-secondary" onclick="custAddDishAndSave()" style="flex:1;margin-top:0;border-color:#2D7A3A;color:#2D7A3A">+ Save &amp; add</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2546,6 +2558,9 @@ function togglePrivateChefMode(on) {
     renderCustDietaryPrefs();
     renderCustDishAllergens();
     renderMenuLibrary();
+    renderDishLibrary();
+    renderSavedDishChips('menu-dish-chips', 'menuAddFromLibrary');
+    renderSavedDishChips('cust-dish-chips', 'custAddFromLibrary');
     custPopulateMenuSelect();
     populateSelect('tr-by','staff');
     populateSelect('ms-by','staff');
@@ -2698,6 +2713,99 @@ function menuDelete(id) {
   renderMenuLibrary();
   custPopulateMenuSelect();
   toast('Menu deleted');
+}
+
+function menuAddDishAndSave() {
+  var name = (document.getElementById('menu-dish-name').value || '').trim();
+  if (!name) { toast('Enter a dish name first', false); return; }
+  var allergens = ALLERGENS_14.filter(function(a) {
+    var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
+    return el && el.checked;
+  });
+  _menuDishes.push({ dish: name, allergens: allergens });
+  saveDishToLibrary(name, allergens);
+  document.getElementById('menu-dish-name').value = '';
+  ALLERGENS_14.forEach(function(a) {
+    var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
+    if (el) el.checked = false;
+  });
+  menuRenderDishes();
+  document.getElementById('menu-dish-name').focus();
+}
+
+function menuAddFromLibrary(id) {
+  var dishes = settings.savedDishes || [];
+  var dish = null;
+  dishes.forEach(function(d) { if (d.id === id) dish = d; });
+  if (!dish) return;
+  _menuDishes.push({ dish: dish.dish, allergens: dish.allergens.slice() });
+  menuRenderDishes();
+  toast('"' + dish.dish + '" added');
+}
+
+// --- DISH LIBRARY ---
+
+function saveDishToLibrary(name, allergens) {
+  if (!name) return false;
+  if (!settings.savedDishes) settings.savedDishes = [];
+  var exists = settings.savedDishes.some(function(d) { return d.dish.toLowerCase() === name.toLowerCase(); });
+  if (exists) { toast('"' + name + '" is already in your dish library'); return false; }
+  settings.savedDishes.push({ id: Date.now(), dish: name, allergens: allergens.slice() });
+  saveSettings();
+  renderDishLibrary();
+  renderSavedDishChips('menu-dish-chips', 'menuAddFromLibrary');
+  renderSavedDishChips('cust-dish-chips', 'custAddFromLibrary');
+  return true;
+}
+
+function dishDelete(id) {
+  if (!settings.savedDishes) return;
+  settings.savedDishes = settings.savedDishes.filter(function(d) { return d.id !== id; });
+  saveSettings();
+  renderDishLibrary();
+  renderSavedDishChips('menu-dish-chips', 'menuAddFromLibrary');
+  renderSavedDishChips('cust-dish-chips', 'custAddFromLibrary');
+  toast('Dish removed from library');
+}
+
+function renderSavedDishChips(containerId, addFnName) {
+  var c = document.getElementById(containerId);
+  if (!c) return;
+  var dishes = settings.savedDishes || [];
+  if (!dishes.length) {
+    c.innerHTML = '<div style="font-size:12px;color:#aaa;padding:2px 0 6px">No saved dishes yet — use "+ Save &amp; add" to build your library.</div>';
+    return;
+  }
+  c.innerHTML = '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">From dish library</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">'
+    + dishes.map(function(d) {
+        return '<button onclick="' + addFnName + '(' + d.id + ')" style="padding:5px 10px;background:#fff;border:1px solid #e5e4de;border-radius:20px;font-size:12px;font-weight:600;color:#1a1a18;cursor:pointer;font-family:inherit">'
+          + d.dish
+          + (d.allergens.length ? '<span style="color:#aaa;font-weight:400"> (' + d.allergens.length + ')</span>' : '')
+          + '</button>';
+      }).join('')
+    + '</div>';
+}
+
+function renderDishLibrary() {
+  var c = document.getElementById('dish-library-list');
+  if (!c) return;
+  var dishes = settings.savedDishes || [];
+  if (!dishes.length) {
+    c.innerHTML = '<div class="empty">No saved dishes yet — use "+ Save &amp; add" when building a menu to grow your library.</div>';
+    return;
+  }
+  c.innerHTML = dishes.map(function(d) {
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:#fff;border:1px solid #e5e4de;border-radius:10px;margin-bottom:8px">'
+      + '<div style="flex:1">'
+      + '<div style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + '</div>'
+      + (d.allergens.length
+          ? '<div style="font-size:12px;color:#888;margin-top:2px">' + d.allergens.join(', ') + '</div>'
+          : '<div style="font-size:12px;color:#aaa;margin-top:2px">No allergens</div>')
+      + '</div>'
+      + '<button onclick="dishDelete(' + d.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      + '</div>';
+  }).join('');
 }
 
 function renderMenuLibrary() {
@@ -2976,6 +3084,38 @@ function custAddDish() {
   custCheckConflicts(_custDishes);
   custRenderMenuPreview(_custDishes);
   document.getElementById('cust-dish-name').focus();
+}
+
+function custAddDishAndSave() {
+  var name = (document.getElementById('cust-dish-name').value || '').trim();
+  if (!name) { toast('Enter a dish name first', false); return; }
+  var allergens = ALLERGENS_14.filter(function(a) {
+    var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
+    return el && el.checked;
+  });
+  _custDishes.push({ dish: name, allergens: allergens });
+  saveDishToLibrary(name, allergens);
+  document.getElementById('cust-dish-name').value = '';
+  ALLERGENS_14.forEach(function(a) {
+    var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
+    if (el) el.checked = false;
+  });
+  custRenderCustomDishes();
+  custCheckConflicts(_custDishes);
+  custRenderMenuPreview(_custDishes);
+  document.getElementById('cust-dish-name').focus();
+}
+
+function custAddFromLibrary(id) {
+  var dishes = settings.savedDishes || [];
+  var dish = null;
+  dishes.forEach(function(d) { if (d.id === id) dish = d; });
+  if (!dish) return;
+  _custDishes.push({ dish: dish.dish, allergens: dish.allergens.slice() });
+  custRenderCustomDishes();
+  custCheckConflicts(_custDishes);
+  custRenderMenuPreview(_custDishes);
+  toast('"' + dish.dish + '" added');
 }
 
 function custRemoveDish(idx) {
