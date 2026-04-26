@@ -73,9 +73,11 @@ window.Mise.auth = (function () {
       +   '<button id="auth-submit" onclick="Mise.auth._submit()" '
       +     'style="width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px">Sign in</button>'
 
-      // Forgot password (sign-in only)
-      +   '<div id="auth-forgot-row" style="text-align:center;margin-top:11px">'
-      +     '<button onclick="Mise.auth._forgot()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit">Forgot password?</button>'
+      // Forgot password / magic link (sign-in only)
+      +   '<div id="auth-forgot-row" style="text-align:center;margin-top:11px;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap">'
+      +     '<button onclick="Mise.auth._forgot()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit;padding:0">Forgot password?</button>'
+      +     '<span style="color:#ccc;font-size:12px">&middot;</span>'
+      +     '<button onclick="Mise.auth._magicLink()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit;padding:0">Email me a sign-in link</button>'
       +   '</div>'
 
       // Trial note (sign-up only)
@@ -246,6 +248,35 @@ window.Mise.auth = (function () {
       _setMsg('Reset link sent — check your inbox.', 'ok');
     } catch (err) {
       _setMsg(_friendlyError(err.message), 'error');
+    }
+  }
+
+  // ── _magicLink ─────────────────────────────────────────────────────────────
+  // Sends a passwordless sign-in link to the email entered in the form.
+  // Used by accounts created via the landing page magic link flow.
+  async function _magicLink() {
+    var email = (document.getElementById('auth-email').value || '').trim();
+    if (!email) { _setMsg('Enter your email address first.', 'error'); return; }
+    var btn = document.getElementById('auth-submit');
+    if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+    try {
+      var res = await fetch(
+        'https://yixrwyfodipfcbhjcszp.supabase.co/auth/v1/otp?redirect_to=' + encodeURIComponent(window.location.origin + '/app'),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeHJ3eWZvZGlwZmNiaGpjc3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODg3MDIsImV4cCI6MjA5MTY2NDcwMn0.nXbnQ5iOxFEM5xWUP-p1a9hNyIlVe0xex0wQxZ9L4UE'
+          },
+          body: JSON.stringify({ email: email, create_user: false })
+        }
+      );
+      if (!res.ok) throw new Error();
+      _setMsg('Sign-in link sent — check your inbox.', 'ok');
+    } catch (e) {
+      _setMsg('Could not send link. Check the email address and try again.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Sign in'; }
     }
   }
 
@@ -428,6 +459,6 @@ window.Mise.auth = (function () {
   }
 
   // Expose internal tab/form handlers so onclick attributes in injected HTML can call them
-  return { init, login, signup, loginGoogle, logout, resetPassword, _tab, _submit, _forgot, _google, _togglePw };
+  return { init, login, signup, loginGoogle, logout, resetPassword, _tab, _submit, _forgot, _magicLink, _google, _togglePw };
 
 })();
