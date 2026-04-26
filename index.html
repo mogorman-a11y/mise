@@ -10,19 +10,26 @@
   <meta name="keywords" content="HACCP app UK, digital HACCP records, food safety app UK, temperature log app, food hygiene app, HACCP software UK, kitchen compliance app, fridge temperature log, food safety records">
   <link rel="canonical" href="https://getveriqo.co.uk/">
 
+  <!-- ── Preconnect hints ─────────────────────────────────────────── -->
+  <link rel="preconnect" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://eu-assets.i.posthog.com">
+  <link rel="preconnect" href="https://yixrwyfodipfcbhjcszp.supabase.co">
+
   <!-- ── Open Graph ────────────────────────────────────────────────── -->
   <meta property="og:title" content="Veriqo — Digital HACCP Records for Professional Kitchens">
   <meta property="og:description" content="Replace paper logs with a digital HACCP system. Log temps, checks and cleaning in seconds. Free 14-day trial — no card needed.">
   <meta property="og:url" content="https://getveriqo.co.uk/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Veriqo">
+  <meta property="og:image" content="https://getveriqo.co.uk/icons/icon-512.png">
 
   <!-- ── Twitter card ─────────────────────────────────────────────── -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Veriqo — Digital HACCP Records">
   <meta name="twitter:description" content="Replace paper temperature logs with a digital HACCP system. Free 14-day trial.">
+  <meta name="twitter:image" content="https://getveriqo.co.uk/icons/icon-512.png">
 
-  <!-- ── Schema.org structured data ───────────────────────────────── -->
+  <!-- ── Schema.org: SoftwareApplication ─────────────────────────── -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -33,42 +40,73 @@
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web, iOS, Android",
     "offers": [
+      { "@type": "Offer", "name": "Monthly", "price": "12.00", "priceCurrency": "GBP" },
+      { "@type": "Offer", "name": "Annual", "price": "120.00", "priceCurrency": "GBP" }
+    ]
+  }
+  </script>
+
+  <!-- ── Schema.org: Organization ─────────────────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Veriqo",
+    "url": "https://getveriqo.co.uk",
+    "logo": "https://getveriqo.co.uk/icons/icon-512.png",
+    "description": "Digital HACCP food safety records for professional kitchens.",
+    "email": "hello@getveriqo.co.uk",
+    "sameAs": ["https://www.instagram.com/veriqoapp"],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "hello@getveriqo.co.uk",
+      "contactType": "customer support"
+    }
+  }
+  </script>
+
+  <!-- ── Schema.org: WebSite ───────────────────────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Veriqo",
+    "url": "https://getveriqo.co.uk"
+  }
+  </script>
+
+  <!-- ── Schema.org: FAQ ───────────────────────────────────────────── -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
       {
-        "@type": "Offer",
-        "name": "Monthly",
-        "price": "12.00",
-        "priceCurrency": "GBP",
-        "description": "Monthly subscription with full access to all features"
+        "@type": "Question",
+        "name": "Will EHOs accept digital HACCP records?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. The Food Standards Agency's guidance makes clear that digital records are fully acceptable — and increasingly preferred — by Environmental Health Officers. Veriqo's timestamped records and PDF exports give inspectors exactly the audit trail they need." }
       },
       {
-        "@type": "Offer",
-        "name": "Annual",
-        "price": "120.00",
-        "priceCurrency": "GBP",
-        "description": "Annual subscription — 2 months free vs monthly"
+        "@type": "Question",
+        "name": "Does Veriqo work offline?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Veriqo is a Progressive Web App that stores data locally on your device. You can log records during a full Wi-Fi outage and everything syncs automatically when you go back online." }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to download an app?",
+        "acceptedAnswer": { "@type": "Answer", "text": "No download or App Store needed. Visit getveriqo.co.uk in your browser on any device. For iPhone, save it to your home screen from Safari using Add to Home Screen." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can multiple staff use the same account?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes. Add staff names in Settings and they appear in dropdowns when logging. Multiple people can log from different devices and all records sync in real time." }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does Veriqo cost?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Veriqo costs £12 per month or £120 per year (saving £24). Both plans start with a free 14-day trial. No credit card required to start." }
       }
-    ],
-    "featureList": [
-      "Temperature logging",
-      "HACCP compliance records",
-      "PDF export",
-      "Works offline",
-      "Push notification reminders",
-      "Opening and closing checks",
-      "Cleaning records",
-      "Delivery checks",
-      "Allergen records"
-    ],
-    "publisher": {
-      "@type": "Organization",
-      "name": "Mise Labs",
-      "url": "https://getveriqo.co.uk",
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "email": "hello@getveriqo.co.uk",
-        "contactType": "customer support"
-      }
-    }
+    ]
   }
   </script>
 
@@ -450,6 +488,101 @@
     .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
     .footer-links a:hover { color: #fff; }
 
+    /* ── Screenshots ──────────────────────────────────────── */
+    .screenshots { background: var(--bg-alt); }
+    .screenshots-header { text-align: center; margin-bottom: 48px; }
+    .screenshots-header .section-sub { margin: 12px auto 0; text-align: center; }
+    .screenshots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+    .screenshot-card { text-align: center; }
+    .screenshot-card img {
+      width: 100%; max-width: 260px;
+      border-radius: 20px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+      display: block; margin: 0 auto 12px;
+    }
+    .screenshot-label {
+      font-size: 13px; font-weight: 600;
+      color: var(--muted);
+    }
+
+    /* ── Testimonials ─────────────────────────────────────── */
+    .testimonials { background: var(--bg); }
+    .testimonials-header { text-align: center; margin-bottom: 48px; }
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; max-width: 760px; margin: 0 auto;
+    }
+    .testimonial-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .testimonial-stars { font-size: 18px; margin-bottom: 14px; letter-spacing: 2px; }
+    .testimonial-card blockquote {
+      font-size: 17px; font-weight: 600;
+      color: var(--dark); line-height: 1.5;
+      margin-bottom: 16px;
+      font-style: italic;
+    }
+    .testimonial-card blockquote::before { content: '"'; }
+    .testimonial-card blockquote::after  { content: '"'; }
+    .testimonial-author {
+      font-size: 13px; font-weight: 600;
+      color: var(--green);
+    }
+
+    /* ── Email capture ────────────────────────────────────── */
+    .email-capture {
+      background: linear-gradient(155deg, #1a1a18 0%, #1f3828 60%, #2a4a30 100%);
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .email-capture .section-label { color: #85e092; }
+    .email-capture .section-title { color: #fff; margin: 0 auto 14px; max-width: 600px; }
+    .email-capture p { font-size: 17px; color: rgba(255,255,255,0.65); margin-bottom: 32px; }
+    .capture-form { max-width: 500px; margin: 0 auto; }
+    .capture-row {
+      display: flex; gap: 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      padding: 6px 6px 6px 18px;
+    }
+    .capture-row input {
+      flex: 1; background: none; border: none; outline: none;
+      color: #fff; font-size: 15px;
+      font-family: inherit;
+    }
+    .capture-row input::placeholder { color: rgba(255,255,255,0.4); }
+    .capture-row button {
+      background: var(--green); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 12px 22px; font-size: 15px;
+      font-weight: 700; font-family: inherit;
+      cursor: pointer; white-space: nowrap;
+      transition: background .15s;
+    }
+    .capture-row button:hover { background: #238a30; }
+    .capture-row button:disabled { opacity: .6; cursor: default; }
+    .lead-msg {
+      margin-top: 12px; font-size: 14px;
+      min-height: 20px;
+    }
+    .lead-msg.success { color: #85e092; }
+    .lead-msg.error   { color: #fca5a5; }
+    @media (max-width: 480px) {
+      .capture-row { flex-direction: column; padding: 12px; gap: 8px; }
+      .capture-row input { padding: 4px 0; }
+      .capture-row button { width: 100%; padding: 13px; }
+    }
+
     /* ── Five-star section ────────────────────────────────── */
     .five-star {
       background: var(--dark);
@@ -525,6 +658,7 @@
 <body>
 
 <!-- ════════════════ NAV ════════════════ -->
+<header>
 <nav>
   <div class="nav-inner">
     <div class="nav-logo">Veri<span>qo</span></div>
@@ -538,6 +672,8 @@
     </div>
   </div>
 </nav>
+</header>
+<main>
 
 <!-- ════════════════ HERO ════════════════ -->
 <section class="hero">
@@ -560,6 +696,35 @@
     <div class="trust-item">📄 <span><strong>PDF reports</strong> ready for inspectors instantly</span></div>
   </div>
 </div>
+
+<!-- ════════════════ SCREENSHOTS ════════════════ -->
+<section class="screenshots" id="screenshots">
+  <div class="container">
+    <div class="screenshots-header">
+      <div class="section-label">See it in action</div>
+      <div class="section-title">Built for real kitchens</div>
+      <p class="section-sub">Everything your team needs to stay compliant — from the first temp log to the final PDF report.</p>
+    </div>
+    <div class="screenshots-grid">
+      <div class="screenshot-card">
+        <img src="./images/screenshot-home.png" alt="Veriqo home screen showing daily HACCP dashboard with OK, Warning and Failed counts" loading="lazy" width="260" height="520">
+        <div class="screenshot-label">Daily dashboard</div>
+      </div>
+      <div class="screenshot-card">
+        <img src="./images/screenshot-features.png" alt="Veriqo app showing inspection-ready, no paperwork and digital audit trail features" loading="lazy" width="260" height="520">
+        <div class="screenshot-label">Always inspection-ready</div>
+      </div>
+      <div class="screenshot-card">
+        <img src="./images/screenshot-pdf.png" alt="Veriqo PDF export showing HACCP daily log with fridge temperatures and cooked food records" loading="lazy" width="260" height="520">
+        <div class="screenshot-label">Instant PDF export</div>
+      </div>
+      <div class="screenshot-card">
+        <img src="./images/screenshot-flags.png" alt="Veriqo cooking temperature check instantly flagging unsafe food temperature" loading="lazy" width="260" height="520">
+        <div class="screenshot-label">Instant safety alerts</div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- ════════════════ FIVE STAR ════════════════ -->
 <section class="five-star" id="five-star">
@@ -679,6 +844,28 @@
         <div class="feature-icon">🧑‍🍳</div>
         <h3>Private chef mode</h3>
         <p>Working in clients' homes? Switch on Private chef mode for job logging, kitchen assessments, transport temperature checks, and mobile credentials.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ TESTIMONIALS ════════════════ -->
+<section class="testimonials" id="testimonials">
+  <div class="container">
+    <div class="testimonials-header">
+      <div class="section-label">From the kitchen</div>
+      <div class="section-title">What chefs are saying</div>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+        <blockquote>Oh mate this is mustard! Thank you</blockquote>
+        <div class="testimonial-author">Mike S. — Chef &amp; Trainer</div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">⭐⭐⭐⭐⭐</div>
+        <blockquote>Looks good! I've signed up.</blockquote>
+        <div class="testimonial-author">Nicola H. — Kitchen Manager</div>
       </div>
     </div>
   </div>
@@ -843,6 +1030,22 @@
   </div>
 </section>
 
+<!-- ════════════════ EMAIL CAPTURE ════════════════ -->
+<section class="email-capture" id="get-started">
+  <div class="container">
+    <div class="section-label">Get started free</div>
+    <div class="section-title">Try Veriqo free for 14 days</div>
+    <p>No credit card. No commitment. Better HACCP records from day one.</p>
+    <form class="capture-form" onsubmit="submitLead(event)">
+      <div class="capture-row">
+        <input type="email" id="lead-email" placeholder="Your work email address" required autocomplete="email">
+        <button type="submit" id="lead-btn">Start free trial →</button>
+      </div>
+      <div id="lead-msg" class="lead-msg"></div>
+    </form>
+  </div>
+</section>
+
 <!-- ════════════════ FINAL CTA ════════════════ -->
 <section class="final-cta">
   <div class="container">
@@ -853,16 +1056,19 @@
   </div>
 </section>
 
+</main>
+
 <!-- ════════════════ FOOTER ════════════════ -->
 <footer>
   <div class="footer-inner">
     <div class="footer-logo">Veri<span>qo</span> <span style="font-size:12px;font-weight:400;opacity:.5">by Mise Labs</span></div>
     <div class="footer-links">
       <a href="https://getveriqo.co.uk/app">Open app</a>
+      <a href="https://www.instagram.com/veriqoapp" target="_blank" rel="noopener">Instagram</a>
       <a href="mailto:hello@getveriqo.co.uk">hello@getveriqo.co.uk</a>
       <a href="https://getveriqo.co.uk/app#tab-legal">Privacy &amp; Terms</a>
     </div>
-    <div>© 2025 Mise Labs</div>
+    <div>© 2026 Mise Labs</div>
   </div>
 </footer>
 
@@ -875,6 +1081,37 @@
       el.classList.remove('open');
     });
     if (!wasOpen) item.classList.add('open');
+  }
+
+  // ── Email capture form ────────────────────────────
+  async function submitLead(e) {
+    e.preventDefault();
+    var btn = document.getElementById('lead-btn');
+    var msg = document.getElementById('lead-msg');
+    var email = document.getElementById('lead-email').value.trim();
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+    msg.className = 'lead-msg';
+    msg.textContent = '';
+    try {
+      var res = await fetch('https://yixrwyfodipfcbhjcszp.supabase.co/functions/v1/capture-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, source: 'landing_page' })
+      });
+      if (res.ok) {
+        msg.textContent = '✓ You\'re in! Redirecting to your free trial…';
+        msg.className = 'lead-msg success';
+        if (window.posthog) posthog.capture('lead_captured', { email: email });
+        if (window.gtag) gtag('event', 'generate_lead', { value: 1 });
+        setTimeout(function() { window.location.href = 'https://getveriqo.co.uk/app'; }, 1800);
+      } else { throw new Error(); }
+    } catch(err) {
+      msg.textContent = 'Something went wrong — try signing up directly at the app.';
+      msg.className = 'lead-msg error';
+      btn.textContent = 'Start free trial →';
+      btn.disabled = false;
+    }
   }
 
   // ── Smooth anchor scroll ──────────────────────────
