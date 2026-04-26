@@ -733,16 +733,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
     <!-- Menu selection -->
     <div class="card">
-      <div class="card-title">Menu</div>
+      <div class="card-title">Menus</div>
       <div id="cust-conflict-banner" style="display:none;background:#fde8e8;border:1px solid #f5c6c6;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#A32D2D;line-height:1.5"></div>
       <div class="form-group">
-        <label class="form-label">Select a saved menu</label>
-        <select class="form-input" id="cust-menu-select" onchange="custMenuChanged()">
-          <option value="">— Choose a menu —</option>
-          <option value="custom">Custom menu (build below)</option>
-        </select>
+        <label class="form-label">Add a menu to this job</label>
+        <div style="display:flex;gap:8px;align-items:flex-start">
+          <select class="form-input" id="cust-menu-select" style="flex:1;margin:0">
+            <option value="">— Choose a menu —</option>
+            <option value="custom">Custom dishes (build below)</option>
+          </select>
+          <button class="btn-secondary" onclick="custAddMenu()" style="white-space:nowrap;margin:0;flex-shrink:0;padding:10px 14px">+ Add</button>
+        </div>
       </div>
-      <!-- Preview of selected menu with conflict highlighting -->
+      <!-- List of added menus (removable) -->
+      <div id="cust-added-menus"></div>
+      <!-- Combined dish preview with conflict highlighting -->
       <div id="cust-menu-preview"></div>
       <!-- Custom dish builder -->
       <div id="cust-custom-section" style="display:none">
@@ -2845,8 +2850,25 @@ function renderMenuLibrary() {
 
 // --- CUSTOMER JOBS ---
 
-var _custDishes = [];
-var _editingJobIdx = null;  // records[] index of job being edited
+var _custDishes = [];          // custom ad-hoc dishes for the current job
+var _custAddedMenus = [];      // saved menus added to the current job [{id, name}]
+var _editingJobIdx = null;     // records[] index of job being edited
+
+// Returns the combined flat dish list from all added menus + custom dishes
+function custGetAllDishes() {
+  var all = [];
+  var savedMenus = settings.savedMenus || [];
+  _custAddedMenus.forEach(function(entry) {
+    if (entry.id === 'custom') {
+      _custDishes.forEach(function(d) { all.push(d); });
+    } else {
+      savedMenus.forEach(function(m) {
+        if (m.id === entry.id) m.dishes.forEach(function(d) { all.push(d); });
+      });
+    }
+  });
+  return all;
+}
 
 function custEditJob(recIdx) {
   var r = records[recIdx];
@@ -2885,30 +2907,33 @@ function custEditJob(recIdx) {
     if (el) { el.checked = r.dietaryPrefs && r.dietaryPrefs.indexOf(p) !== -1; custTogglePref(id); }
   });
 
-  // Menu — try to match a saved menu by name, else use custom
-  var sel = document.getElementById('cust-menu-select');
+  // Restore menus — prefer new r.menus array, fall back to old single-menu format
+  _custAddedMenus = [];
+  _custDishes = [];
   var customSection = document.getElementById('cust-custom-section');
-  if (sel) {
-    var matchedId = null;
-    if (r.menuName && r.menuName !== 'Custom menu') {
-      var menus = settings.savedMenus || [];
-      menus.forEach(function(m) { if (m.name === r.menuName) matchedId = String(m.id); });
-    }
-    if (matchedId) {
-      sel.value = matchedId;
-      if (customSection) customSection.style.display = 'none';
-      var menus2 = settings.savedMenus || [];
-      menus2.forEach(function(m) { if (String(m.id) === matchedId) custRenderMenuPreview(m.dishes); });
-    } else if (r.menu && r.menu.length) {
-      sel.value = 'custom';
-      if (customSection) customSection.style.display = 'block';
-      _custDishes = r.menu.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice() }; });
-      custRenderCustomDishes();
-    } else {
-      sel.selectedIndex = 0;
-    }
-    custCheckConflicts();
+  if (customSection) customSection.style.display = 'none';
+  if (r.menus && r.menus.length) {
+    // New multi-menu format
+    r.menus.forEach(function(m) {
+      _custAddedMenus.push({ id: m.id, name: m.name });
+      if (m.id === 'custom') {
+        _custDishes = m.dishes.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice() }; });
+        if (customSection) customSection.style.display = 'block';
+      }
+    });
+  } else if (r.menuName === 'Custom menu' && r.menu && r.menu.length) {
+    // Old custom single-menu
+    _custAddedMenus.push({ id: 'custom', name: 'Custom dishes' });
+    _custDishes = r.menu.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice() }; });
+    if (customSection) customSection.style.display = 'block';
+  } else if (r.menuName) {
+    // Old saved single-menu — find by name
+    var savedRef = settings.savedMenus || [];
+    savedRef.forEach(function(m) { if (m.name === r.menuName) _custAddedMenus.push({ id: m.id, name: m.name }); });
   }
+  custRenderCustomDishes();
+  custRenderAddedMenus();
+  custCheckConflicts();
 
   // Remove the old record so it gets re-saved cleanly
   records.splice(recIdx, 1);
@@ -2971,7 +2996,6 @@ function custGetAllergens() {
 function custPopulateMenuSelect() {
   var sel = document.getElementById('cust-menu-select');
   if (!sel) return;
-  var current = sel.value;
   while (sel.options.length > 2) sel.remove(2);
   var menus = settings.savedMenus || [];
   menus.forEach(function(m) {
@@ -2980,34 +3004,66 @@ function custPopulateMenuSelect() {
     opt.textContent = m.name;
     sel.appendChild(opt);
   });
-  if (current && sel.querySelector('option[value="' + current + '"]')) sel.value = current;
 }
 
-function custMenuChanged() {
+function custAddMenu() {
   var sel = document.getElementById('cust-menu-select');
-  var customSection = document.getElementById('cust-custom-section');
-  if (!sel) return;
+  if (!sel || !sel.value) { toast('Choose a menu to add', false); return; }
   var val = sel.value;
+  // Don't add the same menu twice
+  var already = _custAddedMenus.some(function(e) { return String(e.id) === val; });
+  if (already) { toast('That menu is already added', false); return; }
   if (val === 'custom') {
-    if (customSection) customSection.style.display = 'block';
-    _custDishes = [];
-    custRenderCustomDishes();
-    custCheckConflicts(_custDishes);
-    custRenderMenuPreview(null);
-  } else if (val === '') {
-    if (customSection) customSection.style.display = 'none';
-    custRenderMenuPreview(null);
-    custCheckConflicts([]);
+    _custAddedMenus.push({ id: 'custom', name: 'Custom dishes' });
+    var cs = document.getElementById('cust-custom-section');
+    if (cs) cs.style.display = 'block';
   } else {
-    if (customSection) customSection.style.display = 'none';
     var menus = settings.savedMenus || [];
     var menu = null;
     menus.forEach(function(m) { if (String(m.id) === val) menu = m; });
-    if (menu) {
-      custRenderMenuPreview(menu.dishes);
-      custCheckConflicts(menu.dishes);
-    }
+    if (!menu) return;
+    _custAddedMenus.push({ id: menu.id, name: menu.name });
   }
+  sel.selectedIndex = 0;
+  custRenderAddedMenus();
+  custCheckConflicts();
+}
+
+function custRemoveAddedMenu(idx) {
+  var removed = _custAddedMenus.splice(idx, 1)[0];
+  if (removed && removed.id === 'custom') {
+    var cs = document.getElementById('cust-custom-section');
+    if (cs) cs.style.display = 'none';
+    _custDishes = [];
+    custRenderCustomDishes();
+  }
+  custRenderAddedMenus();
+  custCheckConflicts();
+}
+
+function custRenderAddedMenus() {
+  var c = document.getElementById('cust-added-menus');
+  if (!c) return;
+  if (!_custAddedMenus.length) { c.innerHTML = ''; custRenderMenuPreview(null); return; }
+  var savedMenus = settings.savedMenus || [];
+  c.innerHTML = _custAddedMenus.map(function(entry, idx) {
+    var dishCount = '';
+    if (entry.id === 'custom') {
+      dishCount = _custDishes.length ? _custDishes.length + ' dish' + (_custDishes.length !== 1 ? 'es' : '') : 'no dishes yet';
+    } else {
+      savedMenus.forEach(function(m) {
+        if (m.id === entry.id) dishCount = m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '');
+      });
+    }
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#f8f7f3;border:1px solid #e5e4de;border-radius:8px;margin-bottom:6px">'
+      + '<div>'
+      + '<div style="font-size:13px;font-weight:600;color:#1a1a18">' + entry.name + '</div>'
+      + '<div style="font-size:12px;color:#888">' + dishCount + '</div>'
+      + '</div>'
+      + '<button onclick="custRemoveAddedMenu(' + idx + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1">&times;</button>'
+      + '</div>';
+  }).join('');
+  custRenderMenuPreview(custGetAllDishes());
 }
 
 function custRenderMenuPreview(dishes) {
@@ -3035,17 +3091,9 @@ function custRenderMenuPreview(dishes) {
 }
 
 function custCheckConflicts(dishes) {
-  // When called from allergen checkboxes (no args), resolve the current menu
+  // When called with no args (e.g. from allergen checkboxes), use the current combined dish list
   if (dishes === undefined) {
-    var sel = document.getElementById('cust-menu-select');
-    var val = sel ? sel.value : '';
-    if (val === 'custom') { dishes = _custDishes; }
-    else if (val) {
-      var menus = settings.savedMenus || [];
-      menus.forEach(function(m) { if (String(m.id) === val) dishes = m.dishes; });
-    }
-    if (!dishes) { dishes = []; }
-    // Also re-render the preview with updated conflict highlighting
+    dishes = custGetAllDishes();
     custRenderMenuPreview(dishes.length ? dishes : null);
   }
   var banner = document.getElementById('cust-conflict-banner');
@@ -3081,8 +3129,8 @@ function custAddDish() {
     if (el) el.checked = false;
   });
   custRenderCustomDishes();
-  custCheckConflicts(_custDishes);
-  custRenderMenuPreview(_custDishes);
+  custRenderAddedMenus();
+  custCheckConflicts();
   document.getElementById('cust-dish-name').focus();
 }
 
@@ -3101,8 +3149,8 @@ function custAddDishAndSave() {
     if (el) el.checked = false;
   });
   custRenderCustomDishes();
-  custCheckConflicts(_custDishes);
-  custRenderMenuPreview(_custDishes);
+  custRenderAddedMenus();
+  custCheckConflicts();
   document.getElementById('cust-dish-name').focus();
 }
 
@@ -3113,16 +3161,16 @@ function custAddFromLibrary(id) {
   if (!dish) return;
   _custDishes.push({ dish: dish.dish, allergens: dish.allergens.slice() });
   custRenderCustomDishes();
-  custCheckConflicts(_custDishes);
-  custRenderMenuPreview(_custDishes);
+  custRenderAddedMenus();
+  custCheckConflicts();
   toast('"' + dish.dish + '" added');
 }
 
 function custRemoveDish(idx) {
   _custDishes.splice(idx, 1);
   custRenderCustomDishes();
-  custCheckConflicts(_custDishes);
-  custRenderMenuPreview(_custDishes);
+  custRenderAddedMenus();
+  custCheckConflicts();
 }
 
 function custRenderCustomDishes() {
@@ -3170,27 +3218,29 @@ function logCustomerJob() {
     return el && el.checked;
   });
 
-  var sel = document.getElementById('cust-menu-select');
-  var menuVal = sel ? sel.value : '';
-  var menuName = '';
-  var dishes = [];
-  if (menuVal === 'custom') {
-    menuName = 'Custom menu';
-    dishes = _custDishes.slice();
-  } else if (menuVal) {
-    var menus = settings.savedMenus || [];
-    menus.forEach(function(m) { if (String(m.id) === menuVal) { menuName = m.name; dishes = m.dishes.slice(); } });
-  }
+  // Build menus array from added menus
+  var savedMenusRef = settings.savedMenus || [];
+  var menusToSave = _custAddedMenus.map(function(entry) {
+    if (entry.id === 'custom') {
+      return { id: 'custom', name: 'Custom dishes', dishes: _custDishes.slice() };
+    }
+    var found = null;
+    savedMenusRef.forEach(function(m) { if (m.id === entry.id) found = m; });
+    return found ? { id: found.id, name: found.name, dishes: found.dishes.slice() } : null;
+  }).filter(Boolean);
+
+  var allDishes = custGetAllDishes();
+  var menuNamesStr = menusToSave.map(function(m) { return m.name; }).join(', ');
 
   var conflicts = [];
-  dishes.forEach(function(d) {
+  allDishes.forEach(function(d) {
     d.allergens.forEach(function(a) {
       if (clientAllergens.indexOf(a) !== -1 && conflicts.indexOf(a) === -1) conflicts.push(a);
     });
   });
 
   var status = conflicts.length ? 'warn' : 'ok';
-  var msg = type + (covers ? ' · ' + covers + ' covers' : '') + (menuName ? ' · ' + menuName : '');
+  var msg = type + (covers ? ' · ' + covers + ' covers' : '') + (menuNamesStr ? ' · ' + menuNamesStr : '');
   if (conflicts.length) msg += ' · ⚠️ ' + conflicts.length + ' allergen conflict' + (conflicts.length > 1 ? 's' : '');
 
   records.push({
@@ -3198,7 +3248,9 @@ function logCustomerJob() {
     jobType: type, covers: covers, time: time, eventDate: eventDate,
     notes: notes, dietNotes: dietNotes,
     clientAllergens: clientAllergens, dietaryPrefs: dietaryPrefs,
-    menuName: menuName, menu: dishes,
+    menus: menusToSave,
+    // legacy fields for backward compat with old records display
+    menuName: menuNamesStr, menu: allDishes,
     conflicts: conflicts, status: status, msg: msg
   });
   saveToday();
@@ -3216,9 +3268,13 @@ function logCustomerJob() {
     if (el) { el.checked = false; custTogglePref('cdp-' + p.replace(/\s+/g,'_')); }
   });
   _custDishes = [];
+  _custAddedMenus = [];
+  var sel = document.getElementById('cust-menu-select');
   if (sel) sel.selectedIndex = 0;
   var customSection = document.getElementById('cust-custom-section');
   if (customSection) customSection.style.display = 'none';
+  var addedMenusEl = document.getElementById('cust-added-menus');
+  if (addedMenusEl) addedMenusEl.innerHTML = '';
   var preview = document.getElementById('cust-menu-preview');
   if (preview) preview.innerHTML = '';
   var banner = document.getElementById('cust-conflict-banner');
@@ -3388,8 +3444,13 @@ function renderSection_PC(type) {
     if (r.type==='job') {
       if (r.location)   extra += '<div class="log-time">📍 '+r.location+'</div>';
       if (r.eventDate)  extra += '<div class="log-time">📅 '+new Date(r.eventDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>';
-      if (r.menuName) extra += '<div class="log-time">🍽 ' + r.menuName + (r.menu&&r.menu.length?' ('+r.menu.length+' dish'+(r.menu.length>1?'es':'')+')'  :'') + '</div>';
-      else if (r.menu && r.menu.length) extra += '<div class="log-time">🍽 '+r.menu.length+' dish'+(r.menu.length>1?'es':'')+'</div>';
+      if (r.menus && r.menus.length) {
+        r.menus.forEach(function(m) {
+          extra += '<div class="log-time">🍽 ' + m.name + ' (' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + ')</div>';
+        });
+      } else if (r.menuName) {
+        extra += '<div class="log-time">🍽 ' + r.menuName + (r.menu&&r.menu.length?' ('+r.menu.length+' dish'+(r.menu.length>1?'es':'')+')'  :'') + '</div>';
+      }
       if (r.dietaryPrefs&&r.dietaryPrefs.length) extra += '<div class="log-time">'+r.dietaryPrefs.join(', ')+'</div>';
       if (r.conflicts && r.conflicts.length) extra += '<div style="margin-top:4px;font-size:12px;color:#A32D2D;font-weight:600">⚠️ Allergen conflicts: '+r.conflicts.join(', ')+'</div>';
       extra += '<div style="margin-top:8px"><button onclick="custEditJob('+recIdx+')" style="padding:5px 12px;background:#f0f0ec;border:none;border-radius:7px;font-size:12px;font-weight:600;color:#555;cursor:pointer;font-family:inherit">Edit job</button></div>';
