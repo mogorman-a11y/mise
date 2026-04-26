@@ -338,6 +338,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <div class="tile-label">Transport temps</div>
           <div class="tile-sub" id="sub-transport">Food in transit</div>
         </div>
+        <div class="tile" onclick="showTab('calendar')">
+          <div class="tile-badge none" id="badge-calendar"></div>
+          <div class="tile-icon">📅</div>
+          <div class="tile-label">Calendar</div>
+          <div class="tile-sub" id="sub-calendar">Jobs &amp; availability</div>
+        </div>
         <div class="tile" onclick="showTab('mobileset')">
           <div class="tile-badge none" id="badge-mobileset"></div>
           <div class="tile-icon">🔧</div>
@@ -943,6 +949,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
     <div class="divider">Transport records</div>
     <div id="transport-log"><div class="empty">No transport records yet — log temperatures at departure and arrival for every food delivery to a client.</div></div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="tab-calendar" class="section">
+
+    <!-- Month navigation -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button onclick="calPrev()" style="background:none;border:1px solid #e5e4de;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;color:#1a1a18;display:flex;align-items:center;justify-content:center">‹</button>
+      <div id="cal-month-label" style="font-size:17px;font-weight:700;color:#1a1a18"></div>
+      <button onclick="calNext()" style="background:none;border:1px solid #e5e4de;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;color:#1a1a18;display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+
+    <!-- Legend -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:11px;color:#888">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#EAF3DE;border:1px solid #b8dfa0;display:inline-block"></span>Job booked</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#FFF0F0;border:1px solid #f5c6c6;display:inline-block"></span>Unavailable</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#1a1a18;display:inline-block"></span>Today</span>
+    </div>
+
+    <!-- Calendar grid -->
+    <div id="calendar-grid"></div>
+
+    <!-- Day detail panel -->
+    <div id="cal-day-detail"></div>
+
   </div>
 
   <!-- MOBILE SETUP -->
@@ -1898,7 +1929,7 @@ function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
-var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Clients',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
+var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Clients',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',calendar:'Calendar',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
 
 var _homeScrollPos = 0;
 
@@ -1935,6 +1966,7 @@ function showTab(name) {
   if(name==='inspector') renderInspector();
   if(name==='customers') { renderCustomerCRM(); populateCustCRMSelect(); }
   if(name==='transport') populateTransportCustomerSelect();
+  if(name==='calendar')  renderCalendar();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
   updateDashboard();
   if(name === 'home') { var pos = _homeScrollPos; requestAnimationFrame(function(){ window.scrollTo(0, pos); }); }
@@ -2621,7 +2653,7 @@ function buildPDFExport(dateLabel, recs) {
 }
 
 // --- PRIVATE CHEF MODE ---
-var PC_TYPES = ['job','customers','kitchenassess','allergen','transport','mobileset','credentials'];
+var PC_TYPES = ['job','customers','kitchenassess','allergen','transport','calendar','mobileset','credentials'];
 
 var ALLERGENS_14 = ['Celery','Cereals containing gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphur dioxide'];
 var DIETARY_PREFS = ['Vegetarian','Vegan','Gluten-free','Dairy-free','Halal','Kosher','Nut-free','Shellfish-free'];
@@ -3946,9 +3978,228 @@ function removeCredential(i) {
   var list = loadCredentials(); list.splice(i,1); saveCredentials(list); renderCredentials(); toast('Credential removed');
 }
 
+// --- CALENDAR ---
+
+var _calYear  = new Date().getFullYear();
+var _calMonth = new Date().getMonth();   // 0-indexed
+var _calSelectedDate = null;
+
+var CAL_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// Build a map of dateStr → [jobRecord, ...] from today + all localStorage days.
+// Uses r.eventDate as the calendar date when present; falls back to the log date.
+function getAllJobsByDate() {
+  var byDate = {};
+  function add(r, fallbackDate) {
+    if (r.type !== 'job' || !r.client) return;
+    var d = r.eventDate || fallbackDate;
+    if (!d) return;
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(r);
+  }
+  records.forEach(function(r) { add(r, TODAY); });
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('haccp_') !== 0) continue;
+      if (k === 'haccp_settings' || k === 'haccp_suppliers' || k === 'haccp_credentials') continue;
+      var dayStr = k.replace('haccp_', '');
+      getDayRecords(dayStr).forEach(function(r) { add(r, dayStr); });
+    }
+  } catch(e) {}
+  return byDate;
+}
+
+function calPrev() {
+  _calMonth--;
+  if (_calMonth < 0) { _calMonth = 11; _calYear--; }
+  _calSelectedDate = null;
+  renderCalendar();
+}
+
+function calNext() {
+  _calMonth++;
+  if (_calMonth > 11) { _calMonth = 0; _calYear++; }
+  _calSelectedDate = null;
+  renderCalendar();
+}
+
+function calDayClick(dateStr) {
+  _calSelectedDate = (_calSelectedDate === dateStr) ? null : dateStr;
+  renderCalendar();
+  if (_calSelectedDate) {
+    setTimeout(function() {
+      var el = document.getElementById('cal-day-detail');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 60);
+  }
+}
+
+function calToggleUnavailable(dateStr) {
+  if (!settings.unavailableDates) settings.unavailableDates = [];
+  var idx = settings.unavailableDates.indexOf(dateStr);
+  if (idx !== -1) {
+    settings.unavailableDates.splice(idx, 1);
+    toast('Availability restored');
+  } else {
+    settings.unavailableDates.push(dateStr);
+    toast('Marked unavailable');
+  }
+  saveSettings();
+  renderCalendar();          // re-render grid
+  if (_calSelectedDate === dateStr) {
+    // Refresh the detail panel without closing it
+    _renderCalDayDetail(dateStr, getAllJobsByDate());
+  }
+}
+
+function renderCalendar() {
+  var labelEl = document.getElementById('cal-month-label');
+  var gridEl  = document.getElementById('calendar-grid');
+  if (!gridEl) return;
+  if (labelEl) labelEl.textContent = CAL_MONTH_NAMES[_calMonth] + ' ' + _calYear;
+
+  var jobsByDate   = getAllJobsByDate();
+  var unavailable  = settings.unavailableDates || [];
+  var today        = todayStr();
+
+  var firstDay     = new Date(_calYear, _calMonth, 1);
+  var daysInMonth  = new Date(_calYear, _calMonth + 1, 0).getDate();
+  // ISO week starts Monday; JS getDay() is 0=Sun, so shift
+  var startDow     = (firstDay.getDay() + 6) % 7;
+
+  // --- Day-of-week headers ---
+  var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px">';
+  ['M','T','W','T','F','S','S'].forEach(function(d) {
+    html += '<div style="text-align:center;font-size:11px;font-weight:700;color:#aaa;padding:3px 0">' + d + '</div>';
+  });
+  html += '</div>';
+
+  // --- Day cells ---
+  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+
+  // Leading empty cells
+  for (var e = 0; e < startDow; e++) {
+    html += '<div style="min-height:52px"></div>';
+  }
+
+  for (var day = 1; day <= daysInMonth; day++) {
+    var mm  = String(_calMonth + 1).padStart(2, '0');
+    var dd  = String(day).padStart(2, '0');
+    var dateStr = _calYear + '-' + mm + '-' + dd;
+
+    var isToday    = dateStr === today;
+    var isUnavail  = unavailable.indexOf(dateStr) !== -1;
+    var jobs       = jobsByDate[dateStr] || [];
+    var hasJob     = jobs.length > 0;
+    var isSelected = _calSelectedDate === dateStr;
+    var isPast     = dateStr < today;
+
+    // Cell colours — priority: selected > today > job > unavailable > past > normal
+    var bg, fg, border;
+    if (isSelected && isToday)       { bg='#1a1a18'; fg='#fff'; border='#1a1a18'; }
+    else if (isSelected)             { bg='#e8e7e3'; fg='#1a1a18'; border='#1a1a18'; }
+    else if (isToday)                { bg='#1a1a18'; fg='#fff'; border='#1a1a18'; }
+    else if (hasJob && isUnavail)    { bg='#FFF0F0'; fg='#A32D2D'; border='#f5c6c6'; }
+    else if (hasJob)                 { bg='#EAF3DE'; fg='#2D7A3A'; border='#b8dfa0'; }
+    else if (isUnavail)              { bg='#FFF0F0'; fg='#A32D2D'; border='#f5c6c6'; }
+    else if (isPast)                 { bg='#faf9f6'; fg='#bbb'; border='#eee'; }
+    else                             { bg='#fff';    fg='#1a1a18'; border='#e5e4de'; }
+
+    html += '<div onclick="calDayClick(\'' + dateStr + '\')" style="'
+      + 'background:' + bg + ';color:' + fg + ';border:1px solid ' + border + ';'
+      + 'border-radius:9px;padding:6px 2px 5px;text-align:center;cursor:pointer;'
+      + 'min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;'
+      + (isSelected ? 'box-shadow:0 0 0 2px #1a1a18;' : '')
+      + '">'
+      + '<div style="font-size:14px;font-weight:' + (isToday || isSelected ? '700' : '400') + ';line-height:1.2">' + day + '</div>';
+
+    if (hasJob) {
+      html += '<div style="font-size:9px;font-weight:700;margin-top:2px;line-height:1.1">' + jobs.length + (jobs.length > 1 ? ' jobs' : ' job') + '</div>';
+    } else if (isUnavail) {
+      html += '<div style="font-size:9px;font-weight:700;margin-top:2px;line-height:1.1">Off</div>';
+    }
+
+    html += '</div>';
+  }
+
+  html += '</div>';
+  gridEl.innerHTML = html;
+
+  // Render detail panel
+  var detailEl = document.getElementById('cal-day-detail');
+  if (detailEl) {
+    if (_calSelectedDate) {
+      _renderCalDayDetail(_calSelectedDate, jobsByDate);
+    } else {
+      detailEl.innerHTML = '';
+    }
+  }
+}
+
+function _renderCalDayDetail(dateStr, jobsByDate) {
+  var detailEl = document.getElementById('cal-day-detail');
+  if (!detailEl) return;
+
+  var jobs      = (jobsByDate || getAllJobsByDate())[dateStr] || [];
+  var unavail   = (settings.unavailableDates || []).indexOf(dateStr) !== -1;
+  var dateParts = dateStr.split('-');
+  var dateLabel = new Date(parseInt(dateParts[0]), parseInt(dateParts[1])-1, parseInt(dateParts[2]))
+                    .toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  var isPast    = dateStr < todayStr();
+
+  var html = '<div style="background:#fff;border:1px solid #e5e4de;border-radius:14px;padding:16px 16px 12px;margin-top:14px">';
+  html += '<div style="font-size:15px;font-weight:700;color:#1a1a18;margin-bottom:12px">' + dateLabel + '</div>';
+
+  if (jobs.length) {
+    jobs.forEach(function(r) {
+      var statusCol = r.status === 'fail' ? '#A32D2D' : r.status === 'warn' ? '#854F0B' : '#2D7A3A';
+      var statusBg  = r.status === 'fail' ? '#FCEBEB' : r.status === 'warn' ? '#FAEEDA' : '#EAF3DE';
+      html += '<div style="background:#f8f7f3;border:1px solid #e5e4de;border-radius:10px;padding:12px 14px;margin-bottom:10px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+      html += '<div style="flex:1"><div style="font-size:15px;font-weight:700;color:#1a1a18">' + r.client + '</div>';
+      if (r.jobType) html += '<div style="font-size:12px;color:#555;margin-top:2px">' + r.jobType + (r.covers ? ' · ' + r.covers + ' covers' : '') + '</div>';
+      if (r.location) html += '<div style="font-size:12px;color:#888;margin-top:2px">📍 ' + r.location + '</div>';
+      if (r.time)    html += '<div style="font-size:12px;color:#888;margin-top:2px">🕐 ' + r.time + '</div>';
+      if (r.menus && r.menus.length) {
+        r.menus.forEach(function(m) {
+          html += '<div style="font-size:12px;color:#888;margin-top:2px">🍽 ' + m.name + ' (' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + ')</div>';
+        });
+      }
+      if (r.dietaryPrefs && r.dietaryPrefs.length) html += '<div style="font-size:12px;color:#888;margin-top:2px">🌿 ' + r.dietaryPrefs.join(', ') + '</div>';
+      if (r.conflicts && r.conflicts.length) {
+        html += '<div style="font-size:12px;color:#A32D2D;font-weight:600;margin-top:6px">⚠️ Allergen conflicts: ' + r.conflicts.join(', ') + '</div>';
+      }
+      if (r.notes) html += '<div style="font-size:12px;color:#888;margin-top:4px;font-style:italic">' + r.notes + '</div>';
+      // Contact buttons
+      var btns = '';
+      if (r.phone)    btns += '<a href="tel:'+r.phone.replace(/\s/g,'')+'" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#fff;border:1px solid #e5e4de;border-radius:7px;margin-top:8px;margin-right:6px">📞 '+r.phone+'</a>';
+      if (r.email)    btns += '<a href="mailto:'+r.email+'" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#fff;border:1px solid #e5e4de;border-radius:7px;margin-top:8px;margin-right:6px">✉️ '+r.email+'</a>';
+      if (r.location) btns += '<a href="https://maps.google.com/?q='+encodeURIComponent(r.location)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#fff;border:1px solid #e5e4de;border-radius:7px;margin-top:8px">🗺 Directions</a>';
+      if (btns) html += '<div style="display:flex;flex-wrap:wrap">' + btns + '</div>';
+      html += '</div>';
+      html += '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;background:'+statusBg+';color:'+statusCol+';white-space:nowrap;flex-shrink:0">' + (r.status||'ok').toUpperCase() + '</span>';
+      html += '</div></div>';
+    });
+  } else {
+    html += '<div style="font-size:13px;color:#aaa;margin-bottom:12px">No jobs booked for this day.</div>';
+  }
+
+  // Unavailability toggle (only meaningful for non-past dates, but allow removal for past)
+  if (unavail) {
+    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="width:100%;padding:11px;background:#FFF0F0;color:#A32D2D;border:1px solid #f5c6c6;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px">✓ Marked unavailable — tap to remove</button>';
+  } else if (!isPast || jobs.length === 0) {
+    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="width:100%;padding:11px;background:#f5f4f0;color:#555;border:1px solid #e5e4de;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:4px">Mark as unavailable</button>';
+  }
+
+  html += '</div>';
+  detailEl.innerHTML = html;
+}
+
 // --- PC RENDER ---
 function renderSection_PC(type) {
   if (type === 'credentials') { renderCredentials(); return; }
+  if (type === 'calendar')    { renderCalendar();    return; }
   // 'customers' tab renders job-type records into #job-log
   var renderType = (type === 'customers') ? 'job' : type;
   var ids = {job:'job-log', customers:'job-log', kitchenassess:'kitchenassess-log', allergen:'allergen-log', transport:'transport-log', mobileset:'mobileset-log'};
