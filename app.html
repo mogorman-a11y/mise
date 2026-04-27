@@ -3004,7 +3004,7 @@ function renderMenuLibrary() {
         if (allergenSet.indexOf(a) === -1) allergenSet.push(a);
       });
     });
-    return '<div class="card" onclick="menuEdit(' + m.id + ')" style="margin-bottom:10px;cursor:pointer">'
+    return '<div class="card" onclick="menuEdit(\'' + m.id + '\')" style="margin-bottom:10px;cursor:pointer">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       + '<div style="flex:1">'
       + '<div class="card-title" style="margin-bottom:4px">' + m.name + '</div>'
@@ -3023,7 +3023,7 @@ function renderMenuLibrary() {
           }).join('');
         })()
       + '</div>'
-      + '<button onclick="event.stopPropagation();menuDelete(' + m.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
+      + '<button onclick="event.stopPropagation();menuDelete(\'' + m.id + '\')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
       + '</div></div>';
   }).join('');
 }
