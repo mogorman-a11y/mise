@@ -2610,6 +2610,18 @@ function renderAllergenChecks() {
 
 var _menuDishes = [];
 var _editingMenuId = null;
+var _expandedMenuDishIdx = null;
+
+function _sortByMealOrder(dishes) {
+  return dishes.slice().sort(function(a, b) {
+    var ai = DISH_CATEGORIES.indexOf(a.category || '');
+    var bi = DISH_CATEGORIES.indexOf(b.category || '');
+    // '' is index 0 — treat uncategorised as last
+    if (ai <= 0) ai = DISH_CATEGORIES.length;
+    if (bi <= 0) bi = DISH_CATEGORIES.length;
+    return ai - bi;
+  });
+}
 
 function renderMenuDishAllergens() {
   var c = document.getElementById('menu-dish-allergens');
@@ -2630,6 +2642,7 @@ function menuAddDish() {
   });
   var cat = (document.getElementById('menu-dish-cat').value || '').trim();
   _menuDishes.push({ dish: name, allergens: allergens, category: cat });
+  _menuDishes = _sortByMealOrder(_menuDishes);
   document.getElementById('menu-dish-name').value = '';
   document.getElementById('menu-dish-cat').value = '';
   ALLERGENS_14.forEach(function(a) {
@@ -2652,22 +2665,74 @@ function menuRenderDishes() {
     c.innerHTML = '<div style="font-size:13px;color:#aaa;text-align:center;padding:8px 0">No dishes added yet</div>';
     return;
   }
-  c.innerHTML = _menuDishes.map(function(d, idx) {
+  var html = '';
+  var lastCat = null;
+  _menuDishes.forEach(function(d, idx) {
+    var cat = d.category || '';
+    if (cat !== lastCat) {
+      if (cat) html += '<div style="font-size:11px;font-weight:700;color:#2D7A3A;text-transform:uppercase;letter-spacing:0.05em;padding:6px 0 3px">' + cat + '</div>';
+      lastCat = cat;
+    }
+    var isEditing = _expandedMenuDishIdx === idx;
     var tags = d.allergens.length
       ? d.allergens.map(function(a) {
           return '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;margin:2px 2px 0 0;background:#f0f0ec;color:#555">' + a + '</span>';
         }).join('')
       : '<span style="font-size:12px;color:#aaa">No allergens</span>';
-    return '<div style="padding:8px 12px;background:#fff;border:1px solid #e5e4de;border-radius:8px;margin-bottom:6px">'
+    var catOptions = DISH_CATEGORIES.map(function(co) {
+      return '<option value="' + co + '"' + (d.category === co ? ' selected' : '') + '>' + (co || 'No category') + '</option>';
+    }).join('');
+    var editForm = isEditing
+      ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e4de">'
+        + '<input id="mde-name-' + idx + '" class="form-input" type="text" value="' + d.dish.replace(/"/g,'&quot;') + '" style="margin-bottom:8px">'
+        + '<select id="mde-cat-' + idx + '" class="form-input" style="margin-bottom:8px;color:#555">' + catOptions + '</select>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
+        + ALLERGENS_14.map(function(a) {
+            var eid = 'mde-al-' + idx + '-' + a.replace(/\s+/g,'_');
+            var chk = d.allergens.indexOf(a) !== -1 ? ' checked' : '';
+            return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:2px 0;cursor:pointer">'
+              + '<input type="checkbox" id="' + eid + '"' + chk + ' style="width:14px;height:14px;accent-color:#1a1a18"> ' + a + '</label>';
+          }).join('')
+        + '</div>'
+        + '<div style="display:flex;gap:8px">'
+        + '<button onclick="menuDishSaveEdit(' + idx + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save</button>'
+        + '<button onclick="event.stopPropagation();menuDishToggleEdit(' + idx + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
+        + '</div>'
+        + '</div>'
+      : '';
+    html += '<div onclick="menuDishToggleEdit(' + idx + ')" style="padding:8px 12px;background:#fff;border:1px solid '+(isEditing?'#1a1a18':'#e5e4de')+';border-radius:8px;margin-bottom:6px;cursor:pointer">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       + '<div style="flex:1">'
       + '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:2px">' + d.dish + '</div>'
-      + (d.category ? '<div style="font-size:11px;color:#2D7A3A;font-weight:600;margin-bottom:3px">' + d.category + '</div>' : '')
       + '<div>' + tags + '</div>'
       + '</div>'
-      + '<button onclick="menuRemoveDish(' + idx + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
-      + '</div></div>';
-  }).join('');
+      + '<button onclick="event.stopPropagation();menuRemoveDish(' + idx + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      + '</div>'
+      + editForm
+      + '</div>';
+  });
+  c.innerHTML = html;
+}
+
+function menuDishToggleEdit(idx) {
+  _expandedMenuDishIdx = (_expandedMenuDishIdx === idx) ? null : idx;
+  menuRenderDishes();
+}
+
+function menuDishSaveEdit(idx) {
+  var nameEl = document.getElementById('mde-name-' + idx);
+  var name = nameEl ? (nameEl.value || '').trim() : '';
+  if (!name) { toast('Dish name required', false); return; }
+  var catEl = document.getElementById('mde-cat-' + idx);
+  var cat = catEl ? catEl.value : '';
+  var allergens = ALLERGENS_14.filter(function(a) {
+    var el = document.getElementById('mde-al-' + idx + '-' + a.replace(/\s+/g,'_'));
+    return el && el.checked;
+  });
+  _menuDishes[idx] = { dish: name, allergens: allergens, category: cat };
+  _menuDishes = _sortByMealOrder(_menuDishes);
+  _expandedMenuDishIdx = null;
+  menuRenderDishes();
 }
 
 function menuSave() {
@@ -2703,7 +2768,8 @@ function menuEdit(id) {
   if (!menu) return;
   // Load into form
   document.getElementById('menu-name').value = menu.name;
-  _menuDishes = menu.dishes.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice(), category: d.category || '' }; });
+  _menuDishes = _sortByMealOrder(menu.dishes.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice(), category: d.category || '' }; }));
+  _expandedMenuDishIdx = null;
   menuRenderDishes();
   _editingMenuId = id;
   var btn = document.getElementById('menu-save-btn');
@@ -2732,6 +2798,7 @@ function menuAddDishAndSave() {
   });
   var cat = (document.getElementById('menu-dish-cat').value || '').trim();
   _menuDishes.push({ dish: name, allergens: allergens, category: cat });
+  _menuDishes = _sortByMealOrder(_menuDishes);
   saveDishToLibrary(name, allergens, cat);
   document.getElementById('menu-dish-name').value = '';
   document.getElementById('menu-dish-cat').value = '';
@@ -2936,12 +3003,19 @@ function renderMenuLibrary() {
       + '<div style="flex:1">'
       + '<div class="card-title" style="margin-bottom:4px">' + m.name + '</div>'
       + '<div style="font-size:13px;color:#888;margin-bottom:8px">' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + (allergenSet.length ? ' · Contains: ' + allergenSet.join(', ') : ' · No allergens') + '</div>'
-      + m.dishes.map(function(d) {
-          return '<div style="font-size:13px;color:#555;padding:3px 0;border-bottom:1px solid #f0f0ec">'
-            + '<strong>' + d.dish + '</strong>'
-            + (d.allergens.length ? ' — ' + d.allergens.join(', ') : '')
-            + '</div>';
-        }).join('')
+      + (function() {
+          var sorted = _sortByMealOrder(m.dishes);
+          var lastCat = null;
+          return sorted.map(function(d) {
+            var cat = d.category || '';
+            var header = (cat && cat !== lastCat) ? '<div style="font-size:10px;font-weight:700;color:#2D7A3A;text-transform:uppercase;letter-spacing:0.05em;padding:5px 0 1px">' + cat + '</div>' : '';
+            lastCat = cat;
+            return header + '<div style="font-size:13px;color:#555;padding:3px 0;border-bottom:1px solid #f0f0ec">'
+              + '<strong>' + d.dish + '</strong>'
+              + (d.allergens.length ? ' — ' + d.allergens.join(', ') : '')
+              + '</div>';
+          }).join('');
+        })()
       + '</div>'
       + '<button onclick="event.stopPropagation();menuDelete(' + m.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
       + '</div></div>';
