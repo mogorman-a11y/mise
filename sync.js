@@ -1,10 +1,11 @@
 // sync.js — cloud sync (Supabase mirrors localStorage)
 // ───────────────────────────────────────────────────────
-// Strategy: localStorage is always the live source of truth.
-// Supabase is the cloud backup that persists across devices/browsers.
+// Strategy: Supabase is the source of truth for multi-device sync.
+// localStorage is a write-through cache — cloud data fully replaces it on pull.
 //
-// On sign-in:  pull from Supabase → write into localStorage → app reads normally
-// On save:     app writes to localStorage as before → also push to Supabase
+// On sign-in:  pull from Supabase → REPLACE localStorage → app reads normally
+// On save:     push to Supabase → update localStorage
+// On tab focus: re-pull from Supabase so open tabs stay current
 //
 // Dish/menu library is shared across the suite: on login this module also
 // pulls from mise_settings (Carte) and merges savedDishes + savedMenus so
@@ -14,6 +15,7 @@ window.Mise = window.Mise || {};
 window.Mise.sync = (function () {
 
   var _userId = null;
+  var _visibilityBound = false;
 
   // ── loadAll ────────────────────────────────────────────────────────────────
   async function loadAll(userId) {
@@ -27,6 +29,17 @@ window.Mise.sync = (function () {
       _refreshAppViews();
     } catch (err) {
       console.warn('[Veriqo] loadAll error — using local data:', err.message);
+    }
+
+    if (!_visibilityBound) {
+      _visibilityBound = true;
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && _userId) {
+          Promise.all([_pullRecords(_userId), _pullSettings(_userId)])
+            .then(_refreshAppViews)
+            .catch(function () {});
+        }
+      });
     }
   }
 
@@ -74,6 +87,12 @@ window.Mise.sync = (function () {
 
     if (result.error) throw result.error;
     if (!result.data) return;
+
+    Object.keys(localStorage)
+      .filter(function (k) {
+        return k.startsWith('haccp_') && k !== 'haccp_settings' && k !== 'haccp_credentials' && k !== 'haccp_suppliers';
+      })
+      .forEach(function (k) { localStorage.removeItem(k); });
 
     result.data.forEach(function (row) {
       try {
@@ -131,7 +150,9 @@ window.Mise.sync = (function () {
     if (result.error && result.error.code !== 'PGRST116') throw result.error;
 
     if (result.data && result.data.config && typeof settings !== 'undefined') {
-      Object.assign(settings, result.data.config);
+      var _cloud = result.data.config;
+      Object.keys(settings).forEach(function (k) { delete settings[k]; });
+      Object.assign(settings, _cloud);
       try { localStorage.setItem('haccp_settings', JSON.stringify(settings)); } catch (e) {}
       if (typeof loadSettings === 'function') loadSettings();
     }

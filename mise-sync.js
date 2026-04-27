@@ -1,10 +1,11 @@
 // mise-sync.js — cloud sync for Carte (mirrors localStorage ↔ Supabase)
 // ──────────────────────────────────────────────────────────────────────
-// Strategy: localStorage is always the live source of truth.
-// Supabase is the cloud backup that persists across devices/browsers.
+// Strategy: Supabase is the source of truth for multi-device sync.
+// localStorage is a write-through cache — cloud data fully replaces it on pull.
 //
-// On sign-in:  pull from Supabase → write into localStorage → app reads normally
-// On save:     app writes to localStorage as before → also push to Supabase
+// On sign-in:  pull from Supabase → REPLACE localStorage → app reads normally
+// On save:     push to Supabase → update localStorage
+// On tab focus: re-pull from Supabase so open tabs stay current
 //
 // Dish/menu library is shared across the suite: on login this module also
 // pulls from settings (Veriqo) and merges savedDishes + savedMenus so
@@ -18,10 +19,11 @@ window.Mise = window.Mise || {};
 window.Mise.sync = (function () {
 
   var _userId = null;
+  var _visibilityBound = false;
 
   // ── loadAll ────────────────────────────────────────────────────────────────
   // Called by auth.js after sign-in. Pulls the user's data from Supabase and
-  // writes it into localStorage so the rest of the app works unchanged.
+  // replaces localStorage so the rest of the app works with current cloud data.
   async function loadAll(userId) {
     _userId = userId;
 
@@ -33,6 +35,17 @@ window.Mise.sync = (function () {
       _refreshAppViews();
     } catch (err) {
       console.warn('[Mise] loadAll error — using local data:', err.message);
+    }
+
+    if (!_visibilityBound) {
+      _visibilityBound = true;
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible' && _userId) {
+          Promise.all([_pullRecords(_userId), _pullSettings(_userId)])
+            .then(_refreshAppViews)
+            .catch(function () {});
+        }
+      });
     }
   }
 
@@ -149,7 +162,9 @@ window.Mise.sync = (function () {
     if (result.error && result.error.code !== 'PGRST116') throw result.error;
 
     if (result.data && result.data.config && typeof mSettings !== 'undefined') {
-      Object.assign(mSettings, result.data.config);
+      var _cloud = result.data.config;
+      Object.keys(mSettings).forEach(function (k) { delete mSettings[k]; });
+      Object.assign(mSettings, _cloud);
       try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch (e) {}
       if (typeof loadSettings === 'function') loadSettings();
     }
