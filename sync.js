@@ -24,6 +24,7 @@ window.Mise.sync = (function () {
         _pullRecords(userId),
         _pullSettings(userId)
       ]);
+      _refreshAppViews();
     } catch (err) {
       console.warn('[Veriqo] loadAll error — using local data:', err.message);
     }
@@ -40,6 +41,7 @@ window.Mise.sync = (function () {
         records: recordsArray
       }, { onConflict: 'user_id,date' });
       await _mirrorJobsToCarte(dateStr, recordsArray);
+      _refreshAppViews();
     } catch (err) {
       console.warn('[Veriqo] saveDay error:', err.message);
     }
@@ -56,6 +58,7 @@ window.Mise.sync = (function () {
         updated_at: new Date().toISOString()
       });
       await _mirrorSettingsToCarte(settingsObj);
+      _refreshAppViews();
     } catch (err) {
       console.warn('[Veriqo] saveSettings error:', err.message);
     }
@@ -96,7 +99,7 @@ window.Mise.sync = (function () {
       .order('date', { ascending: false });
     if (result.error || !result.data) return;
     result.data.forEach(function(row){
-      var jobs = (row.records || []).filter(function(r){ return r && r.type === 'job'; }).map(function(r){
+      var jobs = (row.records || []).filter(function(r){ return r && r.type === 'job' && r.sourceApp !== 'veriqo'; }).map(function(r){
         return Object.assign({}, r, { id: String(r.id).indexOf('mise_') === 0 ? r.id : 'mise_' + r.id, sourceApp: 'carte' });
       });
       if (!jobs.length) return;
@@ -147,12 +150,18 @@ window.Mise.sync = (function () {
         if (settings.credentials) {
           try { localStorage.setItem('haccp_credentials', JSON.stringify(settings.credentials)); } catch (e) {}
         }
+        await supabaseClient.from('settings').upsert({
+          id: userId,
+          config: settings,
+          updated_at: new Date().toISOString()
+        });
       }
     }
   }
 
   async function _mirrorJobsToCarte(dateStr, recordsArray) {
     var jobs = (recordsArray || []).filter(function(r){ return r && r.type === 'job'; });
+    jobs = jobs.filter(function(r){ return r.sourceApp !== 'carte'; });
     if (!jobs.length) return;
     var result = await supabaseClient
       .from('mise_records')
@@ -294,6 +303,18 @@ window.Mise.sync = (function () {
     if (Array.isArray(value)) return value.filter(Boolean);
     if (!value) return [];
     return String(value).split(',').map(function(a){ return a.trim(); }).filter(Boolean);
+  }
+
+  function _refreshAppViews() {
+    if (typeof loadSettings === 'function') loadSettings();
+    if (typeof loadToday === 'function') loadToday();
+    if (typeof populateAllSelects === 'function') populateAllSelects();
+    if (typeof renderMenuLibrary === 'function') renderMenuLibrary();
+    if (typeof renderDishLibrary === 'function') renderDishLibrary();
+    if (typeof renderSavedMenus === 'function') renderSavedMenus();
+    if (typeof renderCalendar === 'function') renderCalendar();
+    if (typeof updateDashboard === 'function') updateDashboard();
+    if (typeof renderAllSections === 'function') renderAllSections();
   }
 
   return { loadAll, saveDay, saveSettings };

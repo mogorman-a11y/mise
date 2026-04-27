@@ -180,7 +180,16 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
       <h1 id="mise-header-title">Carte</h1>
       <span class="header-sub" id="mise-header-sub"></span>
     </div>
-    <button onclick="openVeriqo()" style="background:#F5F0E8;border:1px solid #D0C8BE;border-radius:8px;padding:7px 9px;color:#1C2B1E;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">Veriqo</button>
+    <button onclick="openVeriqo()" style="width:42px;height:42px;border-radius:21px;background:#1a1a18;border:1px solid #111;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;padding:0" aria-label="Open Veriqo">
+      <svg width="27" height="27" viewBox="0 0 512 512" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="miseSwitchShield" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="112" fill="#1B3A5C"/>
+        <path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#miseSwitchShield)"/>
+        <polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </button>
   </div>
 
   <!-- ═══════════════════════════════════════ HOME / DASHBOARD ═══════════════ -->
