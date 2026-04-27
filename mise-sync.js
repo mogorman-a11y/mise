@@ -367,6 +367,31 @@ window.Mise.sync = (function () {
     if (typeof renderJobsHistory === 'function') renderJobsHistory();
   }
 
-  return { loadAll, saveDay, saveSettings };
+  // Deletes a menu/dish from Veriqo's settings so cross-pull doesn't resurrect it.
+  async function deleteSuiteMenu(menuId) {
+    if (!_userId) return;
+    var result = await supabaseClient.from('settings').select('config').eq('id', _userId).single();
+    if (result.error || !result.data || !result.data.config) return;
+    var config = result.data.config;
+    if (!config.savedMenus) return;
+    var before = config.savedMenus.length;
+    config.savedMenus = config.savedMenus.filter(function(m) { return m.id !== menuId; });
+    if (config.savedMenus.length === before) return;
+    await supabaseClient.from('settings').upsert({ id: _userId, config: config, updated_at: new Date().toISOString() });
+  }
+
+  async function deleteSuiteDish(dishId) {
+    if (!_userId) return;
+    var result = await supabaseClient.from('settings').select('config').eq('id', _userId).single();
+    if (result.error || !result.data || !result.data.config) return;
+    var config = result.data.config;
+    if (!config.savedDishes) return;
+    var before = config.savedDishes.length;
+    config.savedDishes = config.savedDishes.filter(function(d) { return d.id !== dishId; });
+    if (config.savedDishes.length === before) return;
+    await supabaseClient.from('settings').upsert({ id: _userId, config: config, updated_at: new Date().toISOString() });
+  }
+
+  return { loadAll, saveDay, saveSettings, deleteSuiteMenu, deleteSuiteDish };
 
 })();

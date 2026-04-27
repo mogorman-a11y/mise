@@ -1321,6 +1321,9 @@ function deleteDish(id){
   renderDishLibrary();
   renderMenuDishSelect();
   toast('Dish removed');
+  if (window.Mise && window.Mise.sync && window.Mise.sync.deleteSuiteDish) {
+    window.Mise.sync.deleteSuiteDish(id).catch(function(){});
+  }
 }
 
 var _editingDishId = null;
@@ -1415,6 +1418,9 @@ function editMenu(id){
 function deleteMenu(id){
   mSettings.savedMenus = (mSettings.savedMenus||[]).filter(function(m){ return m.id!==id; });
   saveSettings(); renderSavedMenus(); toast('Menu removed');
+  if (window.Mise && window.Mise.sync && window.Mise.sync.deleteSuiteMenu) {
+    window.Mise.sync.deleteSuiteMenu(id).catch(function(){});
+  }
 }
 
 // ═══════════════════════════════════════════════════════ JOBS ════════════════
@@ -1815,7 +1821,7 @@ function renderAllSections(){
 
 <!-- Mise shared modules -->
 <script src="supabase.js?v=4"></script>
-<script src="mise-sync.js?v=3"></script>
+<script src="mise-sync.js?v=4"></script>
 <script src="auth.js?v=4"></script>
 <script>
 Mise.auth.init();
