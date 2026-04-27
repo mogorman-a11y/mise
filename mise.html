@@ -180,6 +180,7 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
       <h1 id="mise-header-title">Carte</h1>
       <span class="header-sub" id="mise-header-sub"></span>
     </div>
+    <button onclick="openVeriqo()" style="background:#F5F0E8;border:1px solid #D0C8BE;border-radius:8px;padding:7px 9px;color:#1C2B1E;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">Veriqo</button>
   </div>
 
   <!-- ═══════════════════════════════════════ HOME / DASHBOARD ═══════════════ -->
@@ -318,7 +319,7 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
         </div>
         <div class="form-group">
           <label class="form-label">Allergens (14)</label>
-          <input class="form-input" id="dish-allergens" placeholder="e.g. Milk, Eggs">
+          <div id="dish-allergens-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px"></div>
         </div>
       </div>
       <button class="btn-primary" onclick="addDish()" style="margin-top:4px">Add Dish</button>
@@ -400,11 +401,6 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
   <!-- ═══════════════════════════════════════ MORE ════════════════════════ -->
   <div id="tab-more" class="section">
     <div class="card" style="margin-bottom:0;padding:4px 14px">
-      <div class="more-item" onclick="showTab('transport')">
-        <div class="more-icon">🚐</div>
-        <div><div class="more-name">Transport Temperatures</div><div class="more-sub">Log food transit temps</div></div>
-        <div class="more-arrow">›</div>
-      </div>
       <div class="more-item" onclick="showTab('assess')">
         <div class="more-icon">📋</div>
         <div><div class="more-name">Kitchen Assessment</div><div class="more-sub">Pre-job checklist & fridge temps</div></div>
@@ -626,17 +622,9 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
     </div>
 
     <div class="card">
-      <div class="card-title">Veriqo Integration</div>
-      <div class="toggle-row">
-        <div>
-          <span class="toggle-label">Sync job records to Veriqo</span>
-          <span class="toggle-sub">Job logs also saved with haccp_ prefix so Veriqo can access them for compliance records</span>
-        </div>
-        <label class="toggle" style="margin-left:14px">
-          <input type="checkbox" id="set-veriqo-sync" onchange="toggleVeriqoSync(this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
+      <div class="card-title">Suite</div>
+      <div style="font-size:13px;color:#5A544E;line-height:1.45">Carte syncs clients, jobs, menus, dishes, and credentials with Veriqo automatically when you are signed in.</div>
+      <button class="btn-primary btn-green" onclick="openVeriqo()" style="margin-top:12px">Open Veriqo</button>
     </div>
   </div>
 
@@ -718,6 +706,33 @@ function initAllergenGrid(){
       + _esc(a) + '</label>';
   }).join('');
 }
+function initDishAllergenGrid(){
+  var g = document.getElementById('dish-allergens-grid');
+  if(!g) return;
+  g.innerHTML = ALLERGENS_14.map(function(a){
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#1C2B1E;padding:5px 8px;border:1px solid #E2DDD5;border-radius:6px;cursor:pointer;background:#fff">'
+      + '<input type="checkbox" id="dish-a-'+a.replace(/\s/g,'_')+'" style="accent-color:#3A7D44">'
+      + _esc(a) + '</label>';
+  }).join('');
+}
+function getDishAllergens(){
+  return ALLERGENS_14.filter(function(a){
+    var el = document.getElementById('dish-a-'+a.replace(/\s/g,'_'));
+    return el && el.checked;
+  });
+}
+function setDishAllergens(arr){
+  arr = _normaliseAllergens(arr);
+  ALLERGENS_14.forEach(function(a){
+    var el = document.getElementById('dish-a-'+a.replace(/\s/g,'_'));
+    if(el) el.checked = arr.indexOf(a) !== -1;
+  });
+}
+function _normaliseAllergens(value){
+  if(Array.isArray(value)) return value.filter(Boolean);
+  if(!value) return [];
+  return String(value).split(',').map(function(a){ return a.trim(); }).filter(Boolean);
+}
 
 // ═══════════════════════════════════════════════════════ SETTINGS ═══════════
 function loadSettings(){
@@ -735,6 +750,7 @@ function loadToday(){
 }
 function saveToday(){
   try { localStorage.setItem('mise_'+TODAY, JSON.stringify(mRecords)); } catch(e){}
+  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(TODAY, mRecords);
 }
 function getDayRecords(ds){
   try { return JSON.parse(localStorage.getItem('mise_'+ds) || '[]'); } catch(e){ return []; }
@@ -846,7 +862,7 @@ function showTab(name){
   // Nav button active state
   _NAV_TABS.forEach(function(t){
     var btn = document.getElementById('nav-'+t);
-    if(btn) btn.classList.toggle('active', t===name || (t==='more' && ['more','transport','assess','allergen','credentials','settings'].indexOf(name)!==-1));
+    if(btn) btn.classList.toggle('active', t===name || (t==='more' && ['more','assess','allergen','credentials','settings'].indexOf(name)!==-1));
   });
 
   _activeTab = name;
@@ -968,10 +984,15 @@ function renderClientList(){
   list.innerHTML = clients.map(function(c){
     var initials = c.name.trim().split(/\s+/).map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
     var isOpen = _expandedClientId === c.id;
+    var quickBtns = '';
+    if(c.phone) quickBtns += '<a class="contact-link" href="tel:'+_esc(c.phone)+'" onclick="event.stopPropagation()"><span class="contact-icon">📞</span>Call</a>';
+    if(c.email) quickBtns += '<a class="contact-link" href="mailto:'+_esc(c.email)+'" onclick="event.stopPropagation()"><span class="contact-icon">✉️</span>Email</a>';
+    if(c.address) quickBtns += '<a class="contact-link" href="https://maps.apple.com/?q='+encodeURIComponent(c.address)+'" target="_blank" onclick="event.stopPropagation()"><span class="contact-icon">📍</span>Map</a>';
     var headerHtml = '<div class="client-card-header" onclick="clientToggle(\''+c.id+'\')">'
       + '<div class="client-avatar">'+_esc(initials)+'</div>'
       + '<div class="client-info"><div class="client-name">'+_esc(c.name)+'</div>'
       + (c.diet ? '<div class="client-sub">'+_esc(c.diet)+'</div>' : (c.address ? '<div class="client-sub">'+_esc(c.address.split(',')[0])+'</div>' : ''))
+      + (quickBtns ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">'+quickBtns+'</div>' : '')
       + '</div><div class="client-expand">'+(isOpen?'▲':'▼')+'</div></div>';
 
     var bodyHtml = '';
@@ -1216,19 +1237,24 @@ function addDish(){
   var name = (document.getElementById('dish-name').value||'').trim();
   if(!name){ toast('Dish name required','err'); return; }
   if(!mSettings.savedDishes) mSettings.savedDishes = [];
-  mSettings.savedDishes.push({
-    id: uid(),
+  var dishData = {
     dish: name,
     category: document.getElementById('dish-cat').value||'',
-    allergens: (document.getElementById('dish-allergens').value||'').trim()
-  });
+    allergens: getDishAllergens()
+  };
+  if(_editingDishId){
+    mSettings.savedDishes = mSettings.savedDishes.map(function(d){ return d.id===_editingDishId ? Object.assign({}, d, dishData) : d; });
+  } else {
+    mSettings.savedDishes.push(Object.assign({ id: uid() }, dishData));
+  }
   saveSettings();
   document.getElementById('dish-name').value='';
   document.getElementById('dish-cat').value='';
-  document.getElementById('dish-allergens').value='';
+  setDishAllergens([]);
+  _editingDishId = null;
   renderDishLibrary();
   renderMenuDishSelect();
-  toast('Dish added ✓');
+  toast('Dish saved ✓');
 }
 
 function renderDishLibrary(){
@@ -1251,11 +1277,11 @@ function renderDishLibrary(){
     if(!grouped[cat] || grouped[cat].length===0) return;
     html += '<div class="cat-header">'+_esc(cat)+'</div>';
     grouped[cat].forEach(function(d){
-      html += '<div class="dish-row">'
+      html += '<div class="dish-row" onclick="editDish(\''+d.id+'\')" style="cursor:pointer">'
         + '<div class="dish-name">'+_esc(d.dish)
-        + (d.allergens ? '<br><span style="font-size:11px;color:#A09890">'+_esc(d.allergens)+'</span>' : '')
+        + (_normaliseAllergens(d.allergens).length ? '<br><span style="font-size:11px;color:#A09890">'+_esc(_normaliseAllergens(d.allergens).join(', '))+'</span>' : '')
         + '</div>'
-        + '<button onclick="deleteDish(\''+d.id+'\')" class="btn-remove" title="Remove">×</button>'
+        + '<button onclick="event.stopPropagation();deleteDish(\''+d.id+'\')" class="btn-remove" title="Remove">×</button>'
         + '</div>';
     });
   });
@@ -1277,6 +1303,18 @@ function deleteDish(id){
   renderDishLibrary();
   renderMenuDishSelect();
   toast('Dish removed');
+}
+
+var _editingDishId = null;
+function editDish(id){
+  var dish = (mSettings.savedDishes||[]).find(function(d){ return d.id===id; });
+  if(!dish) return;
+  _editingDishId = id;
+  document.getElementById('dish-name').value = dish.dish || '';
+  document.getElementById('dish-cat').value = dish.category || '';
+  setDishAllergens(dish.allergens || []);
+  document.getElementById('dish-name').scrollIntoView({behavior:'smooth',block:'center'});
+  toast('Editing dish');
 }
 
 // ═══════════════════════════════════════════════════════ MENUS ═══════════════
@@ -1303,9 +1341,14 @@ function saveMenu(){
   }).map(function(d){ return d.id; });
   if(selected.length===0){ toast('Select at least one dish','err'); return; }
   if(!mSettings.savedMenus) mSettings.savedMenus=[];
-  mSettings.savedMenus.push({ id: uid(), name: name, dishIds: selected });
+  if(_editingMenuId){
+    mSettings.savedMenus = mSettings.savedMenus.map(function(m){ return m.id===_editingMenuId ? Object.assign({}, m, { name: name, dishIds: selected }) : m; });
+  } else {
+    mSettings.savedMenus.push({ id: uid(), name: name, dishIds: selected });
+  }
   saveSettings();
   document.getElementById('menu-name').value='';
+  _editingMenuId = null;
   renderMenuDishSelect();
   renderSavedMenus();
   toast('Menu saved ✓');
@@ -1326,14 +1369,29 @@ function renderSavedMenus(){
       var d = dishMap[id];
       return d ? '<span class="badge badge-grey" style="margin:2px">'+_esc(d.dish)+'</span>' : '';
     }).join('');
-    return '<div class="card" style="margin-bottom:8px">'
+    return '<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="editMenu(\''+m.id+'\')">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
       + '<div style="font-size:15px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
-      + '<button onclick="deleteMenu(\''+m.id+'\')" class="btn-remove">×</button>'
+      + '<button onclick="event.stopPropagation();deleteMenu(\''+m.id+'\')" class="btn-remove">×</button>'
       + '</div>'
       + '<div style="display:flex;flex-wrap:wrap;gap:2px">'+dishList+'</div>'
       + '</div>';
   }).join('');
+}
+
+var _editingMenuId = null;
+function editMenu(id){
+  var menu = (mSettings.savedMenus||[]).find(function(m){ return m.id===id; });
+  if(!menu) return;
+  _editingMenuId = id;
+  document.getElementById('menu-name').value = menu.name || '';
+  renderMenuDishSelect();
+  (menu.dishIds||[]).forEach(function(did){
+    var cb = document.getElementById('menu-d-'+did);
+    if(cb) cb.checked = true;
+  });
+  document.getElementById('menu-name').scrollIntoView({behavior:'smooth',block:'center'});
+  toast('Editing menu');
 }
 
 function deleteMenu(id){
@@ -1383,15 +1441,7 @@ function logJob(){
     var day = getDayRecords(rec.date); day.push(rec); saveDayRecords(rec.date, day);
   }
 
-  // Veriqo sync
-  if(mSettings.veriqoSync){
-    var hKey = 'haccp_'+TODAY;
-    try {
-      var hRecs = JSON.parse(localStorage.getItem(hKey)||'[]');
-      hRecs.push(Object.assign({},rec,{id:'mise_'+rec.id}));
-      localStorage.setItem(hKey, JSON.stringify(hRecs));
-    } catch(e){}
-  }
+  mirrorJobToVeriqo(rec);
 
   // Reset form
   ['job-client-manual','job-location','job-time','job-covers','job-notes'].forEach(function(id){
@@ -1701,15 +1751,23 @@ function populateStaffSelects(){
 }
 
 function loadSettingsToggles(){
-  var cb = document.getElementById('set-veriqo-sync');
-  if(cb) cb.checked = !!mSettings.veriqoSync;
 }
 
 function toggleVeriqoSync(val){
-  mSettings.veriqoSync = val;
-  saveSettings();
-  toast(val ? 'Veriqo sync enabled' : 'Veriqo sync disabled');
 }
+
+function mirrorJobToVeriqo(rec){
+  var hKey = 'haccp_' + (rec.date || TODAY);
+  try {
+    var hRecs = JSON.parse(localStorage.getItem(hKey)||'[]');
+    var mirrorId = 'mise_' + rec.id;
+    if(!hRecs.some(function(r){ return r.id === mirrorId; })){
+      hRecs.push(Object.assign({}, rec, { id: mirrorId, sourceApp: 'carte' }));
+      localStorage.setItem(hKey, JSON.stringify(hRecs));
+    }
+  } catch(e){}
+}
+function openVeriqo(){ window.location.href = 'app.html'; }
 
 // ═══════════════════════════════════════════════════════ INIT ════════════════
 function populateAllSelects(){
@@ -1727,6 +1785,7 @@ function renderAllSections(){
   loadToday();
   populateAllSelects();
   initAllergenGrid();
+  initDishAllergenGrid();
   showTab('home');
   // Set default dates
   var tDate = document.getElementById('tr-date');
@@ -1742,6 +1801,30 @@ function renderAllSections(){
 <script src="auth.js?v=4"></script>
 <script>
 Mise.auth.init();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  var refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
+    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    reg.addEventListener('updatefound', function() {
+      var worker = reg.installing;
+      if (!worker) return;
+      worker.addEventListener('statechange', function() {
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+          worker.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+    });
+  }).catch(function(err) {
+    console.warn('[Carte] SW registration failed:', err);
+  });
+}
 </script>
 </body>
 </html>

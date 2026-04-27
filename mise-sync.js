@@ -47,6 +47,7 @@ window.Mise.sync = (function () {
         date: dateStr,
         records: recordsArray
       }, { onConflict: 'user_id,date' });
+      await _mirrorJobsToVeriqo(dateStr, recordsArray);
     } catch (err) {
       console.warn('[Mise] saveDay error:', err.message);
     }
@@ -63,6 +64,7 @@ window.Mise.sync = (function () {
         config: settingsObj,
         updated_at: new Date().toISOString()
       });
+      await _mirrorSettingsToVeriqo(settingsObj);
     } catch (err) {
       console.warn('[Mise] saveSettings error:', err.message);
     }
@@ -99,6 +101,34 @@ window.Mise.sync = (function () {
       mRecords.length = 0;
       if (todayRow) todayRow.records.forEach(function (r) { mRecords.push(r); });
     }
+
+    await _pullVeriqoJobs(userId);
+  }
+
+  async function _pullVeriqoJobs(userId) {
+    var result = await supabaseClient
+      .from('haccp_records')
+      .select('date, records')
+      .eq('user_id', userId)
+      .order('date', { ascending: false });
+    if (result.error || !result.data) return;
+    result.data.forEach(function(row){
+      var jobs = (row.records || []).filter(function(r){ return r && r.type === 'job'; }).map(function(r){
+        return Object.assign({}, r, { id: String(r.id).indexOf('veriqo_') === 0 ? r.id : 'veriqo_' + r.id, sourceApp: 'veriqo' });
+      });
+      if (!jobs.length) return;
+      var key = 'mise_' + row.date;
+      var existing = [];
+      try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { existing = []; }
+      jobs.forEach(function(job){
+        if (!existing.some(function(r){ return r.id === job.id; })) existing.push(job);
+      });
+      try { localStorage.setItem(key, JSON.stringify(existing)); } catch(e) {}
+      if (row.date === new Date().toISOString().slice(0, 10) && typeof mRecords !== 'undefined') {
+        mRecords.length = 0;
+        existing.forEach(function(r){ mRecords.push(r); });
+      }
+    });
   }
 
   // ── _pullSettings ──────────────────────────────────────────────────────────
@@ -130,34 +160,156 @@ window.Mise.sync = (function () {
 
     if (!veriqoResult.error && veriqoResult.data && veriqoResult.data.config) {
       if (typeof mSettings !== 'undefined') {
-        _mergeLibrary(mSettings, veriqoResult.data.config);
+        _mergeSuiteData(mSettings, veriqoResult.data.config, 'carte');
         try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch (e) {}
       }
     }
   }
 
-  // ── _mergeLibrary ──────────────────────────────────────────────────────────
-  // Merges savedDishes and savedMenus from another app's config into target,
-  // deduplicating by name (case-insensitive) so own entries always win.
-  function _mergeLibrary(target, source) {
-    if (source.savedDishes && source.savedDishes.length) {
+  async function _mirrorJobsToVeriqo(dateStr, recordsArray) {
+    var jobs = (recordsArray || []).filter(function(r){ return r && r.type === 'job'; });
+    if (!jobs.length) return;
+    var result = await supabaseClient
+      .from('haccp_records')
+      .select('records')
+      .eq('user_id', _userId)
+      .eq('date', dateStr)
+      .single();
+    var hRecords = (!result.error && result.data && Array.isArray(result.data.records)) ? result.data.records : [];
+    jobs.forEach(function(job){
+      var mirrorId = 'mise_' + job.id;
+      if (!hRecords.some(function(r){ return r.id === mirrorId; })) {
+        hRecords.push(Object.assign({}, job, { id: mirrorId, sourceApp: 'carte' }));
+      }
+    });
+    await supabaseClient.from('haccp_records').upsert({
+      user_id: _userId,
+      date: dateStr,
+      records: hRecords
+    }, { onConflict: 'user_id,date' });
+  }
+
+  async function _mirrorSettingsToVeriqo(settingsObj) {
+    var result = await supabaseClient
+      .from('settings')
+      .select('config')
+      .eq('id', _userId)
+      .single();
+    var config = (!result.error && result.data && result.data.config) ? result.data.config : {};
+    _mergeSuiteData(config, settingsObj, 'veriqo');
+    await supabaseClient.from('settings').upsert({
+      id: _userId,
+      config: config,
+      updated_at: new Date().toISOString()
+    });
+  }
+
+  // Merges suite data between app-specific settings shapes.
+  function _mergeSuiteData(target, source, targetApp) {
+    if (!source) return;
+    if (targetApp === 'carte') {
+      _mergeClients(target, source.savedCustomers, 'savedClients');
+      _mergeCredentials(target, source.credentials, 'credentials', 'carte');
+      _mergeDishes(target, source.savedDishes);
+      _mergeMenusIntoCarte(target, source);
+    } else {
+      _mergeClients(target, source.savedClients, 'savedCustomers');
+      _mergeCredentials(target, source.credentials, 'credentials', 'veriqo');
+      _mergeDishes(target, source.savedDishes);
+      _mergeMenusIntoVeriqo(target, source);
+    }
+  }
+
+  function _mergeDishes(target, sourceList) {
+    if (sourceList && sourceList.length) {
       if (!target.savedDishes) target.savedDishes = [];
-      source.savedDishes.forEach(function (d) {
+      sourceList.forEach(function (d) {
+        var name = d.dish || d.name || '';
+        if (!name) return;
         var exists = target.savedDishes.some(function (e) {
-          return e.dish.toLowerCase() === d.dish.toLowerCase();
+          return (e.dish || e.name || '').toLowerCase() === name.toLowerCase();
         });
-        if (!exists) target.savedDishes.push(d);
+        if (!exists) target.savedDishes.push(Object.assign({}, d, { dish: name, allergens: _normaliseAllergens(d.allergens) }));
       });
     }
-    if (source.savedMenus && source.savedMenus.length) {
-      if (!target.savedMenus) target.savedMenus = [];
-      source.savedMenus.forEach(function (m) {
-        var exists = target.savedMenus.some(function (e) {
-          return e.name.toLowerCase() === m.name.toLowerCase();
-        });
-        if (!exists) target.savedMenus.push(m);
+  }
+
+  function _mergeMenusIntoCarte(target, source) {
+    if (!source.savedMenus || !source.savedMenus.length) return;
+    if (!target.savedMenus) target.savedMenus = [];
+    if (!target.savedDishes) target.savedDishes = [];
+    source.savedMenus.forEach(function(m){
+      if (!m.name) return;
+      var exists = target.savedMenus.some(function(e){ return e.name && e.name.toLowerCase() === m.name.toLowerCase(); });
+      if (exists) return;
+      var dishIds = [];
+      (m.dishes || []).forEach(function(d){
+        var name = d.dish || d.name || '';
+        if (!name) return;
+        var found = target.savedDishes.find(function(td){ return (td.dish || '').toLowerCase() === name.toLowerCase(); });
+        if (!found) {
+          found = { id: 'shared_' + Date.now() + '_' + Math.random().toString(36).slice(2), dish: name, category: d.category || '', allergens: _normaliseAllergens(d.allergens) };
+          target.savedDishes.push(found);
+        }
+        dishIds.push(found.id);
       });
-    }
+      target.savedMenus.push({ id: m.id || ('shared_menu_' + Date.now()), name: m.name, dishIds: dishIds });
+    });
+  }
+
+  function _mergeMenusIntoVeriqo(target, source) {
+    if (!source.savedMenus || !source.savedMenus.length) return;
+    if (!target.savedMenus) target.savedMenus = [];
+    var dishMap = {};
+    (source.savedDishes || []).forEach(function(d){ dishMap[d.id] = d; });
+    source.savedMenus.forEach(function(m){
+      if (!m.name) return;
+      var exists = target.savedMenus.some(function(e){ return e.name && e.name.toLowerCase() === m.name.toLowerCase(); });
+      if (exists) return;
+      var dishes = (m.dishIds || []).map(function(id){ return dishMap[id]; }).filter(Boolean).map(function(d){
+        return { dish: d.dish || d.name || '', category: d.category || '', allergens: _normaliseAllergens(d.allergens) };
+      });
+      target.savedMenus.push({ id: m.id || ('shared_menu_' + Date.now()), name: m.name, dishes: dishes });
+    });
+  }
+
+  function _mergeClients(target, sourceList, targetKey) {
+    if (!sourceList || !sourceList.length) return;
+    if (!target[targetKey]) target[targetKey] = [];
+    sourceList.forEach(function(c){
+      var name = c.name || c.client || '';
+      if (!name) return;
+      var exists = target[targetKey].some(function(e){ return (e.name || '').toLowerCase() === name.toLowerCase(); });
+      if (!exists) target[targetKey].push({
+        id: c.id || ('shared_client_' + Date.now() + '_' + Math.random().toString(36).slice(2)),
+        name: name,
+        address: c.address || c.location || '',
+        phone: c.phone || '',
+        email: c.email || '',
+        diet: c.diet || c.preferences || ''
+      });
+    });
+  }
+
+  function _mergeCredentials(target, sourceList, targetKey, targetApp) {
+    if (!sourceList || !sourceList.length) return;
+    if (!target[targetKey]) target[targetKey] = [];
+    sourceList.forEach(function(c){
+      var name = c.name || c.credType || '';
+      var expiry = c.expiry || '';
+      if (!name) return;
+      var exists = target[targetKey].some(function(e){ return (e.name || e.credType || '') === name && (e.expiry || '') === expiry; });
+      var merged = Object.assign({}, c, { id: c.id || ('shared_cred_' + Date.now() + '_' + Math.random().toString(36).slice(2)) });
+      if (targetApp === 'veriqo') merged.credType = merged.credType || name;
+      else merged.name = merged.name || name;
+      if (!exists) target[targetKey].push(merged);
+    });
+  }
+
+  function _normaliseAllergens(value) {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (!value) return [];
+    return String(value).split(',').map(function(a){ return a.trim(); }).filter(Boolean);
   }
 
   return { loadAll, saveDay, saveSettings };

@@ -161,6 +161,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     </button>
+    <button onclick="openCarte()" style="background:#f5f4f0;border:1px solid #e5e4de;border-radius:8px;padding:7px 9px;color:#1a1a18;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0" aria-label="Open Carte">Carte</button>
   </div>
 
   <!-- HOME -->
@@ -3555,8 +3556,27 @@ function previewCredPhoto(input) {
   reader.readAsDataURL(input.files[0]);
 }
 function clearCredPhoto() { document.getElementById('cred-photo').value=''; document.getElementById('cred-photo-img').src=''; document.getElementById('cred-photo-preview').style.display='none'; }
-function saveCredentials(list) { try { localStorage.setItem('haccp_credentials', JSON.stringify(list)); } catch(e){} }
-function loadCredentials() { try { var r=localStorage.getItem('haccp_credentials'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
+function saveCredentials(list) {
+  try { localStorage.setItem('haccp_credentials', JSON.stringify(list)); } catch(e){}
+  settings.credentials = list;
+  saveSettings();
+}
+function loadCredentials() {
+  var local = [];
+  try { var r=localStorage.getItem('haccp_credentials'); local = r?JSON.parse(r):[]; } catch(e){ local = []; }
+  var cloud = settings.credentials || [];
+  var merged = local.slice();
+  cloud.forEach(function(c){
+    var name = c.name || c.credType || '';
+    var expiry = c.expiry || '';
+    var exists = merged.some(function(e){ return (e.name || e.credType || '') === name && (e.expiry || '') === expiry; });
+    if(!exists) merged.push(Object.assign({}, c, { credType: c.credType || c.name || 'Credential' }));
+  });
+  if(merged.length !== local.length) {
+    try { localStorage.setItem('haccp_credentials', JSON.stringify(merged)); } catch(e){}
+  }
+  return merged;
+}
 
 function renderCredentials() {
   var list = loadCredentials();
@@ -4393,6 +4413,7 @@ renderChecklists();
 initPrivateChefMode();
 showTab('home');
 renderAllSections();
+function openCarte(){ window.location.href = 'mise.html'; }
 </script>
 
 <!-- Mise production modules — loaded after app script so they can wrap/extend it -->
@@ -4409,7 +4430,24 @@ renderAllSections();
 <!-- Service worker registration (Step 7 — PWA) -->
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(function(err) {
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    navigator.serviceWorker.register('sw.js').then(function(reg) {
+      if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      reg.addEventListener('updatefound', function() {
+        var worker = reg.installing;
+        if (!worker) return;
+        worker.addEventListener('statechange', function() {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+            worker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    }).catch(function(err) {
       console.warn('[Mise] SW registration failed:', err);
     });
   }

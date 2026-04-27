@@ -1,18 +1,20 @@
 // sw.js — Service Worker (PWA offline support)
 // ─────────────────────────────────────────────
 // Strategy:
-//   App shell (HTML + JS files) → cache-first (loads instantly offline)
+//   App pages / JS files       → network-first (updates quickly, falls back offline)
 //   Supabase API calls          → network-first (sync when online, skip offline)
 //   Everything else             → network with cache fallback
 
-const CACHE = 'veriqo-v4';
+const CACHE = 'veriqo-v5';
 
 const APP_SHELL = [
   './app.html',
   './app',
+  './mise.html',
   './supabase.js',
   './auth.js',
   './sync.js',
+  './mise-sync.js',
   './subscription.js',
   './manifest.json',
   './icons/icon-192.png',
@@ -30,6 +32,11 @@ self.addEventListener('install', function (event) {
       return self.skipWaiting(); // activate immediately without waiting for old SW to die
     })
   );
+});
+
+// Allow the app to activate a freshly installed service worker immediately.
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // ── Activate ───────────────────────────────────────────────────────────────
@@ -86,7 +93,31 @@ self.addEventListener('fetch', function (event) {
     return; // fall through to normal network fetch
   }
 
-  // For navigation requests (loading the page) and app shell assets: cache-first
+  var pathname = new URL(url).pathname;
+  var isAppShellAsset = APP_SHELL.some(function(path) {
+    var clean = path.replace('./', '/');
+    return pathname.endsWith(clean) || pathname.endsWith(clean.replace('/app', '/app.html'));
+  });
+
+  // App pages and local shell assets must be network-first so installs pick up changes.
+  if (event.request.mode === 'navigate' || isAppShellAsset || url.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request).then(function(response) {
+        if (response && response.status === 200) {
+          var clone = response.clone();
+          caches.open(CACHE).then(function(cache) { cache.put(event.request, clone); });
+        }
+        return response;
+      }).catch(function() {
+        return caches.match(event.request).then(function(cached) {
+          return cached || caches.match('./app.html');
+        });
+      })
+    );
+    return;
+  }
+
+  // For other GET assets: stale-while-revalidate
   if (event.request.method === 'GET') {
     event.respondWith(
       caches.match(event.request).then(function (cached) {

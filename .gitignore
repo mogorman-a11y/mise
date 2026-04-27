@@ -13,6 +13,7 @@
 
 # Business documents
 *.pdf
+!sample-report.pdf
 
 # Private chef variant (managed separately)
 haccp-app PC.html
