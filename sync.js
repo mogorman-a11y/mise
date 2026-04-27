@@ -20,6 +20,7 @@ window.Mise.sync = (function () {
   // ── loadAll ────────────────────────────────────────────────────────────────
   async function loadAll(userId) {
     _userId = userId;
+    console.log('[Veriqo sync] loadAll — userId:', userId);
 
     try {
       await Promise.all([
@@ -27,8 +28,9 @@ window.Mise.sync = (function () {
         _pullSettings(userId)
       ]);
       _refreshAppViews();
+      console.log('[Veriqo sync] ✓ full sync complete');
     } catch (err) {
-      console.warn('[Veriqo] loadAll error — using local data:', err.message);
+      console.error('[Veriqo sync] loadAll error:', err.message || err);
     }
 
     if (!_visibilityBound) {
@@ -45,7 +47,7 @@ window.Mise.sync = (function () {
 
   // ── saveDay ────────────────────────────────────────────────────────────────
   async function saveDay(dateStr, recordsArray) {
-    if (!_userId) return;
+    if (!_userId) { console.warn('[Veriqo sync] saveDay skipped — not signed in'); return; }
 
     try {
       var r = await supabaseClient.from('haccp_records').upsert({
@@ -54,17 +56,20 @@ window.Mise.sync = (function () {
         records: recordsArray
       }, { onConflict: 'user_id,date' });
       if (r.error) throw r.error;
-      await _mirrorJobsToCarte(dateStr, recordsArray);
+      console.log('[Veriqo sync] ✓ day saved:', dateStr);
+      _mirrorJobsToCarte(dateStr, recordsArray).catch(function (e) {
+        console.error('[Veriqo sync] mirror jobs→Carte failed:', e.message || e);
+      });
       _refreshAppViews();
     } catch (err) {
-      console.error('[Veriqo] saveDay failed:', err.message || err);
+      console.error('[Veriqo sync] saveDay failed:', err.message || err);
       if (typeof toast === 'function') toast('Sync error — data saved locally only', 'err');
     }
   }
 
   // ── saveSettings ───────────────────────────────────────────────────────────
   async function saveSettings(settingsObj) {
-    if (!_userId) return;
+    if (!_userId) { console.warn('[Veriqo sync] saveSettings skipped — not signed in'); return; }
 
     try {
       var r = await supabaseClient.from('settings').upsert({
@@ -73,10 +78,13 @@ window.Mise.sync = (function () {
         updated_at: new Date().toISOString()
       });
       if (r.error) throw r.error;
-      await _mirrorSettingsToCarte(settingsObj);
+      console.log('[Veriqo sync] ✓ settings saved');
+      _mirrorSettingsToCarte(settingsObj).catch(function (e) {
+        console.error('[Veriqo sync] mirror settings→Carte failed:', e.message || e);
+      });
       _refreshAppViews();
     } catch (err) {
-      console.error('[Veriqo] saveSettings failed:', err.message || err);
+      console.error('[Veriqo sync] saveSettings failed:', err.message || err);
       if (typeof toast === 'function') toast('Sync error — settings saved locally only', 'err');
     }
   }
@@ -175,12 +183,16 @@ window.Mise.sync = (function () {
         if (settings.credentials) {
           try { localStorage.setItem('haccp_credentials', JSON.stringify(settings.credentials)); } catch (e) {}
         }
-        await supabaseClient.from('settings').upsert({
+        var sr = await supabaseClient.from('settings').upsert({
           id: userId,
           config: settings,
           updated_at: new Date().toISOString()
         });
-        await _mirrorSettingsToCarte(settings);
+        if (sr.error) console.error('[Veriqo sync] settings upsert after cross-pull failed:', sr.error.message);
+        else console.log('[Veriqo sync] ✓ cross-pull merged and saved');
+        _mirrorSettingsToCarte(settings).catch(function (e) {
+          console.error('[Veriqo sync] mirror→Carte (on load) failed:', e.message || e);
+        });
       }
     }
   }
@@ -223,10 +235,8 @@ window.Mise.sync = (function () {
       config: config,
       updated_at: new Date().toISOString()
     });
-    if (wr.error) {
-      console.error('[Veriqo] mirror settings→Carte failed:', wr.error.message);
-      throw wr.error;
-    }
+    if (wr.error) console.error('[Veriqo sync] mirror settings→Carte failed:', wr.error.message);
+    else console.log('[Veriqo sync] ✓ mirrored settings→Carte');
   }
 
   function _mergeSuiteData(target, source, targetApp) {
