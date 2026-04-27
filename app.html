@@ -642,6 +642,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
             oninput="dishAutofill('menu')" onfocus="dishAutofill('menu')" onblur="setTimeout(function(){dishHideSuggestions('menu')},180)">
           <div id="menu-dish-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ccc;border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)"></div>
         </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <select class="form-input" id="menu-dish-cat" style="color:#555">
+            <option value="">Course / category (optional)</option>
+            <option>Canapé</option><option>Starter</option><option>Fish course</option><option>Main</option><option>Side</option><option>Sauce</option><option>Pre-dessert</option><option>Dessert</option><option>Cheese</option><option>Petit four</option><option>Bread</option><option>Other</option>
+          </select>
+        </div>
         <div class="form-group" style="margin-bottom:10px">
           <label class="form-label">Allergens in this dish</label>
           <div id="menu-dish-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div>
@@ -756,6 +762,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
             <input class="form-input" type="text" id="cust-dish-name" placeholder="Dish name" autocomplete="off"
               oninput="dishAutofill('cust')" onfocus="dishAutofill('cust')" onblur="setTimeout(function(){dishHideSuggestions('cust')},180)">
             <div id="cust-dish-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ccc;border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:8px">
+            <select class="form-input" id="cust-dish-cat" style="color:#555">
+              <option value="">Course / category (optional)</option>
+              <option>Canapé</option><option>Starter</option><option>Fish course</option><option>Main</option><option>Side</option><option>Sauce</option><option>Pre-dessert</option><option>Dessert</option><option>Cheese</option><option>Petit four</option><option>Bread</option><option>Other</option>
+            </select>
           </div>
           <div class="form-group" style="margin-bottom:10px">
             <label class="form-label">Allergens in this dish</label>
@@ -2503,6 +2515,7 @@ function buildPDFExport(dateLabel, recs) {
 // --- PRIVATE CHEF MODE ---
 var PC_TYPES = ['job','customers','kitchenassess','allergen','transport','mobileset','credentials'];
 
+var DISH_CATEGORIES = ['','Canapé','Starter','Fish course','Main','Side','Sauce','Pre-dessert','Dessert','Cheese','Petit four','Bread','Other'];
 var ALLERGENS_14 = ['Celery','Cereals containing gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphur dioxide'];
 var DIETARY_PREFS = ['Vegetarian','Vegan','Gluten-free','Dairy-free','Halal','Kosher','Nut-free','Shellfish-free'];
 
@@ -2615,8 +2628,10 @@ function menuAddDish() {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
-  _menuDishes.push({ dish: name, allergens: allergens });
+  var cat = (document.getElementById('menu-dish-cat').value || '').trim();
+  _menuDishes.push({ dish: name, allergens: allergens, category: cat });
   document.getElementById('menu-dish-name').value = '';
+  document.getElementById('menu-dish-cat').value = '';
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = false;
@@ -2646,7 +2661,8 @@ function menuRenderDishes() {
     return '<div style="padding:8px 12px;background:#fff;border:1px solid #e5e4de;border-radius:8px;margin-bottom:6px">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       + '<div style="flex:1">'
-      + '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:4px">' + d.dish + '</div>'
+      + '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:2px">' + d.dish + '</div>'
+      + (d.category ? '<div style="font-size:11px;color:#2D7A3A;font-weight:600;margin-bottom:3px">' + d.category + '</div>' : '')
       + '<div>' + tags + '</div>'
       + '</div>'
       + '<button onclick="menuRemoveDish(' + idx + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
@@ -2687,7 +2703,7 @@ function menuEdit(id) {
   if (!menu) return;
   // Load into form
   document.getElementById('menu-name').value = menu.name;
-  _menuDishes = menu.dishes.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice() }; });
+  _menuDishes = menu.dishes.map(function(d) { return { dish: d.dish, allergens: d.allergens.slice(), category: d.category || '' }; });
   menuRenderDishes();
   _editingMenuId = id;
   var btn = document.getElementById('menu-save-btn');
@@ -2714,9 +2730,11 @@ function menuAddDishAndSave() {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
-  _menuDishes.push({ dish: name, allergens: allergens });
-  saveDishToLibrary(name, allergens);
+  var cat = (document.getElementById('menu-dish-cat').value || '').trim();
+  _menuDishes.push({ dish: name, allergens: allergens, category: cat });
+  saveDishToLibrary(name, allergens, cat);
   document.getElementById('menu-dish-name').value = '';
+  document.getElementById('menu-dish-cat').value = '';
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = false;
@@ -2767,6 +2785,8 @@ function dishSelect(prefix, id) {
   if (!dish) return;
   var allergenPrefix = prefix === 'menu' ? 'mda' : 'cda';
   document.getElementById(prefix + '-dish-name').value = dish.dish;
+  var catEl = document.getElementById(prefix + '-dish-cat');
+  if (catEl) catEl.value = dish.category || '';
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById(allergenPrefix + '-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = dish.allergens.indexOf(a) !== -1;
@@ -2774,12 +2794,12 @@ function dishSelect(prefix, id) {
   dishHideSuggestions(prefix);
 }
 
-function saveDishToLibrary(name, allergens) {
+function saveDishToLibrary(name, allergens, category) {
   if (!name) return false;
   if (!settings.savedDishes) settings.savedDishes = [];
   var exists = settings.savedDishes.some(function(d) { return d.dish.toLowerCase() === name.toLowerCase(); });
   if (exists) { toast('"' + name + '" is already in your dish library'); return false; }
-  settings.savedDishes.push({ id: Date.now(), dish: name, allergens: allergens.slice() });
+  settings.savedDishes.push({ id: Date.now(), dish: name, allergens: allergens.slice(), category: category || '' });
   saveSettings();
   renderDishLibrary();
   return true;
@@ -2817,8 +2837,10 @@ function dishSaveEdit(id) {
     var el = document.getElementById('dish-edit-al-' + id + '-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
+  var catEl = document.getElementById('dish-edit-cat-' + id);
+  var category = catEl ? catEl.value : '';
   settings.savedDishes = (settings.savedDishes || []).map(function(d) {
-    return d.id === id ? { id: d.id, dish: name, allergens: allergens } : d;
+    return d.id === id ? { id: d.id, dish: name, allergens: allergens, category: category } : d;
   });
   saveSettings();
   _expandedDishId = null;
@@ -2834,38 +2856,64 @@ function renderDishLibrary() {
     c.innerHTML = '<div class="empty">No saved dishes yet — use "+ Save &amp; add" when building a menu to grow your library.</div>';
     return;
   }
-  c.innerHTML = dishes.map(function(d) {
-    var isEditing = _expandedDishId === d.id;
-    var editForm = isEditing
-      ? '<div id="dish-edit-' + d.id + '" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e4de">'
-        + '<input id="dish-edit-name-' + d.id + '" class="form-input" type="text" value="' + d.dish.replace(/"/g,'&quot;') + '" style="margin-bottom:8px">'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
-        + ALLERGENS_14.map(function(a) {
-            var eid = 'dish-edit-al-' + d.id + '-' + a.replace(/\s+/g,'_');
-            var chk = d.allergens.indexOf(a) !== -1 ? ' checked' : '';
-            return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:2px 0;cursor:pointer">'
-              + '<input type="checkbox" id="' + eid + '"' + chk + ' style="width:14px;height:14px;accent-color:#1a1a18"> ' + a + '</label>';
-          }).join('')
-        + '</div>'
-        + '<div style="display:flex;gap:8px;align-items:center">'
-        + '<button onclick="dishSaveEdit(' + d.id + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
-        + '<button onclick="event.stopPropagation();dishToggleEdit(' + d.id + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
-        + '</div>'
-        + '</div>'
-      : '';
-    return '<div onclick="dishToggleEdit(' + d.id + ')" style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1a1a18':'#e5e4de')+';border-radius:10px;margin-bottom:8px;cursor:pointer">'
-      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
-      + '<div style="flex:1">'
-      + '<div style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + '</div>'
-      + (d.allergens.length
-          ? '<div style="font-size:12px;color:#888;margin-top:2px">' + d.allergens.join(', ') + '</div>'
-          : '<div style="font-size:12px;color:#aaa;margin-top:2px">No allergens</div>')
-      + '</div>'
-      + '<button onclick="event.stopPropagation();dishDelete(' + d.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
-      + '</div>'
-      + editForm
-      + '</div>';
+  var ORDER = DISH_CATEGORIES.filter(function(cat) { return cat !== ''; });
+  var grouped = {};
+  dishes.forEach(function(d) {
+    var key = d.category || 'Other';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(d);
+  });
+  var html = '';
+  var shown = {};
+  ORDER.forEach(function(cat) {
+    if (!grouped[cat]) return;
+    shown[cat] = true;
+    html += '<div style="font-size:11px;font-weight:700;color:#2D7A3A;text-transform:uppercase;letter-spacing:0.05em;padding:8px 0 4px">' + cat + '</div>';
+    grouped[cat].forEach(function(d) { html += _dishCard(d); });
+  });
+  Object.keys(grouped).forEach(function(cat) {
+    if (shown[cat]) return;
+    html += '<div style="font-size:11px;font-weight:700;color:#2D7A3A;text-transform:uppercase;letter-spacing:0.05em;padding:8px 0 4px">' + cat + '</div>';
+    grouped[cat].forEach(function(d) { html += _dishCard(d); });
+  });
+  c.innerHTML = html;
+}
+
+function _dishCard(d) {
+  var isEditing = _expandedDishId === d.id;
+  var catOptions = DISH_CATEGORIES.map(function(cat) {
+    return '<option value="' + cat + '"' + (d.category === cat ? ' selected' : '') + '>' + (cat || 'No category') + '</option>';
   }).join('');
+  var editForm = isEditing
+    ? '<div id="dish-edit-' + d.id + '" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e4de">'
+      + '<input id="dish-edit-name-' + d.id + '" class="form-input" type="text" value="' + d.dish.replace(/"/g,'&quot;') + '" style="margin-bottom:8px">'
+      + '<select id="dish-edit-cat-' + d.id + '" class="form-input" style="margin-bottom:8px;color:#555">' + catOptions + '</select>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
+      + ALLERGENS_14.map(function(a) {
+          var eid = 'dish-edit-al-' + d.id + '-' + a.replace(/\s+/g,'_');
+          var chk = d.allergens.indexOf(a) !== -1 ? ' checked' : '';
+          return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:2px 0;cursor:pointer">'
+            + '<input type="checkbox" id="' + eid + '"' + chk + ' style="width:14px;height:14px;accent-color:#1a1a18"> ' + a + '</label>';
+        }).join('')
+      + '</div>'
+      + '<div style="display:flex;gap:8px;align-items:center">'
+      + '<button onclick="dishSaveEdit(' + d.id + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
+      + '<button onclick="event.stopPropagation();dishToggleEdit(' + d.id + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
+      + '</div>'
+      + '</div>'
+    : '';
+  return '<div onclick="dishToggleEdit(' + d.id + ')" style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1a1a18':'#e5e4de')+';border-radius:10px;margin-bottom:8px;cursor:pointer">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+    + '<div style="flex:1">'
+    + '<div style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + '</div>'
+    + (d.allergens.length
+        ? '<div style="font-size:12px;color:#888;margin-top:2px">' + d.allergens.join(', ') + '</div>'
+        : '<div style="font-size:12px;color:#aaa;margin-top:2px">No allergens</div>')
+    + '</div>'
+    + '<button onclick="event.stopPropagation();dishDelete(' + d.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+    + '</div>'
+    + editForm
+    + '</div>';
 }
 
 function renderMenuLibrary() {
@@ -3174,8 +3222,10 @@ function custAddDish() {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
-  _custDishes.push({ dish: name, allergens: allergens });
+  var cat = (document.getElementById('cust-dish-cat').value || '').trim();
+  _custDishes.push({ dish: name, allergens: allergens, category: cat });
   document.getElementById('cust-dish-name').value = '';
+  document.getElementById('cust-dish-cat').value = '';
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = false;
@@ -3193,9 +3243,11 @@ function custAddDishAndSave() {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
-  _custDishes.push({ dish: name, allergens: allergens });
-  saveDishToLibrary(name, allergens);
+  var cat = (document.getElementById('cust-dish-cat').value || '').trim();
+  _custDishes.push({ dish: name, allergens: allergens, category: cat });
+  saveDishToLibrary(name, allergens, cat);
   document.getElementById('cust-dish-name').value = '';
+  document.getElementById('cust-dish-cat').value = '';
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = false;
