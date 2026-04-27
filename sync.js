@@ -48,15 +48,17 @@ window.Mise.sync = (function () {
     if (!_userId) return;
 
     try {
-      await supabaseClient.from('haccp_records').upsert({
+      var r = await supabaseClient.from('haccp_records').upsert({
         user_id: _userId,
         date: dateStr,
         records: recordsArray
       }, { onConflict: 'user_id,date' });
+      if (r.error) throw r.error;
       await _mirrorJobsToCarte(dateStr, recordsArray);
       _refreshAppViews();
     } catch (err) {
-      console.warn('[Veriqo] saveDay error:', err.message);
+      console.error('[Veriqo] saveDay failed:', err.message || err);
+      if (typeof toast === 'function') toast('Sync error — data saved locally only', 'err');
     }
   }
 
@@ -65,15 +67,17 @@ window.Mise.sync = (function () {
     if (!_userId) return;
 
     try {
-      await supabaseClient.from('settings').upsert({
+      var r = await supabaseClient.from('settings').upsert({
         id: _userId,
         config: settingsObj,
         updated_at: new Date().toISOString()
       });
+      if (r.error) throw r.error;
       await _mirrorSettingsToCarte(settingsObj);
       _refreshAppViews();
     } catch (err) {
-      console.warn('[Veriqo] saveSettings error:', err.message);
+      console.error('[Veriqo] saveSettings failed:', err.message || err);
+      if (typeof toast === 'function') toast('Sync error — settings saved locally only', 'err');
     }
   }
 
@@ -198,11 +202,12 @@ window.Mise.sync = (function () {
         mRecords.push(Object.assign({}, job, { id: mirrorId, sourceApp: 'veriqo' }));
       }
     });
-    await supabaseClient.from('mise_records').upsert({
+    var wr = await supabaseClient.from('mise_records').upsert({
       user_id: _userId,
       date: dateStr,
       records: mRecords
     }, { onConflict: 'user_id,date' });
+    if (wr.error) console.error('[Veriqo] mirror jobs→Carte failed:', wr.error.message);
   }
 
   async function _mirrorSettingsToCarte(settingsObj) {
@@ -213,11 +218,15 @@ window.Mise.sync = (function () {
       .single();
     var config = (!result.error && result.data && result.data.config) ? result.data.config : {};
     _mergeSuiteData(config, settingsObj, 'carte');
-    await supabaseClient.from('mise_settings').upsert({
+    var wr = await supabaseClient.from('mise_settings').upsert({
       id: _userId,
       config: config,
       updated_at: new Date().toISOString()
     });
+    if (wr.error) {
+      console.error('[Veriqo] mirror settings→Carte failed:', wr.error.message);
+      throw wr.error;
+    }
   }
 
   function _mergeSuiteData(target, source, targetApp) {
