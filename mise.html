@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mise</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F5F0E8; color: #1C2B1E; }
+.app { max-width: 430px; margin: 0 auto; background: #F5F0E8; min-height: 100vh; }
+.header { background: #1C2B1E; padding: 14px 16px 14px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; }
+.back-btn { font-size: 22px; cursor: pointer; line-height: 1; padding: 4px 6px 4px 0; display: none; color: #F5F0E8; background: none; border: none; font-family: inherit; }
+.header-text { flex: 1; display: flex; align-items: center; gap: 10px; }
+.header-text h1 { font-size: 18px; font-weight: 700; color: #F5F0E8; letter-spacing: -0.3px; }
+.header-sub { font-size: 12px; color: #C8A96E; margin-left: auto; font-weight: 500; }
+.section { display: none; padding: 16px; padding-bottom: 90px; }
+.section.active { display: block; }
+.home { padding: 16px; padding-bottom: 90px; }
+.card { background: #fff; border: 1px solid #E2DDD5; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.card-title { font-size: 11px; font-weight: 600; color: #A09890; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; color: #5A544E; margin-bottom: 6px; display: block; }
+.form-input { width: 100%; padding: 10px 12px; border: 1px solid #D0C8BE; border-radius: 8px; background: #fff; color: #1C2B1E; font-size: 14px; font-family: inherit; -webkit-appearance: none; }
+.form-input:focus { outline: none; border-color: #3A7D44; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-primary { width: 100%; padding: 13px; background: #1C2B1E; color: #F5F0E8; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; font-family: inherit; }
+.btn-primary:active { opacity: 0.8; }
+.btn-green { background: #3A7D44; color: #fff; }
+.btn-gold { background: #C8A96E; color: #1C2B1E; }
+.btn-secondary { width: 100%; padding: 11px; background: transparent; color: #1C2B1E; border: 1px solid #D0C8BE; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; font-family: inherit; }
+.divider { font-size: 11px; color: #A09890; margin: 14px 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.log-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid #F0EBE2; }
+.log-row:last-child { border-bottom: none; }
+.log-name { font-size: 14px; color: #1C2B1E; }
+.log-time { font-size: 12px; color: #A09890; margin-top: 2px; }
+.empty { font-size: 13px; color: #A09890; padding: 8px 0; line-height: 1.5; }
+.toast { position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%); font-size: 13px; padding: 10px 20px; border-radius: 20px; display: none; z-index: 99; white-space: nowrap; font-family: inherit; background: #1C2B1E; color: #F5F0E8; }
+.toast.show { display: block; }
+.badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 600; }
+.badge-green { background: #DFF0E3; color: #2A6432; }
+.badge-gold { background: #F5EDD8; color: #8A6820; }
+.badge-red { background: #FBECEC; color: #8A2D2D; }
+.badge-grey { background: #EDE9E3; color: #6A645E; }
+.add-row { display: flex; gap: 8px; margin-top: 10px; }
+.add-row input { flex: 1; padding: 9px 12px; border: 1px solid #D0C8BE; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: #1C2B1E; }
+.add-row input:focus { outline: none; border-color: #3A7D44; }
+.btn-add { padding: 9px 16px; background: #1C2B1E; color: #F5F0E8; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.setting-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #F0EBE2; }
+.setting-item:last-child { border-bottom: none; }
+.setting-item-name { flex: 1; font-size: 14px; color: #1C2B1E; }
+.btn-remove { background: none; border: none; color: #A32D2D; font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; font-family: inherit; flex-shrink: 0; }
+
+/* Bottom nav */
+.bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: #1C2B1E; display: flex; border-top: 1px solid #2E4030; z-index: 20; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px 10px; cursor: pointer; border: none; background: none; font-family: inherit; -webkit-tap-highlight-color: transparent; transition: background 0.15s; gap: 4px; }
+.nav-btn:active { background: rgba(255,255,255,0.07); }
+.nav-icon { font-size: 22px; line-height: 1; }
+.nav-label { font-size: 10px; font-weight: 500; color: #7A8C7C; letter-spacing: 0.02em; }
+.nav-btn.active .nav-label { color: #C8A96E; }
+.nav-btn.active .nav-icon { filter: none; }
+
+/* Client cards */
+.client-card { background: #fff; border: 1px solid #E2DDD5; border-radius: 12px; margin-bottom: 10px; overflow: hidden; cursor: pointer; }
+.client-card-header { padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+.client-avatar { width: 40px; height: 40px; border-radius: 20px; background: #1C2B1E; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #C8A96E; flex-shrink: 0; }
+.client-info { flex: 1; }
+.client-name { font-size: 15px; font-weight: 600; color: #1C2B1E; }
+.client-sub { font-size: 12px; color: #A09890; margin-top: 2px; }
+.client-expand { font-size: 12px; color: #A09890; }
+.client-body { padding: 0 14px 14px; border-top: 1px solid #F0EBE2; }
+.contact-link { display: flex; align-items: center; gap: 8px; padding: 8px 0; text-decoration: none; color: #1C2B1E; border-bottom: 1px solid #F0EBE2; font-size: 14px; }
+.contact-link:last-child { border-bottom: none; }
+.contact-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+
+/* Calendar */
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.cal-month { font-size: 18px; font-weight: 700; color: #1C2B1E; }
+.cal-nav { width: 36px; height: 36px; border-radius: 18px; border: 1px solid #E2DDD5; background: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #1C2B1E; font-family: inherit; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.cal-dow { text-align: center; font-size: 11px; font-weight: 600; color: #A09890; padding: 4px 0 8px; }
+.cal-day { aspect-ratio: 1; border-radius: 8px; border: 1px solid #E2DDD5; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; font-weight: 500; color: #1C2B1E; position: relative; -webkit-tap-highlight-color: transparent; transition: background 0.1s; gap: 2px; }
+.cal-day:active { opacity: 0.7; }
+.cal-day.today { border-color: #3A7D44; border-width: 2px; font-weight: 700; }
+.cal-day.selected { background: #1C2B1E; color: #F5F0E8; border-color: #1C2B1E; }
+.cal-day.has-job { background: #DFF0E3; border-color: #9ECBA8; }
+.cal-day.unavail { background: #FBF0F0; border-color: #E8C5C5; color: #A32D2D; }
+.cal-day.past { opacity: 0.45; }
+.cal-day.empty { background: transparent; border: none; cursor: default; }
+.cal-dot { width: 5px; height: 5px; border-radius: 3px; background: #3A7D44; }
+.cal-day.selected .cal-dot { background: #C8A96E; }
+.cal-detail { background: #fff; border: 1px solid #E2DDD5; border-radius: 12px; padding: 14px; margin-top: 14px; }
+
+/* Dish library */
+.dish-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #F0EBE2; }
+.dish-row:last-child { border-bottom: none; }
+.dish-name { flex: 1; font-size: 14px; color: #1C2B1E; }
+.dish-cat { font-size: 11px; color: #A09890; }
+.cat-header { font-size: 11px; font-weight: 700; color: #C8A96E; text-transform: uppercase; letter-spacing: 0.07em; padding: 10px 0 4px; }
+
+/* Dashboard */
+.greeting { font-size: 22px; font-weight: 700; color: #1C2B1E; letter-spacing: -0.5px; margin-bottom: 4px; }
+.greeting-sub { font-size: 13px; color: #7A7468; margin-bottom: 20px; }
+.next-booking { background: #1C2B1E; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+.next-label { font-size: 11px; font-weight: 700; color: #C8A96E; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+.next-client { font-size: 20px; font-weight: 700; color: #F5F0E8; letter-spacing: -0.3px; }
+.next-meta { font-size: 13px; color: #9AB09C; margin-top: 6px; }
+.stats-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+.stat-tile { background: #fff; border: 1px solid #E2DDD5; border-radius: 10px; padding: 12px 8px; text-align: center; }
+.stat-num { font-size: 22px; font-weight: 700; color: #1C2B1E; }
+.stat-label { font-size: 11px; color: #A09890; margin-top: 3px; }
+.quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.quick-btn { padding: 14px 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 8px; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.quick-btn:active { opacity: 0.8; }
+.qa-dark { background: #1C2B1E; color: #F5F0E8; }
+.qa-gold { background: #C8A96E; color: #1C2B1E; }
+.nav-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.nav-tile { background: #fff; border: 1px solid #E2DDD5; border-radius: 14px; padding: 18px 14px 14px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.1s; }
+.nav-tile:active { transform: scale(0.97); }
+.nav-tile-icon { font-size: 36px; margin-bottom: 8px; }
+.nav-tile-label { font-size: 14px; font-weight: 600; color: #1C2B1E; }
+.nav-tile-sub { font-size: 12px; color: #A09890; margin-top: 3px; }
+
+/* More menu */
+.more-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid #F0EBE2; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.more-item:last-child { border-bottom: none; }
+.more-icon { font-size: 24px; width: 40px; text-align: center; flex-shrink: 0; }
+.more-name { font-size: 15px; font-weight: 600; color: #1C2B1E; }
+.more-sub { font-size: 12px; color: #A09890; margin-top: 2px; }
+.more-arrow { font-size: 16px; color: #C0B8B0; margin-left: auto; }
+
+/* Toggle switch */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #F0EBE2; }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 14px; color: #1C2B1E; flex: 1; }
+.toggle-sub { font-size: 12px; color: #A09890; display: block; margin-top: 2px; }
+.toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: #D0C8BE; border-radius: 13px; cursor: pointer; transition: background 0.2s; }
+.toggle-slider:before { content: ''; position: absolute; width: 20px; height: 20px; border-radius: 10px; background: #fff; left: 3px; top: 3px; transition: transform 0.2s; }
+input:checked + .toggle-slider { background: #3A7D44; }
+input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+/* Job history */
+.month-group { margin-bottom: 6px; }
+.month-label { font-size: 11px; font-weight: 700; color: #A09890; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 0 4px; }
+.job-card { background: #fff; border: 1px solid #E2DDD5; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; }
+.job-card:active { opacity: 0.8; }
+.job-card-header { display: flex; align-items: flex-start; justify-content: space-between; }
+.job-card-name { font-size: 15px; font-weight: 600; color: #1C2B1E; }
+.job-card-date { font-size: 12px; color: #C8A96E; font-weight: 600; margin-top: 2px; }
+.job-card-meta { font-size: 12px; color: #A09890; margin-top: 4px; }
+.job-card-body { margin-top: 10px; padding-top: 10px; border-top: 1px solid #F0EBE2; display: none; }
+.job-card-body.open { display: block; }
+.job-detail-row { display: flex; gap: 6px; font-size: 13px; color: #5A544E; padding: 3px 0; }
+.job-detail-key { color: #A09890; width: 80px; flex-shrink: 0; }
+
+/* Credential rows */
+.cred-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F0EBE2; }
+.cred-row:last-child { border-bottom: none; }
+.cred-name { flex: 1; }
+.cred-title { font-size: 14px; font-weight: 600; color: #1C2B1E; }
+.cred-issuer { font-size: 12px; color: #A09890; margin-top: 2px; }
+.cred-expiry { font-size: 12px; font-weight: 600; text-align: right; }
+.cred-ok { color: #2A6432; }
+.cred-soon { color: #8A6820; }
+.cred-exp { color: #8A2D2D; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <button class="back-btn" id="back-btn" onclick="goHome()">&#8592;</button>
+    <div class="header-text">
+      <!-- Mise logo: stylised toque -->
+      <svg id="mise-header-logo" width="30" height="30" viewBox="0 0 60 60" style="display:none;flex-shrink:0" xmlns="http://www.w3.org/2000/svg">
+        <rect width="60" height="60" rx="12" fill="#C8A96E"/>
+        <text x="30" y="44" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="32" font-weight="800" fill="#1C2B1E">M</text>
+      </svg>
+      <h1 id="mise-header-title">Mise</h1>
+      <span class="header-sub" id="mise-header-sub"></span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ HOME / DASHBOARD ═══════════════ -->
+  <div id="tab-home" class="home">
+    <div style="margin-bottom:20px;display:flex;align-items:center;gap:14px;padding-top:4px">
+      <svg width="56" height="56" viewBox="0 0 60 60" style="flex-shrink:0;border-radius:14px" xmlns="http://www.w3.org/2000/svg">
+        <rect width="60" height="60" rx="14" fill="#1C2B1E"/>
+        <text x="30" y="44" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="34" font-weight="800" fill="#C8A96E">M</text>
+      </svg>
+      <div>
+        <div style="font-size:26px;font-weight:800;color:#1C2B1E;letter-spacing:-0.8px">Mise</div>
+        <div style="font-size:13px;color:#3A7D44;margin-top:2px;font-weight:600">Private Chef. All in one place.</div>
+      </div>
+    </div>
+
+    <div id="dash-greeting" class="greeting"></div>
+    <div id="dash-sub" class="greeting-sub"></div>
+
+    <!-- Next booking -->
+    <div id="dash-next" class="next-booking" style="display:none">
+      <div class="next-label">Next Booking</div>
+      <div class="next-client" id="dash-next-client"></div>
+      <div class="next-meta" id="dash-next-meta"></div>
+    </div>
+    <div id="dash-no-next" class="card" style="display:none;text-align:center;padding:20px 14px">
+      <div style="font-size:32px;margin-bottom:8px">📅</div>
+      <div style="font-size:14px;font-weight:600;color:#1C2B1E">No upcoming bookings</div>
+      <div style="font-size:13px;color:#A09890;margin-top:4px">Tap "New Job" to log your next event</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-strip">
+      <div class="stat-tile"><div class="stat-num" id="dash-stat-clients">0</div><div class="stat-label">Clients</div></div>
+      <div class="stat-tile"><div class="stat-num" id="dash-stat-upcoming">0</div><div class="stat-label">Upcoming</div></div>
+      <div class="stat-tile"><div class="stat-num" id="dash-stat-month">0</div><div class="stat-label">This month</div></div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="quick-actions">
+      <button class="quick-btn qa-dark" onclick="startNewJob()">➕ New Job</button>
+      <button class="quick-btn qa-gold" onclick="showTab('clients')">👥 Clients</button>
+    </div>
+
+    <!-- Nav tiles -->
+    <div class="nav-tiles">
+      <div class="nav-tile" onclick="showTab('calendar')">
+        <div class="nav-tile-icon">📅</div>
+        <div class="nav-tile-label">Calendar</div>
+        <div class="nav-tile-sub" id="tile-sub-calendar">View bookings</div>
+      </div>
+      <div class="nav-tile" onclick="showTab('menus')">
+        <div class="nav-tile-icon">📖</div>
+        <div class="nav-tile-label">Menus</div>
+        <div class="nav-tile-sub" id="tile-sub-menus">Dishes & courses</div>
+      </div>
+      <div class="nav-tile" onclick="showTab('jobs')">
+        <div class="nav-tile-icon">🍽️</div>
+        <div class="nav-tile-label">Jobs</div>
+        <div class="nav-tile-sub" id="tile-sub-jobs">All bookings</div>
+      </div>
+      <div class="nav-tile" onclick="showTab('more')">
+        <div class="nav-tile-icon">⋯</div>
+        <div class="nav-tile-label">More</div>
+        <div class="nav-tile-sub">Transport, assess…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ CLIENTS ═══════════════════════ -->
+  <div id="tab-clients" class="section">
+    <div class="card">
+      <div class="card-title">Add Client</div>
+      <div class="form-group">
+        <label class="form-label">Full name *</label>
+        <input class="form-input" id="cl-name" placeholder="e.g. Jane & Tom Williams" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input class="form-input" id="cl-address" placeholder="Full address">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="cl-phone" type="tel" placeholder="07700 900000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="cl-email" type="email" placeholder="email@example.com">
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <label class="form-label">Dietary notes</label>
+        <input class="form-input" id="cl-diet" placeholder="Allergies, preferences, etc.">
+      </div>
+      <button class="btn-primary btn-green" onclick="addClient()" style="margin-top:12px">Save Client</button>
+    </div>
+    <div class="divider">Your Clients</div>
+    <div id="clients-list"><p class="empty">No clients yet. Add one above.</p></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ CALENDAR ════════════════════ -->
+  <div id="tab-calendar" class="section">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calPrev()">&#8592;</button>
+      <div class="cal-month" id="cal-month-label"></div>
+      <button class="cal-nav" onclick="calNext()">&#8594;</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div id="cal-detail" style="display:none"></div>
+    <div style="margin-top:12px;display:flex;gap:14px;font-size:12px;color:#A09890;flex-wrap:wrap;padding:2px 0">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#DFF0E3;border:1px solid #9ECBA8;display:inline-block"></span>Has booking</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#FBF0F0;border:1px solid #E8C5C5;display:inline-block"></span>Unavailable</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#1C2B1E;display:inline-block"></span>Selected</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ MENUS ════════════════════════ -->
+  <div id="tab-menus" class="section">
+    <!-- Dish library -->
+    <div class="card">
+      <div class="card-title">Add Dish to Library</div>
+      <div class="form-group">
+        <label class="form-label">Dish name *</label>
+        <input class="form-input" id="dish-name" placeholder="e.g. Beef Wellington">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select class="form-input" id="dish-cat">
+            <option value="">Category</option>
+            <option>Canapé</option><option>Starter</option><option>Fish course</option>
+            <option>Main</option><option>Side</option><option>Sauce</option>
+            <option>Pre-dessert</option><option>Dessert</option><option>Cheese</option>
+            <option>Petit four</option><option>Bread</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Allergens (14)</label>
+          <input class="form-input" id="dish-allergens" placeholder="e.g. Milk, Eggs">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="addDish()" style="margin-top:4px">Add Dish</button>
+    </div>
+
+    <div class="divider">Dish Library</div>
+    <div id="dish-library"></div>
+
+    <!-- Saved Menus -->
+    <div class="divider" style="margin-top:20px">Saved Menus</div>
+    <div class="card">
+      <div class="card-title">Create Menu</div>
+      <div class="form-group">
+        <label class="form-label">Menu name *</label>
+        <input class="form-input" id="menu-name" placeholder="e.g. Summer 2025 Tasting Menu">
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <label class="form-label">Dishes (select from library)</label>
+        <div id="menu-dish-select" style="max-height:180px;overflow-y:auto;border:1px solid #D0C8BE;border-radius:8px;background:#fff;padding:4px 0"></div>
+      </div>
+      <button class="btn-primary" onclick="saveMenu()" style="margin-top:12px">Save Menu</button>
+    </div>
+    <div id="saved-menus-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ JOBS ════════════════════════ -->
+  <div id="tab-jobs" class="section">
+    <div class="card">
+      <div class="card-title">Log New Job</div>
+      <div class="form-group">
+        <label class="form-label">Client *</label>
+        <div style="display:flex;gap:8px">
+          <select class="form-input" id="job-client-select" onchange="jobFillFromCRM(this.value)" style="flex:1">
+            <option value="">Select client…</option>
+          </select>
+        </div>
+        <input class="form-input" id="job-client-manual" placeholder="Or type client name" style="margin-top:6px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location / address</label>
+        <input class="form-input" id="job-location" placeholder="Event location">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Event date *</label>
+          <input class="form-input" id="job-event-date" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Time</label>
+          <input class="form-input" id="job-time" type="time" placeholder="19:00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Covers</label>
+          <input class="form-input" id="job-covers" type="number" min="1" placeholder="e.g. 8">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Job type</label>
+          <select class="form-input" id="job-type">
+            <option value="">Select…</option>
+            <option>Dinner party</option><option>Wedding</option><option>Corporate</option>
+            <option>Lunch</option><option>Canapes</option><option>Meal prep</option>
+            <option>Private class</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="job-notes" placeholder="Menu, dietary req, access details…">
+      </div>
+      <button class="btn-primary btn-green" onclick="logJob()" style="margin-top:12px">Log Job</button>
+    </div>
+
+    <div class="divider">All Jobs</div>
+    <div id="jobs-history"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ MORE ════════════════════════ -->
+  <div id="tab-more" class="section">
+    <div class="card" style="margin-bottom:0;padding:4px 14px">
+      <div class="more-item" onclick="showTab('transport')">
+        <div class="more-icon">🚐</div>
+        <div><div class="more-name">Transport Temperatures</div><div class="more-sub">Log food transit temps</div></div>
+        <div class="more-arrow">›</div>
+      </div>
+      <div class="more-item" onclick="showTab('assess')">
+        <div class="more-icon">📋</div>
+        <div><div class="more-name">Kitchen Assessment</div><div class="more-sub">Pre-job checklist & fridge temps</div></div>
+        <div class="more-arrow">›</div>
+      </div>
+      <div class="more-item" onclick="showTab('allergen')">
+        <div class="more-icon">⚠️</div>
+        <div><div class="more-name">Allergen Log</div><div class="more-sub">Record allergens per dish/client</div></div>
+        <div class="more-arrow">›</div>
+      </div>
+      <div class="more-item" onclick="showTab('credentials')">
+        <div class="more-icon">🪪</div>
+        <div><div class="more-name">Credentials</div><div class="more-sub">Certificates & expiry dates</div></div>
+        <div class="more-arrow">›</div>
+      </div>
+      <div class="more-item" onclick="showTab('settings')">
+        <div class="more-icon">⚙️</div>
+        <div><div class="more-name">Settings</div><div class="more-sub">Profile, staff, Veriqo sync</div></div>
+        <div class="more-arrow">›</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ TRANSPORT ═══════════════════ -->
+  <div id="tab-transport" class="section">
+    <div class="card">
+      <div class="card-title">Log Transport Temperature</div>
+      <div class="form-group">
+        <label class="form-label">Client / event</label>
+        <select class="form-input" id="tr-client-select" onchange="trFillFromCRM(this.value)">
+          <option value="">Select client…</option>
+        </select>
+        <input class="form-input" id="tr-client-manual" placeholder="Or type client / event name" style="margin-top:6px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Food being transported *</label>
+        <input class="form-input" id="tr-food" placeholder="e.g. Beef Wellington, salads">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Destination</label>
+        <input class="form-input" id="tr-dest" placeholder="Delivery address">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Temp at loading (°C)</label>
+          <input class="form-input" id="tr-temp-start" type="number" step="0.1" placeholder="e.g. 3.5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Temp at arrival (°C)</label>
+          <input class="form-input" id="tr-temp-end" type="number" step="0.1" placeholder="e.g. 4.2">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Packed by</label>
+          <select class="form-input" id="tr-by">
+            <option value="">Select…</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" id="tr-date" type="date">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="logTransport()" style="margin-top:4px">Save Record</button>
+    </div>
+    <div class="divider">Recent Records</div>
+    <div id="transport-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ ASSESS ══════════════════════ -->
+  <div id="tab-assess" class="section">
+    <div class="card">
+      <div class="card-title">Kitchen Assessment</div>
+      <div class="form-group">
+        <label class="form-label">Client / location *</label>
+        <select class="form-input" id="as-client-select" onchange="asFillFromCRM(this.value)">
+          <option value="">Select client…</option>
+        </select>
+        <input class="form-input" id="as-client" placeholder="Or type name / location" style="margin-top:6px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="as-date" type="date">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fridge temp (°C)</label>
+          <input class="form-input" id="as-fridge-temp" type="number" step="0.1" placeholder="e.g. 3.0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Freezer temp (°C)</label>
+          <input class="form-input" id="as-freezer-temp" type="number" step="0.1" placeholder="e.g. -18">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">General condition</label>
+        <select class="form-input" id="as-condition">
+          <option value="">Select…</option>
+          <option>Excellent — clean, well-equipped</option>
+          <option>Good — minor issues noted</option>
+          <option>Acceptable — adequate for service</option>
+          <option>Poor — significant concerns</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <label class="form-label">Notes</label>
+        <input class="form-input" id="as-notes" placeholder="Equipment, cleanliness, concerns…">
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <label class="form-label">Assessed by</label>
+        <select class="form-input" id="as-by">
+          <option value="">Select…</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="logAssess()" style="margin-top:4px">Save Assessment</button>
+    </div>
+    <div class="divider">Recent Assessments</div>
+    <div id="assess-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ ALLERGEN ════════════════════ -->
+  <div id="tab-allergen" class="section">
+    <div class="card">
+      <div class="card-title">Log Allergen Information</div>
+      <div class="form-group">
+        <label class="form-label">Client *</label>
+        <select class="form-input" id="al-client-select" onchange="alFillFromCRM(this.value)">
+          <option value="">Select client…</option>
+        </select>
+        <input class="form-input" id="al-client" placeholder="Or type client name" style="margin-top:6px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dish name *</label>
+        <input class="form-input" id="al-dish" placeholder="e.g. Lobster bisque">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Allergens present (from 14)</label>
+        <div id="al-allergens-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <label class="form-label">Additional notes</label>
+        <input class="form-input" id="al-notes" placeholder="Modifications, may contain…">
+      </div>
+      <button class="btn-primary" onclick="logAllergen()" style="margin-top:4px">Save Record</button>
+    </div>
+    <div class="divider">Recent Records</div>
+    <div id="allergen-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ CREDENTIALS ═════════════════ -->
+  <div id="tab-credentials" class="section">
+    <div class="card">
+      <div class="card-title">Add Certificate / Credential</div>
+      <div class="form-group">
+        <label class="form-label">Certificate name *</label>
+        <input class="form-input" id="cred-name" placeholder="e.g. Level 3 Food Hygiene">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Held by</label>
+        <select class="form-input" id="cred-holder">
+          <option value="">Select person…</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Issuing body</label>
+        <input class="form-input" id="cred-issuer" placeholder="e.g. Highfield, CIEH">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date issued</label>
+          <input class="form-input" id="cred-issued" type="date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expiry date</label>
+          <input class="form-input" id="cred-expiry" type="date">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="addCredential()" style="margin-top:4px">Save</button>
+    </div>
+    <div class="divider">Your Credentials</div>
+    <div id="credentials-list"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ SETTINGS ════════════════════ -->
+  <div id="tab-settings" class="section">
+    <!-- auth.js injects account card here as first child -->
+
+    <div class="card">
+      <div class="card-title">Your Profile</div>
+      <div class="form-group">
+        <label class="form-label">Your name</label>
+        <input class="form-input" id="set-chef-name" placeholder="e.g. Alex Taylor">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Business name</label>
+        <input class="form-input" id="set-business" placeholder="e.g. Taylor Private Dining">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" id="set-phone" type="tel">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="set-email" type="email">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="saveProfile()" style="margin-top:4px">Save Profile</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Staff</div>
+      <div id="staff-list"></div>
+      <div class="add-row">
+        <input id="staff-input" placeholder="Add staff member name" onkeydown="if(event.key==='Enter')addStaff()">
+        <button class="btn-add" onclick="addStaff()">Add</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Veriqo Integration</div>
+      <div class="toggle-row">
+        <div>
+          <span class="toggle-label">Sync job records to Veriqo</span>
+          <span class="toggle-sub">Job logs also saved with haccp_ prefix so Veriqo can access them for compliance records</span>
+        </div>
+        <label class="toggle" style="margin-left:14px">
+          <input type="checkbox" id="set-veriqo-sync" onchange="toggleVeriqoSync(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════ BOTTOM NAV ═════════════════ -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="showTab('home')">
+      <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+    </button>
+    <button class="nav-btn" id="nav-clients" onclick="showTab('clients')">
+      <span class="nav-icon">👥</span><span class="nav-label">Clients</span>
+    </button>
+    <button class="nav-btn" id="nav-calendar" onclick="showTab('calendar')">
+      <span class="nav-icon">📅</span><span class="nav-label">Calendar</span>
+    </button>
+    <button class="nav-btn" id="nav-menus" onclick="showTab('menus')">
+      <span class="nav-icon">📖</span><span class="nav-label">Menus</span>
+    </button>
+    <button class="nav-btn" id="nav-more" onclick="showTab('more')">
+      <span class="nav-icon">⋯</span><span class="nav-label">More</span>
+    </button>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════ CONSTANTS & STATE ═══
+var ALLERGENS_14 = ['Celery','Cereals with gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphites'];
+var DISH_CATEGORIES = ['','Canapé','Starter','Fish course','Main','Side','Sauce','Pre-dessert','Dessert','Cheese','Petit four','Bread','Other'];
+var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+var mSettings = {};
+var mRecords  = [];  // today's job records
+var TODAY = (function(){ var d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+var _activeTab = 'home';
+var _calYear   = new Date().getFullYear();
+var _calMonth  = new Date().getMonth();
+var _calSelectedDate = null;
+var _expandedClientId = null;
+var _expandedJobId    = null;
+
+// ═══════════════════════════════════════════════════════ UTILITIES ═══════════
+function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function fmtDate(d){
+  if(!d) return '';
+  var parts = d.split('-');
+  if(parts.length !== 3) return d;
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return parseInt(parts[2],10)+' '+months[parseInt(parts[1],10)-1]+' '+parts[0];
+}
+function fmtDateLong(d){
+  if(!d) return '';
+  var dt = new Date(d + 'T12:00:00');
+  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return days[dt.getDay()]+' '+dt.getDate()+' '+months[dt.getMonth()]+' '+dt.getFullYear();
+}
+function daysUntil(dateStr){
+  var now = new Date(TODAY + 'T00:00:00');
+  var then = new Date(dateStr + 'T00:00:00');
+  return Math.round((then - now) / 86400000);
+}
+function toast(msg, type){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'err' ? '#8A2D2D' : type === 'warn' ? '#8A6820' : '#1C2B1E';
+  t.style.color = '#F5F0E8';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2800);
+}
+function initAllergenGrid(){
+  var g = document.getElementById('al-allergens-grid');
+  if(!g) return;
+  g.innerHTML = ALLERGENS_14.map(function(a){
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#1C2B1E;padding:5px 8px;border:1px solid #E2DDD5;border-radius:6px;cursor:pointer;background:#fff">'
+      + '<input type="checkbox" id="al-a-'+a.replace(/\s/g,'_')+'" style="accent-color:#3A7D44">'
+      + _esc(a) + '</label>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════ SETTINGS ═══════════
+function loadSettings(){
+  try { mSettings = JSON.parse(localStorage.getItem('mise_settings') || '{}'); } catch(e){ mSettings = {}; }
+}
+function saveSettings(){
+  try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch(e){}
+  // Optional cloud sync via shared Mise.sync if available
+  if (window.Mise && window.Mise.sync) Mise.sync.saveSettings(mSettings);
+}
+
+// ═══════════════════════════════════════════════════════ RECORDS ════════════
+function loadToday(){
+  try { mRecords = JSON.parse(localStorage.getItem('mise_'+TODAY) || '[]'); } catch(e){ mRecords = []; }
+}
+function saveToday(){
+  try { localStorage.setItem('mise_'+TODAY, JSON.stringify(mRecords)); } catch(e){}
+}
+function getDayRecords(ds){
+  try { return JSON.parse(localStorage.getItem('mise_'+ds) || '[]'); } catch(e){ return []; }
+}
+function saveDayRecords(ds, arr){
+  try { localStorage.setItem('mise_'+ds, JSON.stringify(arr)); } catch(e){}
+}
+function getAllJobs(){
+  var all = []; var seen = {};
+  mRecords.filter(function(r){ return r.type==='job'; }).forEach(function(r){
+    if(!seen[r.id]){ seen[r.id]=true; all.push(r); }
+  });
+  try {
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(!k || k.indexOf('mise_')!==0 || k==='mise_settings') continue;
+      var ds=k.replace('mise_','');
+      getDayRecords(ds).filter(function(r){ return r.type==='job'; }).forEach(function(r){
+        if(!seen[r.id]){ seen[r.id]=true; all.push(r); }
+      });
+    }
+  } catch(e){}
+  all.sort(function(a,b){ return (b.eventDate||'').localeCompare(a.eventDate||''); });
+  return all;
+}
+function getAllTypeRecords(type){
+  var all = []; var seen = {};
+  mRecords.filter(function(r){ return r.type===type; }).forEach(function(r){
+    if(!seen[r.id]){ seen[r.id]=true; all.push(r); }
+  });
+  try {
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(!k||k.indexOf('mise_')!==0||k==='mise_settings') continue;
+      var ds=k.replace('mise_','');
+      getDayRecords(ds).filter(function(r){ return r.type===type; }).forEach(function(r){
+        if(!seen[r.id]){ seen[r.id]=true; all.push(r); }
+      });
+    }
+  } catch(e){}
+  all.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  return all;
+}
+
+// ═══════════════════════════════════════════════════════ ADDRESS BOOK ════════
+function getAddressBook(){
+  var book=[]; var seen={};
+  (mSettings.savedClients||[]).forEach(function(c){
+    var norm=c.name.trim().toLowerCase(); seen[norm]=true;
+    book.push({key:'crm_'+c.id, name:c.name, address:c.address||'', phone:c.phone||'', email:c.email||'', diet:c.diet||'', fromCRM:true});
+  });
+  mRecords.filter(function(r){ return r.type==='job' && r.client; }).forEach(function(r){
+    var norm=r.client.trim().toLowerCase();
+    if(seen[norm]) return; seen[norm]=true;
+    book.push({key:'hist_'+norm, name:r.client, address:r.location||'', phone:'', email:'', diet:'', fromCRM:false});
+  });
+  try {
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(!k||k.indexOf('mise_')!==0||k==='mise_settings') continue;
+      var ds=k.replace('mise_','');
+      getDayRecords(ds).filter(function(r){ return r.type==='job' && r.client; }).forEach(function(r){
+        var norm=r.client.trim().toLowerCase();
+        if(seen[norm]) return; seen[norm]=true;
+        book.push({key:'hist_'+norm, name:r.client, address:r.location||'', phone:'', email:'', diet:'', fromCRM:false});
+      });
+    }
+  } catch(e){}
+  book.sort(function(a,b){ return a.name.localeCompare(b.name); });
+  return book;
+}
+function addressBookLookup(key){
+  return getAddressBook().find(function(e){ return e.key===key; }) || null;
+}
+
+// ═══════════════════════════════════════════════════════ NAVIGATION ══════════
+var _homeScrollPos = 0;
+var _NAV_TABS = ['home','clients','calendar','menus','more'];
+var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','settings'];
+var _TITLES = {
+  clients:'Clients', calendar:'Calendar', menus:'Menus & Dishes', jobs:'Jobs',
+  more:'More', transport:'Transport Temps', assess:'Kitchen Assessment',
+  allergen:'Allergen Log', credentials:'Credentials', settings:'Settings'
+};
+
+function goHome(){ showTab('home'); }
+
+function showTab(name){
+  if(name !== 'home') _homeScrollPos = window.scrollY || 0;
+
+  // Show/hide sections
+  document.getElementById('tab-home').style.display = name==='home' ? 'block' : 'none';
+  _SECTION_TABS.forEach(function(t){
+    var el = document.getElementById('tab-'+t);
+    if(el) el.classList.toggle('active', t===name);
+  });
+
+  // Back button + header logo
+  var backBtn = document.getElementById('back-btn');
+  var headerLogo = document.getElementById('mise-header-logo');
+  backBtn.style.display    = name==='home' ? 'none' : 'block';
+  if(headerLogo) headerLogo.style.display = name==='home' ? 'none' : 'block';
+
+  // Header title
+  document.getElementById('mise-header-title').textContent = name==='home' ? 'Mise' : (_TITLES[name]||name);
+  document.getElementById('mise-header-sub').textContent = '';
+
+  // Nav button active state
+  _NAV_TABS.forEach(function(t){
+    var btn = document.getElementById('nav-'+t);
+    if(btn) btn.classList.toggle('active', t===name || (t==='more' && ['more','transport','assess','allergen','credentials','settings'].indexOf(name)!==-1));
+  });
+
+  _activeTab = name;
+
+  // Tab-specific renders
+  if(name==='home')        updateDashboard();
+  if(name==='clients')     { renderClientList(); populateClientSelects(); }
+  if(name==='calendar')    renderCalendar();
+  if(name==='menus')       { renderDishLibrary(); renderMenuDishSelect(); renderSavedMenus(); }
+  if(name==='jobs')        { populateJobClientSelect(); renderJobsHistory(); }
+  if(name==='transport')   { populateStaffSelects(); populateClientSelects(); renderTransportList(); }
+  if(name==='assess')      { populateStaffSelects(); populateClientSelects(); renderAssessList(); }
+  if(name==='allergen')    { populateClientSelects(); renderAllergenList(); }
+  if(name==='credentials') { populateStaffSelects(); renderCredentialsList(); }
+  if(name==='settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); }
+
+  // Set date fields to today if empty
+  ['tr-date','as-date'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el && !el.value) el.value = TODAY;
+  });
+
+  if(name === 'home'){ window.scrollTo(0, _homeScrollPos); }
+  else { window.scrollTo(0, 0); }
+}
+
+// ═══════════════════════════════════════════════════════ DASHBOARD ══════════
+function updateDashboard(){
+  // Greeting
+  var h = new Date().getHours();
+  var greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  var chefName = (mSettings.chefName||'').split(' ')[0];
+  document.getElementById('dash-greeting').textContent = greet + (chefName ? ', '+chefName : '') + '.';
+  var biz = mSettings.businessName || 'Your private chef business';
+  document.getElementById('dash-sub').textContent = biz;
+
+  // Find next upcoming job
+  var allJobs = getAllJobs();
+  var upcoming = allJobs.filter(function(j){ return j.eventDate && j.eventDate >= TODAY; })
+                        .sort(function(a,b){ return a.eventDate.localeCompare(b.eventDate); });
+  var nextBook = document.getElementById('dash-next');
+  var noNext   = document.getElementById('dash-no-next');
+  if(upcoming.length > 0){
+    var nj = upcoming[0];
+    nextBook.style.display = 'block';
+    noNext.style.display   = 'none';
+    document.getElementById('dash-next-client').textContent = nj.client || 'Unnamed client';
+    var d = daysUntil(nj.eventDate);
+    var dStr = d === 0 ? 'Today' : d === 1 ? 'Tomorrow' : 'In '+d+' days';
+    var meta = dStr + ' · ' + fmtDate(nj.eventDate);
+    if(nj.covers) meta += ' · ' + nj.covers + ' covers';
+    if(nj.jobType) meta += ' · ' + nj.jobType;
+    document.getElementById('dash-next-meta').textContent = meta;
+  } else {
+    nextBook.style.display = 'none';
+    noNext.style.display   = 'block';
+  }
+
+  // Stats
+  var clients = (mSettings.savedClients||[]).length;
+  var thisMonth = new Date().toISOString().slice(0,7);
+  var monthJobs = allJobs.filter(function(j){ return (j.eventDate||'').slice(0,7)===thisMonth; }).length;
+  document.getElementById('dash-stat-clients').textContent  = clients;
+  document.getElementById('dash-stat-upcoming').textContent = upcoming.length;
+  document.getElementById('dash-stat-month').textContent    = monthJobs;
+
+  // Tile sub-labels
+  var nextCal = upcoming.length > 0 ? fmtDate(upcoming[0].eventDate) : 'No bookings';
+  var elCal   = document.getElementById('tile-sub-calendar');
+  if(elCal) elCal.textContent = nextCal;
+  var dishes  = (mSettings.savedDishes||[]).length;
+  var menus   = (mSettings.savedMenus||[]).length;
+  var elMenus = document.getElementById('tile-sub-menus');
+  if(elMenus) elMenus.textContent = dishes + ' dishes · ' + menus + ' menus';
+  var elJobs = document.getElementById('tile-sub-jobs');
+  if(elJobs) elJobs.textContent = allJobs.length + ' total';
+}
+
+function startNewJob(){
+  showTab('jobs');
+  setTimeout(function(){
+    var el = document.getElementById('job-event-date');
+    if(el && !el.value) el.value = TODAY;
+    window.scrollTo(0,0);
+  }, 80);
+}
+
+// ═══════════════════════════════════════════════════════ CLIENTS / CRM ══════
+function addClient(){
+  var name = (document.getElementById('cl-name').value||'').trim();
+  if(!name){ toast('Client name required', 'err'); return; }
+  var client = {
+    id: uid(),
+    name: name,
+    address: (document.getElementById('cl-address').value||'').trim(),
+    phone:   (document.getElementById('cl-phone').value||'').trim(),
+    email:   (document.getElementById('cl-email').value||'').trim(),
+    diet:    (document.getElementById('cl-diet').value||'').trim()
+  };
+  if(!mSettings.savedClients) mSettings.savedClients = [];
+  mSettings.savedClients.push(client);
+  saveSettings();
+  ['cl-name','cl-address','cl-phone','cl-email','cl-diet'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  renderClientList();
+  populateClientSelects();
+  toast('Client saved ✓');
+}
+
+function renderClientList(){
+  var list = document.getElementById('clients-list');
+  if(!list) return;
+  var clients = mSettings.savedClients || [];
+  if(clients.length === 0){
+    list.innerHTML = '<p class="empty">No clients yet. Add one above.</p>';
+    return;
+  }
+  list.innerHTML = clients.map(function(c){
+    var initials = c.name.trim().split(/\s+/).map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
+    var isOpen = _expandedClientId === c.id;
+    var headerHtml = '<div class="client-card-header" onclick="clientToggle(\''+c.id+'\')">'
+      + '<div class="client-avatar">'+_esc(initials)+'</div>'
+      + '<div class="client-info"><div class="client-name">'+_esc(c.name)+'</div>'
+      + (c.diet ? '<div class="client-sub">'+_esc(c.diet)+'</div>' : (c.address ? '<div class="client-sub">'+_esc(c.address.split(',')[0])+'</div>' : ''))
+      + '</div><div class="client-expand">'+(isOpen?'▲':'▼')+'</div></div>';
+
+    var bodyHtml = '';
+    if(isOpen){
+      var editHtml = '<div style="padding-top:12px">'
+        + '<div class="form-group"><label class="form-label">Name</label>'
+        + '<input class="form-input" id="cedit-name-'+c.id+'" value="'+_esc(c.name)+'"></div>'
+        + '<div class="form-group"><label class="form-label">Address</label>'
+        + '<input class="form-input" id="cedit-address-'+c.id+'" value="'+_esc(c.address)+'"></div>'
+        + '<div class="form-row">'
+        + '<div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="cedit-phone-'+c.id+'" value="'+_esc(c.phone)+'"></div>'
+        + '<div class="form-group"><label class="form-label">Email</label><input class="form-input" id="cedit-email-'+c.id+'" value="'+_esc(c.email)+'"></div>'
+        + '</div><div class="form-group"><label class="form-label">Dietary notes</label>'
+        + '<input class="form-input" id="cedit-diet-'+c.id+'" value="'+_esc(c.diet)+'"></div>'
+        + '<div style="display:flex;gap:8px;margin-top:4px">'
+        + '<button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="clientSaveEdit(\''+c.id+'\')">Save</button>'
+        + '<button style="flex:0 0 auto;padding:12px 16px;background:#FBECEC;color:#8A2D2D;border:1px solid #E8C5C5;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="clientDelete(\''+c.id+'\')">Delete</button>'
+        + '</div></div>';
+
+      var contactsHtml = '';
+      if(c.phone) contactsHtml += '<a class="contact-link" href="tel:'+_esc(c.phone)+'"><span class="contact-icon">📞</span>'+_esc(c.phone)+'</a>';
+      if(c.email) contactsHtml += '<a class="contact-link" href="mailto:'+_esc(c.email)+'"><span class="contact-icon">✉️</span>'+_esc(c.email)+'</a>';
+      if(c.address) contactsHtml += '<a class="contact-link" href="https://maps.apple.com/?q='+encodeURIComponent(c.address)+'" target="_blank"><span class="contact-icon">📍</span>'+_esc(c.address)+'</a>';
+
+      bodyHtml = '<div class="client-body">'
+        + (contactsHtml ? '<div style="padding:6px 0 0">'+contactsHtml+'</div>' : '')
+        + editHtml + '</div>';
+    }
+    return '<div class="client-card">'+headerHtml+bodyHtml+'</div>';
+  }).join('');
+}
+
+function clientToggle(id){
+  _expandedClientId = (_expandedClientId === id) ? null : id;
+  renderClientList();
+}
+
+function clientSaveEdit(id){
+  var fields = ['name','address','phone','email','diet'];
+  var updates = {};
+  fields.forEach(function(f){
+    var el = document.getElementById('cedit-'+f+'-'+id);
+    updates[f] = el ? el.value.trim() : '';
+  });
+  if(!updates.name){ toast('Name required','err'); return; }
+  mSettings.savedClients = (mSettings.savedClients||[]).map(function(c){
+    return c.id===id ? Object.assign({},c,updates) : c;
+  });
+  _expandedClientId = null;
+  saveSettings();
+  renderClientList();
+  populateClientSelects();
+  toast('Client updated ✓');
+}
+
+function clientDelete(id){
+  if(!confirm('Delete this client? This cannot be undone.')) return;
+  mSettings.savedClients = (mSettings.savedClients||[]).filter(function(c){ return c.id!==id; });
+  _expandedClientId = null;
+  saveSettings();
+  renderClientList();
+  populateClientSelects();
+  toast('Client removed');
+}
+
+function populateClientSelects(){
+  var book = getAddressBook();
+  var opts = '<option value="">Select client…</option>'
+    + book.map(function(e){
+        return '<option value="'+_esc(e.key)+'">'+_esc(e.name)+(e.fromCRM?'':' *')+'</option>';
+      }).join('');
+  ['job-client-select','tr-client-select','as-client-select','al-client-select'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.innerHTML = opts;
+  });
+}
+
+function jobFillFromCRM(key){
+  if(!key) return;
+  var e = addressBookLookup(key);
+  if(!e) return;
+  var mn = document.getElementById('job-client-manual');
+  var loc = document.getElementById('job-location');
+  if(mn) mn.value = e.name;
+  if(loc && !loc.value) loc.value = e.address;
+}
+function trFillFromCRM(key){
+  if(!key) return;
+  var e = addressBookLookup(key);
+  if(!e) return;
+  var m = document.getElementById('tr-client-manual');
+  var d = document.getElementById('tr-dest');
+  if(m) m.value = e.name;
+  if(d && !d.value) d.value = e.address;
+}
+function asFillFromCRM(key){
+  if(!key) return;
+  var e = addressBookLookup(key);
+  if(!e) return;
+  var m = document.getElementById('as-client');
+  if(m) m.value = e.name;
+}
+function alFillFromCRM(key){
+  if(!key) return;
+  var e = addressBookLookup(key);
+  if(!e) return;
+  var m = document.getElementById('al-client');
+  if(m) m.value = e.name;
+}
+
+// ═══════════════════════════════════════════════════════ CALENDAR ══════════
+function calPrev(){ _calMonth--; if(_calMonth<0){_calMonth=11;_calYear--;} renderCalendar(); }
+function calNext(){ _calMonth++; if(_calMonth>11){_calMonth=0;_calYear++;} renderCalendar(); }
+
+function getAllJobsByDate(){
+  var map = {};
+  function add(r){
+    if(r.type!=='job' || !r.eventDate) return;
+    if(!map[r.eventDate]) map[r.eventDate]=[];
+    map[r.eventDate].push(r);
+  }
+  mRecords.forEach(add);
+  try {
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(!k||k.indexOf('mise_')!==0||k==='mise_settings') continue;
+      getDayRecords(k.replace('mise_','')).forEach(add);
+    }
+  } catch(e){}
+  return map;
+}
+
+function renderCalendar(){
+  var label = document.getElementById('cal-month-label');
+  var grid  = document.getElementById('cal-grid');
+  if(!label||!grid) return;
+  label.textContent = MONTHS[_calMonth] + ' ' + _calYear;
+
+  var jobsByDate = getAllJobsByDate();
+  var unavail    = mSettings.unavailableDates || [];
+
+  // Day-of-week headers
+  var html = DAYS.map(function(d){ return '<div class="cal-dow">'+d+'</div>'; }).join('');
+
+  // Blank cells before 1st
+  var first = new Date(_calYear, _calMonth, 1).getDay();
+  for(var b=0;b<first;b++) html += '<div class="cal-day empty"></div>';
+
+  // Day cells
+  var daysInMonth = new Date(_calYear, _calMonth+1, 0).getDate();
+  for(var day=1;day<=daysInMonth;day++){
+    var ds = _calYear+'-'+String(_calMonth+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    var isToday    = ds === TODAY;
+    var isSelected = ds === _calSelectedDate;
+    var isUnavail  = unavail.indexOf(ds) !== -1;
+    var hasJob     = !!(jobsByDate[ds] && jobsByDate[ds].length);
+    var isPast     = ds < TODAY;
+
+    var cls = 'cal-day';
+    if(isSelected)         cls += ' selected';
+    else if(hasJob && isUnavail) cls += ' has-job unavail';
+    else if(hasJob)        cls += ' has-job';
+    else if(isUnavail)     cls += ' unavail';
+    if(isToday && !isSelected) cls += ' today';
+    if(isPast && !isToday) cls += ' past';
+
+    var dot = (hasJob && !isSelected) ? '<div class="cal-dot"></div>' : '';
+    html += '<div class="'+cls+'" onclick="calDayClick(\''+ds+'\')">'+day+dot+'</div>';
+  }
+  grid.innerHTML = html;
+
+  // Detail panel
+  var detail = document.getElementById('cal-detail');
+  if(_calSelectedDate){
+    detail.style.display = 'block';
+    detail.innerHTML = _renderCalDetail(_calSelectedDate, jobsByDate);
+  } else {
+    detail.style.display = 'none';
+  }
+}
+
+function calDayClick(ds){
+  _calSelectedDate = (_calSelectedDate === ds) ? null : ds;
+  renderCalendar();
+}
+
+function calToggleUnavailable(ds){
+  if(!mSettings.unavailableDates) mSettings.unavailableDates = [];
+  var idx = mSettings.unavailableDates.indexOf(ds);
+  if(idx !== -1){ mSettings.unavailableDates.splice(idx,1); toast('Removed from unavailable'); }
+  else { mSettings.unavailableDates.push(ds); toast('Marked unavailable'); }
+  saveSettings();
+  renderCalendar();
+}
+
+function _renderCalDetail(ds, jobsByDate){
+  var jobs    = jobsByDate[ds] || [];
+  var unavail = (mSettings.unavailableDates||[]).indexOf(ds) !== -1;
+  var isPast  = ds < TODAY;
+  var html    = '<div class="card-title" style="margin-bottom:6px">'+fmtDateLong(ds)+'</div>';
+
+  if(jobs.length > 0){
+    jobs.forEach(function(j){
+      html += '<div style="padding:8px 0;border-bottom:1px solid #F0EBE2">'
+        + '<div style="font-size:15px;font-weight:600;color:#1C2B1E">'+_esc(j.client||'Unnamed')+'</div>'
+        + '<div style="font-size:13px;color:#7A7468;margin-top:3px">'
+        + (j.eventTime ? j.eventTime+' · ' : '')
+        + (j.covers ? j.covers+' covers · ' : '')
+        + (j.jobType || '')
+        + '</div>'
+        + (j.location ? '<div style="font-size:12px;color:#A09890;margin-top:2px">📍 '+_esc(j.location)+'</div>' : '')
+        + '</div>';
+    });
+  } else {
+    html += '<div class="empty">No bookings on this date.</div>';
+  }
+
+  html += '<div style="display:flex;gap:8px;margin-top:12px">';
+  if(!isPast){
+    html += '<button onclick="calBookJob(\''+ds+'\')" style="flex:1;padding:11px;background:#3A7D44;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">＋ Book Job</button>';
+  }
+  if(unavail){
+    html += '<button onclick="calToggleUnavailable(\''+ds+'\')" style="flex:1;padding:11px;background:#FBF0F0;color:#8A2D2D;border:1px solid #E8C5C5;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">✓ Unavailable — remove</button>';
+  } else if(!isPast){
+    html += '<button onclick="calToggleUnavailable(\''+ds+'\')" style="flex:1;padding:11px;background:#F5F0E8;color:#5A544E;border:1px solid #E2DDD5;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Mark unavailable</button>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function calBookJob(ds){
+  showTab('jobs');
+  setTimeout(function(){
+    var el = document.getElementById('job-event-date');
+    if(el) el.value = ds;
+    window.scrollTo(0,0);
+  }, 120);
+}
+
+// ═══════════════════════════════════════════════════════ DISH LIBRARY ════════
+function addDish(){
+  var name = (document.getElementById('dish-name').value||'').trim();
+  if(!name){ toast('Dish name required','err'); return; }
+  if(!mSettings.savedDishes) mSettings.savedDishes = [];
+  mSettings.savedDishes.push({
+    id: uid(),
+    dish: name,
+    category: document.getElementById('dish-cat').value||'',
+    allergens: (document.getElementById('dish-allergens').value||'').trim()
+  });
+  saveSettings();
+  document.getElementById('dish-name').value='';
+  document.getElementById('dish-cat').value='';
+  document.getElementById('dish-allergens').value='';
+  renderDishLibrary();
+  renderMenuDishSelect();
+  toast('Dish added ✓');
+}
+
+function renderDishLibrary(){
+  var el = document.getElementById('dish-library');
+  if(!el) return;
+  var dishes = mSettings.savedDishes||[];
+  if(dishes.length===0){ el.innerHTML='<p class="empty">No dishes yet.</p>'; return; }
+
+  // Group by category
+  var grouped = {};
+  var ORDER = DISH_CATEGORIES.filter(function(c){ return c!==''; });
+  dishes.forEach(function(d){
+    var cat = d.category || 'Other';
+    if(!grouped[cat]) grouped[cat]=[];
+    grouped[cat].push(d);
+  });
+
+  var html='<div class="card" style="padding:8px 14px">';
+  ORDER.forEach(function(cat){
+    if(!grouped[cat] || grouped[cat].length===0) return;
+    html += '<div class="cat-header">'+_esc(cat)+'</div>';
+    grouped[cat].forEach(function(d){
+      html += '<div class="dish-row">'
+        + '<div class="dish-name">'+_esc(d.dish)
+        + (d.allergens ? '<br><span style="font-size:11px;color:#A09890">'+_esc(d.allergens)+'</span>' : '')
+        + '</div>'
+        + '<button onclick="deleteDish(\''+d.id+'\')" class="btn-remove" title="Remove">×</button>'
+        + '</div>';
+    });
+  });
+  // Uncategorised
+  if(grouped['Other'] && !ORDER.includes('Other')){
+    html += '<div class="cat-header">Other</div>';
+    grouped['Other'].forEach(function(d){
+      html += '<div class="dish-row"><div class="dish-name">'+_esc(d.dish)+'</div>'
+        + '<button onclick="deleteDish(\''+d.id+'\')" class="btn-remove">×</button></div>';
+    });
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function deleteDish(id){
+  mSettings.savedDishes = (mSettings.savedDishes||[]).filter(function(d){ return d.id!==id; });
+  saveSettings();
+  renderDishLibrary();
+  renderMenuDishSelect();
+  toast('Dish removed');
+}
+
+// ═══════════════════════════════════════════════════════ MENUS ═══════════════
+function renderMenuDishSelect(){
+  var el = document.getElementById('menu-dish-select');
+  if(!el) return;
+  var dishes = mSettings.savedDishes||[];
+  if(dishes.length===0){ el.innerHTML='<div style="padding:10px;font-size:13px;color:#A09890">Add dishes to the library first</div>'; return; }
+  el.innerHTML = dishes.map(function(d){
+    var label = (d.category ? '['+d.category+'] ' : '') + d.dish;
+    return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #F0EBE2;cursor:pointer;font-size:14px;color:#1C2B1E">'
+      + '<input type="checkbox" id="menu-d-'+d.id+'" style="accent-color:#3A7D44;flex-shrink:0">'
+      + _esc(label) + '</label>';
+  }).join('');
+}
+
+function saveMenu(){
+  var name = (document.getElementById('menu-name').value||'').trim();
+  if(!name){ toast('Menu name required','err'); return; }
+  var dishes = mSettings.savedDishes||[];
+  var selected = dishes.filter(function(d){
+    var cb = document.getElementById('menu-d-'+d.id);
+    return cb && cb.checked;
+  }).map(function(d){ return d.id; });
+  if(selected.length===0){ toast('Select at least one dish','err'); return; }
+  if(!mSettings.savedMenus) mSettings.savedMenus=[];
+  mSettings.savedMenus.push({ id: uid(), name: name, dishIds: selected });
+  saveSettings();
+  document.getElementById('menu-name').value='';
+  renderMenuDishSelect();
+  renderSavedMenus();
+  toast('Menu saved ✓');
+}
+
+function renderSavedMenus(){
+  var el = document.getElementById('saved-menus-list');
+  if(!el) return;
+  var menus  = mSettings.savedMenus||[];
+  var dishes = mSettings.savedDishes||[];
+  var dishMap = {};
+  dishes.forEach(function(d){ dishMap[d.id]=d; });
+
+  if(menus.length===0){ el.innerHTML='<p class="empty">No saved menus.</p>'; return; }
+
+  el.innerHTML = menus.map(function(m){
+    var dishList = (m.dishIds||[]).map(function(id){
+      var d = dishMap[id];
+      return d ? '<span class="badge badge-grey" style="margin:2px">'+_esc(d.dish)+'</span>' : '';
+    }).join('');
+    return '<div class="card" style="margin-bottom:8px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+      + '<div style="font-size:15px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
+      + '<button onclick="deleteMenu(\''+m.id+'\')" class="btn-remove">×</button>'
+      + '</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:2px">'+dishList+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function deleteMenu(id){
+  mSettings.savedMenus = (mSettings.savedMenus||[]).filter(function(m){ return m.id!==id; });
+  saveSettings(); renderSavedMenus(); toast('Menu removed');
+}
+
+// ═══════════════════════════════════════════════════════ JOBS ════════════════
+function populateJobClientSelect(){
+  var book = getAddressBook();
+  var el   = document.getElementById('job-client-select');
+  if(!el) return;
+  el.innerHTML = '<option value="">Select client…</option>'
+    + book.map(function(e){ return '<option value="'+_esc(e.key)+'">'+_esc(e.name)+(e.fromCRM?'':' *')+'</option>'; }).join('');
+}
+
+function logJob(){
+  var sel = document.getElementById('job-client-select');
+  var manual = (document.getElementById('job-client-manual').value||'').trim();
+  var client = manual;
+  if(!client && sel && sel.value){
+    var e = addressBookLookup(sel.value);
+    client = e ? e.name : '';
+  }
+  if(!client){ toast('Client name required','err'); return; }
+  var eventDate = document.getElementById('job-event-date').value;
+  if(!eventDate){ toast('Event date required','err'); return; }
+
+  var rec = {
+    id: uid(), type: 'job', date: TODAY, time: new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+    client: client,
+    location: (document.getElementById('job-location').value||'').trim(),
+    eventDate: eventDate,
+    eventTime: (document.getElementById('job-time').value||'').trim(),
+    covers: (document.getElementById('job-covers').value||'').trim(),
+    jobType: document.getElementById('job-type').value||'',
+    notes: (document.getElementById('job-notes').value||'').trim()
+  };
+
+  // If client isn't already in CRM, offer to add
+  var inCRM = (mSettings.savedClients||[]).some(function(c){ return c.name.trim().toLowerCase()===client.toLowerCase(); });
+
+  // Save record
+  if(rec.date === TODAY){
+    mRecords.push(rec); saveToday();
+  } else {
+    var day = getDayRecords(rec.date); day.push(rec); saveDayRecords(rec.date, day);
+  }
+
+  // Veriqo sync
+  if(mSettings.veriqoSync){
+    var hKey = 'haccp_'+TODAY;
+    try {
+      var hRecs = JSON.parse(localStorage.getItem(hKey)||'[]');
+      hRecs.push(Object.assign({},rec,{id:'mise_'+rec.id}));
+      localStorage.setItem(hKey, JSON.stringify(hRecs));
+    } catch(e){}
+  }
+
+  // Reset form
+  ['job-client-manual','job-location','job-time','job-covers','job-notes'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  document.getElementById('job-client-select').value='';
+  document.getElementById('job-type').value='';
+  document.getElementById('job-event-date').value='';
+
+  updateDashboard();
+  renderJobsHistory();
+  toast(inCRM ? 'Job logged ✓' : 'Job logged ✓ (add client to CRM for full details)');
+}
+
+function renderJobsHistory(){
+  var el = document.getElementById('jobs-history');
+  if(!el) return;
+  var jobs = getAllJobs();
+  if(jobs.length===0){ el.innerHTML='<p class="empty">No jobs logged yet.</p>'; return; }
+
+  // Group by month of eventDate
+  var byMonth = {};
+  jobs.forEach(function(j){
+    var mo = (j.eventDate||j.date||'').slice(0,7);
+    if(!byMonth[mo]) byMonth[mo]=[];
+    byMonth[mo].push(j);
+  });
+
+  var months = Object.keys(byMonth).sort().reverse();
+  el.innerHTML = months.map(function(mo){
+    var parts = mo.split('-');
+    var moLabel = MONTHS[parseInt(parts[1],10)-1] + ' ' + parts[0];
+    var cards = byMonth[mo].map(function(j){
+      var isOpen = _expandedJobId === j.id;
+      var bodyHtml = isOpen ? '<div class="job-card-body open">'
+        + (j.location ? '<div class="job-detail-row"><span class="job-detail-key">Location</span>'+_esc(j.location)+'</div>' : '')
+        + (j.eventTime ? '<div class="job-detail-row"><span class="job-detail-key">Time</span>'+_esc(j.eventTime)+'</div>' : '')
+        + (j.covers ? '<div class="job-detail-row"><span class="job-detail-key">Covers</span>'+_esc(j.covers)+'</div>' : '')
+        + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
+        + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
+        + '</div>' : '';
+      return '<div class="job-card" onclick="toggleJobCard(\''+j.id+'\')">'
+        + '<div class="job-card-header">'
+        + '<div><div class="job-card-name">'+_esc(j.client||'Unnamed')+'</div>'
+        + '<div class="job-card-date">'+fmtDate(j.eventDate)+(j.jobType?' · '+_esc(j.jobType):'')+'</div>'
+        + (j.covers ? '<div class="job-card-meta">'+j.covers+' covers</div>' : '')
+        + '</div>'
+        + '<div style="font-size:16px;color:#C0B8B0">'+(isOpen?'▲':'▼')+'</div>'
+        + '</div>'
+        + bodyHtml + '</div>';
+    }).join('');
+    return '<div class="month-group"><div class="month-label">'+moLabel+'</div>'+cards+'</div>';
+  }).join('');
+}
+
+function toggleJobCard(id){
+  _expandedJobId = (_expandedJobId===id) ? null : id;
+  renderJobsHistory();
+}
+
+// ═══════════════════════════════════════════════════════ TRANSPORT ══════════
+function logTransport(){
+  var food = (document.getElementById('tr-food').value||'').trim();
+  if(!food){ toast('Food item required','err'); return; }
+  var client = (document.getElementById('tr-client-manual').value||'').trim()
+    || (function(){ var e=addressBookLookup(document.getElementById('tr-client-select').value); return e?e.name:''; })();
+  var tempStart = document.getElementById('tr-temp-start').value;
+  var tempEnd   = document.getElementById('tr-temp-end').value;
+  var ts = parseFloat(tempStart); var te = parseFloat(tempEnd);
+  var status = (!isNaN(ts) && ts > 8) || (!isNaN(te) && te > 8) ? 'warn' : 'ok';
+  var rec = {
+    id: uid(), type: 'transport', date: document.getElementById('tr-date').value || TODAY,
+    time: new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+    client: client, food: food,
+    destination: (document.getElementById('tr-dest').value||'').trim(),
+    tempStart: tempStart, tempEnd: tempEnd, status: status,
+    by: document.getElementById('tr-by').value||''
+  };
+  mRecords.push(rec); saveToday();
+  ['tr-client-manual','tr-food','tr-dest','tr-temp-start','tr-temp-end'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  document.getElementById('tr-client-select').value='';
+  document.getElementById('tr-date').value=TODAY;
+  renderTransportList();
+  toast(status==='warn' ? 'Saved — temperature above 8°C ⚠️' : 'Transport record saved ✓');
+}
+
+function renderTransportList(){
+  var el = document.getElementById('transport-list');
+  if(!el) return;
+  var recs = getAllTypeRecords('transport').slice(0,15);
+  if(recs.length===0){ el.innerHTML='<p class="empty">No transport records yet.</p>'; return; }
+  el.innerHTML = recs.map(function(r){
+    var statusBadge = r.status==='warn'
+      ? '<span class="badge badge-gold">⚠ Warm</span>'
+      : '<span class="badge badge-green">✓ OK</span>';
+    return '<div class="card" style="margin-bottom:8px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+      + '<div><div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(r.food)+'</div>'
+      + (r.client ? '<div style="font-size:12px;color:#A09890">'+_esc(r.client)+'</div>' : '')
+      + '<div style="font-size:12px;color:#A09890;margin-top:2px">'+fmtDate(r.date)+' · '+(r.by?_esc(r.by):'')+'</div>'
+      + '</div>'+statusBadge+'</div>'
+      + '<div style="margin-top:8px;font-size:13px;color:#5A544E">'
+      + (r.tempStart ? '📦 Load: <b>'+r.tempStart+'°C</b> ' : '')
+      + (r.tempEnd   ? '🏁 Arrival: <b>'+r.tempEnd+'°C</b>' : '')
+      + '</div></div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════ ASSESS ════════════
+function logAssess(){
+  var client = (document.getElementById('as-client').value||'').trim()
+    || (function(){ var e=addressBookLookup(document.getElementById('as-client-select').value); return e?e.name:''; })();
+  if(!client){ toast('Client / location required','err'); return; }
+  var rec = {
+    id: uid(), type: 'assess', date: document.getElementById('as-date').value||TODAY,
+    time: new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+    client: client,
+    fridgeTemp:   document.getElementById('as-fridge-temp').value,
+    freezerTemp:  document.getElementById('as-freezer-temp').value,
+    condition:    document.getElementById('as-condition').value,
+    notes:        (document.getElementById('as-notes').value||'').trim(),
+    by:           document.getElementById('as-by').value||''
+  };
+  mRecords.push(rec); saveToday();
+  ['as-client','as-fridge-temp','as-freezer-temp','as-notes'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  document.getElementById('as-condition').value='';
+  document.getElementById('as-client-select').value='';
+  document.getElementById('as-date').value=TODAY;
+  renderAssessList();
+  toast('Assessment saved ✓');
+}
+
+function renderAssessList(){
+  var el = document.getElementById('assess-list');
+  if(!el) return;
+  var recs = getAllTypeRecords('assess').slice(0,10);
+  if(recs.length===0){ el.innerHTML='<p class="empty">No assessments yet.</p>'; return; }
+  el.innerHTML = recs.map(function(r){
+    return '<div class="card" style="margin-bottom:8px">'
+      + '<div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(r.client)+'</div>'
+      + '<div style="font-size:12px;color:#A09890;margin-top:2px">'+fmtDate(r.date)+(r.by?' · '+_esc(r.by):'')+'</div>'
+      + (r.fridgeTemp ? '<div style="font-size:13px;color:#5A544E;margin-top:6px">🌡 Fridge: <b>'+r.fridgeTemp+'°C</b>'+(r.freezerTemp?' &nbsp;Freezer: <b>'+r.freezerTemp+'°C</b>':'')+'</div>' : '')
+      + (r.condition  ? '<div style="font-size:12px;color:#5A544E;margin-top:4px">'+_esc(r.condition)+'</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════ ALLERGEN ══════════
+function logAllergen(){
+  var client = (document.getElementById('al-client').value||'').trim()
+    || (function(){ var e=addressBookLookup(document.getElementById('al-client-select').value); return e?e.name:''; })();
+  var dish = (document.getElementById('al-dish').value||'').trim();
+  if(!dish){ toast('Dish name required','err'); return; }
+  var present = ALLERGENS_14.filter(function(a){
+    var cb = document.getElementById('al-a-'+a.replace(/\s/g,'_'));
+    return cb && cb.checked;
+  });
+  var rec = {
+    id: uid(), type: 'allergen', date: TODAY,
+    time: new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}),
+    client: client, dish: dish,
+    allergens: present.join(', '),
+    notes: (document.getElementById('al-notes').value||'').trim()
+  };
+  mRecords.push(rec); saveToday();
+  document.getElementById('al-client').value='';
+  document.getElementById('al-dish').value='';
+  document.getElementById('al-notes').value='';
+  document.getElementById('al-client-select').value='';
+  ALLERGENS_14.forEach(function(a){
+    var cb=document.getElementById('al-a-'+a.replace(/\s/g,'_'));
+    if(cb) cb.checked=false;
+  });
+  renderAllergenList();
+  toast('Allergen record saved ✓');
+}
+
+function renderAllergenList(){
+  var el = document.getElementById('allergen-list');
+  if(!el) return;
+  var recs = getAllTypeRecords('allergen').slice(0,15);
+  if(recs.length===0){ el.innerHTML='<p class="empty">No allergen records yet.</p>'; return; }
+  el.innerHTML = recs.map(function(r){
+    return '<div class="card" style="margin-bottom:8px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+      + '<div><div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(r.dish)+'</div>'
+      + (r.client ? '<div style="font-size:12px;color:#A09890">'+_esc(r.client)+'</div>' : '')
+      + '</div><div style="font-size:12px;color:#A09890">'+fmtDate(r.date)+'</div></div>'
+      + (r.allergens ? '<div style="margin-top:8px;font-size:13px;color:#8A2D2D;background:#FBECEC;padding:6px 8px;border-radius:6px">⚠ '+_esc(r.allergens)+'</div>' : '<div style="margin-top:8px;font-size:13px;color:#2A6432">✓ No major allergens declared</div>')
+      + '</div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════ CREDENTIALS ═══════
+function addCredential(){
+  var name = (document.getElementById('cred-name').value||'').trim();
+  if(!name){ toast('Certificate name required','err'); return; }
+  if(!mSettings.credentials) mSettings.credentials=[];
+  mSettings.credentials.push({
+    id: uid(),
+    name: name,
+    holder:  document.getElementById('cred-holder').value||'',
+    issuer:  (document.getElementById('cred-issuer').value||'').trim(),
+    issued:  document.getElementById('cred-issued').value||'',
+    expiry:  document.getElementById('cred-expiry').value||''
+  });
+  saveSettings();
+  ['cred-name','cred-issuer','cred-issued','cred-expiry'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('cred-holder').value='';
+  renderCredentialsList();
+  toast('Credential saved ✓');
+}
+
+function renderCredentialsList(){
+  var el = document.getElementById('credentials-list');
+  if(!el) return;
+  var creds = mSettings.credentials||[];
+  if(creds.length===0){ el.innerHTML='<p class="empty">No credentials added yet.</p>'; return; }
+  var today = TODAY;
+  var soon  = new Date(Date.now()+90*86400000).toISOString().slice(0,10);
+  el.innerHTML = '<div class="card">' + creds.map(function(c){
+    var expClass='', expText='';
+    if(c.expiry){
+      if(c.expiry < today){ expClass='cred-exp'; expText='Expired '+fmtDate(c.expiry); }
+      else if(c.expiry <= soon){ expClass='cred-soon'; expText='Exp '+fmtDate(c.expiry); }
+      else { expClass='cred-ok'; expText='Exp '+fmtDate(c.expiry); }
+    }
+    return '<div class="cred-row">'
+      + '<div class="cred-name"><div class="cred-title">'+_esc(c.name)+'</div>'
+      + '<div class="cred-issuer">'+(c.holder?_esc(c.holder)+' · ':'')+( c.issuer?_esc(c.issuer):'')+'</div></div>'
+      + (expText ? '<div class="cred-expiry '+expClass+'">'+expText+'</div>' : '')
+      + '<button onclick="deleteCred(\''+c.id+'\')" class="btn-remove">×</button>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
+function deleteCred(id){
+  mSettings.credentials=(mSettings.credentials||[]).filter(function(c){ return c.id!==id; });
+  saveSettings(); renderCredentialsList(); toast('Removed');
+}
+
+// ═══════════════════════════════════════════════════════ SETTINGS ══════════
+function loadProfileUI(){
+  var fields = {
+    'set-chef-name':'chefName',
+    'set-business':'businessName',
+    'set-phone':'phone',
+    'set-email':'email'
+  };
+  Object.keys(fields).forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.value = mSettings[fields[id]]||'';
+  });
+}
+
+function saveProfile(){
+  mSettings.chefName      = (document.getElementById('set-chef-name').value||'').trim();
+  mSettings.businessName  = (document.getElementById('set-business').value||'').trim();
+  mSettings.phone         = (document.getElementById('set-phone').value||'').trim();
+  mSettings.email         = (document.getElementById('set-email').value||'').trim();
+  saveSettings();
+  updateDashboard();
+  toast('Profile saved ✓');
+}
+
+function renderStaffList(){
+  var el = document.getElementById('staff-list');
+  if(!el) return;
+  var staff = mSettings.staff||[];
+  if(staff.length===0){ el.innerHTML='<p class="empty" style="padding:4px 0 8px">No staff added yet.</p>'; return; }
+  el.innerHTML = staff.map(function(s){
+    return '<div class="setting-item"><span class="setting-item-name">'+_esc(s)+'</span>'
+      + '<button class="btn-remove" onclick="removeStaff(\''+_esc(s)+'\')">×</button></div>';
+  }).join('');
+}
+
+function addStaff(){
+  var input = document.getElementById('staff-input');
+  var val = (input.value||'').trim();
+  if(!val) return;
+  if(!mSettings.staff) mSettings.staff=[];
+  if(mSettings.staff.indexOf(val)===-1) mSettings.staff.push(val);
+  saveSettings();
+  input.value='';
+  renderStaffList();
+  populateStaffSelects();
+  toast('Staff member added');
+}
+
+function removeStaff(name){
+  mSettings.staff=(mSettings.staff||[]).filter(function(s){ return s!==name; });
+  saveSettings(); renderStaffList(); populateStaffSelects();
+}
+
+function populateStaffSelects(){
+  var staff = mSettings.staff||[];
+  var opts  = '<option value="">Select…</option>'
+    + staff.map(function(s){ return '<option value="'+_esc(s)+'">'+_esc(s)+'</option>'; }).join('');
+  ['tr-by','as-by','cred-holder'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) el.innerHTML = opts;
+  });
+}
+
+function loadSettingsToggles(){
+  var cb = document.getElementById('set-veriqo-sync');
+  if(cb) cb.checked = !!mSettings.veriqoSync;
+}
+
+function toggleVeriqoSync(val){
+  mSettings.veriqoSync = val;
+  saveSettings();
+  toast(val ? 'Veriqo sync enabled' : 'Veriqo sync disabled');
+}
+
+// ═══════════════════════════════════════════════════════ INIT ════════════════
+function populateAllSelects(){
+  populateClientSelects();
+  populateStaffSelects();
+}
+
+function renderAllSections(){
+  if(_activeTab !== 'home') return;
+  updateDashboard();
+}
+
+(function init(){
+  loadSettings();
+  loadToday();
+  populateAllSelects();
+  initAllergenGrid();
+  showTab('home');
+  // Set default dates
+  var tDate = document.getElementById('tr-date');
+  if(tDate) tDate.value = TODAY;
+  var aDate = document.getElementById('as-date');
+  if(aDate) aDate.value = TODAY;
+})();
+</script>
+
+<!-- Mise shared modules -->
+<script src="supabase.js?v=4"></script>
+<script src="auth.js?v=4"></script>
+<script>
+Mise.auth.init();
+</script>
+</body>
+</html>
