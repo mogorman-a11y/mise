@@ -1,10 +1,14 @@
-// mise-sync.js — cloud sync for Mise (mirrors localStorage ↔ Supabase)
+// mise-sync.js — cloud sync for Carte (mirrors localStorage ↔ Supabase)
 // ──────────────────────────────────────────────────────────────────────
 // Strategy: localStorage is always the live source of truth.
 // Supabase is the cloud backup that persists across devices/browsers.
 //
 // On sign-in:  pull from Supabase → write into localStorage → app reads normally
 // On save:     app writes to localStorage as before → also push to Supabase
+//
+// Dish/menu library is shared across the suite: on login this module also
+// pulls from settings (Veriqo) and merges savedDishes + savedMenus so
+// both apps always have the combined library without the user entering data twice.
 //
 // Tables:
 //   mise_records  — user_id, date, records (JSON array)
@@ -98,8 +102,10 @@ window.Mise.sync = (function () {
   }
 
   // ── _pullSettings ──────────────────────────────────────────────────────────
-  // Fetches settings from Supabase and merges into the app's mSettings object.
+  // Fetches own settings then cross-pulls the dish/menu library from Veriqo
+  // (settings) so the suite shares one library across both apps.
   async function _pullSettings(userId) {
+    // Own settings
     var result = await supabaseClient
       .from('mise_settings')
       .select('config')
@@ -108,15 +114,49 @@ window.Mise.sync = (function () {
 
     // PGRST116 = row not found — first login, no settings yet, that's fine
     if (result.error && result.error.code !== 'PGRST116') throw result.error;
-    if (!result.data || !result.data.config) return;
 
-    // Merge cloud settings into the app's mSettings object
-    if (typeof mSettings !== 'undefined') {
+    if (result.data && result.data.config && typeof mSettings !== 'undefined') {
       Object.assign(mSettings, result.data.config);
-      try {
-        localStorage.setItem('mise_settings', JSON.stringify(mSettings));
-      } catch (e) {}
+      try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch (e) {}
       if (typeof loadSettings === 'function') loadSettings();
+    }
+
+    // Cross-pull dish/menu library from Veriqo (settings)
+    var veriqoResult = await supabaseClient
+      .from('settings')
+      .select('config')
+      .eq('id', userId)
+      .single();
+
+    if (!veriqoResult.error && veriqoResult.data && veriqoResult.data.config) {
+      if (typeof mSettings !== 'undefined') {
+        _mergeLibrary(mSettings, veriqoResult.data.config);
+        try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch (e) {}
+      }
+    }
+  }
+
+  // ── _mergeLibrary ──────────────────────────────────────────────────────────
+  // Merges savedDishes and savedMenus from another app's config into target,
+  // deduplicating by name (case-insensitive) so own entries always win.
+  function _mergeLibrary(target, source) {
+    if (source.savedDishes && source.savedDishes.length) {
+      if (!target.savedDishes) target.savedDishes = [];
+      source.savedDishes.forEach(function (d) {
+        var exists = target.savedDishes.some(function (e) {
+          return e.dish.toLowerCase() === d.dish.toLowerCase();
+        });
+        if (!exists) target.savedDishes.push(d);
+      });
+    }
+    if (source.savedMenus && source.savedMenus.length) {
+      if (!target.savedMenus) target.savedMenus = [];
+      source.savedMenus.forEach(function (m) {
+        var exists = target.savedMenus.some(function (e) {
+          return e.name.toLowerCase() === m.name.toLowerCase();
+        });
+        if (!exists) target.savedMenus.push(m);
+      });
     }
   }
 

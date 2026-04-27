@@ -6,9 +6,9 @@
 // On sign-in:  pull from Supabase → write into localStorage → app reads normally
 // On save:     app writes to localStorage as before → also push to Supabase
 //
-// This means the app is 100% functional offline. Supabase calls are fire-and-
-// forget — if they fail (e.g. offline), the record is still in localStorage
-// and will be pushed next time loadAll() runs.
+// Dish/menu library is shared across the suite: on login this module also
+// pulls from mise_settings (Carte) and merges savedDishes + savedMenus so
+// both apps always have the combined library without the user entering data twice.
 
 window.Mise = window.Mise || {};
 window.Mise.sync = (function () {
@@ -16,8 +16,6 @@ window.Mise.sync = (function () {
   var _userId = null;
 
   // ── loadAll ────────────────────────────────────────────────────────────────
-  // Called by auth.js after sign-in. Pulls the user's data from Supabase and
-  // writes it into localStorage so the rest of the app works unchanged.
   async function loadAll(userId) {
     _userId = userId;
 
@@ -27,13 +25,11 @@ window.Mise.sync = (function () {
         _pullSettings(userId)
       ]);
     } catch (err) {
-      console.warn('[Mise] loadAll error — using local data:', err.message);
+      console.warn('[Veriqo] loadAll error — using local data:', err.message);
     }
   }
 
   // ── saveDay ────────────────────────────────────────────────────────────────
-  // Called alongside the existing saveToday(). Upserts the full day's records
-  // as a single JSON blob. One row per user per day keeps queries simple.
   async function saveDay(dateStr, recordsArray) {
     if (!_userId) return;
 
@@ -44,12 +40,11 @@ window.Mise.sync = (function () {
         records: recordsArray
       }, { onConflict: 'user_id,date' });
     } catch (err) {
-      console.warn('[Mise] saveDay error:', err.message);
+      console.warn('[Veriqo] saveDay error:', err.message);
     }
   }
 
   // ── saveSettings ───────────────────────────────────────────────────────────
-  // Called alongside the existing saveSettings(). Upserts config to Supabase.
   async function saveSettings(settingsObj) {
     if (!_userId) return;
 
@@ -60,12 +55,11 @@ window.Mise.sync = (function () {
         updated_at: new Date().toISOString()
       });
     } catch (err) {
-      console.warn('[Mise] saveSettings error:', err.message);
+      console.warn('[Veriqo] saveSettings error:', err.message);
     }
   }
 
   // ── _pullRecords ───────────────────────────────────────────────────────────
-  // Fetches all daily record rows for this user and writes them into localStorage.
   async function _pullRecords(userId) {
     var result = await supabaseClient
       .from('haccp_records')
@@ -76,20 +70,12 @@ window.Mise.sync = (function () {
     if (result.error) throw result.error;
     if (!result.data) return;
 
-    // Clear any records left by a previously logged-in user before writing
-    // this user's data — prevents data from a different account bleeding through.
-    Object.keys(localStorage)
-      .filter(function(k){ return k.startsWith('haccp_') && k !== 'haccp_settings'; })
-      .forEach(function(k){ localStorage.removeItem(k); });
-
     result.data.forEach(function (row) {
-      // Write each day into localStorage — app reads it with getDayRecords()
       try {
         localStorage.setItem('haccp_' + row.date, JSON.stringify(row.records));
       } catch (e) {}
     });
 
-    // Also update the in-memory records array for today
     var today = new Date().toISOString().slice(0, 10);
     var todayRow = result.data.find(function (r) { return r.date === today; });
     if (typeof records !== 'undefined') {
@@ -99,27 +85,60 @@ window.Mise.sync = (function () {
   }
 
   // ── _pullSettings ──────────────────────────────────────────────────────────
-  // Fetches settings from Supabase and merges into the app's settings object.
+  // Fetches own settings then cross-pulls the dish/menu library from Carte
+  // (mise_settings) so the suite shares one library across both apps.
   async function _pullSettings(userId) {
+    // Own settings
     var result = await supabaseClient
       .from('settings')
       .select('config')
       .eq('id', userId)
       .single();
 
-    // PGRST116 = row not found — first login, no settings yet, that's fine
     if (result.error && result.error.code !== 'PGRST116') throw result.error;
-    if (!result.data || !result.data.config) return;
 
-    // Merge cloud settings into the app's settings object
-    if (typeof settings !== 'undefined') {
+    if (result.data && result.data.config && typeof settings !== 'undefined') {
       Object.assign(settings, result.data.config);
-      // Write back to localStorage too
-      try {
-        localStorage.setItem('haccp_settings', JSON.stringify(settings));
-      } catch (e) {}
-      // Re-run the app's own settings post-processing
+      try { localStorage.setItem('haccp_settings', JSON.stringify(settings)); } catch (e) {}
       if (typeof loadSettings === 'function') loadSettings();
+    }
+
+    // Cross-pull dish/menu library from Carte (mise_settings)
+    var carteResult = await supabaseClient
+      .from('mise_settings')
+      .select('config')
+      .eq('id', userId)
+      .single();
+
+    if (!carteResult.error && carteResult.data && carteResult.data.config) {
+      if (typeof settings !== 'undefined') {
+        _mergeLibrary(settings, carteResult.data.config);
+        try { localStorage.setItem('haccp_settings', JSON.stringify(settings)); } catch (e) {}
+      }
+    }
+  }
+
+  // ── _mergeLibrary ──────────────────────────────────────────────────────────
+  // Merges savedDishes and savedMenus from another app's config into target,
+  // deduplicating by name (case-insensitive) so own entries always win.
+  function _mergeLibrary(target, source) {
+    if (source.savedDishes && source.savedDishes.length) {
+      if (!target.savedDishes) target.savedDishes = [];
+      source.savedDishes.forEach(function (d) {
+        var exists = target.savedDishes.some(function (e) {
+          return e.dish.toLowerCase() === d.dish.toLowerCase();
+        });
+        if (!exists) target.savedDishes.push(d);
+      });
+    }
+    if (source.savedMenus && source.savedMenus.length) {
+      if (!target.savedMenus) target.savedMenus = [];
+      source.savedMenus.forEach(function (m) {
+        var exists = target.savedMenus.some(function (e) {
+          return e.name.toLowerCase() === m.name.toLowerCase();
+        });
+        if (!exists) target.savedMenus.push(m);
+      });
     }
   }
 
