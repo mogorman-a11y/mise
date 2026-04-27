@@ -2756,7 +2756,7 @@ function menuSave() {
     if (btn) btn.textContent = 'Save menu';
     toast('Menu updated');
   } else {
-    settings.savedMenus.push({ id: Date.now(), name: name, dishes: _menuDishes.slice() });
+    settings.savedMenus.push({ id: String(Date.now()), name: name, dishes: _menuDishes.slice() });
     toast('Menu "' + name + '" saved');
   }
   saveSettings();
@@ -2788,13 +2788,13 @@ function menuEdit(id) {
 
 function menuDelete(id) {
   if (!settings.savedMenus) return;
-  settings.savedMenus = settings.savedMenus.filter(function(m) { return m.id !== id; });
+  settings.savedMenus = settings.savedMenus.filter(function(m) { return String(m.id) !== String(id); });
   saveSettings();
   renderMenuLibrary();
   custPopulateMenuSelect();
   toast('Menu deleted');
   if (window.Mise && window.Mise.sync && window.Mise.sync.deleteSuiteMenu) {
-    window.Mise.sync.deleteSuiteMenu(id).catch(function(){});
+    window.Mise.sync.deleteSuiteMenu(String(id)).catch(function(){});
   }
 }
 

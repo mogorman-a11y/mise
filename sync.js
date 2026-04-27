@@ -366,7 +366,7 @@ window.Mise.sync = (function () {
     var config = result.data.config;
     if (!config.savedMenus) return;
     var before = config.savedMenus.length;
-    config.savedMenus = config.savedMenus.filter(function(m) { return m.id !== menuId; });
+    config.savedMenus = config.savedMenus.filter(function(m) { return String(m.id) !== String(menuId); });
     if (config.savedMenus.length === before) return;
     await supabaseClient.from('mise_settings').upsert({ id: _userId, config: config, updated_at: new Date().toISOString() });
   }
