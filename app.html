@@ -32,11 +32,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .stat-num { font-size: 20px; font-weight: 700; }
 .stat-label { font-size: 10px; color: #888; margin-top: 2px; }
 .tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.tile { background: #fff; border-radius: 16px; border: 1px solid #e5e4de; padding: 20px 16px 18px; cursor: pointer; text-align: center; transition: transform 0.1s; position: relative; -webkit-tap-highlight-color: transparent; }
+.tile { background: #fff; border-radius: 14px; border: 1px solid #e5e4de; padding: 14px 12px 12px; cursor: pointer; text-align: center; transition: transform 0.1s; position: relative; -webkit-tap-highlight-color: transparent; }
 .tile:active { transform: scale(0.97); }
-.tile-wide { grid-column: 1/-1; padding: 14px 16px; text-align: left; }
+.tile-wide { grid-column: 1/-1; padding: 12px 14px; text-align: left; }
 .tile-wide-inner { display: flex; align-items: center; gap: 12px; }
-.tile-icon { font-size: 44px; margin-bottom: 10px; line-height: 1; }
+.tile-icon { font-size: 32px; margin-bottom: 6px; line-height: 1; }
 .tile-icon-sm { font-size: 28px; line-height: 1; flex-shrink: 0; }
 .tile-label { font-size: 15px; font-weight: 600; color: #1a1a18; }
 .tile-sub { font-size: 12px; color: #888; margin-top: 4px; }
@@ -155,6 +155,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <h1 id="header-title">Veriqo</h1>
       <p id="header-date" style="margin-top:0;margin-left:auto"></p>
     </div>
+    <button onclick="showTab('settings')" id="settings-btn" style="background:none;border:none;cursor:pointer;padding:6px;color:#555;line-height:0;flex-shrink:0" aria-label="Settings">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
   </div>
 
   <!-- HOME -->
@@ -276,6 +282,47 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="tile-label">Staff illness</div>
         <div class="tile-sub" id="sub-illness">No records yet</div>
       </div>
+      <!-- PRIVATE CHEF TILES — always visible -->
+      <div style="grid-column:1/-1;margin:4px 0 0;display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em">Private chef</span>
+        <div style="flex:1;height:1px;background:#e5e4de"></div>
+      </div>
+      <div class="tile" onclick="showTab('job')">
+        <div class="tile-badge none" id="badge-job">0</div>
+        <div class="tile-icon">🍽</div>
+        <div class="tile-label">Menus</div>
+        <div class="tile-sub" id="sub-job">Build &amp; save menus</div>
+      </div>
+      <div class="tile" onclick="showTab('customers')">
+        <div class="tile-badge none" id="badge-customers">0</div>
+        <div class="tile-icon">👥</div>
+        <div class="tile-label">Customers</div>
+        <div class="tile-sub" id="sub-customers">Jobs &amp; allergen check</div>
+      </div>
+      <div class="tile" onclick="showTab('kitchenassess')">
+        <div class="tile-badge none" id="badge-kitchenassess"></div>
+        <div class="tile-icon">🏠</div>
+        <div class="tile-label">Kitchen assessment</div>
+        <div class="tile-sub" id="sub-kitchenassess">Pre-job check</div>
+      </div>
+      <div class="tile" onclick="showTab('transport')">
+        <div class="tile-badge none" id="badge-transport">0</div>
+        <div class="tile-icon">🚗</div>
+        <div class="tile-label">Transport temps</div>
+        <div class="tile-sub" id="sub-transport">Food in transit</div>
+      </div>
+      <div class="tile" onclick="showTab('mobileset')">
+        <div class="tile-badge none" id="badge-mobileset"></div>
+        <div class="tile-icon">🔧</div>
+        <div class="tile-label">Mobile setup</div>
+        <div class="tile-sub" id="sub-mobileset">Temporary kitchen</div>
+      </div>
+      <div class="tile" onclick="showTab('credentials')">
+        <div class="tile-badge none" id="badge-credentials"></div>
+        <div class="tile-icon">📜</div>
+        <div class="tile-label">My credentials</div>
+        <div class="tile-sub" id="sub-credentials">Certs &amp; expiry dates</div>
+      </div>
       <!-- EHO INSPECTION MODE — full-width branded tile -->
       <div class="tile tile-wide" onclick="showTab('inspector')" style="background:#2D7A3A;border-color:#2D7A3A">
         <div class="tile-wide-inner">
@@ -299,65 +346,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <div><div class="tile-label">Approved suppliers</div><div class="tile-sub" id="sub-suppliers">Supplier register</div></div>
         </div>
       </div>
-      <div class="tile tile-wide" onclick="showTab('settings')">
-        <div class="tile-wide-inner">
-          <span class="tile-icon-sm">⚙️</span>
-          <div><div class="tile-label">Settings</div><div class="tile-sub">Customise dropdowns &amp; lists</div></div>
-        </div>
-      </div>
     </div>
 
-    <!-- PRIVATE CHEF SECTION -->
-    <div id="pc-section" style="display:none">
-      <div style="margin:16px 0 10px;display:flex;align-items:center;gap:8px">
-        <span style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em">Private chef</span>
-        <div style="flex:1;height:1px;background:#e5e4de"></div>
-      </div>
-      <div class="tile-grid">
-        <div class="tile" onclick="showTab('job')">
-          <div class="tile-badge none" id="badge-job">0</div>
-          <div class="tile-icon">🍽</div>
-          <div class="tile-label">Menus</div>
-          <div class="tile-sub" id="sub-job">Build &amp; save menus</div>
-        </div>
-        <div class="tile" onclick="showTab('customers')">
-          <div class="tile-badge none" id="badge-customers">0</div>
-          <div class="tile-icon">👥</div>
-          <div class="tile-label">Customers</div>
-          <div class="tile-sub" id="sub-customers">Address book &amp; jobs</div>
-        </div>
-        <div class="tile" onclick="showTab('kitchenassess')">
-          <div class="tile-badge none" id="badge-kitchenassess"></div>
-          <div class="tile-icon">🏠</div>
-          <div class="tile-label">Kitchen assessment</div>
-          <div class="tile-sub" id="sub-kitchenassess">Pre-job check</div>
-        </div>
-        <div class="tile" onclick="showTab('transport')">
-          <div class="tile-badge none" id="badge-transport">0</div>
-          <div class="tile-icon">🚗</div>
-          <div class="tile-label">Transport temps</div>
-          <div class="tile-sub" id="sub-transport">Food in transit</div>
-        </div>
-        <div class="tile" onclick="showTab('calendar')">
-          <div class="tile-badge none" id="badge-calendar"></div>
-          <div class="tile-icon">📅</div>
-          <div class="tile-label">Calendar</div>
-          <div class="tile-sub" id="sub-calendar">Jobs &amp; availability</div>
-        </div>
-        <div class="tile" onclick="showTab('mobileset')">
-          <div class="tile-badge none" id="badge-mobileset"></div>
-          <div class="tile-icon">🔧</div>
-          <div class="tile-label">Mobile setup</div>
-          <div class="tile-sub" id="sub-mobileset">Temporary kitchen</div>
-        </div>
-        <div class="tile" onclick="showTab('credentials')">
-          <div class="tile-badge none" id="badge-credentials"></div>
-          <div class="tile-icon">📜</div>
-          <div class="tile-label">My credentials</div>
-          <div class="tile-sub" id="sub-credentials">Certs &amp; expiry dates</div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- OPENING CHECKS -->
@@ -619,7 +609,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="form-group"><label class="form-label">Contact name</label><input class="form-input" type="text" id="supp-contact" placeholder="e.g. John Smith"></div>
         <div class="form-group"><label class="form-label">Phone</label><input class="form-input" type="tel" id="supp-phone" placeholder="e.g. 01234 567890"></div>
       </div>
-      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="supp-email" placeholder="e.g. orders@supplier.com"></div>
       <div class="form-group"><label class="form-label">Products supplied</label><input class="form-input" type="text" id="supp-products" placeholder="e.g. Meat, dairy"></div>
       <div class="form-group"><label class="form-label">Approval basis</label>
         <select class="form-input" id="supp-approval">
@@ -653,15 +642,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
             oninput="dishAutofill('menu')" onfocus="dishAutofill('menu')" onblur="setTimeout(function(){dishHideSuggestions('menu')},180)">
           <div id="menu-dish-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ccc;border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)"></div>
         </div>
-        <div class="form-group" style="margin-bottom:8px">
-          <select class="form-input" id="menu-dish-category" style="margin:0">
-            <option value="">Category (optional)</option>
-            <option>Canapé</option><option>Starter</option><option>Fish course</option>
-            <option>Main</option><option>Side</option><option>Sauce</option>
-            <option>Pre-dessert</option><option>Dessert</option><option>Cheese</option>
-            <option>Petit four</option><option>Bread</option><option>Other</option>
-          </select>
-        </div>
         <div class="form-group" style="margin-bottom:10px">
           <label class="form-label">Allergens in this dish</label>
           <div id="menu-dish-allergens" style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px"></div>
@@ -682,77 +662,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <!-- CUSTOMERS -->
   <div id="tab-customers" class="section">
 
-    <!-- ── CRM section ─────────────────────────────────────── -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-size:16px;font-weight:700;color:#1a1a18">Address book</div>
-      <button onclick="crmToggleAddForm()" class="btn-secondary" style="width:auto;margin:0;padding:7px 14px;font-size:13px">+ Add customer</button>
-    </div>
-    <!-- Add customer form -->
-    <div id="crm-add-form" class="card" style="display:none;margin-bottom:12px">
-      <div class="card-title">New customer</div>
-      <div class="form-group"><label class="form-label">Name</label>
-        <input class="form-input" type="text" id="crm-name" placeholder="e.g. Henderson Family">
+    <!-- Customer details -->
+    <div class="card">
+      <div class="card-title">Customer details</div>
+      <div class="form-group"><label class="form-label">Customer / client name</label>
+        <input class="form-input" type="text" id="cust-name" placeholder="e.g. Henderson Family">
       </div>
       <div class="form-group"><label class="form-label">Address</label>
-        <input class="form-input" type="text" id="crm-address" placeholder="e.g. 12 Oak Lane, Oxford, OX1 1AA">
+        <input class="form-input" type="text" id="cust-address" placeholder="e.g. 12 Oak Lane, Oxford, OX1 1AA">
       </div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Phone</label>
-          <input class="form-input" type="tel" id="crm-phone" placeholder="07700 123456">
+          <input class="form-input" type="tel" id="cust-phone" placeholder="07700 123456">
         </div>
         <div class="form-group"><label class="form-label">Email</label>
-          <input class="form-input" type="email" id="crm-email" placeholder="client@email.com">
+          <input class="form-input" type="email" id="cust-email" placeholder="client@email.com">
         </div>
       </div>
-      <div class="form-group"><label class="form-label">Dietary / allergen notes</label>
-        <input class="form-input" type="text" id="crm-diet" placeholder="e.g. Nut allergy, vegan preference">
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-primary" style="flex:1;margin:0" onclick="addCustomerToCRM()">Save customer</button>
-        <button class="btn-secondary" style="margin:0;padding:11px 16px;width:auto" onclick="crmToggleAddForm()">Cancel</button>
-      </div>
-    </div>
-    <!-- CRM cards list -->
-    <div id="crm-list"></div>
-
-    <!-- ── Log a job ────────────────────────────────────────── -->
-    <div class="divider" style="margin-top:18px">Log a customer job</div>
-
-    <!-- Customer picker -->
-    <div class="card">
-      <div class="card-title">Customer</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <div style="flex:1;min-width:0">
-          <select class="form-input" id="cust-crm-select" style="margin:0" onchange="custFillFromCRM()">
-            <option value="">— Select saved customer —</option>
-            <option value="manual">↓ Enter details manually</option>
-          </select>
-        </div>
-      </div>
-      <!-- Selected CRM customer preview -->
-      <div id="cust-crm-preview" style="display:none;margin-top:10px;padding:10px 12px;background:#f8f7f3;border-radius:8px;border:1px solid #e5e4de">
-        <div id="cust-crm-preview-name" style="font-size:14px;font-weight:700;color:#1a1a18"></div>
-        <div id="cust-crm-preview-info" style="font-size:12px;color:#888;margin-top:3px;line-height:1.7"></div>
-      </div>
-      <!-- Manual entry fields (shown when "manual" selected or editing) -->
-      <div id="cust-manual-fields" style="display:none;margin-top:12px">
-        <div class="form-group"><label class="form-label">Customer / client name</label>
-          <input class="form-input" type="text" id="cust-name" placeholder="e.g. Henderson Family">
-        </div>
-        <div class="form-group"><label class="form-label">Address</label>
-          <input class="form-input" type="text" id="cust-address" placeholder="e.g. 12 Oak Lane, Oxford, OX1 1AA">
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Phone</label>
-            <input class="form-input" type="tel" id="cust-phone" placeholder="07700 123456">
-          </div>
-          <div class="form-group"><label class="form-label">Email</label>
-            <input class="form-input" type="email" id="cust-email" placeholder="client@email.com">
-          </div>
-        </div>
-      </div>
-      <!-- Hidden fields to carry CRM-selected data into logCustomerJob() -->
-      <input type="hidden" id="cust-crm-id" value="">
     </div>
 
     <!-- Event details -->
@@ -817,8 +743,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <button class="btn-secondary" onclick="custAddMenu()" style="white-space:nowrap;flex-shrink:0;margin:0;padding:10px 14px;width:auto">+ Add</button>
         </div>
       </div>
+      <!-- List of added menus (removable) -->
       <div id="cust-added-menus"></div>
+      <!-- Combined dish preview with conflict highlighting -->
       <div id="cust-menu-preview"></div>
+      <!-- Custom dish builder -->
       <div id="cust-custom-section" style="display:none">
         <div style="background:#f8f7f3;border-radius:10px;padding:14px;border:1px solid #e5e4de">
           <div class="card-title" style="margin-bottom:10px">Custom dishes</div>
@@ -827,15 +756,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
             <input class="form-input" type="text" id="cust-dish-name" placeholder="Dish name" autocomplete="off"
               oninput="dishAutofill('cust')" onfocus="dishAutofill('cust')" onblur="setTimeout(function(){dishHideSuggestions('cust')},180)">
             <div id="cust-dish-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #ccc;border-top:none;border-radius:0 0 8px 8px;z-index:50;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08)"></div>
-          </div>
-          <div class="form-group" style="margin-bottom:8px">
-            <select class="form-input" id="cust-dish-category" style="margin:0">
-              <option value="">Category (optional)</option>
-              <option>Canapé</option><option>Starter</option><option>Fish course</option>
-              <option>Main</option><option>Side</option><option>Sauce</option>
-              <option>Pre-dessert</option><option>Dessert</option><option>Cheese</option>
-              <option>Petit four</option><option>Bread</option><option>Other</option>
-            </select>
           </div>
           <div class="form-group" style="margin-bottom:10px">
             <label class="form-label">Allergens in this dish</label>
@@ -850,7 +770,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
 
     <button class="btn-primary" onclick="logCustomerJob()">Save customer job</button>
-    <div class="divider">Today's jobs</div>
+    <div class="divider">Customer jobs</div>
     <div id="job-log"><div class="empty">No customer jobs logged yet today.</div></div>
   </div>
 
@@ -919,12 +839,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="card">
       <div class="card-title">Transport temperature log</div>
       <div class="info-box">Food transported to a client must be kept at safe temperatures throughout. Chilled food must stay below 8°C, frozen below -18°C.</div>
-      <div class="form-group">
-        <label class="form-label">Customer (optional — auto-fills details)</label>
-        <select class="form-input" id="tr-customer-select" onchange="trFillFromCustomer()">
-          <option value="">— Select saved customer —</option>
-        </select>
-      </div>
       <div class="form-group"><label class="form-label">Food item / batch</label><input class="form-input" type="text" id="tr-food" placeholder="e.g. Prepared starters"></div>
       <div class="form-group"><label class="form-label">Destination / client</label><input class="form-input" type="text" id="tr-destination" placeholder="e.g. Henderson — Oak Lane"></div>
       <div class="form-row">
@@ -949,31 +863,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
     <div class="divider">Transport records</div>
     <div id="transport-log"><div class="empty">No transport records yet — log temperatures at departure and arrival for every food delivery to a client.</div></div>
-  </div>
-
-  <!-- CALENDAR -->
-  <div id="tab-calendar" class="section">
-
-    <!-- Month navigation -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <button onclick="calPrev()" style="background:none;border:1px solid #e5e4de;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;color:#1a1a18;display:flex;align-items:center;justify-content:center">‹</button>
-      <div id="cal-month-label" style="font-size:17px;font-weight:700;color:#1a1a18"></div>
-      <button onclick="calNext()" style="background:none;border:1px solid #e5e4de;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;color:#1a1a18;display:flex;align-items:center;justify-content:center">›</button>
-    </div>
-
-    <!-- Legend -->
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:11px;color:#888">
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#EAF3DE;border:1px solid #b8dfa0;display:inline-block"></span>Job booked</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#FFF0F0;border:1px solid #f5c6c6;display:inline-block"></span>Unavailable</span>
-      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#1a1a18;display:inline-block"></span>Today</span>
-    </div>
-
-    <!-- Calendar grid -->
-    <div id="calendar-grid"></div>
-
-    <!-- Day detail panel -->
-    <div id="cal-day-detail"></div>
-
   </div>
 
   <!-- MOBILE SETUP -->
@@ -1092,22 +981,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="card" style="margin-bottom:16px" id="reminders-card">
       <div class="card-title">Daily reminders</div>
       <div style="font-size:13px;color:#aaa;padding:4px 0">Loading…</div>
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">Mode</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
-        <div>
-          <div style="font-size:14px;font-weight:600;color:#1a1a18">Private chef mode</div>
-          <div style="font-size:12px;color:#888;margin-top:2px">Adds job logging, kitchen assessment, allergen log, transport checks, mobile setup &amp; credentials</div>
-        </div>
-        <label style="position:relative;display:inline-block;width:44px;height:26px;flex-shrink:0;margin-left:12px">
-          <input type="checkbox" id="pc-toggle" onchange="togglePrivateChefMode(this.checked)" style="opacity:0;width:0;height:0">
-          <span id="pc-slider" style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:26px;transition:0.3s">
-            <span style="position:absolute;content:'';height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s" id="pc-knob"></span>
-          </span>
-        </label>
-      </div>
     </div>
 
     <div class="divider" style="margin-top:0">Dropdowns &amp; lists</div>
@@ -1407,9 +1280,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
 
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">Private chef mode</div>
+      <div class="card-title">Private chef features</div>
       <div style="font-size:14px;color:#444;line-height:1.6">
-        <p>Turn on <strong>Private chef mode</strong> in Settings to unlock extra record types: job logging, kitchen assessments, allergen logs, transport temperature checks, mobile setup, and credentials. Designed for chefs working in clients' homes.</p>
+        <p>Veriqo includes built-in private chef record types: job logging, kitchen assessments, allergen logs, transport temperature checks, mobile setup, and credentials. You'll find these on the home screen below the standard HACCP tiles.</p>
       </div>
     </div>
 
@@ -1929,7 +1802,7 @@ function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
-var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Clients',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',calendar:'Calendar',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
+var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Customer jobs',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
 
 var _homeScrollPos = 0;
 
@@ -1964,9 +1837,6 @@ function showTab(name) {
   if(name==='suppliers') renderSuppliersLog();
   if(name==='credentials') renderCredentials();
   if(name==='inspector') renderInspector();
-  if(name==='customers') { renderCustomerCRM(); populateCustCRMSelect(); }
-  if(name==='transport') populateTransportCustomerSelect();
-  if(name==='calendar')  renderCalendar();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
   updateDashboard();
   if(name === 'home') { var pos = _homeScrollPos; requestAnimationFrame(function(){ window.scrollTo(0, pos); }); }
@@ -2230,18 +2100,9 @@ function logSupplier() {
   var name=document.getElementById('supp-name').value.trim();
   if(!name){toast('Please enter a supplier name',false);return;}
   var list=loadSuppliers();
-  list.push({
-    name:name,
-    contact:document.getElementById('supp-contact').value.trim(),
-    phone:document.getElementById('supp-phone').value.trim(),
-    email:document.getElementById('supp-email').value.trim(),
-    products:document.getElementById('supp-products').value.trim(),
-    approval:document.getElementById('supp-approval').value,
-    notes:document.getElementById('supp-notes').value.trim(),
-    date:todayStr()
-  });
+  list.push({name:name,contact:document.getElementById('supp-contact').value.trim(),phone:document.getElementById('supp-phone').value.trim(),products:document.getElementById('supp-products').value.trim(),approval:document.getElementById('supp-approval').value,notes:document.getElementById('supp-notes').value.trim(),date:todayStr()});
   saveSuppliers(list);
-  ['supp-name','supp-contact','supp-phone','supp-email','supp-products','supp-notes'].forEach(function(id){document.getElementById(id).value='';});
+  ['supp-name','supp-contact','supp-phone','supp-products','supp-notes'].forEach(function(id){document.getElementById(id).value='';});
   renderSuppliersLog(); toast('Saved — '+name+' added to register');
 }
 function renderSuppliersLog() {
@@ -2249,24 +2110,11 @@ function renderSuppliersLog() {
   if(!list.length){c.innerHTML='<div class="empty">No approved suppliers yet — add your regulars so they appear in the delivery dropdown.</div>';return;}
   document.getElementById('sub-suppliers').textContent=list.length+' supplier'+(list.length>1?'s':'');
   c.innerHTML=list.map(function(s,i){
-    var phoneHtml = s.phone
-      ? '<a href="tel:'+s.phone.replace(/\s/g,'')+'" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a18;text-decoration:none;padding:8px 12px;background:#f5f4f0;border-radius:8px;margin:6px 6px 0 0">📞 '+s.phone+'</a>'
-      : '';
-    var emailHtml = s.email
-      ? '<a href="mailto:'+s.email+'" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a18;text-decoration:none;padding:8px 12px;background:#f5f4f0;border-radius:8px;margin:6px 6px 0 0">✉️ '+s.email+'</a>'
-      : '';
-    return '<div class="card" style="margin-bottom:10px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
-      +'<div style="flex:1">'
-      +'<div style="font-size:15px;font-weight:700;color:#1a1a18">'+s.name+'</div>'
-      +(s.contact?'<div style="font-size:13px;color:#555;margin-top:2px">'+s.contact+'</div>':'')
-      +(s.products?'<div style="font-size:12px;color:#888;margin-top:2px">'+s.products+'</div>':'')
-      +'<div style="margin-top:6px"><span style="font-size:11px;font-weight:700;color:#2D7A3A;background:#EAF3DE;border-radius:6px;padding:2px 8px">'+s.approval+'</span></div>'
-      +(s.notes?'<div style="font-size:12px;color:#aaa;margin-top:6px">'+s.notes+'</div>':'')
-      +((phoneHtml||emailHtml)?'<div style="display:flex;flex-wrap:wrap">'+phoneHtml+emailHtml+'</div>':'')
-      +'</div>'
-      +'<button onclick="removeSupplier('+i+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
-      +'</div></div>';
+    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+s.name+'</div>'+
+      (s.products?'<div class="log-time">'+s.products+'</div>':'')+
+      (s.contact||s.phone?'<div class="log-time">'+(s.contact||'')+(s.phone?' · '+s.phone:'')+'</div>':'')+
+      '<div class="log-time">'+s.approval+'</div></div>'+
+      '<button onclick="removeSupplier('+i+')" style="background:none;border:none;color:#A32D2D;font-size:16px;cursor:pointer;padding:4px">&times;</button></div>';
   }).join('');
 }
 function removeSupplier(i) {
@@ -2301,7 +2149,7 @@ function renderSection(type) {
 
 function renderAllSections() {
   ['opening','closing','crosscontam','fridge','cooking','cooling','reheating','delivery','cleaning','probe','pest','illness'].forEach(renderSection);
-  if (settings.privateChefMode) { ['customers','kitchenassess','allergen','transport','mobileset'].forEach(renderSection_PC); renderCredentials(); }
+  ['customers','kitchenassess','allergen','transport','mobileset'].forEach(renderSection_PC); renderCredentials();
 }
 
 // --- DASHBOARD ---
@@ -2653,7 +2501,7 @@ function buildPDFExport(dateLabel, recs) {
 }
 
 // --- PRIVATE CHEF MODE ---
-var PC_TYPES = ['job','customers','kitchenassess','allergen','transport','calendar','mobileset','credentials'];
+var PC_TYPES = ['job','customers','kitchenassess','allergen','transport','mobileset','credentials'];
 
 var ALLERGENS_14 = ['Celery','Cereals containing gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphur dioxide'];
 var DIETARY_PREFS = ['Vegetarian','Vegan','Gluten-free','Dairy-free','Halal','Kosher','Nut-free','Shellfish-free'];
@@ -2699,9 +2547,6 @@ function togglePrivateChefMode(on) {
     renderMenuLibrary();
     renderDishLibrary();
     custPopulateMenuSelect();
-    populateCustCRMSelect();
-    populateTransportCustomerSelect();
-    renderCustomerCRM();
     populateSelect('tr-by','staff');
     populateSelect('ms-by','staff');
   }
@@ -2709,10 +2554,17 @@ function togglePrivateChefMode(on) {
 }
 
 function initPrivateChefMode() {
-  var on = settings.privateChefMode || false;
-  var toggle = document.getElementById('pc-toggle');
-  if (toggle) toggle.checked = on;
-  togglePrivateChefMode(on);
+  renderPCChecklists();
+  renderAllergenChecks();
+  renderMenuDishAllergens();
+  renderCustAllergens();
+  renderCustDietaryPrefs();
+  renderCustDishAllergens();
+  renderMenuLibrary();
+  renderDishLibrary();
+  custPopulateMenuSelect();
+  populateSelect('tr-by','staff');
+  populateSelect('ms-by','staff');
 }
 
 function renderPCChecklists() {
@@ -2862,11 +2714,9 @@ function menuAddDishAndSave() {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
-  var category = (document.getElementById('menu-dish-category').value || '');
-  _menuDishes.push({ dish: name, allergens: allergens, category: category });
-  saveDishToLibrary(name, allergens, category);
+  _menuDishes.push({ dish: name, allergens: allergens });
+  saveDishToLibrary(name, allergens);
   document.getElementById('menu-dish-name').value = '';
-  document.getElementById('menu-dish-category').selectedIndex = 0;
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = false;
@@ -2893,31 +2743,15 @@ function dishAutofill(prefix) {
     ? saved.filter(function(d) { return d.dish.toLowerCase().indexOf(q) !== -1; })
     : saved;
   if (!matches.length) { drop.style.display = 'none'; return; }
-
-  // Group by category for display
-  var grouped = {};
-  var order = [];
-  matches.forEach(function(d) {
-    var cat = d.category || 'Uncategorised';
-    if (!grouped[cat]) { grouped[cat] = []; order.push(cat); }
-    grouped[cat].push(d);
-  });
-
   drop.style.display = 'block';
-  drop.innerHTML = order.map(function(cat) {
-    var header = order.length > 1 || cat !== 'Uncategorised'
-      ? '<div style="padding:6px 14px 3px;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.06em;background:#fafaf8">' + cat + '</div>'
-      : '';
-    var rows = grouped[cat].map(function(d) {
-      return '<div onmousedown="dishSelect(\'' + prefix + '\',' + d.id + ')" '
-        + 'style="padding:9px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #f5f4ef">'
-        + '<span style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + '</span>'
-        + (d.allergens.length
-            ? '<span style="font-size:11px;color:#aaa;white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis">' + d.allergens.join(', ') + '</span>'
-            : '<span style="font-size:11px;color:#ddd">No allergens</span>')
-        + '</div>';
-    }).join('');
-    return header + rows;
+  drop.innerHTML = matches.map(function(d) {
+    return '<div onmousedown="dishSelect(\'' + prefix + '\',' + d.id + ')" '
+      + 'style="padding:10px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid #f5f4ef">'
+      + '<span style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + '</span>'
+      + (d.allergens.length
+          ? '<span style="font-size:11px;color:#aaa;white-space:nowrap">' + d.allergens.join(', ') + '</span>'
+          : '<span style="font-size:11px;color:#ccc">No allergens</span>')
+      + '</div>';
   }).join('');
 }
 
@@ -2940,12 +2774,12 @@ function dishSelect(prefix, id) {
   dishHideSuggestions(prefix);
 }
 
-function saveDishToLibrary(name, allergens, category) {
+function saveDishToLibrary(name, allergens) {
   if (!name) return false;
   if (!settings.savedDishes) settings.savedDishes = [];
   var exists = settings.savedDishes.some(function(d) { return d.dish.toLowerCase() === name.toLowerCase(); });
   if (exists) { toast('"' + name + '" is already in your dish library'); return false; }
-  settings.savedDishes.push({ id: Date.now(), dish: name, allergens: allergens.slice(), category: category || '' });
+  settings.savedDishes.push({ id: Date.now(), dish: name, allergens: allergens.slice() });
   saveSettings();
   renderDishLibrary();
   return true;
@@ -2977,24 +2811,20 @@ function dishToggleEdit(id) {
 
 function dishSaveEdit(id) {
   var nameEl = document.getElementById('dish-edit-name-' + id);
-  var catEl  = document.getElementById('dish-edit-cat-' + id);
   var name = nameEl ? (nameEl.value || '').trim() : '';
   if (!name) { toast('Dish name required', false); return; }
-  var category = catEl ? catEl.value : '';
   var allergens = ALLERGENS_14.filter(function(a) {
     var el = document.getElementById('dish-edit-al-' + id + '-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
   settings.savedDishes = (settings.savedDishes || []).map(function(d) {
-    return d.id === id ? { id: d.id, dish: name, allergens: allergens, category: category } : d;
+    return d.id === id ? { id: d.id, dish: name, allergens: allergens } : d;
   });
   saveSettings();
   _expandedDishId = null;
   renderDishLibrary();
   toast('"' + name + '" updated');
 }
-
-var DISH_CATEGORIES = ['','Canapé','Starter','Fish course','Main','Side','Sauce','Pre-dessert','Dessert','Cheese','Petit four','Bread','Other'];
 
 function renderDishLibrary() {
   var c = document.getElementById('dish-library-list');
@@ -3004,77 +2834,38 @@ function renderDishLibrary() {
     c.innerHTML = '<div class="empty">No saved dishes yet — use "+ Save &amp; add" when building a menu to grow your library.</div>';
     return;
   }
-
-  // Group by category
-  var grouped = {};
-  var orderedCats = [];
-  dishes.forEach(function(d) {
-    var cat = d.category || '';
-    if (!grouped[cat]) { grouped[cat] = []; }
-    grouped[cat].push(d);
-  });
-  // Order: predefined order first, then any extras, then uncategorised last
-  DISH_CATEGORIES.forEach(function(cat) {
-    if (grouped[cat] && grouped[cat].length && orderedCats.indexOf(cat) === -1) orderedCats.push(cat);
-  });
-  Object.keys(grouped).forEach(function(cat) {
-    if (orderedCats.indexOf(cat) === -1 && grouped[cat].length) orderedCats.push(cat);
-  });
-  // move '' (uncategorised) to end
-  var uncatIdx = orderedCats.indexOf('');
-  if (uncatIdx > -1 && orderedCats.length > 1) { orderedCats.splice(uncatIdx, 1); orderedCats.push(''); }
-
-  var showHeaders = orderedCats.length > 1 || (orderedCats.length === 1 && orderedCats[0] !== '');
-  var html = '';
-
-  orderedCats.forEach(function(cat) {
-    if (showHeaders) {
-      html += '<div style="font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin:' + (html ? '14px' : '2px') + ' 0 6px;padding-left:2px">' + (cat || 'Uncategorised') + '</div>';
-    }
-    grouped[cat].forEach(function(d) {
-      var isEditing = _expandedDishId === d.id;
-      var catSelectHtml = '<select id="dish-edit-cat-' + d.id + '" class="form-input" style="margin-bottom:8px">'
-        + DISH_CATEGORIES.map(function(opt) {
-            return '<option value="' + opt + '"' + (opt === (d.category||'') ? ' selected' : '') + '>' + (opt || 'Category (optional)') + '</option>';
+  c.innerHTML = dishes.map(function(d) {
+    var isEditing = _expandedDishId === d.id;
+    var editForm = isEditing
+      ? '<div id="dish-edit-' + d.id + '" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e4de">'
+        + '<input id="dish-edit-name-' + d.id + '" class="form-input" type="text" value="' + d.dish.replace(/"/g,'&quot;') + '" style="margin-bottom:8px">'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
+        + ALLERGENS_14.map(function(a) {
+            var eid = 'dish-edit-al-' + d.id + '-' + a.replace(/\s+/g,'_');
+            var chk = d.allergens.indexOf(a) !== -1 ? ' checked' : '';
+            return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:2px 0;cursor:pointer">'
+              + '<input type="checkbox" id="' + eid + '"' + chk + ' style="width:14px;height:14px;accent-color:#1a1a18"> ' + a + '</label>';
           }).join('')
-        + '</select>';
-      var editForm = isEditing
-        ? '<div id="dish-edit-' + d.id + '" style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e4de">'
-          + '<input id="dish-edit-name-' + d.id + '" class="form-input" type="text" value="' + d.dish.replace(/"/g,'&quot;') + '" style="margin-bottom:8px">'
-          + catSelectHtml
-          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
-          + ALLERGENS_14.map(function(a) {
-              var eid = 'dish-edit-al-' + d.id + '-' + a.replace(/\s+/g,'_');
-              var chk = (d.allergens||[]).indexOf(a) !== -1 ? ' checked' : '';
-              return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#555;padding:2px 0;cursor:pointer">'
-                + '<input type="checkbox" id="' + eid + '"' + chk + ' style="width:14px;height:14px;accent-color:#1a1a18"> ' + a + '</label>';
-            }).join('')
-          + '</div>'
-          + '<div style="display:flex;gap:8px;align-items:center">'
-          + '<button onclick="dishSaveEdit(' + d.id + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
-          + '<button onclick="event.stopPropagation();dishToggleEdit(' + d.id + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
-          + '</div>'
-          + '</div>'
-        : '';
-      var catTag = (!showHeaders && d.category)
-        ? ' <span style="font-size:11px;color:#aaa;background:#f1efe8;border-radius:10px;padding:2px 7px;margin-left:4px;font-weight:400">' + d.category + '</span>'
-        : '';
-      html += '<div onclick="dishToggleEdit(' + d.id + ')" style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1a1a18':'#e5e4de')+';border-radius:10px;margin-bottom:8px;cursor:pointer">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
-        + '<div style="flex:1">'
-        + '<div style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + catTag + '</div>'
-        + ((d.allergens||[]).length
-            ? '<div style="font-size:12px;color:#888;margin-top:2px">' + d.allergens.join(', ') + '</div>'
-            : '<div style="font-size:12px;color:#aaa;margin-top:2px">No allergens</div>')
         + '</div>'
-        + '<button onclick="event.stopPropagation();dishDelete(' + d.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+        + '<div style="display:flex;gap:8px;align-items:center">'
+        + '<button onclick="dishSaveEdit(' + d.id + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
+        + '<button onclick="event.stopPropagation();dishToggleEdit(' + d.id + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
         + '</div>'
-        + editForm
-        + '</div>';
-    });
-  });
-
-  c.innerHTML = html;
+        + '</div>'
+      : '';
+    return '<div onclick="dishToggleEdit(' + d.id + ')" style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1a1a18':'#e5e4de')+';border-radius:10px;margin-bottom:8px;cursor:pointer">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      + '<div style="flex:1">'
+      + '<div style="font-size:14px;font-weight:600;color:#1a1a18">' + d.dish + '</div>'
+      + (d.allergens.length
+          ? '<div style="font-size:12px;color:#888;margin-top:2px">' + d.allergens.join(', ') + '</div>'
+          : '<div style="font-size:12px;color:#aaa;margin-top:2px">No allergens</div>')
+      + '</div>'
+      + '<button onclick="event.stopPropagation();dishDelete(' + d.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+      + '</div>'
+      + editForm
+      + '</div>';
+  }).join('');
 }
 
 function renderMenuLibrary() {
@@ -3087,312 +2878,26 @@ function renderMenuLibrary() {
   }
   c.innerHTML = menus.map(function(m) {
     var allergenSet = [];
-    (m.dishes||[]).forEach(function(d) {
-      (d.allergens||[]).forEach(function(a) { if (allergenSet.indexOf(a) === -1) allergenSet.push(a); });
+    m.dishes.forEach(function(d) {
+      d.allergens.forEach(function(a) {
+        if (allergenSet.indexOf(a) === -1) allergenSet.push(a);
+      });
     });
-    // Group dishes by category within this menu
-    var grouped = {}; var orderedCats = [];
-    (m.dishes||[]).forEach(function(d) {
-      var cat = d.category || '';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(d);
-    });
-    DISH_CATEGORIES.forEach(function(cat) { if (grouped[cat] && orderedCats.indexOf(cat) === -1) orderedCats.push(cat); });
-    Object.keys(grouped).forEach(function(cat) { if (orderedCats.indexOf(cat) === -1) orderedCats.push(cat); });
-    var uIdx = orderedCats.indexOf('');
-    if (uIdx > -1 && orderedCats.length > 1) { orderedCats.splice(uIdx,1); orderedCats.push(''); }
-    var useCatHeaders = orderedCats.length > 1 || (orderedCats.length === 1 && orderedCats[0] !== '');
-
-    var dishesHtml = orderedCats.map(function(cat) {
-      var header = useCatHeaders
-        ? '<div style="font-size:10px;font-weight:700;color:#bbb;text-transform:uppercase;letter-spacing:0.07em;margin:8px 0 4px">' + (cat || 'Uncategorised') + '</div>'
-        : '';
-      return header + grouped[cat].map(function(d) {
-        return '<div style="font-size:13px;color:#555;padding:4px 0;border-bottom:1px solid #f5f4f0;display:flex;align-items:baseline;gap:6px">'
-          + '<span style="font-weight:600;color:#1a1a18">' + d.dish + '</span>'
-          + ((d.allergens||[]).length ? '<span style="font-size:11px;color:#aaa">' + d.allergens.join(', ') + '</span>' : '')
-          + '</div>';
-      }).join('');
-    }).join('');
-
     return '<div class="card" onclick="menuEdit(' + m.id + ')" style="margin-bottom:10px;cursor:pointer">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
       + '<div style="flex:1">'
-      + '<div style="font-size:16px;font-weight:700;color:#1a1a18;margin-bottom:3px">' + m.name + '</div>'
-      + '<div style="font-size:12px;color:#888;margin-bottom:10px">'
-        + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '')
-        + (allergenSet.length ? ' · <strong style="color:#854F0B">Contains: ' + allergenSet.join(', ') + '</strong>' : ' · No allergens')
-        + '</div>'
-      + dishesHtml
+      + '<div class="card-title" style="margin-bottom:4px">' + m.name + '</div>'
+      + '<div style="font-size:13px;color:#888;margin-bottom:8px">' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + (allergenSet.length ? ' · Contains: ' + allergenSet.join(', ') : ' · No allergens') + '</div>'
+      + m.dishes.map(function(d) {
+          return '<div style="font-size:13px;color:#555;padding:3px 0;border-bottom:1px solid #f0f0ec">'
+            + '<strong>' + d.dish + '</strong>'
+            + (d.allergens.length ? ' — ' + d.allergens.join(', ') : '')
+            + '</div>';
+        }).join('')
       + '</div>'
       + '<button onclick="event.stopPropagation();menuDelete(' + m.id + ')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;margin-top:2px">&times;</button>'
       + '</div></div>';
   }).join('');
-}
-
-// --- CUSTOMER CRM ---
-
-var _expandedCustId = null;
-
-function custToggleEdit(id) {
-  _expandedCustId = (_expandedCustId === id) ? null : id;
-  renderCustomerCRM();
-  if (_expandedCustId) {
-    setTimeout(function() {
-      var el = document.getElementById('crm-edit-' + id);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 50);
-  }
-}
-
-function custSaveEdit(id) {
-  var nameEl = document.getElementById('crm-edit-name-' + id);
-  var name = nameEl ? (nameEl.value || '').trim() : '';
-  if (!name) { toast('Name is required', false); return; }
-  settings.savedCustomers = (settings.savedCustomers || []).map(function(c) {
-    if (c.id !== id) return c;
-    return {
-      id: c.id,
-      name: name,
-      address: (document.getElementById('crm-edit-address-' + id).value || '').trim(),
-      phone:   (document.getElementById('crm-edit-phone-'   + id).value || '').trim(),
-      email:   (document.getElementById('crm-edit-email-'   + id).value || '').trim(),
-      diet:    (document.getElementById('crm-edit-diet-'    + id).value || '').trim()
-    };
-  });
-  saveSettings();
-  _expandedCustId = null;
-  renderCustomerCRM();
-  toast(name + ' updated');
-}
-
-function renderCustomerCRM() {
-  var c = document.getElementById('crm-list');
-  if (!c) return;
-  var customers = settings.savedCustomers || [];
-  if (!customers.length) {
-    c.innerHTML = '<div class="empty" style="margin-bottom:8px">Address book is empty — tap "+ Add customer" to save your first client. Past clients appear automatically in the job &amp; transport dropdowns.</div>';
-    return;
-  }
-  c.innerHTML = customers.map(function(cust) {
-    var isEditing = _expandedCustId === cust.id;
-    var mapsUrl = cust.address ? 'https://maps.google.com/?q=' + encodeURIComponent(cust.address) : '';
-
-    var phoneHtml = cust.phone
-      ? '<a href="tel:'+cust.phone.replace(/\s/g,'')+'" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a18;text-decoration:none;padding:8px 12px;background:#f5f4f0;border-radius:8px;margin:6px 6px 0 0">📞 '+cust.phone+'</a>'
-      : '';
-    var emailHtml = cust.email
-      ? '<a href="mailto:'+cust.email+'" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a18;text-decoration:none;padding:8px 12px;background:#f5f4f0;border-radius:8px;margin:6px 6px 0 0">✉️ '+cust.email+'</a>'
-      : '';
-    var mapsHtml = mapsUrl
-      ? '<a href="'+mapsUrl+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:600;color:#1a1a18;text-decoration:none;padding:8px 12px;background:#f5f4f0;border-radius:8px;margin:6px 6px 0 0">🗺 Directions</a>'
-      : '';
-
-    var editForm = isEditing
-      ? '<div id="crm-edit-' + cust.id + '" style="margin-top:12px;padding-top:12px;border-top:1px solid #e5e4de">'
-        + '<div class="form-group" style="margin-bottom:8px"><input id="crm-edit-name-'    + cust.id + '" class="form-input" type="text"  placeholder="Name"                   value="' + (cust.name    ||'').replace(/"/g,'&quot;') + '"></div>'
-        + '<div class="form-group" style="margin-bottom:8px"><input id="crm-edit-address-' + cust.id + '" class="form-input" type="text"  placeholder="Address"                value="' + (cust.address ||'').replace(/"/g,'&quot;') + '"></div>'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">'
-        +   '<input id="crm-edit-phone-' + cust.id + '" class="form-input" type="tel"   placeholder="Phone" value="' + (cust.phone||'').replace(/"/g,'&quot;') + '">'
-        +   '<input id="crm-edit-email-' + cust.id + '" class="form-input" type="email" placeholder="Email" value="' + (cust.email||'').replace(/"/g,'&quot;') + '">'
-        + '</div>'
-        + '<div class="form-group" style="margin-bottom:10px"><input id="crm-edit-diet-' + cust.id + '" class="form-input" type="text" placeholder="Dietary / allergen notes" value="' + (cust.diet||'').replace(/"/g,'&quot;') + '"></div>'
-        + '<div style="display:flex;gap:8px;align-items:center">'
-        + '<button onclick="custSaveEdit(' + cust.id + ')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
-        + '<button onclick="event.stopPropagation();custToggleEdit(' + cust.id + ')" style="background:none;border:none;color:#aaa;font-size:13px;cursor:pointer;padding:4px;font-family:inherit">Cancel</button>'
-        + '</div>'
-        + '</div>'
-      : '';
-
-    return '<div class="card" onclick="custToggleEdit(' + cust.id + ')" style="margin-bottom:10px;cursor:pointer;border-color:' + (isEditing ? '#1a1a18' : '#e5e4de') + '">'
-      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
-      +'<div style="flex:1">'
-      +'<div style="font-size:15px;font-weight:700;color:#1a1a18">'+cust.name+'</div>'
-      +(cust.address?'<div style="font-size:12px;color:#888;margin-top:3px">📍 '+cust.address+'</div>':'')
-      +(cust.diet?'<div style="font-size:12px;color:#888;margin-top:3px">⚠️ '+cust.diet+'</div>':'')
-      +(!isEditing && (phoneHtml||emailHtml||mapsHtml) ? '<div style="display:flex;flex-wrap:wrap">'+phoneHtml+emailHtml+mapsHtml+'</div>' : '')
-      +(!isEditing ? '<button onclick="event.stopPropagation();crmLogJobFor('+cust.id+')" style="display:inline-block;margin-top:10px;padding:7px 14px;background:#1a1a18;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Log a job →</button>' : '')
-      +'</div>'
-      +'<button onclick="event.stopPropagation();deleteCustomer('+cust.id+')" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
-      +'</div>'
-      + editForm
-      +'</div>';
-  }).join('');
-  // Sync the CRM select dropdown
-  populateCustCRMSelect();
-}
-
-function crmToggleAddForm() {
-  var f = document.getElementById('crm-add-form');
-  if (!f) return;
-  f.style.display = f.style.display === 'none' ? 'block' : 'none';
-  if (f.style.display === 'block') {
-    setTimeout(function(){ var n=document.getElementById('crm-name'); if(n)n.focus(); }, 80);
-  }
-}
-
-function addCustomerToCRM() {
-  var name = (document.getElementById('crm-name').value || '').trim();
-  if (!name) { toast('Please enter a customer name', false); return; }
-  if (!settings.savedCustomers) settings.savedCustomers = [];
-  settings.savedCustomers.push({
-    id: Date.now(),
-    name: name,
-    address: (document.getElementById('crm-address').value || '').trim(),
-    phone:   (document.getElementById('crm-phone').value   || '').trim(),
-    email:   (document.getElementById('crm-email').value   || '').trim(),
-    diet:    (document.getElementById('crm-diet').value    || '').trim()
-  });
-  saveSettings();
-  ['crm-name','crm-address','crm-phone','crm-email','crm-diet'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  var f = document.getElementById('crm-add-form');
-  if (f) f.style.display = 'none';
-  renderCustomerCRM();
-  toast('Customer saved — ' + name);
-}
-
-function deleteCustomer(id) {
-  if (!settings.savedCustomers) return;
-  var cust = settings.savedCustomers.find(function(c){ return c.id === id; });
-  settings.savedCustomers = settings.savedCustomers.filter(function(c){ return c.id !== id; });
-  saveSettings();
-  renderCustomerCRM();
-  if (cust) toast(cust.name + ' removed');
-}
-
-// ── Central address book ────────────────────────────────────────────────────
-// Returns a deduplicated list of all known clients, merging:
-//   1. settings.savedCustomers  (CRM — full data, takes precedence)
-//   2. All historical job records from every stored day
-// Each entry: { key, name, address, phone, email, diet, fromCRM }
-// 'key' is used as the <option value> — 'crm_ID' or 'hist_NAME'
-function getAddressBook() {
-  var book = [];
-  var seen = {};  // normalised name → true
-
-  // 1. CRM contacts first — they have full data
-  (settings.savedCustomers || []).forEach(function(c) {
-    var norm = c.name.trim().toLowerCase();
-    seen[norm] = true;
-    book.push({ key: 'crm_' + c.id, name: c.name, address: c.address || '', phone: c.phone || '', email: c.email || '', diet: c.diet || '', fromCRM: true });
-  });
-
-  // 2. Harvest from today's in-memory records
-  records.forEach(function(r) {
-    if (r.type !== 'job' || !r.client) return;
-    var norm = r.client.trim().toLowerCase();
-    if (seen[norm]) return;
-    seen[norm] = true;
-    book.push({ key: 'hist_' + norm, name: r.client, address: r.location || '', phone: r.phone || '', email: r.email || '', diet: '', fromCRM: false });
-  });
-
-  // 3. Harvest from all historical days in localStorage
-  try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (!k || k.indexOf('haccp_') !== 0) continue;
-      if (k === 'haccp_settings' || k === 'haccp_suppliers' || k === 'haccp_credentials') continue;
-      var dayRecs = getDayRecords(k.replace('haccp_', ''));
-      dayRecs.forEach(function(r) {
-        if (r.type !== 'job' || !r.client) return;
-        var norm = r.client.trim().toLowerCase();
-        if (seen[norm]) return;
-        seen[norm] = true;
-        book.push({ key: 'hist_' + norm, name: r.client, address: r.location || '', phone: r.phone || '', email: r.email || '', diet: '', fromCRM: false });
-      });
-    }
-  } catch(e) {}
-
-  // Sort alphabetically
-  book.sort(function(a, b) { return a.name.localeCompare(b.name); });
-  return book;
-}
-
-// Looks up an entry from the address book by key
-function addressBookLookup(key) {
-  return getAddressBook().find(function(e) { return e.key === key; }) || null;
-}
-
-function populateCustCRMSelect() {
-  var sel = document.getElementById('cust-crm-select');
-  if (!sel) return;
-  while (sel.options.length > 2) sel.remove(2);
-  getAddressBook().forEach(function(c) {
-    var opt = document.createElement('option');
-    opt.value = c.key;
-    opt.textContent = c.name + (c.fromCRM ? '' : ' (past client)');
-    sel.appendChild(opt);
-  });
-}
-
-function populateTransportCustomerSelect() {
-  var sel = document.getElementById('tr-customer-select');
-  if (!sel) return;
-  while (sel.options.length > 1) sel.remove(1);
-  getAddressBook().forEach(function(c) {
-    var opt = document.createElement('option');
-    opt.value = c.key;
-    var label = c.name;
-    if (c.address) label += ' — ' + c.address.split(',')[0];
-    opt.textContent = label;
-    sel.appendChild(opt);
-  });
-}
-
-function custFillFromCRM() {
-  var sel = document.getElementById('cust-crm-select');
-  var preview = document.getElementById('cust-crm-preview');
-  var manualFields = document.getElementById('cust-manual-fields');
-  var idField = document.getElementById('cust-crm-id');
-  if (!sel) return;
-  var val = sel.value;
-  if (!val || val === 'manual') {
-    if (preview) preview.style.display = 'none';
-    if (manualFields) manualFields.style.display = 'block';
-    if (idField) idField.value = '';
-    ['cust-name','cust-address','cust-phone','cust-email'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-    return;
-  }
-  var entry = addressBookLookup(val);
-  if (!entry) return;
-  // Populate the hidden input fields that logCustomerJob() reads
-  var _v = function(id,v){ var el=document.getElementById(id); if(el) el.value=v||''; };
-  _v('cust-name',    entry.name);
-  _v('cust-address', entry.address);
-  _v('cust-phone',   entry.phone);
-  _v('cust-email',   entry.email);
-  if (idField) idField.value = val;
-  // Show preview card
-  if (preview) {
-    preview.style.display = 'block';
-    document.getElementById('cust-crm-preview-name').textContent = entry.name;
-    var info = [];
-    if (entry.address) info.push('📍 ' + entry.address);
-    if (entry.diet)    info.push('⚠️ ' + entry.diet);
-    if (!entry.fromCRM) info.push('<span style="font-size:11px;color:#aaa">Past client — not yet in address book</span>');
-    document.getElementById('cust-crm-preview-info').innerHTML = info.join('<br>');
-  }
-  if (manualFields) manualFields.style.display = 'none';
-}
-
-function crmLogJobFor(custId) {
-  // Find the CRM entry and select it in the job form dropdown
-  var key = 'crm_' + custId;
-  var sel = document.getElementById('cust-crm-select');
-  if (sel) { sel.value = key; custFillFromCRM(); }
-  // Scroll down to the job form
-  var divider = document.querySelector('#tab-customers .divider');
-  if (divider) divider.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(function(){ var d = document.getElementById('cust-event-date'); if(d) d.focus(); }, 420);
-}
-
-function trFillFromCustomer() {
-  var sel = document.getElementById('tr-customer-select');
-  if (!sel || !sel.value) return;
-  var entry = addressBookLookup(sel.value);
-  if (!entry) return;
-  var dest = document.getElementById('tr-destination');
-  if (dest) dest.value = entry.name + (entry.address ? ' — ' + entry.address.split(',')[0] : '');
 }
 
 // --- CUSTOMER JOBS ---
@@ -3420,14 +2925,6 @@ function custGetAllDishes() {
 function custEditJob(recIdx) {
   var r = records[recIdx];
   if (!r || r.type !== 'job') return;
-
-  // Switch to manual entry mode so fields are visible
-  var crmSel = document.getElementById('cust-crm-select');
-  if (crmSel) { crmSel.value = 'manual'; }
-  var crmPrev = document.getElementById('cust-crm-preview');
-  if (crmPrev) crmPrev.style.display = 'none';
-  var manFields = document.getElementById('cust-manual-fields');
-  if (manFields) manFields.style.display = 'block';
 
   // Fill customer details
   var _v = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
@@ -3696,11 +3193,9 @@ function custAddDishAndSave() {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
   });
-  var category = (document.getElementById('cust-dish-category').value || '');
-  _custDishes.push({ dish: name, allergens: allergens, category: category });
-  saveDishToLibrary(name, allergens, category);
+  _custDishes.push({ dish: name, allergens: allergens });
+  saveDishToLibrary(name, allergens);
   document.getElementById('cust-dish-name').value = '';
-  document.getElementById('cust-dish-category').selectedIndex = 0;
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     if (el) el.checked = false;
@@ -3756,7 +3251,7 @@ function logCustomerJob() {
   var notes     =  document.getElementById('cust-notes').value;
   var dietNotes =  document.getElementById('cust-diet-notes').value;
 
-  if (!client) { toast('Select a customer or enter details manually', false); return; }
+  if (!client) { toast('Please enter a client name', false); return; }
 
   var clientAllergens = custGetAllergens();
   var dietaryPrefs = DIETARY_PREFS.filter(function(p) {
@@ -3802,16 +3297,10 @@ function logCustomerJob() {
   saveToday();
 
   ['cust-name','cust-address','cust-phone','cust-email','cust-covers','cust-notes',
-   'cust-diet-notes','cust-event-date','cust-time','cust-crm-id'].forEach(function(id) {
+   'cust-diet-notes','cust-event-date','cust-time'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('cust-type').selectedIndex = 0;
-  var crmSel = document.getElementById('cust-crm-select');
-  if (crmSel) crmSel.selectedIndex = 0;
-  var crmPrev = document.getElementById('cust-crm-preview');
-  if (crmPrev) crmPrev.style.display = 'none';
-  var manFields = document.getElementById('cust-manual-fields');
-  if (manFields) manFields.style.display = 'none';
   ALLERGENS_14.forEach(function(a) {
     var el = document.getElementById('cal-' + a.replace(/\s+/g,'_')); if (el) el.checked = false;
   });
@@ -3978,257 +3467,15 @@ function removeCredential(i) {
   var list = loadCredentials(); list.splice(i,1); saveCredentials(list); renderCredentials(); toast('Credential removed');
 }
 
-// --- CALENDAR ---
-
-var _calYear  = new Date().getFullYear();
-var _calMonth = new Date().getMonth();   // 0-indexed
-var _calSelectedDate = null;
-
-var CAL_MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-// Build a map of dateStr → [jobRecord, ...] from today + all localStorage days.
-// Uses r.eventDate as the calendar date when present; falls back to the log date.
-function getAllJobsByDate() {
-  var byDate = {};
-  function add(r, fallbackDate) {
-    if (r.type !== 'job' || !r.client) return;
-    var d = r.eventDate || fallbackDate;
-    if (!d) return;
-    if (!byDate[d]) byDate[d] = [];
-    byDate[d].push(r);
-  }
-  records.forEach(function(r) { add(r, TODAY); });
-  try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (!k || k.indexOf('haccp_') !== 0) continue;
-      if (k === 'haccp_settings' || k === 'haccp_suppliers' || k === 'haccp_credentials') continue;
-      var dayStr = k.replace('haccp_', '');
-      getDayRecords(dayStr).forEach(function(r) { add(r, dayStr); });
-    }
-  } catch(e) {}
-  return byDate;
-}
-
-function calPrev() {
-  _calMonth--;
-  if (_calMonth < 0) { _calMonth = 11; _calYear--; }
-  _calSelectedDate = null;
-  renderCalendar();
-}
-
-function calNext() {
-  _calMonth++;
-  if (_calMonth > 11) { _calMonth = 0; _calYear++; }
-  _calSelectedDate = null;
-  renderCalendar();
-}
-
-function calDayClick(dateStr) {
-  _calSelectedDate = (_calSelectedDate === dateStr) ? null : dateStr;
-  renderCalendar();
-  if (_calSelectedDate) {
-    setTimeout(function() {
-      var el = document.getElementById('cal-day-detail');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 60);
-  }
-}
-
-function calToggleUnavailable(dateStr) {
-  if (!settings.unavailableDates) settings.unavailableDates = [];
-  var idx = settings.unavailableDates.indexOf(dateStr);
-  if (idx !== -1) {
-    settings.unavailableDates.splice(idx, 1);
-    toast('Availability restored');
-  } else {
-    settings.unavailableDates.push(dateStr);
-    toast('Marked unavailable');
-  }
-  saveSettings();
-  renderCalendar();          // re-render grid
-  if (_calSelectedDate === dateStr) {
-    // Refresh the detail panel without closing it
-    _renderCalDayDetail(dateStr, getAllJobsByDate());
-  }
-}
-
-function renderCalendar() {
-  var labelEl = document.getElementById('cal-month-label');
-  var gridEl  = document.getElementById('calendar-grid');
-  if (!gridEl) return;
-  if (labelEl) labelEl.textContent = CAL_MONTH_NAMES[_calMonth] + ' ' + _calYear;
-
-  var jobsByDate   = getAllJobsByDate();
-  var unavailable  = settings.unavailableDates || [];
-  var today        = todayStr();
-
-  var firstDay     = new Date(_calYear, _calMonth, 1);
-  var daysInMonth  = new Date(_calYear, _calMonth + 1, 0).getDate();
-  // ISO week starts Monday; JS getDay() is 0=Sun, so shift
-  var startDow     = (firstDay.getDay() + 6) % 7;
-
-  // --- Day-of-week headers ---
-  var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px">';
-  ['M','T','W','T','F','S','S'].forEach(function(d) {
-    html += '<div style="text-align:center;font-size:11px;font-weight:700;color:#aaa;padding:3px 0">' + d + '</div>';
-  });
-  html += '</div>';
-
-  // --- Day cells ---
-  html += '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
-
-  // Leading empty cells
-  for (var e = 0; e < startDow; e++) {
-    html += '<div style="min-height:52px"></div>';
-  }
-
-  for (var day = 1; day <= daysInMonth; day++) {
-    var mm  = String(_calMonth + 1).padStart(2, '0');
-    var dd  = String(day).padStart(2, '0');
-    var dateStr = _calYear + '-' + mm + '-' + dd;
-
-    var isToday    = dateStr === today;
-    var isUnavail  = unavailable.indexOf(dateStr) !== -1;
-    var jobs       = jobsByDate[dateStr] || [];
-    var hasJob     = jobs.length > 0;
-    var isSelected = _calSelectedDate === dateStr;
-    var isPast     = dateStr < today;
-
-    // Cell colours — priority: selected > today > job > unavailable > past > normal
-    var bg, fg, border;
-    if (isSelected && isToday)       { bg='#1a1a18'; fg='#fff'; border='#1a1a18'; }
-    else if (isSelected)             { bg='#e8e7e3'; fg='#1a1a18'; border='#1a1a18'; }
-    else if (isToday)                { bg='#1a1a18'; fg='#fff'; border='#1a1a18'; }
-    else if (hasJob && isUnavail)    { bg='#FFF0F0'; fg='#A32D2D'; border='#f5c6c6'; }
-    else if (hasJob)                 { bg='#EAF3DE'; fg='#2D7A3A'; border='#b8dfa0'; }
-    else if (isUnavail)              { bg='#FFF0F0'; fg='#A32D2D'; border='#f5c6c6'; }
-    else if (isPast)                 { bg='#faf9f6'; fg='#bbb'; border='#eee'; }
-    else                             { bg='#fff';    fg='#1a1a18'; border='#e5e4de'; }
-
-    html += '<div onclick="calDayClick(\'' + dateStr + '\')" style="'
-      + 'background:' + bg + ';color:' + fg + ';border:1px solid ' + border + ';'
-      + 'border-radius:9px;padding:6px 2px 5px;text-align:center;cursor:pointer;'
-      + 'min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;'
-      + (isSelected ? 'box-shadow:0 0 0 2px #1a1a18;' : '')
-      + '">'
-      + '<div style="font-size:14px;font-weight:' + (isToday || isSelected ? '700' : '400') + ';line-height:1.2">' + day + '</div>';
-
-    if (hasJob) {
-      html += '<div style="font-size:9px;font-weight:700;margin-top:2px;line-height:1.1">' + jobs.length + (jobs.length > 1 ? ' jobs' : ' job') + '</div>';
-    } else if (isUnavail) {
-      html += '<div style="font-size:9px;font-weight:700;margin-top:2px;line-height:1.1">Off</div>';
-    }
-
-    html += '</div>';
-  }
-
-  html += '</div>';
-  gridEl.innerHTML = html;
-
-  // Render detail panel
-  var detailEl = document.getElementById('cal-day-detail');
-  if (detailEl) {
-    if (_calSelectedDate) {
-      _renderCalDayDetail(_calSelectedDate, jobsByDate);
-    } else {
-      detailEl.innerHTML = '';
-    }
-  }
-}
-
-function _renderCalDayDetail(dateStr, jobsByDate) {
-  var detailEl = document.getElementById('cal-day-detail');
-  if (!detailEl) return;
-
-  var jobs      = (jobsByDate || getAllJobsByDate())[dateStr] || [];
-  var unavail   = (settings.unavailableDates || []).indexOf(dateStr) !== -1;
-  var dateParts = dateStr.split('-');
-  var dateLabel = new Date(parseInt(dateParts[0]), parseInt(dateParts[1])-1, parseInt(dateParts[2]))
-                    .toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  var isPast    = dateStr < todayStr();
-
-  var html = '<div style="background:#fff;border:1px solid #e5e4de;border-radius:14px;padding:16px 16px 12px;margin-top:14px">';
-  html += '<div style="font-size:15px;font-weight:700;color:#1a1a18;margin-bottom:12px">' + dateLabel + '</div>';
-
-  if (jobs.length) {
-    jobs.forEach(function(r) {
-      var statusCol = r.status === 'fail' ? '#A32D2D' : r.status === 'warn' ? '#854F0B' : '#2D7A3A';
-      var statusBg  = r.status === 'fail' ? '#FCEBEB' : r.status === 'warn' ? '#FAEEDA' : '#EAF3DE';
-      html += '<div style="background:#f8f7f3;border:1px solid #e5e4de;border-radius:10px;padding:12px 14px;margin-bottom:10px">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
-      html += '<div style="flex:1"><div style="font-size:15px;font-weight:700;color:#1a1a18">' + r.client + '</div>';
-      if (r.jobType) html += '<div style="font-size:12px;color:#555;margin-top:2px">' + r.jobType + (r.covers ? ' · ' + r.covers + ' covers' : '') + '</div>';
-      if (r.location) html += '<div style="font-size:12px;color:#888;margin-top:2px">📍 ' + r.location + '</div>';
-      if (r.time)    html += '<div style="font-size:12px;color:#888;margin-top:2px">🕐 ' + r.time + '</div>';
-      if (r.menus && r.menus.length) {
-        r.menus.forEach(function(m) {
-          html += '<div style="font-size:12px;color:#888;margin-top:2px">🍽 ' + m.name + ' (' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + ')</div>';
-        });
-      }
-      if (r.dietaryPrefs && r.dietaryPrefs.length) html += '<div style="font-size:12px;color:#888;margin-top:2px">🌿 ' + r.dietaryPrefs.join(', ') + '</div>';
-      if (r.conflicts && r.conflicts.length) {
-        html += '<div style="font-size:12px;color:#A32D2D;font-weight:600;margin-top:6px">⚠️ Allergen conflicts: ' + r.conflicts.join(', ') + '</div>';
-      }
-      if (r.notes) html += '<div style="font-size:12px;color:#888;margin-top:4px;font-style:italic">' + r.notes + '</div>';
-      // Contact buttons
-      var btns = '';
-      if (r.phone)    btns += '<a href="tel:'+r.phone.replace(/\s/g,'')+'" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#fff;border:1px solid #e5e4de;border-radius:7px;margin-top:8px;margin-right:6px">📞 '+r.phone+'</a>';
-      if (r.email)    btns += '<a href="mailto:'+r.email+'" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#fff;border:1px solid #e5e4de;border-radius:7px;margin-top:8px;margin-right:6px">✉️ '+r.email+'</a>';
-      if (r.location) btns += '<a href="https://maps.google.com/?q='+encodeURIComponent(r.location)+'" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#fff;border:1px solid #e5e4de;border-radius:7px;margin-top:8px">🗺 Directions</a>';
-      if (btns) html += '<div style="display:flex;flex-wrap:wrap">' + btns + '</div>';
-      html += '</div>';
-      html += '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;background:'+statusBg+';color:'+statusCol+';white-space:nowrap;flex-shrink:0">' + (r.status||'ok').toUpperCase() + '</span>';
-      html += '</div></div>';
-    });
-  } else {
-    html += '<div style="font-size:13px;color:#aaa;margin-bottom:12px">No jobs booked for this day.</div>';
-  }
-
-  // Action buttons row
-  html += '<div style="display:flex;gap:8px;margin-top:8px">';
-
-  // Book a job — only show for future/today dates that aren't fully blocked
-  if (!isPast && !unavail) {
-    html += '<button onclick="calBookJob(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#1a1a18;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Book a job</button>';
-  } else if (!isPast && unavail) {
-    html += '<button onclick="calBookJob(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#1a1a18;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Book a job</button>';
-  }
-
-  // Unavailability toggle
-  if (unavail) {
-    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#FFF0F0;color:#A32D2D;border:1px solid #f5c6c6;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">✓ Unavailable — remove</button>';
-  } else if (!isPast) {
-    html += '<button onclick="calToggleUnavailable(\'' + dateStr + '\')" style="flex:1;padding:11px;background:#f5f4f0;color:#555;border:1px solid #e5e4de;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">Mark unavailable</button>';
-  }
-
-  html += '</div>';
-  html += '</div>';
-  detailEl.innerHTML = html;
-}
-
-function calBookJob(dateStr) {
-  showTab('customers');
-  setTimeout(function() {
-    // Pre-fill the event date in the job form
-    var dateEl = document.getElementById('cust-event-date');
-    if (dateEl) dateEl.value = dateStr;
-    // Scroll to the job form section
-    var divider = document.querySelector('#tab-customers .divider');
-    if (divider) divider.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 180);
-}
-
 // --- PC RENDER ---
 function renderSection_PC(type) {
   if (type === 'credentials') { renderCredentials(); return; }
-  if (type === 'calendar')    { renderCalendar();    return; }
   // 'customers' tab renders job-type records into #job-log
   var renderType = (type === 'customers') ? 'job' : type;
   var ids = {job:'job-log', customers:'job-log', kitchenassess:'kitchenassess-log', allergen:'allergen-log', transport:'transport-log', mobileset:'mobileset-log'};
   var c = document.getElementById(ids[type]); if (!c) return;
   var recs = records.filter(function(r){ return r.type===renderType; });
-  if (!recs.length) { c.innerHTML='<div class="empty">'+(type==='customers'?'No jobs logged yet today — select a client above to get started.':'No records logged yet today.')+'</div>'; return; }
+  if (!recs.length) { c.innerHTML='<div class="empty">'+(type==='customers'?'No customer jobs logged yet today.':'No records logged yet today.')+'</div>'; return; }
   c.innerHTML = recs.slice().reverse().map(function(r) {
     var recIdx = records.indexOf(r);
     var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.by||'';
@@ -4236,6 +3483,7 @@ function renderSection_PC(type) {
     if (r.type==='allergen' && r.allergens && r.allergens.length) extra += '<div class="log-time">'+r.allergens.join(', ')+'</div>';
     if (r.type==='transport') extra += '<div class="log-time">'+r.startTemp+'°C at '+r.startTime+' → '+r.endTemp+'°C at '+r.endTime+'</div>';
     if (r.type==='job') {
+      if (r.location)   extra += '<div class="log-time">📍 '+r.location+'</div>';
       if (r.eventDate)  extra += '<div class="log-time">📅 '+new Date(r.eventDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>';
       if (r.menus && r.menus.length) {
         r.menus.forEach(function(m) {
@@ -4246,12 +3494,6 @@ function renderSection_PC(type) {
       }
       if (r.dietaryPrefs&&r.dietaryPrefs.length) extra += '<div class="log-time">'+r.dietaryPrefs.join(', ')+'</div>';
       if (r.conflicts && r.conflicts.length) extra += '<div style="margin-top:4px;font-size:12px;color:#A32D2D;font-weight:600">⚠️ Allergen conflicts: '+r.conflicts.join(', ')+'</div>';
-      // CRM-style contact buttons
-      var contactBtns = '';
-      if (r.phone)    contactBtns += '<a href="tel:'+r.phone.replace(/\s/g,'')+'" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#f5f4f0;border-radius:7px;margin:6px 5px 0 0">📞 '+r.phone+'</a>';
-      if (r.email)    contactBtns += '<a href="mailto:'+r.email+'" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#f5f4f0;border-radius:7px;margin:6px 5px 0 0">✉️ '+r.email+'</a>';
-      if (r.location) contactBtns += '<a href="https://maps.google.com/?q='+encodeURIComponent(r.location)+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1a1a18;text-decoration:none;padding:6px 10px;background:#f5f4f0;border-radius:7px;margin:6px 5px 0 0">🗺 Directions</a>';
-      if (contactBtns) extra += '<div style="display:flex;flex-wrap:wrap">'+contactBtns+'</div>';
     }
     if (r.photo) extra += '<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="event.stopPropagation();viewPhoto(this.src)"/></div>';
     var rowClick = (r.type === 'job') ? ' onclick="custEditJob('+recIdx+')" style="align-items:flex-start;cursor:pointer"' : ' style="align-items:flex-start"';

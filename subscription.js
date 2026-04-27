@@ -320,7 +320,7 @@ window.Mise.subscription = (function () {
       +   '<span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px">⚙️</span>'
       +   '<div>'
       +     '<div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:2px">Customise everything in Settings</div>'
-      +     '<div style="font-size:13px;color:#666;line-height:1.5">Add your staff names, fridge units and suppliers so the dropdowns are ready when you need them.</div>'
+      +     '<div style="font-size:13px;color:#666;line-height:1.5">Tap the ⚙️ icon in the top-right corner to add your staff names, fridge units and suppliers before you start.</div>'
       +   '</div>'
       + '</div>'
 
