@@ -1,10 +1,10 @@
-# Veriqo + Bookr — Project Reference
+# Veriqo + Carte — Project Reference
 
 ## Two-App Architecture
 
 One GitHub repo, one Supabase project, one Vercel deployment. Two standalone apps.
 
-| | Veriqo | Bookr |
+| | Veriqo | Carte |
 |---|---|---|
 | **File** | `app.html` | `mise.html` |
 | **Purpose** | HACCP food safety compliance (any commercial kitchen) | Private chef business management |
@@ -17,8 +17,8 @@ One GitHub repo, one Supabase project, one Vercel deployment. Two standalone app
 
 - **Frontend:** Single-file vanilla HTML/CSS/JS — no framework, no bundler, no npm
 - **Auth:** Supabase Auth (email/password + Google OAuth + magic link) via shared `auth.js`
-- **Cloud sync:** Supabase Postgres via `sync.js` (Veriqo) and `mise-sync.js` (Bookr)
-- **Subscription:** Stripe paywall via `subscription.js` + `api/` Vercel serverless functions (Veriqo only — Bookr has no paywall yet)
+- **Cloud sync:** Supabase Postgres via `sync.js` (Veriqo) and `mise-sync.js` (Carte)
+- **Subscription:** Stripe paywall via `subscription.js` + `api/` Vercel serverless functions (Veriqo only — Carte has no paywall yet)
 - **PWA:** Service worker (`sw.js`), manifest (`manifest.json`), icons in `icons/`
 - **Hosting:** Vercel (auto-deploys from `main` within ~30 seconds)
 - **Repo:** `https://github.com/mogorman-a11y/mise` (branch: `main`)
@@ -30,11 +30,11 @@ One GitHub repo, one Supabase project, one Vercel deployment. Two standalone app
 
 ```
 app.html          ← Veriqo HACCP app
-mise.html         ← Bookr private chef app
+mise.html         ← Carte private chef app
 auth.js           ← Shared auth (email/pw, Google, magic link, account card)
 supabase.js       ← Shared Supabase client init
 sync.js           ← Cloud sync for Veriqo (haccp_records + settings tables)
-mise-sync.js      ← Cloud sync for Bookr (mise_records + mise_settings tables)
+mise-sync.js      ← Cloud sync for Carte (mise_records + mise_settings tables)
 subscription.js   ← Stripe paywall for Veriqo only
 sw.js             ← Service worker (PWA, offline-first)
 manifest.json     ← PWA manifest
@@ -71,8 +71,8 @@ All tables have Row Level Security enabled.
 | `profiles` | Both | `id`, `business_name`, `chef_name`, `subscription_status`, `trial_ends_at`, `stripe_customer_id`, `logo`, `onboarded`, `updated_at` |
 | `haccp_records` | Veriqo | `user_id`, `date`, `records` (JSON array) |
 | `settings` | Veriqo | `id` (user_id), `config` (JSON), `updated_at` |
-| `mise_records` | Bookr | `user_id`, `date`, `records` (JSON array) |
-| `mise_settings` | Bookr | `id` (user_id), `config` (JSON), `updated_at` |
+| `mise_records` | Carte | `user_id`, `date`, `records` (JSON array) |
+| `mise_settings` | Carte | `id` (user_id), `config` (JSON), `updated_at` |
 | `push_subscriptions` | Veriqo | `user_id`, `endpoint`, `subscription` (JSON) |
 | `leads` | Landing page | `email`, `source` |
 
@@ -118,7 +118,7 @@ All tables have Row Level Security enabled.
 
 ---
 
-## Bookr (mise.html) — What's Built
+## Carte (mise.html) — What's Built
 
 **Tabs (bottom nav):** Home, Clients, Calendar, Menus, More
 **More menu leads to:** Transport, Assess, Allergen, Credentials, Settings
@@ -135,7 +135,7 @@ All tables have Row Level Security enabled.
 - Credentials: certificate tracker with 90-day expiry warning
 - Settings: profile, staff list, Veriqo sync toggle
 - **Cloud sync via `mise-sync.js`** — pulls/pushes `mise_records` + `mise_settings` tables on sign-in/save
-- **No Stripe paywall** — anyone with a Supabase account can access Bookr for free (paywall is future work)
+- **No Stripe paywall** — anyone with a Supabase account can access Carte for free (paywall is future work)
 
 **Key JS patterns:**
 - `mSettings` → `mise_settings` localStorage + Supabase `mise_settings` table
@@ -148,7 +148,7 @@ All tables have Row Level Security enabled.
 
 ## Branding
 
-| | Veriqo | Bookr |
+| | Veriqo | Carte |
 |---|---|---|
 | **Background** | `#f5f4f0` (light grey) | `#F5F0E8` (warm parchment) |
 | **Header** | `#fff` with green accents | `#1C2B1E` (deep forest) |
@@ -190,7 +190,7 @@ Magic link and auth emails currently go to junk. Fix:
 ## Outstanding / Next Steps
 
 - **Email deliverability:** Set up Resend custom SMTP (see above)
-- **Bookr Stripe paywall:** Add subscription check when selling Bookr standalone or as a suite
-- **Bookr PDF export:** Print-to-PDF job reports (similar to Veriqo's `buildPDFExport()`)
+- **Carte Stripe paywall:** Add subscription check when selling Carte standalone or as a suite
+- **Carte PDF export:** Print-to-PDF job reports (similar to Veriqo's `buildPDFExport()`)
 - **Suite landing page:** Page at `getveriqo.co.uk` explaining both apps and bundle offer
 - **Veriqo PDF export plan:** Exists at `/Users/michael/.claude/plans/snappy-munching-river.md` — adds "Export PDF" button in `buildDayBlock()`

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Bookr</title>
+<title>Carte</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -172,12 +172,12 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
   <div class="header">
     <button class="back-btn" id="back-btn" onclick="goHome()">&#8592;</button>
     <div class="header-text">
-      <!-- Bookr logo -->
+      <!-- Carte logo -->
       <svg id="mise-header-logo" width="30" height="30" viewBox="0 0 60 60" style="display:none;flex-shrink:0" xmlns="http://www.w3.org/2000/svg">
-        <rect width="60" height="60" rx="12" fill="#C8A96E"/>
-        <text x="30" y="44" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="32" font-weight="800" fill="#1C2B1E">B</text>
+        <rect width="60" height="60" rx="14" fill="#1C2B1E"/>
+        <path d="M44.1,15.9 A20,20 0 1,0 44.1,44.1 L39.2,39.2 A13,13 0 1,0 39.2,20.8 Z" fill="#C8A96E"/>
       </svg>
-      <h1 id="mise-header-title">Bookr</h1>
+      <h1 id="mise-header-title">Carte</h1>
       <span class="header-sub" id="mise-header-sub"></span>
     </div>
   </div>
@@ -187,10 +187,10 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
     <div style="margin-bottom:20px;display:flex;align-items:center;gap:14px;padding-top:4px">
       <svg width="56" height="56" viewBox="0 0 60 60" style="flex-shrink:0;border-radius:14px" xmlns="http://www.w3.org/2000/svg">
         <rect width="60" height="60" rx="14" fill="#1C2B1E"/>
-        <text x="30" y="44" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="34" font-weight="800" fill="#C8A96E">B</text>
+        <path d="M44.1,15.9 A20,20 0 1,0 44.1,44.1 L39.2,39.2 A13,13 0 1,0 39.2,20.8 Z" fill="#C8A96E"/>
       </svg>
       <div>
-        <div style="font-size:26px;font-weight:800;color:#1C2B1E;letter-spacing:-0.8px">Bookr</div>
+        <div style="font-size:26px;font-weight:800;color:#1C2B1E;letter-spacing:-0.8px">Carte</div>
         <div style="font-size:13px;color:#3A7D44;margin-top:2px;font-weight:600">Private Chef. All in one place.</div>
       </div>
     </div>
@@ -840,7 +840,7 @@ function showTab(name){
   if(headerLogo) headerLogo.style.display = name==='home' ? 'none' : 'block';
 
   // Header title
-  document.getElementById('mise-header-title').textContent = name==='home' ? 'Bookr' : (_TITLES[name]||name);
+  document.getElementById('mise-header-title').textContent = name==='home' ? 'Carte' : (_TITLES[name]||name);
   document.getElementById('mise-header-sub').textContent = '';
 
   // Nav button active state
