@@ -1205,7 +1205,7 @@ function _renderCalDetail(ds, jobsByDate){
 
   if(jobs.length > 0){
     jobs.forEach(function(j){
-      html += '<div style="padding:8px 0;border-bottom:1px solid #F0EBE2">'
+      html += '<div onclick="calViewJob(\''+j.id+'\')" style="padding:8px 0;border-bottom:1px solid #F0EBE2;cursor:pointer">'
         + '<div style="font-size:15px;font-weight:600;color:#1C2B1E">'+_esc(j.client||'Unnamed')+'</div>'
         + '<div style="font-size:13px;color:#7A7468;margin-top:3px">'
         + (j.eventTime ? j.eventTime+' · ' : '')
@@ -1239,6 +1239,15 @@ function calBookJob(ds){
     if(el) el.value = ds;
     window.scrollTo(0,0);
   }, 120);
+}
+
+function calViewJob(id){
+  _expandedJobId = id;
+  showTab('jobs');
+  setTimeout(function(){
+    var el = document.querySelector('[data-job-id="'+id+'"]');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 150);
 }
 
 // ═══════════════════════════════════════════════════════ DISH LIBRARY ════════
@@ -1492,7 +1501,7 @@ function renderJobsHistory(){
         + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
         + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
         + '</div>' : '';
-      return '<div class="job-card" onclick="toggleJobCard(\''+j.id+'\')">'
+      return '<div class="job-card" data-job-id="'+j.id+'" onclick="toggleJobCard(\''+j.id+'\')">'
         + '<div class="job-card-header">'
         + '<div><div class="job-card-name">'+_esc(j.client||'Unnamed')+'</div>'
         + '<div class="job-card-date">'+fmtDate(j.eventDate)+(j.jobType?' · '+_esc(j.jobType):'')+'</div>'

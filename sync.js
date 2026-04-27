@@ -155,6 +155,7 @@ window.Mise.sync = (function () {
           config: settings,
           updated_at: new Date().toISOString()
         });
+        await _mirrorSettingsToCarte(settings);
       }
     }
   }
