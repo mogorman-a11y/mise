@@ -115,6 +115,7 @@ All tables have Row Level Security enabled.
 - `DISH_CATEGORIES` array drives category dropdowns, sort order, and grouping
 - `_sortByMealOrder(dishes)` — sorts by DISH_CATEGORIES index, uncategorised last
 - `saveSettings()` always calls `Mise.sync.saveSettings(settings)` if sync available
+- **Cross-app dish/menu library sharing** — on login, pulls from Carte's `mise_settings` table and merges `savedDishes` + `savedMenus` (deduped by name, own entries win)
 
 ---
 
@@ -135,6 +136,7 @@ All tables have Row Level Security enabled.
 - Credentials: certificate tracker with 90-day expiry warning
 - Settings: profile, staff list, Veriqo sync toggle
 - **Cloud sync via `mise-sync.js`** — pulls/pushes `mise_records` + `mise_settings` tables on sign-in/save
+- **Cross-app dish/menu library sharing** — on login, pulls from Veriqo's `settings` table and merges `savedDishes` + `savedMenus` (deduped by name, own entries win). Dishes added in Carte appear in Veriqo and vice versa automatically.
 - **No Stripe paywall** — anyone with a Supabase account can access Carte for free (paywall is future work)
 
 **Key JS patterns:**
@@ -143,6 +145,7 @@ All tables have Row Level Security enabled.
 - `getDayRecords(ds)` / `saveDayRecords(ds, arr)` — `saveDayRecords` fires `Mise.sync.saveDay()`
 - `getAllJobs()` / `getAllTypeRecords(type)` scan all `mise_*` localStorage keys
 - `getAddressBook()` — merges `mSettings.savedClients` + historical job records
+- `saveSettings()` always calls `Mise.sync.saveSettings(mSettings)` if sync available
 
 ---
 
@@ -155,7 +158,7 @@ All tables have Row Level Security enabled.
 | **Primary action** | `#1a1a18` (near-black) | `#1C2B1E` (forest) |
 | **Accent** | `#2D7A3A` (green) | `#C8A96E` (gold) |
 | **Secondary accent** | — | `#3A7D44` (action green) |
-| **Logo letter** | Veriqo shield SVG | `B` on gold/dark background |
+| **Logo** | Veriqo shield SVG | `C` arc path SVG — `#C8A96E` on `#1C2B1E`, rx="14" |
 
 ---
 
@@ -187,9 +190,27 @@ Magic link and auth emails currently go to junk. Fix:
 
 ---
 
+## What Was Built (Session Log)
+
+### Session 2026-04-27
+- Renamed Mise → Bookr → **Carte** (trademark confirmed clear in Nice Classes 35, 42, 43)
+- Built `mise-sync.js` — cloud sync for Carte (`mise_records` + `mise_settings` tables)
+- Veriqo: Settings moved to **cog icon in header** (top-right, always visible)
+- Veriqo: **All private chef tiles always visible** — no toggle needed
+- Veriqo: Tiles made compact (padding reduced, icons 32px)
+- Veriqo: **Enter/Return key** submits login form
+- Both apps: `DISH_CATEGORIES` array added; dishes auto-sort by meal course order
+- Both apps: Dish library grouped by category with headers; dishes **clickable/editable** in menu builder
+- Both apps: **Cross-app dish/menu library sharing** — `sync.js` and `mise-sync.js` each cross-pull the other app's settings table on login and merge `savedDishes` + `savedMenus` (deduped by name)
+- Carte logo: gold `C` arc path SVG on deep forest background
+- First-login welcome modal updated to reference cog icon location
+- `CLAUDE.md` created with full project reference
+
+---
+
 ## Outstanding / Next Steps
 
-- **Email deliverability:** Set up Resend custom SMTP (see above)
+- **Email deliverability:** Set up Resend custom SMTP (see above) — magic link emails go to junk
 - **Carte Stripe paywall:** Add subscription check when selling Carte standalone or as a suite
 - **Carte PDF export:** Print-to-PDF job reports (similar to Veriqo's `buildPDFExport()`)
 - **Suite landing page:** Page at `getveriqo.co.uk` explaining both apps and bundle offer
