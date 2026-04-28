@@ -131,7 +131,8 @@ window.Mise.sync = (function () {
     if (result.error || !result.data) return;
     result.data.forEach(function(row){
       var jobs = (row.records || []).filter(function(r){ return r && r.type === 'job' && r.sourceApp !== 'veriqo'; }).map(function(r){
-        return Object.assign({}, r, { id: String(r.id).indexOf('mise_') === 0 ? r.id : 'mise_' + r.id, sourceApp: 'carte' });
+        var msg = r.msg || ((r.jobType||'Job') + (r.covers ? ' · ' + r.covers + ' covers' : '') + (r.notes ? ' · ' + r.notes : ''));
+        return Object.assign({}, r, { id: String(r.id).indexOf('mise_') === 0 ? r.id : 'mise_' + r.id, sourceApp: 'carte', msg: msg, status: r.status||'ok' });
       });
       if (!jobs.length) return;
       var key = 'haccp_' + row.date;

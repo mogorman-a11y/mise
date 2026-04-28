@@ -1903,7 +1903,8 @@ function mirrorJobToVeriqo(rec){
     var hRecs = JSON.parse(localStorage.getItem(hKey)||'[]');
     var mirrorId = 'mise_' + rec.id;
     if(!hRecs.some(function(r){ return r.id === mirrorId; })){
-      hRecs.push(Object.assign({}, rec, { id: mirrorId, sourceApp: 'carte' }));
+      var msg = (rec.jobType||'Job') + (rec.covers ? ' · ' + rec.covers + ' covers' : '') + (rec.notes ? ' · ' + rec.notes : '');
+      hRecs.push(Object.assign({}, rec, { id: mirrorId, sourceApp: 'carte', msg: msg, status: rec.status||'ok' }));
       localStorage.setItem(hKey, JSON.stringify(hRecs));
     }
   } catch(e){}
