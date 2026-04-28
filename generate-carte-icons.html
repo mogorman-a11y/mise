@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Carte — Icon Generator</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 40px; background: #F5F0E8; }
+  h2 { margin-bottom: 8px; color: #1C2B1E; }
+  p { margin-bottom: 24px; color: #555; }
+  .row { display: flex; gap: 40px; align-items: flex-start; margin-bottom: 30px; flex-wrap: wrap; }
+  canvas { border-radius: 22%; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  a { display: block; margin-top: 10px; padding: 8px 16px; background: #1C2B1E; color: #C8A96E;
+      border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; text-align: center; }
+</style>
+</head>
+<body>
+<h2>Carte Icon Generator</h2>
+<p>Click each download link, then save the file into the <code>icons/</code> folder with the exact filename shown.</p>
+
+<div class="row">
+  <div>
+    <canvas id="c192" width="192" height="192"></canvas>
+    <a id="dl192" download="carte-192.png">Download carte-192.png</a>
+  </div>
+  <div>
+    <canvas id="c512" width="512" height="512"></canvas>
+    <a id="dl512" download="carte-512.png">Download carte-512.png</a>
+  </div>
+  <div>
+    <canvas id="c180" width="180" height="180"></canvas>
+    <a id="dl180" download="carte-apple-touch.png">Download carte-apple-touch.png</a>
+  </div>
+</div>
+
+<script>
+// Draws the Carte "C" logo: dark forest background + gold C arc
+// The C arc SVG path (viewBox 0 0 60 60):
+//   M44.1,15.9 A20,20 0 1,0 44.1,44.1 L39.2,39.2 A13,13 0 1,0 39.2,20.8 Z
+function drawCarteIcon(canvas) {
+  var s   = canvas.width;
+  var ctx = canvas.getContext('2d');
+  var r   = s * 0.22; // corner radius
+
+  // Dark forest rounded-square background
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(s - r, 0); ctx.quadraticCurveTo(s, 0, s, r);
+  ctx.lineTo(s, s - r); ctx.quadraticCurveTo(s, s, s - r, s);
+  ctx.lineTo(r, s);     ctx.quadraticCurveTo(0, s, 0, s - r);
+  ctx.lineTo(0, r);     ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#1C2B1E';
+  ctx.fill();
+
+  // Scale the 60x60 SVG path to canvas size
+  var sc = s / 60;
+  ctx.save();
+  ctx.scale(sc, sc);
+
+  // Gold C arc using Path2D
+  var path = new Path2D('M44.1,15.9 A20,20 0 1,0 44.1,44.1 L39.2,39.2 A13,13 0 1,0 39.2,20.8 Z');
+  ctx.fillStyle = '#C8A96E';
+  ctx.fill(path);
+
+  ctx.restore();
+}
+
+['c192','c512','c180'].forEach(function(id) {
+  drawCarteIcon(document.getElementById(id));
+});
+
+document.getElementById('dl192').href = document.getElementById('c192').toDataURL('image/png');
+document.getElementById('dl512').href = document.getElementById('c512').toDataURL('image/png');
+document.getElementById('dl180').href = document.getElementById('c180').toDataURL('image/png');
+</script>
+</body>
+</html>

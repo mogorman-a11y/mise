@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Carte</title>
+<!-- PWA -->
+<link rel="manifest" href="mise-manifest.json">
+<meta name="theme-color" content="#1C2B1E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Carte">
+<link rel="apple-touch-icon" href="icons/carte-apple-touch.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -204,6 +212,15 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
         <div style="font-size:26px;font-weight:800;color:#1C2B1E;letter-spacing:-0.8px">Carte</div>
         <div style="font-size:13px;color:#3A7D44;margin-top:2px;font-weight:600">Private Chef. All in one place.</div>
       </div>
+    </div>
+
+    <div id="carte-install-banner" style="display:none;background:#EAF4EC;border:1px solid #A8D5B0;border-radius:10px;padding:12px 14px;margin-bottom:16px;align-items:flex-start;gap:10px">
+      <span style="font-size:22px;flex-shrink:0">📲</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:600;color:#1C2B1E;margin-bottom:4px">Add Carte to your home screen</div>
+        <div id="carte-install-banner-body" style="font-size:13px;color:#555;line-height:1.5"></div>
+      </div>
+      <button onclick="dismissCarteBanner()" style="background:none;border:none;color:#bbb;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>
     </div>
 
     <div id="dash-greeting" class="greeting"></div>
@@ -431,6 +448,11 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
         <div><div class="more-name">Settings</div><div class="more-sub">Profile, staff, Veriqo sync</div></div>
         <div class="more-arrow">›</div>
       </div>
+      <div class="more-item" onclick="showTab('install')">
+        <div class="more-icon">📲</div>
+        <div><div class="more-name">Save as app</div><div class="more-sub">Add Carte to your home screen</div></div>
+        <div class="more-arrow">›</div>
+      </div>
     </div>
   </div>
 
@@ -638,6 +660,76 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════ INSTALL ══════════════════════ -->
+  <div id="tab-install" class="section">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Save Carte as an app</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:14px">
+        <p>Carte works best saved to your home screen — it opens full-screen like a native app, loads faster, and works offline.</p>
+
+        <!-- iPhone / iPad -->
+        <div style="background:#F5F0E8;border-radius:10px;padding:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <svg width="18" height="18" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="56" height="56" rx="12" fill="#000"/><rect x="14" y="6" width="28" height="44" rx="4" fill="#fff"/><circle cx="28" cy="46" r="2.5" fill="#ddd"/></svg>
+            <span style="font-size:13px;font-weight:700;color:#1C2B1E">iPhone &amp; iPad — Safari only</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1C2B1E;color:#C8A96E;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span>
+              <span>Open <strong>getveriqo.co.uk/mise.html</strong> in <strong>Safari</strong> — Chrome &amp; Firefox on iPhone cannot install apps</span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1C2B1E;color:#C8A96E;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span>
+              <span>Tap the <strong>Share button</strong> at the bottom of the screen — the icon looks like a box with an arrow pointing up:
+                <span style="display:inline-flex;align-items:center;justify-content:center;border:2px solid #1C2B1E;border-radius:6px;width:26px;height:28px;margin-left:4px;flex-shrink:0;vertical-align:middle">
+                  <svg width="13" height="16" viewBox="0 0 13 16" fill="none"><path d="M6.5 1v9M3.5 4l3-3 3 3" stroke="#1C2B1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M1 7v7h11V7" stroke="#1C2B1E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1C2B1E;color:#C8A96E;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
+              <span>Scroll down in the share sheet and tap <strong>Add to Home Screen</strong>
+                <span style="display:inline-block;background:#fff;border:1px solid #ddd;border-radius:5px;padding:1px 7px;font-size:12px;margin-left:4px;color:#1C2B1E">＋ Add to Home Screen</span>
+              </span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#1C2B1E;color:#C8A96E;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</span>
+              <span>Tap <strong>Add</strong> in the top-right — Carte appears on your home screen with its own icon</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Android -->
+        <div style="background:#F5F0E8;border-radius:10px;padding:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <svg width="18" height="18" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="56" height="56" rx="12" fill="#3DDC84"/><path d="M14 38c0-7.7 6.3-14 14-14s14 6.3 14 14" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><circle cx="21" cy="26" r="2.5" fill="#fff"/><circle cx="35" cy="26" r="2.5" fill="#fff"/><line x1="20" y1="20" x2="16" y2="15" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><line x1="36" y1="20" x2="40" y2="15" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+            <span style="font-size:13px;font-weight:700;color:#1C2B1E">Android — Chrome</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span>
+              <span>Open Carte in <strong>Chrome</strong></span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span>
+              <span>Tap the <strong>three-dot menu</strong> <span style="display:inline-block;font-size:16px;font-weight:900;line-height:1;vertical-align:middle;letter-spacing:-1px">⋮</span> in the top-right of Chrome</span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
+              <span>Tap <strong>Add to Home screen</strong> or <strong>Install app</strong></span>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <span style="background:#3DDC84;color:#000;font-size:11px;font-weight:700;border-radius:50%;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</span>
+              <span>Tap <strong>Install</strong> to confirm</span>
+            </div>
+          </div>
+        </div>
+
+        <p style="font-size:12px;color:#aaa">Once installed, Carte opens full-screen with no browser bar. Your data stays on the device and syncs to the cloud when you sign in.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════ BOTTOM NAV ═════════════════ -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-home" onclick="showTab('home')">
@@ -841,11 +933,12 @@ function addressBookLookup(key){
 // ═══════════════════════════════════════════════════════ NAVIGATION ══════════
 var _homeScrollPos = 0;
 var _NAV_TABS = ['home','clients','calendar','menus','more'];
-var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','settings'];
+var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','settings','install'];
 var _TITLES = {
   clients:'Clients', calendar:'Calendar', menus:'Menus & Dishes', jobs:'Jobs',
   more:'More', transport:'Transport Temps', assess:'Kitchen Assessment',
-  allergen:'Allergen Log', credentials:'Credentials', settings:'Settings'
+  allergen:'Allergen Log', credentials:'Credentials', settings:'Settings',
+  install:'Save as App'
 };
 
 function goHome(){ showTab('home'); }
@@ -873,7 +966,7 @@ function showTab(name){
   // Nav button active state
   _NAV_TABS.forEach(function(t){
     var btn = document.getElementById('nav-'+t);
-    if(btn) btn.classList.toggle('active', t===name || (t==='more' && ['more','assess','allergen','credentials','settings'].indexOf(name)!==-1));
+    if(btn) btn.classList.toggle('active', t===name || (t==='more' && ['more','assess','allergen','credentials','settings','install'].indexOf(name)!==-1));
   });
 
   _activeTab = name;
@@ -1912,6 +2005,44 @@ function mirrorJobToVeriqo(rec){
 }
 function openVeriqo(){ window.location.href = 'app.html'; }
 
+// ── Carte install banner ──────────────────────────────────────────────────────
+var _carteInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault(); _carteInstallPrompt = e; _showCarteBanner('android');
+});
+function _showCarteBanner(type){
+  if(localStorage.getItem('carte_install_dismissed')) return;
+  if(window.matchMedia('(display-mode: standalone)').matches) return;
+  if(window.navigator.standalone) return;
+  var banner = document.getElementById('carte-install-banner');
+  var body   = document.getElementById('carte-install-banner-body');
+  if(!banner || !body) return;
+  if(type === 'android'){
+    body.innerHTML = '<button onclick="_triggerCarteInstall()" style="margin-top:5px;background:#3A7D44;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Install app</button>';
+  } else {
+    body.innerHTML = 'Tap the <span style="display:inline-block;border:1.5px solid #555;border-radius:4px;padding:0 4px;font-size:12px;line-height:1.6;font-weight:700">&#8679;</span> <strong>Share</strong> button at the bottom of Safari, then tap <strong>Add to Home Screen</strong>';
+  }
+  banner.style.display = 'flex';
+}
+function _triggerCarteInstall(){
+  if(!_carteInstallPrompt) return;
+  _carteInstallPrompt.prompt();
+  _carteInstallPrompt.userChoice.then(function(r){
+    _carteInstallPrompt = null;
+    if(r.outcome === 'accepted') dismissCarteBanner();
+  });
+}
+function dismissCarteBanner(){
+  var el = document.getElementById('carte-install-banner');
+  if(el) el.style.display = 'none';
+  try { localStorage.setItem('carte_install_dismissed','1'); } catch(e){}
+}
+(function(){
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
+  if(isIOS && !isStandalone){ setTimeout(function(){ _showCarteBanner('ios'); }, 300); }
+})();
+
 // ═══════════════════════════════════════════════════════ INIT ════════════════
 function populateAllSelects(){
   populateClientSelects();
@@ -1941,7 +2072,7 @@ function renderAllSections(){
 <!-- Mise shared modules -->
 <script src="supabase.js?v=4"></script>
 <script src="mise-sync.js?v=4"></script>
-<script src="auth.js?v=5"></script>
+<script src="auth.js?v=6"></script>
 <script>
 window.MISE_AUTH_CONFIG = {
   name: 'Carte',

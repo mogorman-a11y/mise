@@ -82,9 +82,14 @@ window.Mise.auth = (function () {
       +   '<button id="auth-submit" onclick="Mise.auth._submit()" '
       +     'style="width:100%;padding:14px;background:'+submitBg+';color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px">Sign in</button>'
 
-      // Forgot password (sign-in only)
-      +   '<div id="auth-forgot-row" style="text-align:center;margin-top:11px">'
+      // Forgot password + magic link toggle (sign-in only)
+      +   '<div id="auth-forgot-row" style="text-align:center;margin-top:11px;display:flex;justify-content:center;gap:14px">'
       +     '<button onclick="Mise.auth._forgot()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit">Forgot password?</button>'
+      +     '<span style="color:#ddd;font-size:13px;line-height:1.6">·</span>'
+      +     '<button id="auth-magic-btn" onclick="Mise.auth._tab(\'magic\')" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit">Email me a link</button>'
+      +   '</div>'
+      +   '<div id="auth-back-row" style="display:none;text-align:center;margin-top:11px">'
+      +     '<button onclick="Mise.auth._tab(\'signin\')" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;font-family:inherit">← Sign in with password</button>'
       +   '</div>'
 
       // Trial note (sign-up only)
@@ -195,25 +200,27 @@ window.Mise.auth = (function () {
   }
 
   // ── _tab ───────────────────────────────────────────────────────────────────
-  // Switches the auth form between "Sign in" and "Create account" views.
   function _tab(tab) {
     _currentTab = tab;
-    const isSignup = tab === 'signup';
+    var isMagic  = tab === 'magic';
+    var isSignup = tab === 'signup';
+
+    var pwWrap   = document.getElementById('auth-password') && document.getElementById('auth-password').closest('div[style*="position:relative"]');
+    if (pwWrap) pwWrap.style.display = isMagic ? 'none' : '';
 
     document.getElementById('auth-signup-fields').style.display = isSignup ? 'block' : 'none';
-    document.getElementById('auth-forgot-row').style.display    = isSignup ? 'none'  : 'block';
+    document.getElementById('auth-forgot-row').style.display    = (!isSignup && !isMagic) ? 'flex'  : 'none';
+    document.getElementById('auth-back-row').style.display      = isMagic ? 'block' : 'none';
     document.getElementById('auth-trial-note').style.display    = isSignup ? 'block' : 'none';
-    document.getElementById('auth-submit').textContent          = isSignup ? 'Create account' : 'Sign in';
+    document.getElementById('auth-submit').textContent          = isMagic ? 'Send magic link' : (isSignup ? 'Create account' : 'Sign in');
+    document.getElementById('auth-submit').disabled             = false;
 
-    // Active tab styling
-    var active   = document.getElementById('auth-tab-' + tab);
-    var inactive = document.getElementById('auth-tab-' + (isSignup ? 'signin' : 'signup'));
-    active.style.background  = '#fff';
-    active.style.color       = '#1a1a18';
-    active.style.boxShadow   = '0 1px 3px rgba(0,0,0,0.12)';
-    inactive.style.background = 'transparent';
-    inactive.style.color      = '#888';
-    inactive.style.boxShadow  = 'none';
+    if (!isMagic) {
+      var active   = document.getElementById('auth-tab-' + tab);
+      var inactive = document.getElementById('auth-tab-' + (isSignup ? 'signin' : 'signup'));
+      if (active)   { active.style.background = '#fff'; active.style.color = '#1a1a18'; active.style.boxShadow = '0 1px 3px rgba(0,0,0,0.12)'; }
+      if (inactive) { inactive.style.background = 'transparent'; inactive.style.color = '#888'; inactive.style.boxShadow = 'none'; }
+    }
 
     _clearMsg();
   }
@@ -221,6 +228,8 @@ window.Mise.auth = (function () {
   // ── _submit ────────────────────────────────────────────────────────────────
   // Handles the main form button — routes to login() or signup().
   async function _submit() {
+    if (_currentTab === 'magic') { await _sendMagicLink(); return; }
+
     var email    = (document.getElementById('auth-email').value    || '').trim();
     var password =  document.getElementById('auth-password').value || '';
     var btn      =  document.getElementById('auth-submit');
@@ -243,6 +252,23 @@ window.Mise.auth = (function () {
       _setMsg(_friendlyError(err.message), 'error');
       btn.textContent = _currentTab === 'signin' ? 'Sign in' : 'Create account';
       btn.disabled = false;
+    }
+  }
+
+  // ── _sendMagicLink ─────────────────────────────────────────────────────────
+  async function _sendMagicLink() {
+    var email = (document.getElementById('auth-email').value || '').trim();
+    if (!email) { _setMsg('Enter your email address.', 'error'); return; }
+    var btn = document.getElementById('auth-submit');
+    btn.textContent = 'Sending…'; btn.disabled = true;
+    var redirectTo = window.location.origin + window.location.pathname;
+    var result = await supabaseClient.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectTo } });
+    if (result.error) {
+      _setMsg(_friendlyError(result.error.message), 'error');
+      btn.textContent = 'Send magic link'; btn.disabled = false;
+    } else {
+      _setMsg('Check your inbox — we\'ve sent you a sign-in link.', 'ok');
+      btn.textContent = 'Email sent ✓';
     }
   }
 
