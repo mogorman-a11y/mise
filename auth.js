@@ -277,13 +277,33 @@ window.Mise.auth = (function () {
     var btn = document.getElementById('auth-submit');
     btn.textContent = 'Sending…'; btn.disabled = true;
     var redirectTo = window.location.origin + window.location.pathname;
-    var result = await supabaseClient.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectTo } });
-    if (result.error) {
-      _setMsg(_friendlyError(result.error.message), 'error');
-      btn.textContent = 'Send magic link'; btn.disabled = false;
+
+    if (window.MISE_AUTH_CONFIG) {
+      // Carte — send branded email via Vercel function (keeps Veriqo unchanged)
+      try {
+        var res = await fetch('/api/carte-magic-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, redirectTo: redirectTo })
+        });
+        var json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to send');
+        _setMsg('Check your inbox — we\'ve sent you a Carte sign-in link.', 'ok');
+        btn.textContent = 'Email sent ✓';
+      } catch (err) {
+        _setMsg(err.message || 'Something went wrong. Try again.', 'error');
+        btn.textContent = 'Send magic link'; btn.disabled = false;
+      }
     } else {
-      _setMsg('Check your inbox — we\'ve sent you a sign-in link.', 'ok');
-      btn.textContent = 'Email sent ✓';
+      // Veriqo — use Supabase OTP directly (unchanged)
+      var result = await supabaseClient.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectTo } });
+      if (result.error) {
+        _setMsg(_friendlyError(result.error.message), 'error');
+        btn.textContent = 'Send magic link'; btn.disabled = false;
+      } else {
+        _setMsg('Check your inbox — we\'ve sent you a sign-in link.', 'ok');
+        btn.textContent = 'Email sent ✓';
+      }
     }
   }
 
