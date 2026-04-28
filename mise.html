@@ -1507,12 +1507,35 @@ function renderMenuDishSelect(){
   if(!el) return;
   var dishes = mSettings.savedDishes||[];
   if(dishes.length===0){ el.innerHTML='<div style="padding:10px;font-size:13px;color:#A09890">Add dishes to the library first</div>'; return; }
-  el.innerHTML = dishes.map(function(d){
-    var label = (d.category ? '['+d.category+'] ' : '') + d.dish;
-    return '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #F0EBE2;cursor:pointer;font-size:14px;color:#1C2B1E">'
-      + '<input type="checkbox" id="menu-d-'+d.id+'" style="accent-color:#3A7D44;flex-shrink:0">'
-      + _esc(label) + '</label>';
-  }).join('');
+  var ORDER = DISH_CATEGORIES.filter(function(c){ return c!==''; });
+  var grouped = {};
+  dishes.forEach(function(d){
+    var cat = d.category||'Other';
+    if(!grouped[cat]) grouped[cat]=[];
+    grouped[cat].push(d);
+  });
+  var html = '';
+  var shown = {};
+  ORDER.forEach(function(cat){
+    if(!grouped[cat]||!grouped[cat].length) return;
+    shown[cat] = true;
+    html += '<div style="padding:5px 10px 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#C8A96E;background:#F5F0E8">'+_esc(cat)+'</div>';
+    grouped[cat].forEach(function(d){
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #F0EBE2;cursor:pointer;font-size:14px;color:#1C2B1E">'
+        +'<input type="checkbox" id="menu-d-'+d.id+'" style="accent-color:#3A7D44;flex-shrink:0">'
+        +_esc(d.dish)+'</label>';
+    });
+  });
+  Object.keys(grouped).forEach(function(cat){
+    if(shown[cat]) return;
+    html += '<div style="padding:5px 10px 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#C8A96E;background:#F5F0E8">'+_esc(cat)+'</div>';
+    grouped[cat].forEach(function(d){
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #F0EBE2;cursor:pointer;font-size:14px;color:#1C2B1E">'
+        +'<input type="checkbox" id="menu-d-'+d.id+'" style="accent-color:#3A7D44;flex-shrink:0">'
+        +_esc(d.dish)+'</label>';
+    });
+  });
+  el.innerHTML = html;
 }
 
 function saveMenu(){
