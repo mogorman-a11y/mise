@@ -416,7 +416,11 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
       </div>
       <div class="form-group" style="margin-bottom:4px">
         <label class="form-label">Notes</label>
-        <input class="form-input" id="job-notes" placeholder="Menu, dietary req, access details…">
+        <input class="form-input" id="job-notes" placeholder="Dietary req, access details…">
+      </div>
+      <div class="form-group" style="margin-bottom:4px">
+        <label class="form-label">Menus <span style="font-size:11px;color:#A09890">(select from library)</span></label>
+        <div id="job-menu-picker" style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px;max-height:200px;overflow-y:auto"></div>
       </div>
       <button class="btn-primary btn-green" onclick="logJob()" style="margin-top:12px">Log Job</button>
     </div>
@@ -987,7 +991,7 @@ function showTab(name){
   if(name==='clients')     { renderClientList(); populateClientSelects(); }
   if(name==='calendar')    renderCalendar();
   if(name==='menus')       { renderDishLibrary(); renderMenuDishSelect(); renderSavedMenus(); }
-  if(name==='jobs')        { populateJobClientSelect(); renderJobsHistory(); }
+  if(name==='jobs')        { populateJobClientSelect(); renderJobsHistory(); renderJobMenuPicker(); }
   if(name==='transport')   { populateStaffSelects(); populateClientSelects(); renderTransportList(); }
   if(name==='assess')      { populateStaffSelects(); populateClientSelects(); renderAssessList(); }
   if(name==='allergen')    { populateClientSelects(); renderAllergenList(); }
@@ -1611,7 +1615,8 @@ function logJob(){
     eventTime: (document.getElementById('job-time').value||'').trim(),
     covers: (document.getElementById('job-covers').value||'').trim(),
     jobType: document.getElementById('job-type').value||'',
-    notes: (document.getElementById('job-notes').value||'').trim()
+    notes: (document.getElementById('job-notes').value||'').trim(),
+    menus: _getSelectedMenusSnapshot('log')
   };
 
   // If client isn't already in CRM, offer to add
@@ -1634,6 +1639,7 @@ function logJob(){
   document.getElementById('job-type').value='';
   document.getElementById('job-event-date').value='';
 
+  renderJobMenuPicker();
   updateDashboard();
   renderJobsHistory();
   toast(inCRM ? 'Job logged ✓' : 'Job logged ✓ (add client to CRM for full details)');
@@ -1687,6 +1693,9 @@ function renderJobsHistory(){
           + '</div>'
           + '<div class="form-group"><label class="form-label">Notes</label>'
           + '<input class="form-input" id="jedit-notes-'+j.id+'" value="'+_esc(j.notes||'')+'"></div>'
+          + '<div class="form-group"><label class="form-label">Menus <span style="font-size:11px;color:#A09890">(select from library)</span></label>'
+          + '<div style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px;max-height:180px;overflow-y:auto">'
+          + _buildMenuPickerHTML(j.id, j.menus||[]) + '</div></div>'
           + '<div style="display:flex;gap:8px;margin-top:4px">'
           + '<button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="saveJobEdit(\''+j.id+'\')">Save</button>'
           + '<button style="flex:0 0 auto;padding:12px 16px;background:#F5F0E8;color:#1C2B1E;border:1px solid #C8A96E;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="_editingJobId=null;renderJobsHistory()">Cancel</button>'
@@ -1702,6 +1711,17 @@ function renderJobsHistory(){
           + (j.covers ? '<div class="job-detail-row"><span class="job-detail-key">Covers</span>'+_esc(j.covers)+'</div>' : '')
           + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
           + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
+          + (j.menus&&j.menus.length ? '<div style="margin-top:10px">'
+              + j.menus.map(function(m){
+                  var dishChips = (m.dishes||[]).map(function(d){
+                    return '<span style="display:inline-block;background:#F5F0E8;border:1px solid #E8E2D8;border-radius:6px;padding:2px 8px;font-size:12px;margin:2px 2px 2px 0;color:#1C2B1E">'+_esc(d.dish)+(d.allergens&&d.allergens.length?' <span style="color:#A09890;font-size:11px">('+_esc(d.allergens.join(', '))+')</span>':'')+'</span>';
+                  }).join('');
+                  return '<div style="margin-bottom:8px">'
+                    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#C8A96E;margin-bottom:4px">'+_esc(m.name)+'</div>'
+                    +(dishChips||'<span style="font-size:12px;color:#A09890">No dishes</span>')
+                    +'</div>';
+                }).join('')
+              +'</div>' : '')
           + editBtn + '</div>';
       }
 
@@ -1744,7 +1764,8 @@ function saveJobEdit(id){
     eventTime: (document.getElementById('jedit-eventtime-'+id).value||'').trim(),
     covers:    (document.getElementById('jedit-covers-'+id).value||'').trim(),
     jobType:   document.getElementById('jedit-jobtype-'+id).value||'',
-    notes:     (document.getElementById('jedit-notes-'+id).value||'').trim()
+    notes:     (document.getElementById('jedit-notes-'+id).value||'').trim(),
+    menus:     _getSelectedMenusSnapshot(id)
   };
   var found = false;
   for(var i=0;i<mRecords.length;i++){
@@ -1799,6 +1820,47 @@ function deleteJob(id){
   toast('Job deleted');
 }
 
+// ══════════════════════════════════════════════════ JOB MENU HELPERS ══════════
+function _buildMenuPickerHTML(prefix, currentMenus){
+  var saved = mSettings.savedMenus||[];
+  if(!saved.length) return '<div style="font-size:12px;color:#A09890;padding:6px 0">No saved menus yet — build one in the Menus tab first.</div>';
+  var currentNames = (currentMenus||[]).map(function(m){ return m.name; });
+  var dishes = mSettings.savedDishes||[];
+  var dishMap = {};
+  dishes.forEach(function(d){ dishMap[d.id]=d; });
+  return saved.map(function(m){
+    var chk = currentNames.indexOf(m.name)!==-1 ? ' checked' : '';
+    var preview = (m.dishIds||[]).slice(0,3).map(function(id){ return dishMap[id]?_esc(dishMap[id].dish):''; }).filter(Boolean).join(', ');
+    if((m.dishIds||[]).length>3) preview += '…';
+    return '<label style="display:flex;align-items:flex-start;gap:10px;padding:8px 4px;border-bottom:1px solid #F0EBE2;cursor:pointer">'
+      +'<input type="checkbox" id="jmenu-'+prefix+'-'+m.id+'" style="margin-top:3px;accent-color:#1C2B1E;width:15px;height:15px;flex-shrink:0"'+chk+'>'
+      +'<div><div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
+      +(preview?'<div style="font-size:12px;color:#A09890;margin-top:1px">'+preview+'</div>':'')
+      +'</div></label>';
+  }).join('');
+}
+
+function _getSelectedMenusSnapshot(prefix){
+  var saved = mSettings.savedMenus||[];
+  var dishes = mSettings.savedDishes||[];
+  var dishMap = {};
+  dishes.forEach(function(d){ dishMap[d.id]=d; });
+  return saved.filter(function(m){
+    var el = document.getElementById('jmenu-'+prefix+'-'+m.id);
+    return el && el.checked;
+  }).map(function(m){
+    return {
+      name: m.name,
+      dishes: (m.dishIds||[]).map(function(id){ return dishMap[id]; }).filter(Boolean)
+    };
+  });
+}
+
+function renderJobMenuPicker(){
+  var el = document.getElementById('job-menu-picker');
+  if(el) el.innerHTML = _buildMenuPickerHTML('log', []);
+}
+
 // ═══════════════════════════════════════════════════════ PDF EXPORT ══════════
 function exportJobsPDF(){
   var jobs = getAllJobs().filter(function(j){ return j.id && j.id.indexOf('veriqo_') !== 0; });
@@ -1830,6 +1892,7 @@ function buildJobsPDF(jobs){
   var sectionsHtml = months.map(function(mo){
     var parts = mo.split('-');
     var moLabel = MONTHS[parseInt(parts[1],10)-1] + ' ' + parts[0];
+    var catOrder = DISH_CATEGORIES.filter(function(c){ return c!==''; });
     var rows = byMonth[mo].map(function(j){
       var dateStr = j.eventDate ? fmtDate(j.eventDate) : (j.date || '');
       var timeStr = j.eventTime || '';
@@ -1840,11 +1903,39 @@ function buildJobsPDF(jobs){
         j.jobType  ? esc(j.jobType) : '',
         j.notes    ? '<em>' + esc(j.notes) + '</em>' : ''
       ].filter(Boolean).join(' &nbsp;·&nbsp; ');
-      return '<tr>'
-        +'<td style="padding:8px 10px;border-bottom:1px solid #EFE9DE;font-size:13px;color:#444;white-space:nowrap">'+esc(when)+'</td>'
-        +'<td style="padding:8px 10px;border-bottom:1px solid #EFE9DE;font-size:14px;font-weight:600;color:#1C2B1E">'+esc(j.client||'')+'</td>'
-        +'<td style="padding:8px 10px;border-bottom:1px solid #EFE9DE;font-size:13px;color:#555">'+details+'</td>'
+      var mainRow = '<tr>'
+        +'<td style="padding:8px 10px;border-bottom:'+(j.menus&&j.menus.length?'none':'1px solid #EFE9DE')+';font-size:13px;color:#444;white-space:nowrap;vertical-align:top">'+esc(when)+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:'+(j.menus&&j.menus.length?'none':'1px solid #EFE9DE')+';font-size:14px;font-weight:600;color:#1C2B1E;vertical-align:top">'+esc(j.client||'')+'</td>'
+        +'<td style="padding:8px 10px;border-bottom:'+(j.menus&&j.menus.length?'none':'1px solid #EFE9DE')+';font-size:13px;color:#555;vertical-align:top">'+details+'</td>'
         +'</tr>';
+      var menuRows = '';
+      if(j.menus && j.menus.length){
+        var menuCells = j.menus.map(function(m){
+          var grouped = {};
+          (m.dishes||[]).forEach(function(d){
+            var cat = d.category||'Other';
+            if(!grouped[cat]) grouped[cat]=[];
+            grouped[cat].push(d);
+          });
+          var dishParts = [];
+          catOrder.forEach(function(cat){
+            if(!grouped[cat]||!grouped[cat].length) return;
+            dishParts.push('<strong style="color:#1C2B1E">'+esc(cat)+':</strong> '+grouped[cat].map(function(d){
+              return esc(d.dish)+(d.allergens&&d.allergens.length?' <em style="color:#A09890">('+d.allergens.map(esc).join(', ')+')</em>':'');
+            }).join(', '));
+          });
+          // uncategorised
+          if(grouped['Other']&&grouped['Other'].length&&catOrder.indexOf('Other')===-1){
+            dishParts.push(grouped['Other'].map(function(d){ return esc(d.dish); }).join(', '));
+          }
+          return '<div style="margin-bottom:6px">'
+            +'<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#C8A96E;margin-bottom:3px">'+esc(m.name)+'</div>'
+            +(dishParts.length ? '<div style="font-size:12px;color:#444;line-height:1.6">'+dishParts.join('<br>')+'</div>' : '')
+            +'</div>';
+        }).join('');
+        menuRows = '<tr><td colspan="3" style="padding:0 10px 10px 10px;border-bottom:1px solid #EFE9DE">'+menuCells+'</td></tr>';
+      }
+      return mainRow + menuRows;
     }).join('');
     return '<div style="margin-bottom:28px;page-break-inside:avoid">'
       +'<div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#C8A96E;border-bottom:2px solid #C8A96E;padding-bottom:4px;margin-bottom:0">'+esc(moLabel)+'</div>'
