@@ -675,6 +675,7 @@ var _calMonth  = new Date().getMonth();
 var _calSelectedDate = null;
 var _expandedClientId = null;
 var _expandedJobId    = null;
+var _editingJobId     = null;
 
 // ═══════════════════════════════════════════════════════ UTILITIES ═══════════
 function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1118,8 +1119,11 @@ function calNext(){ _calMonth++; if(_calMonth>11){_calMonth=0;_calYear++;} rende
 
 function getAllJobsByDate(){
   var map = {};
+  var seen = {};
   function add(r){
     if(r.type!=='job' || !r.eventDate) return;
+    if(seen[r.id]) return;
+    seen[r.id] = true;
     if(!map[r.eventDate]) map[r.eventDate]=[];
     map[r.eventDate].push(r);
   }
@@ -1486,7 +1490,6 @@ function renderJobsHistory(){
   var jobs = getAllJobs();
   if(jobs.length===0){ el.innerHTML='<p class="empty">No jobs logged yet.</p>'; return; }
 
-  // Group by month of eventDate
   var byMonth = {};
   jobs.forEach(function(j){
     var mo = (j.eventDate||j.date||'').slice(0,7);
@@ -1494,26 +1497,65 @@ function renderJobsHistory(){
     byMonth[mo].push(j);
   });
 
+  var JOB_TYPES = ['Dinner party','Wedding','Corporate','Lunch','Canapes','Meal prep','Private class','Other'];
   var months = Object.keys(byMonth).sort().reverse();
   el.innerHTML = months.map(function(mo){
     var parts = mo.split('-');
     var moLabel = MONTHS[parseInt(parts[1],10)-1] + ' ' + parts[0];
     var cards = byMonth[mo].map(function(j){
-      var isOpen = _expandedJobId === j.id;
-      var bodyHtml = isOpen ? '<div class="job-card-body open">'
-        + (j.location ? '<div class="job-detail-row"><span class="job-detail-key">Location</span>'+_esc(j.location)+'</div>' : '')
-        + (j.eventTime ? '<div class="job-detail-row"><span class="job-detail-key">Time</span>'+_esc(j.eventTime)+'</div>' : '')
-        + (j.covers ? '<div class="job-detail-row"><span class="job-detail-key">Covers</span>'+_esc(j.covers)+'</div>' : '')
-        + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
-        + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
-        + '</div>' : '';
+      var isOpen    = _expandedJobId === j.id;
+      var isEditing = _editingJobId  === j.id;
+      var isMirrored = j.id && j.id.indexOf('veriqo_') === 0;
+      var bodyHtml = '';
+
+      if(isEditing){
+        var typeOpts = JOB_TYPES.map(function(t){
+          return '<option'+(j.jobType===t?' selected':'')+'>'+t+'</option>';
+        }).join('');
+        bodyHtml = '<div class="job-card-body open" onclick="event.stopPropagation()">'
+          + '<div class="form-group"><label class="form-label">Client</label>'
+          + '<input class="form-input" id="jedit-client-'+j.id+'" value="'+_esc(j.client||'')+'"></div>'
+          + '<div class="form-group"><label class="form-label">Location</label>'
+          + '<input class="form-input" id="jedit-location-'+j.id+'" value="'+_esc(j.location||'')+'"></div>'
+          + '<div class="form-row">'
+          + '<div class="form-group"><label class="form-label">Event date</label>'
+          + '<input class="form-input" type="date" id="jedit-eventdate-'+j.id+'" value="'+_esc(j.eventDate||'')+'"></div>'
+          + '<div class="form-group"><label class="form-label">Time</label>'
+          + '<input class="form-input" type="time" id="jedit-eventtime-'+j.id+'" value="'+_esc(j.eventTime||'')+'"></div>'
+          + '</div>'
+          + '<div class="form-row">'
+          + '<div class="form-group"><label class="form-label">Covers</label>'
+          + '<input class="form-input" type="number" id="jedit-covers-'+j.id+'" value="'+_esc(j.covers||'')+'"></div>'
+          + '<div class="form-group"><label class="form-label">Job type</label>'
+          + '<select class="form-input" id="jedit-jobtype-'+j.id+'"><option value="">Select…</option>'+typeOpts+'</select></div>'
+          + '</div>'
+          + '<div class="form-group"><label class="form-label">Notes</label>'
+          + '<input class="form-input" id="jedit-notes-'+j.id+'" value="'+_esc(j.notes||'')+'"></div>'
+          + '<div style="display:flex;gap:8px;margin-top:4px">'
+          + '<button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="saveJobEdit(\''+j.id+'\')">Save</button>'
+          + '<button style="flex:0 0 auto;padding:12px 16px;background:#F5F0E8;color:#1C2B1E;border:1px solid #C8A96E;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="_editingJobId=null;renderJobsHistory()">Cancel</button>'
+          + '<button style="flex:0 0 auto;padding:12px 16px;background:#FBECEC;color:#8A2D2D;border:1px solid #E8C5C5;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="deleteJob(\''+j.id+'\')">Delete</button>'
+          + '</div></div>';
+      } else if(isOpen){
+        var editBtn = !isMirrored
+          ? '<div style="margin-top:10px"><button style="width:100%;padding:10px;background:#1C2B1E;color:#C8A96E;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();startJobEdit(\''+j.id+'\')">Edit job</button></div>'
+          : '';
+        bodyHtml = '<div class="job-card-body open" onclick="event.stopPropagation()">'
+          + (j.location ? '<div class="job-detail-row"><span class="job-detail-key">Location</span>'+_esc(j.location)+'</div>' : '')
+          + (j.eventTime ? '<div class="job-detail-row"><span class="job-detail-key">Time</span>'+_esc(j.eventTime)+'</div>' : '')
+          + (j.covers ? '<div class="job-detail-row"><span class="job-detail-key">Covers</span>'+_esc(j.covers)+'</div>' : '')
+          + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
+          + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
+          + editBtn + '</div>';
+      }
+
       return '<div class="job-card" data-job-id="'+j.id+'" onclick="toggleJobCard(\''+j.id+'\')">'
         + '<div class="job-card-header">'
         + '<div><div class="job-card-name">'+_esc(j.client||'Unnamed')+'</div>'
         + '<div class="job-card-date">'+fmtDate(j.eventDate)+(j.jobType?' · '+_esc(j.jobType):'')+'</div>'
         + (j.covers ? '<div class="job-card-meta">'+j.covers+' covers</div>' : '')
         + '</div>'
-        + '<div style="font-size:16px;color:#C0B8B0">'+(isOpen?'▲':'▼')+'</div>'
+        + '<div style="font-size:16px;color:#C0B8B0">'+(isOpen||isEditing?'▲':'▼')+'</div>'
         + '</div>'
         + bodyHtml + '</div>';
     }).join('');
@@ -1522,8 +1564,83 @@ function renderJobsHistory(){
 }
 
 function toggleJobCard(id){
+  if(_editingJobId === id) return;
   _expandedJobId = (_expandedJobId===id) ? null : id;
+  _editingJobId = null;
   renderJobsHistory();
+}
+
+function startJobEdit(id){
+  _editingJobId = id;
+  _expandedJobId = id;
+  renderJobsHistory();
+}
+
+function saveJobEdit(id){
+  var client = (document.getElementById('jedit-client-'+id).value||'').trim();
+  if(!client){ toast('Client required','err'); return; }
+  var eventDate = (document.getElementById('jedit-eventdate-'+id).value||'').trim();
+  if(!eventDate){ toast('Event date required','err'); return; }
+  var updates = {
+    client:    client,
+    location:  (document.getElementById('jedit-location-'+id).value||'').trim(),
+    eventDate: eventDate,
+    eventTime: (document.getElementById('jedit-eventtime-'+id).value||'').trim(),
+    covers:    (document.getElementById('jedit-covers-'+id).value||'').trim(),
+    jobType:   document.getElementById('jedit-jobtype-'+id).value||'',
+    notes:     (document.getElementById('jedit-notes-'+id).value||'').trim()
+  };
+  var found = false;
+  for(var i=0;i<mRecords.length;i++){
+    if(mRecords[i].id===id){ Object.assign(mRecords[i],updates); saveToday(); found=true; break; }
+  }
+  if(!found){
+    try {
+      for(var li=0;li<localStorage.length;li++){
+        var lk=localStorage.key(li);
+        if(!lk||lk.indexOf('mise_')!==0||lk==='mise_settings') continue;
+        var lds=lk.replace('mise_','');
+        var lrecs=getDayRecords(lds);
+        for(var ri=0;ri<lrecs.length;ri++){
+          if(lrecs[ri].id===id){ Object.assign(lrecs[ri],updates); saveDayRecords(lds,lrecs); found=true; break; }
+        }
+        if(found) break;
+      }
+    } catch(e){}
+  }
+  if(!found){ toast('Job not found','err'); return; }
+  _editingJobId=null;
+  updateDashboard();
+  renderCalendar();
+  renderJobsHistory();
+  toast('Job updated ✓');
+}
+
+function deleteJob(id){
+  if(!confirm('Delete this job?')) return;
+  var found = false;
+  for(var i=0;i<mRecords.length;i++){
+    if(mRecords[i].id===id){ mRecords.splice(i,1); saveToday(); found=true; break; }
+  }
+  if(!found){
+    try {
+      for(var li=0;li<localStorage.length;li++){
+        var lk=localStorage.key(li);
+        if(!lk||lk.indexOf('mise_')!==0||lk==='mise_settings') continue;
+        var lds=lk.replace('mise_','');
+        var lrecs=getDayRecords(lds);
+        for(var ri=0;ri<lrecs.length;ri++){
+          if(lrecs[ri].id===id){ lrecs.splice(ri,1); saveDayRecords(lds,lrecs); found=true; break; }
+        }
+        if(found) break;
+      }
+    } catch(e){}
+  }
+  _expandedJobId=null; _editingJobId=null;
+  updateDashboard();
+  renderCalendar();
+  renderJobsHistory();
+  toast('Job deleted');
 }
 
 // ═══════════════════════════════════════════════════════ TRANSPORT ══════════
