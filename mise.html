@@ -641,6 +641,17 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
           <input class="form-input" id="set-email" type="email">
         </div>
       </div>
+      <div class="form-group">
+        <label class="form-label">Logo <span style="font-size:11px;color:#A09890">(syncs with Veriqo)</span></label>
+        <div id="carte-logo-preview" style="display:none;margin-bottom:8px">
+          <img id="carte-logo-img" src="" alt="Logo" style="max-height:60px;max-width:180px;border-radius:6px;border:1px solid #D4C9B5;padding:6px;background:#fff">
+          <button onclick="clearCarteLogo()" style="display:block;margin-top:6px;background:none;border:none;color:#A32D2D;font-size:12px;cursor:pointer;font-family:inherit;padding:0">Remove logo</button>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:8px;padding:9px 14px;background:#F5F0E8;border:1px solid #D4C9B5;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#1C2B1E;font-family:inherit">
+          📷 Upload logo
+          <input type="file" id="carte-logo-input" accept="image/*" onchange="previewCarteLogo(this)" style="display:none">
+        </label>
+      </div>
       <button class="btn-primary" onclick="saveProfile()" style="margin-top:4px">Save Profile</button>
     </div>
 
@@ -1354,15 +1365,12 @@ function addDish(){
   if(!name){ toast('Dish name required','err'); return; }
   if(!mSettings.savedDishes) mSettings.savedDishes = [];
   var dishData = {
+    id: uid(),
     dish: name,
     category: document.getElementById('dish-cat').value||'',
     allergens: getDishAllergens()
   };
-  if(_editingDishId){
-    mSettings.savedDishes = mSettings.savedDishes.map(function(d){ return d.id===_editingDishId ? Object.assign({}, d, dishData) : d; });
-  } else {
-    mSettings.savedDishes.push(Object.assign({ id: uid() }, dishData));
-  }
+  mSettings.savedDishes.push(dishData);
   saveSettings();
   document.getElementById('dish-name').value='';
   document.getElementById('dish-cat').value='';
@@ -1373,13 +1381,50 @@ function addDish(){
   toast('Dish saved ✓');
 }
 
+function _dishRowHTML(d) {
+  var isEditing = _editingDishId === d.id;
+  var allergens = _normaliseAllergens(d.allergens);
+  var catOptions = DISH_CATEGORIES.map(function(c){
+    return '<option value="'+_esc(c)+'"'+(d.category===c?' selected':'')+'>'+_esc(c||'No category')+'</option>';
+  }).join('');
+  var editForm = isEditing
+    ? '<div id="dish-edit-'+d.id+'" style="margin-top:10px;padding-top:10px;border-top:1px solid #D4C9B5">'
+      + '<input id="dish-edit-name-'+d.id+'" class="form-input" type="text" value="'+_esc(d.dish)+'" style="margin-bottom:8px" placeholder="Dish name">'
+      + '<select id="dish-edit-cat-'+d.id+'" class="form-input" style="margin-bottom:8px">'+catOptions+'</select>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
+      + ALLERGENS_14.map(function(a){
+          var eid = 'dish-edit-al-'+d.id+'-'+a.replace(/\s+/g,'_');
+          var chk = allergens.indexOf(a)!==-1?' checked':'';
+          return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#1C2B1E;padding:2px 0;cursor:pointer">'
+            + '<input type="checkbox" id="'+eid+'"'+chk+' style="width:14px;height:14px;accent-color:#1C2B1E"> '+_esc(a)+'</label>';
+        }).join('')
+      + '</div>'
+      + '<div style="display:flex;gap:8px">'
+      + '<button onclick="saveDishEdit(\''+d.id+'\')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
+      + '<button onclick="event.stopPropagation();cancelDishEdit()" style="background:none;border:none;color:#A09890;font-size:13px;cursor:pointer;padding:4px 8px;font-family:inherit">Cancel</button>'
+      + '</div>'
+      + '</div>'
+    : '';
+  return '<div onclick="editDish(\''+d.id+'\')" style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1C2B1E':'#E8E2D8')+';border-radius:10px;margin-bottom:8px;cursor:pointer">'
+    + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+    + '<div style="flex:1">'
+    + '<div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(d.dish)+'</div>'
+    + (allergens.length
+        ? '<div style="font-size:12px;color:#A09890;margin-top:2px">'+_esc(allergens.join(', '))+'</div>'
+        : '<div style="font-size:12px;color:#C8BFB0;margin-top:2px">No allergens</div>')
+    + '</div>'
+    + '<button onclick="event.stopPropagation();deleteDish(\''+d.id+'\')" style="background:none;border:none;color:#C8BFB0;font-size:20px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+    + '</div>'
+    + editForm
+    + '</div>';
+}
+
 function renderDishLibrary(){
   var el = document.getElementById('dish-library');
   if(!el) return;
   var dishes = mSettings.savedDishes||[];
   if(dishes.length===0){ el.innerHTML='<p class="empty">No dishes yet.</p>'; return; }
 
-  // Group by category
   var grouped = {};
   var ORDER = DISH_CATEGORIES.filter(function(c){ return c!==''; });
   dishes.forEach(function(d){
@@ -1388,27 +1433,20 @@ function renderDishLibrary(){
     grouped[cat].push(d);
   });
 
-  var html='<div class="card" style="padding:8px 14px">';
+  var html='<div style="padding:4px 0">';
+  var shown = {};
   ORDER.forEach(function(cat){
     if(!grouped[cat] || grouped[cat].length===0) return;
+    shown[cat] = true;
     html += '<div class="cat-header">'+_esc(cat)+'</div>';
-    grouped[cat].forEach(function(d){
-      html += '<div class="dish-row" onclick="editDish(\''+d.id+'\')" style="cursor:pointer">'
-        + '<div class="dish-name">'+_esc(d.dish)
-        + (_normaliseAllergens(d.allergens).length ? '<br><span style="font-size:11px;color:#A09890">'+_esc(_normaliseAllergens(d.allergens).join(', '))+'</span>' : '')
-        + '</div>'
-        + '<button onclick="event.stopPropagation();deleteDish(\''+d.id+'\')" class="btn-remove" title="Remove">×</button>'
-        + '</div>';
-    });
+    grouped[cat].forEach(function(d){ html += _dishRowHTML(d); });
   });
-  // Uncategorised
-  if(grouped['Other'] && !ORDER.includes('Other')){
-    html += '<div class="cat-header">Other</div>';
-    grouped['Other'].forEach(function(d){
-      html += '<div class="dish-row"><div class="dish-name">'+_esc(d.dish)+'</div>'
-        + '<button onclick="deleteDish(\''+d.id+'\')" class="btn-remove">×</button></div>';
-    });
-  }
+  // Uncategorised dishes not in ORDER
+  Object.keys(grouped).forEach(function(cat){
+    if(shown[cat]) return;
+    html += '<div class="cat-header">'+_esc(cat)+'</div>';
+    grouped[cat].forEach(function(d){ html += _dishRowHTML(d); });
+  });
   html += '</div>';
   el.innerHTML = html;
 }
@@ -1426,14 +1464,37 @@ function deleteDish(id){
 
 var _editingDishId = null;
 function editDish(id){
-  var dish = (mSettings.savedDishes||[]).find(function(d){ return d.id===id; });
-  if(!dish) return;
-  _editingDishId = id;
-  document.getElementById('dish-name').value = dish.dish || '';
-  document.getElementById('dish-cat').value = dish.category || '';
-  setDishAllergens(dish.allergens || []);
-  document.getElementById('dish-name').scrollIntoView({behavior:'smooth',block:'center'});
-  toast('Editing dish');
+  _editingDishId = (_editingDishId === id) ? null : id;
+  renderDishLibrary();
+  if(_editingDishId){
+    setTimeout(function(){
+      var el = document.getElementById('dish-edit-'+id);
+      if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }, 50);
+  }
+}
+function saveDishEdit(id){
+  var nameEl = document.getElementById('dish-edit-name-'+id);
+  var name = nameEl ? (nameEl.value||'').trim() : '';
+  if(!name){ toast('Dish name required', false); return; }
+  var allergens = ALLERGENS_14.filter(function(a){
+    var el = document.getElementById('dish-edit-al-'+id+'-'+a.replace(/\s+/g,'_'));
+    return el && el.checked;
+  });
+  var catEl = document.getElementById('dish-edit-cat-'+id);
+  var category = catEl ? catEl.value : '';
+  mSettings.savedDishes = (mSettings.savedDishes||[]).map(function(d){
+    return d.id===id ? {id:d.id, dish:name, allergens:allergens, category:category} : d;
+  });
+  saveSettings();
+  _editingDishId = null;
+  renderDishLibrary();
+  renderMenuDishSelect();
+  toast('Dish updated ✓');
+}
+function cancelDishEdit(){
+  _editingDishId = null;
+  renderDishLibrary();
 }
 
 // ═══════════════════════════════════════════════════════ MENUS ═══════════════
@@ -1934,15 +1995,59 @@ function loadProfileUI(){
     var el = document.getElementById(id);
     if(el) el.value = mSettings[fields[id]]||'';
   });
+  // Restore logo if stored
+  var logoImg  = document.getElementById('carte-logo-img');
+  var logoPrev = document.getElementById('carte-logo-preview');
+  if(logoImg && mSettings.logo){
+    logoImg.src = mSettings.logo;
+    if(logoPrev) logoPrev.style.display = 'block';
+  }
+}
+
+function previewCarteLogo(input){
+  var file = input.files && input.files[0]; if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = document.getElementById('carte-logo-img');
+    if(img){ img.src = e.target.result; }
+    var prev = document.getElementById('carte-logo-preview');
+    if(prev) prev.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearCarteLogo(){
+  var img = document.getElementById('carte-logo-img');
+  if(img) img.src = '';
+  var prev = document.getElementById('carte-logo-preview');
+  if(prev) prev.style.display = 'none';
+  mSettings.logo = '';
 }
 
 function saveProfile(){
+  var logoImg = document.getElementById('carte-logo-img');
+  var logo = (logoImg && logoImg.src && logoImg.src !== window.location.href) ? logoImg.src : (mSettings.logo||'');
   mSettings.chefName      = (document.getElementById('set-chef-name').value||'').trim();
   mSettings.businessName  = (document.getElementById('set-business').value||'').trim();
   mSettings.phone         = (document.getElementById('set-phone').value||'').trim();
   mSettings.email         = (document.getElementById('set-email').value||'').trim();
+  mSettings.logo          = logo;
   saveSettings();
   updateDashboard();
+  // Also update shared profiles table so Veriqo picks up the latest name/company/logo
+  (async function(){
+    try {
+      var userResult = await supabaseClient.auth.getUser();
+      var user = userResult.data && userResult.data.user;
+      if(user){
+        await supabaseClient.from('profiles').update({
+          business_name: mSettings.businessName||null,
+          chef_name:     mSettings.chefName||null,
+          logo:          mSettings.logo||null
+        }).eq('id', user.id);
+      }
+    } catch(e){ console.warn('[Carte] saveProfile profiles update failed:', e.message); }
+  })();
   toast('Profile saved ✓');
 }
 
@@ -2071,7 +2176,7 @@ function renderAllSections(){
 
 <!-- Mise shared modules -->
 <script src="supabase.js?v=4"></script>
-<script src="mise-sync.js?v=4"></script>
+<script src="mise-sync.js?v=5"></script>
 <script src="auth.js?v=8"></script>
 <script>
 window.MISE_AUTH_CONFIG = {

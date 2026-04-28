@@ -238,6 +238,10 @@ window.Mise.sync = (function () {
       .single();
     var config = (!result.error && result.data && result.data.config) ? result.data.config : {};
     _mergeSuiteData(config, settingsObj, 'veriqo');
+    // Profile fields are overwrite-on-sync (latest save wins, no dedup)
+    if (settingsObj.businessName) config.business_name = settingsObj.businessName;
+    if (settingsObj.chefName)     config.chef_name     = settingsObj.chefName;
+    if (settingsObj.logo)         config.logo          = settingsObj.logo;
     var wr = await supabaseClient.from('settings').upsert({
       id: _userId,
       config: config,
@@ -255,6 +259,10 @@ window.Mise.sync = (function () {
       _mergeCredentials(target, source.credentials, 'credentials', 'carte');
       _mergeDishes(target, source.savedDishes);
       _mergeMenusIntoCarte(target, source);
+      // Additive profile copy from Veriqo → Carte (only fills if target is empty)
+      if (source.business_name && !target.businessName) target.businessName = source.business_name;
+      if (source.chef_name     && !target.chefName)     target.chefName     = source.chef_name;
+      if (source.logo          && !target.logo)         target.logo         = source.logo;
     } else {
       _mergeClients(target, source.savedClients, 'savedCustomers');
       _mergeCredentials(target, source.credentials, 'credentials', 'veriqo');
