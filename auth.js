@@ -14,24 +14,33 @@ window.Mise.auth = (function () {
 
   // ── Auth overlay HTML ──────────────────────────────────────────────────────
   function _buildAuthHTML() {
-    return '<div id="mise-auth" style="position:fixed;inset:0;background:#f5f4f0;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch">'
+    var cfg = window.MISE_AUTH_CONFIG || {};
+    var bgColor    = cfg.background   || '#f5f4f0';
+    var appName    = cfg.name         || 'Veriqo';
+    var tagline    = cfg.tagline      || 'Food Safety. Inspection Ready.';
+    var submitBg   = cfg.submitColor  || '#2D7A3A';
+    var nameColor  = cfg.nameColor    || '#1a1a18';
+    var logoHTML   = cfg.logoHTML     ||
+      '<svg width="48" height="48" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:12px">'
+      + '<defs>'
+      +   '<linearGradient id="abg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1B3A5C"/><stop offset="100%" stop-color="#1B5C72"/></linearGradient>'
+      +   '<linearGradient id="asg" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient>'
+      + '</defs>'
+      + '<rect width="512" height="512" rx="112" fill="url(#abg)"/>'
+      + '<path d="M278 82 Q146 112 146 112 L146 295 Q146 388 278 438 Q410 388 410 295 L410 112 Z" fill="#1B5C72"/>'
+      + '<path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#asg)"/>'
+      + '<polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+      + '</svg>';
+
+    return '<div id="mise-auth" style="position:fixed;inset:0;background:'+bgColor+';z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch">'
       + '<div style="max-width:390px;margin:0 auto;padding:48px 20px 40px">'
 
       // Logo
       + '<div style="display:flex;align-items:center;gap:14px;margin-bottom:36px">'
-      +   '<svg width="48" height="48" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:12px">'
-      +     '<defs>'
-      +       '<linearGradient id="abg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1B3A5C"/><stop offset="100%" stop-color="#1B5C72"/></linearGradient>'
-      +       '<linearGradient id="asg" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient>'
-      +     '</defs>'
-      +     '<rect width="512" height="512" rx="112" fill="url(#abg)"/>'
-      +     '<path d="M278 82 Q146 112 146 112 L146 295 Q146 388 278 438 Q410 388 410 295 L410 112 Z" fill="#1B5C72"/>'
-      +     '<path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#asg)"/>'
-      +     '<polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
-      +   '</svg>'
+      +   logoHTML
       +   '<div>'
-      +     '<div style="font-size:26px;font-weight:700;color:#1a1a18;letter-spacing:-0.5px">Veriqo</div>'
-      +     '<div style="font-size:13px;color:#888;margin-top:1px">Food Safety. Inspection Ready.</div>'
+      +     '<div style="font-size:26px;font-weight:700;color:'+nameColor+';letter-spacing:-0.5px">'+appName+'</div>'
+      +     '<div style="font-size:13px;color:#888;margin-top:1px">'+tagline+'</div>'
       +   '</div>'
       + '</div>'
 
@@ -71,7 +80,7 @@ window.Mise.auth = (function () {
 
       // Submit
       +   '<button id="auth-submit" onclick="Mise.auth._submit()" '
-      +     'style="width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px">Sign in</button>'
+      +     'style="width:100%;padding:14px;background:'+submitBg+';color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:14px">Sign in</button>'
 
       // Forgot password (sign-in only)
       +   '<div id="auth-forgot-row" style="text-align:center;margin-top:11px">'
