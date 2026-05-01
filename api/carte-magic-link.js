@@ -21,7 +21,7 @@ module.exports = async function handler(req, res) {
     const { email, redirectTo } = req.body || {};
     if (!email) return res.status(400).json({ error: 'email required' });
 
-    const dest = redirectTo || 'https://getveriqo.co.uk/mise.html';
+    const dest = redirectTo || 'https://getveriqo.co.uk/mise';
 
     // Generate magic link using service role key (server-side only)
     const supabase = createClient(
