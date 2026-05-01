@@ -39,6 +39,16 @@ module.exports = async function handler(req, res) {
     const link = data && data.properties && data.properties.action_link;
     if (!link) throw new Error('Magic link generation failed');
 
+    // Supabase may override redirect_to with its Site URL if dest isn't in the
+    // allow-list yet. Force it to the correct Carte URL in the action_link.
+    let carteLink = link;
+    try {
+      const u = new URL(link);
+      u.searchParams.set('redirect_to', dest);
+      carteLink = u.toString();
+    } catch (_) { carteLink = link; }
+    console.log('[carte-magic-link] action_link redirect_to was:', new URL(link).searchParams.get('redirect_to'), '→ forced to:', dest);
+
     // Send Carte-branded email via Resend
     const emailRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -50,7 +60,7 @@ module.exports = async function handler(req, res) {
         from: 'Carte <hello@getveriqo.co.uk>',
         to: [email],
         subject: 'Your Carte sign-in link',
-        html: _buildEmail(link)
+        html: _buildEmail(carteLink)
       })
     });
 
