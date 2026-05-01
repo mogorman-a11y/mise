@@ -1386,7 +1386,7 @@ function addDish(){
 }
 
 function _dishRowHTML(d) {
-  var isEditing = _editingDishId === d.id;
+  var isEditing = _editingDishId !== null && String(_editingDishId) === String(d.id);
   var allergens = _normaliseAllergens(d.allergens);
   var catOptions = DISH_CATEGORIES.map(function(c){
     return '<option value="'+_esc(c)+'"'+(d.category===c?' selected':'')+'>'+_esc(c||'No category')+'</option>';
@@ -1456,7 +1456,7 @@ function renderDishLibrary(){
 }
 
 function deleteDish(id){
-  mSettings.savedDishes = (mSettings.savedDishes||[]).filter(function(d){ return d.id!==id; });
+  mSettings.savedDishes = (mSettings.savedDishes||[]).filter(function(d){ return String(d.id)!==String(id); });
   saveSettings();
   renderDishLibrary();
   renderMenuDishSelect();
@@ -1488,7 +1488,7 @@ function saveDishEdit(id){
   var catEl = document.getElementById('dish-edit-cat-'+id);
   var category = catEl ? catEl.value : '';
   mSettings.savedDishes = (mSettings.savedDishes||[]).map(function(d){
-    return d.id===id ? {id:d.id, dish:name, allergens:allergens, category:category} : d;
+    return String(d.id)===String(id) ? {id:d.id, dish:name, allergens:allergens, category:category} : d;
   });
   saveSettings();
   _editingDishId = null;
@@ -1548,17 +1548,43 @@ function saveMenu(){
   }).map(function(d){ return d.id; });
   if(selected.length===0){ toast('Select at least one dish','err'); return; }
   if(!mSettings.savedMenus) mSettings.savedMenus=[];
-  if(_editingMenuId){
-    mSettings.savedMenus = mSettings.savedMenus.map(function(m){ return m.id===_editingMenuId ? Object.assign({}, m, { name: name, dishIds: selected }) : m; });
-  } else {
-    mSettings.savedMenus.push({ id: uid(), name: name, dishIds: selected });
-  }
+  mSettings.savedMenus.push({ id: uid(), name: name, dishIds: selected });
   saveSettings();
   document.getElementById('menu-name').value='';
-  _editingMenuId = null;
   renderMenuDishSelect();
   renderSavedMenus();
   toast('Menu saved ✓');
+}
+
+function _menuInlineEditHTML(m){
+  var dishes = mSettings.savedDishes||[];
+  var ORDER = DISH_CATEGORIES.filter(function(c){ return c!==''; });
+  var grouped = {};
+  dishes.forEach(function(d){
+    var cat = d.category||'Other';
+    if(!grouped[cat]) grouped[cat]=[];
+    grouped[cat].push(d);
+  });
+  var cbHTML = '';
+  var shown = {};
+  function _renderGroup(cat){
+    shown[cat]=true;
+    cbHTML += '<div style="padding:4px 0 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#C8A96E">'+_esc(cat)+'</div>';
+    grouped[cat].forEach(function(d){
+      var chk = (m.dishIds||[]).some(function(id){ return String(id)===String(d.id); }) ? ' checked' : '';
+      cbHTML += '<label style="display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:14px;color:#1C2B1E" onclick="event.stopPropagation()">'
+        +'<input type="checkbox" id="medit-d-'+d.id+'"'+chk+' style="accent-color:#3A7D44;flex-shrink:0"> '+_esc(d.dish)+'</label>';
+    });
+  }
+  ORDER.forEach(function(cat){ if(grouped[cat]&&grouped[cat].length) _renderGroup(cat); });
+  Object.keys(grouped).forEach(function(cat){ if(!shown[cat]) _renderGroup(cat); });
+  return '<div style="margin-top:12px;padding-top:12px;border-top:1px solid #D4C9B5" onclick="event.stopPropagation()">'
+    +'<input id="medit-name-'+m.id+'" class="form-input" type="text" value="'+_esc(m.name)+'" style="margin-bottom:10px" placeholder="Menu name">'
+    +'<div style="border:1px solid #E2DDD5;border-radius:8px;padding:4px 10px;margin-bottom:10px">'+cbHTML+'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="saveMenuEdit(\''+m.id+'\')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
+    +'<button onclick="cancelMenuEdit()" style="background:none;border:none;color:#A09890;font-size:13px;cursor:pointer;padding:4px 8px;font-family:inherit">Cancel</button>'
+    +'</div></div>';
 }
 
 function renderSavedMenus(){
@@ -1567,38 +1593,61 @@ function renderSavedMenus(){
   var menus  = mSettings.savedMenus||[];
   var dishes = mSettings.savedDishes||[];
   var dishMap = {};
-  dishes.forEach(function(d){ dishMap[d.id]=d; });
+  dishes.forEach(function(d){ dishMap[String(d.id)]=d; });
 
   if(menus.length===0){ el.innerHTML='<p class="empty">No saved menus.</p>'; return; }
 
   el.innerHTML = menus.map(function(m){
+    var isEditing = _editingMenuId === m.id;
     var dishList = (m.dishIds||[]).map(function(id){
-      var d = dishMap[id];
+      var d = dishMap[String(id)];
       return d ? '<span class="badge badge-grey" style="margin:2px">'+_esc(d.dish)+'</span>' : '';
     }).join('');
-    return '<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="editMenu(\''+m.id+'\')">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
-      + '<div style="font-size:15px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
-      + '<button onclick="event.stopPropagation();deleteMenu(\''+m.id+'\')" class="btn-remove">×</button>'
-      + '</div>'
-      + '<div style="display:flex;flex-wrap:wrap;gap:2px">'+dishList+'</div>'
-      + '</div>';
+    return '<div class="card" style="margin-bottom:8px;border-color:'+(isEditing?'#1C2B1E':'#E2DDD5')+'" '+(isEditing?'':'onclick="editMenu(\''+m.id+'\')" style="cursor:pointer"')+'>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="font-size:15px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
+      +'<div style="display:flex;align-items:center;gap:4px">'
+      +(isEditing?'':'<button onclick="event.stopPropagation();editMenu(\''+m.id+'\')" style="background:none;border:none;color:#A09890;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 6px">Edit</button>')
+      +'<button onclick="event.stopPropagation();deleteMenu(\''+m.id+'\')" class="btn-remove">×</button>'
+      +'</div></div>'
+      +(dishList?'<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:8px">'+dishList+'</div>':'')
+      +(isEditing ? _menuInlineEditHTML(m) : '')
+      +'</div>';
   }).join('');
 }
 
 var _editingMenuId = null;
 function editMenu(id){
-  var menu = (mSettings.savedMenus||[]).find(function(m){ return m.id===id; });
-  if(!menu) return;
-  _editingMenuId = id;
-  document.getElementById('menu-name').value = menu.name || '';
-  renderMenuDishSelect();
-  (menu.dishIds||[]).forEach(function(did){
-    var cb = document.getElementById('menu-d-'+did);
-    if(cb) cb.checked = true;
+  _editingMenuId = (_editingMenuId===id) ? null : id;
+  renderSavedMenus();
+  if(_editingMenuId){
+    setTimeout(function(){
+      var nameEl = document.getElementById('medit-name-'+id);
+      if(nameEl) nameEl.closest('.card').scrollIntoView({behavior:'smooth',block:'nearest'});
+    },50);
+  }
+}
+function saveMenuEdit(id){
+  var nameEl = document.getElementById('medit-name-'+id);
+  var name = nameEl ? (nameEl.value||'').trim() : '';
+  if(!name){ toast('Menu name required','err'); return; }
+  var dishes = mSettings.savedDishes||[];
+  var selected = dishes.filter(function(d){
+    var cb = document.getElementById('medit-d-'+d.id);
+    return cb && cb.checked;
+  }).map(function(d){ return d.id; });
+  if(!selected.length){ toast('Select at least one dish','err'); return; }
+  mSettings.savedMenus = (mSettings.savedMenus||[]).map(function(m){
+    return m.id===id ? Object.assign({},m,{name:name,dishIds:selected}) : m;
   });
-  document.getElementById('menu-name').scrollIntoView({behavior:'smooth',block:'center'});
-  toast('Editing menu');
+  saveSettings();
+  _editingMenuId = null;
+  renderSavedMenus();
+  toast('Menu updated ✓');
+}
+function cancelMenuEdit(){
+  _editingMenuId = null;
+  renderSavedMenus();
 }
 
 function deleteMenu(id){
