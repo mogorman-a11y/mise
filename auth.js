@@ -138,6 +138,22 @@ window.Mise.auth = (function () {
   async function init() {
     showAuthScreen(); // show immediately — removes itself if session found
 
+    // Carte magic link: token_hash + type=magiclink delivered in URL query string.
+    // The client calls verifyOtp() directly, bypassing Supabase's /verify redirect
+    // so there is no PKCE code-exchange mismatch from server-generated admin links.
+    var _sp = new URLSearchParams(window.location.search);
+    var _tokenHash = _sp.get('token_hash');
+    if (_tokenHash && _sp.get('type') === 'magiclink') {
+      try {
+        var _vr = await supabaseClient.auth.verifyOtp({ token_hash: _tokenHash, type: 'magiclink' });
+        if (_vr.error) throw _vr.error;
+        window.history.replaceState(null, '', window.location.pathname);
+        if (_vr.data && _vr.data.session) { await onSignedIn(_vr.data.session.user); return; }
+      } catch (_ve) {
+        _setMsg('This sign-in link has expired or already been used. Please request a new one.', 'error');
+      }
+    }
+
     // Supabase appends #access_token=...&type=signup to the URL when a user
     // clicks their email confirmation link — detect it so we can show the
     // "Email confirmed" screen before dropping them into the app.

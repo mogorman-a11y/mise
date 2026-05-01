@@ -36,18 +36,14 @@ module.exports = async function handler(req, res) {
     });
     if (error) throw error;
 
-    const link = data && data.properties && data.properties.action_link;
-    if (!link) throw new Error('Magic link generation failed');
+    const tokenHash = data && data.properties && data.properties.hashed_token;
+    if (!tokenHash) throw new Error('Magic link generation failed — no token hash');
 
-    // Supabase may override redirect_to with its Site URL if dest isn't in the
-    // allow-list yet. Force it to the correct Carte URL in the action_link.
-    let carteLink = link;
-    try {
-      const u = new URL(link);
-      u.searchParams.set('redirect_to', dest);
-      carteLink = u.toString();
-    } catch (_) { carteLink = link; }
-    console.log('[carte-magic-link] action_link redirect_to was:', new URL(link).searchParams.get('redirect_to'), '→ forced to:', dest);
+    // Send token_hash directly in the URL so the client calls verifyOtp() itself.
+    // This bypasses Supabase's /verify redirect entirely, avoiding the PKCE
+    // code-exchange mismatch that occurs with server-generated admin links.
+    const carteLink = dest + (dest.includes('?') ? '&' : '?')
+      + 'token_hash=' + encodeURIComponent(tokenHash) + '&type=magiclink';
 
     // Send Carte-branded email via Resend
     const emailRes = await fetch('https://api.resend.com/emails', {

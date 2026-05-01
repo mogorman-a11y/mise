@@ -11,9 +11,4 @@ const SUPABASE_URL  = 'https://yixrwyfodipfcbhjcszp.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeHJ3eWZvZGlwZmNiaGpjc3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODg3MDIsImV4cCI6MjA5MTY2NDcwMn0.nXbnQ5iOxFEM5xWUP-p1a9hNyIlVe0xex0wQxZ9L4UE';
 
 // supabaseClient is used by auth.js, sync.js, and subscription.js
-// flowType:'implicit' is required because Carte magic links are generated server-side
-// via admin.generateLink() which bypasses PKCE — the client must use implicit flow
-// so it reads #access_token=... from the URL hash instead of expecting a code exchange.
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
-  auth: { flowType: 'implicit' }
-});
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
