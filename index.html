@@ -552,23 +552,33 @@
 
     /* ── Hero email form ─────────────────────────────────── */
     .hero-capture-form { max-width: 480px; margin: 28px auto 0; }
-    .hero-capture-row {
-      display: flex; gap: 8px;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.28);
-      border-radius: 12px;
-      padding: 6px 6px 6px 18px;
-      backdrop-filter: blur(4px);
+    .hero-capture-label {
+      display: block; text-align: left;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      color: rgba(255,255,255,0.7); margin-bottom: 8px;
     }
+    .hero-capture-row { display: flex; gap: 8px; }
     .hero-capture-row input {
-      flex: 1; background: none; border: none; outline: none;
-      color: #fff; font-size: 15px; font-family: inherit;
+      flex: 1;
+      background: #fff;
+      border: 2px solid #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      color: #1a1a18; font-size: 15px; font-family: inherit;
+      outline: none; transition: border-color .15s;
     }
-    .hero-capture-row input::placeholder { color: rgba(255,255,255,0.45); }
+    .hero-capture-row input::placeholder { color: #999; }
+    .hero-capture-row input:focus { border-color: #4ade6e; }
+    .hero-capture-row input.input-error { border-color: #f87171; animation: shake .3s ease; }
+    @keyframes shake {
+      0%,100%{ transform:translateX(0) }
+      25%    { transform:translateX(-6px) }
+      75%    { transform:translateX(6px) }
+    }
     .hero-capture-row button {
       background: var(--green); color: #fff;
-      border: none; border-radius: 8px;
-      padding: 12px 20px; font-size: 15px;
+      border: none; border-radius: 10px;
+      padding: 14px 22px; font-size: 15px;
       font-weight: 700; font-family: inherit;
       cursor: pointer; white-space: nowrap;
       transition: background .15s;
@@ -576,8 +586,7 @@
     .hero-capture-row button:hover { background: #238a30; }
     .hero-capture-row button:disabled { opacity: .6; cursor: default; }
     @media (max-width: 480px) {
-      .hero-capture-row { flex-direction: column; padding: 12px; gap: 8px; }
-      .hero-capture-row input { padding: 4px 0; }
+      .hero-capture-row { flex-direction: column; gap: 10px; }
     }
 
     /* ── Email capture ────────────────────────────────────── */
@@ -723,8 +732,9 @@
   <h1>HACCP records.<br><em>Done in seconds.</em></h1>
   <p class="hero-sub">Replace paper temperature logs with a digital system built to satisfy EHO inspectors — keep you compliant, inspection-ready, and on track for a 5-star Food Hygiene Rating.</p>
   <form class="hero-capture-form" onsubmit="submitLead(event,'hero')" novalidate>
+    <label class="hero-capture-label" for="hero-email">Enter your email to get started</label>
     <div class="hero-capture-row">
-      <input type="email" id="hero-email" placeholder="Your work email address" required autocomplete="email">
+      <input type="email" id="hero-email" placeholder="you@yourkitchen.co.uk" required autocomplete="email">
       <button type="submit" id="hero-btn">Get started free →</button>
     </div>
     <div id="hero-msg" class="lead-msg"></div>
@@ -1142,6 +1152,12 @@
     var input = document.getElementById(isHero ? 'hero-email' : 'lead-email');
     var email = input.value.trim();
     var defaultLabel = isHero ? 'Get started free →' : 'Start free trial →';
+    if (!email) {
+      input.classList.add('input-error');
+      input.focus();
+      setTimeout(function(){ input.classList.remove('input-error'); }, 600);
+      return;
+    }
     btn.textContent = 'Sending…';
     btn.disabled = true;
     msg.className = 'lead-msg';
