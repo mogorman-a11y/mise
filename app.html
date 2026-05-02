@@ -198,6 +198,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <button onclick="dismissInstallBanner()" style="background:none;border:none;color:#bbb;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>
     </div>
 
+    <!-- NEXT JOB BANNER -->
+    <div id="next-job-banner" onclick="openCarte()" style="display:none;background:#1C2B1E;border-radius:10px;padding:12px 14px;margin-bottom:16px;cursor:pointer;align-items:center;gap:12px">
+      <span style="font-size:22px;flex-shrink:0">📅</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:#C8A96E;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Next booking · Carte</div>
+        <div id="next-job-client" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+        <div id="next-job-detail" style="font-size:12px;color:#b0c4b4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+
     <div class="summary-row">
       <div class="stat" onclick="showFilter('ok')"><div class="stat-num" id="stat-ok" style="color:#2D7A3A">0</div><div class="stat-label">OK</div></div>
       <div class="stat" onclick="showFilter('warn')"><div class="stat-num" id="stat-warn" style="color:#854F0B">0</div><div class="stat-label">Warning</div></div>
@@ -2292,6 +2303,30 @@ function updateDashboard() {
     }).join('');
   }
   if(currentFilter) refreshFilterPanel(currentFilter);
+  updateNextJobBanner();
+}
+
+function updateNextJobBanner() {
+  var banner = document.getElementById('next-job-banner');
+  if (!banner) return;
+  var allJobs = [];
+  getAllDays().filter(function(d){return d!==TODAY;}).forEach(function(d){
+    getDayRecords(d).forEach(function(r){ if(r.type==='job'&&r.eventDate) allJobs.push(r); });
+  });
+  records.forEach(function(r){ if(r.type==='job'&&r.eventDate) allJobs.push(r); });
+  var upcoming = allJobs.filter(function(r){ return r.eventDate>=TODAY; });
+  upcoming.sort(function(a,b){ return a.eventDate<b.eventDate?-1:a.eventDate>b.eventDate?1:0; });
+  if(!upcoming.length){ banner.style.display='none'; return; }
+  var job = upcoming[0];
+  banner.style.display = 'flex';
+  document.getElementById('next-job-client').textContent = job.client || 'Unnamed client';
+  var parts = [];
+  if(job.eventDate===TODAY) parts.push('Today');
+  else { var d=new Date(job.eventDate+'T12:00:00'); parts.push(d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})); }
+  if(job.jobType) parts.push(job.jobType);
+  if(job.covers) parts.push(job.covers+' guests');
+  if(job.location) parts.push(job.location);
+  document.getElementById('next-job-detail').textContent = parts.join(' · ');
 }
 
 function buildDayBlock(dateStr,recs,isToday) {
