@@ -109,7 +109,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Dashboard */
 .greeting { font-size: 22px; font-weight: 700; color: #1C2B1E; letter-spacing: -0.5px; margin-bottom: 4px; }
 .greeting-sub { font-size: 13px; color: #7A7468; margin-bottom: 20px; }
-.next-booking { background: #1C2B1E; border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+.next-booking { background: #1C2B1E; border-radius: 14px; padding: 18px; margin-bottom: 16px; cursor: pointer; }
+.next-booking:active { opacity: 0.85; }
 .next-label { font-size: 11px; font-weight: 700; color: #C8A96E; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
 .next-client { font-size: 20px; font-weight: 700; color: #F5F0E8; letter-spacing: -0.3px; }
 .next-meta { font-size: 13px; color: #9AB09C; margin-top: 6px; }
@@ -233,8 +234,8 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
     <div id="dash-sub" class="greeting-sub"></div>
 
     <!-- Next booking -->
-    <div id="dash-next" class="next-booking" style="display:none">
-      <div class="next-label">Next Booking</div>
+    <div id="dash-next" class="next-booking" style="display:none" onclick="calViewJob(this.dataset.jobId)">
+      <div class="next-label">Next Booking <span style="float:right;font-size:13px;opacity:0.6">View →</span></div>
       <div class="next-client" id="dash-next-client"></div>
       <div class="next-meta" id="dash-next-meta"></div>
     </div>
@@ -1033,6 +1034,7 @@ function updateDashboard(){
   if(upcoming.length > 0){
     var nj = upcoming[0];
     nextBook.style.display = 'block';
+    nextBook.dataset.jobId = nj.id;
     noNext.style.display   = 'none';
     document.getElementById('dash-next-client').textContent = nj.client || 'Unnamed client';
     var d = daysUntil(nj.eventDate);
