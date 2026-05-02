@@ -1901,80 +1901,136 @@ function deleteJob(id){
 }
 
 // ══════════════════════════════════════════════════ JOB MENU HELPERS ══════════
-function _buildMenuPickerHTML(prefix, currentMenus){
-  var saved = mSettings.savedMenus||[];
-  var currentNames = (currentMenus||[]).map(function(m){ return m.name; });
-  var savedNames = saved.map(function(m){ return m.name; });
+var _jobMenuState = {};
+
+function _buildDishCheckboxesHTML(prefix){
   var dishes = mSettings.savedDishes||[];
-  var dishMap = {};
-  dishes.forEach(function(d){ dishMap[d.id]=d; });
-
-  var savedMenusHTML = saved.length ? saved.map(function(m){
-    var chk = currentNames.indexOf(m.name)!==-1 ? ' checked' : '';
-    var preview = (m.dishIds||[]).slice(0,3).map(function(id){ return dishMap[id]?_esc(dishMap[id].dish):''; }).filter(Boolean).join(', ');
-    if((m.dishIds||[]).length>3) preview += '…';
-    return '<label style="display:flex;align-items:flex-start;gap:10px;padding:8px 4px;border-bottom:1px solid #F0EBE2;cursor:pointer">'
-      +'<input type="checkbox" id="jmenu-'+prefix+'-'+m.id+'" style="margin-top:3px;accent-color:#1C2B1E;width:15px;height:15px;flex-shrink:0"'+chk+'>'
-      +'<div><div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
-      +(preview?'<div style="font-size:12px;color:#A09890;margin-top:1px">'+preview+'</div>':'')
-      +'</div></label>';
-  }).join('') : '<div style="font-size:12px;color:#A09890;padding:6px 0 2px">No saved menus yet.</div>';
-
-  var existingCustom = (currentMenus||[]).filter(function(m){ return savedNames.indexOf(m.name)===-1; })[0]||null;
-  return savedMenusHTML + _buildCustomMenuHTML(prefix, existingCustom);
-}
-
-function _buildCustomMenuHTML(prefix, existingCustom){
-  var dishes = mSettings.savedDishes||[];
-  var existingDishIds = existingCustom ? (existingCustom.dishes||[]).map(function(d){ return d.id; }) : [];
-  var customName = existingCustom ? existingCustom.name : '';
-
+  if(!dishes.length) return '<div style="padding:6px 4px;font-size:12px;color:#A09890">No dishes saved — add one below</div>';
   var catMap = {};
   dishes.forEach(function(d){ var c=d.category||''; if(!catMap[c]) catMap[c]=[]; catMap[c].push(d); });
-  var dishRows = '';
+  var html = '';
   DISH_CATEGORIES.forEach(function(cat){
     var group = catMap[cat]||[];
     if(!group.length) return;
-    if(cat) dishRows += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#C8A96E;padding:6px 4px 2px">'+_esc(cat)+'</div>';
+    if(cat) html += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#C8A96E;padding:6px 4px 2px">'+_esc(cat)+'</div>';
     group.forEach(function(d){
-      var chk = existingDishIds.indexOf(d.id)!==-1 ? ' checked' : '';
-      dishRows += '<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer">'
-        +'<input type="checkbox" id="jcdish-'+prefix+'-'+d.id+'" style="accent-color:#1C2B1E;width:14px;height:14px;flex-shrink:0"'+chk+'>'
+      html += '<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer">'
+        +'<input type="checkbox" id="jcdish-'+prefix+'-'+d.id+'" style="accent-color:#1C2B1E;width:14px;height:14px;flex-shrink:0">'
         +'<span style="font-size:13px;color:#1C2B1E">'+_esc(d.dish)+'</span>'
         +(d.allergens&&d.allergens.length?' <span style="font-size:11px;color:#A09890">('+_esc(d.allergens.join(', '))+')</span>':'')
         +'</label>';
     });
   });
+  return html;
+}
 
+function _buildMenuPickerHTML(prefix, currentMenus){
+  _jobMenuState[prefix] = (currentMenus||[]).map(function(m){ return {name:m.name,dishes:(m.dishes||[]).slice()}; });
+  var saved = mSettings.savedMenus||[];
+  var dishes = mSettings.savedDishes||[];
+  var dishMap = {};
+  dishes.forEach(function(d){ dishMap[d.id]=d; });
+  var savedOpts = saved.length ? saved.map(function(m){
+    var preview = (m.dishIds||[]).slice(0,3).map(function(id){ return dishMap[id]?_esc(dishMap[id].dish):''; }).filter(Boolean).join(', ');
+    if((m.dishIds||[]).length>3) preview += '…';
+    return '<label onclick="event.preventDefault();toggleSavedMenuOnJob(\''+prefix+'\',\''+m.id+'\')" style="display:flex;align-items:flex-start;gap:10px;padding:8px 4px;border-bottom:1px solid #F0EBE2;cursor:pointer">'
+      +'<input type="checkbox" id="jmchk-'+prefix+'-'+m.id+'" onclick="event.stopPropagation()" style="margin-top:3px;accent-color:#1C2B1E;width:15px;height:15px;flex-shrink:0">'
+      +'<div><div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
+      +(preview?'<div style="font-size:12px;color:#A09890;margin-top:1px">'+preview+'</div>':'')
+      +'</div></label>';
+  }).join('') : '<div style="font-size:12px;color:#A09890;padding:6px 0 2px">No saved menus yet.</div>';
   var catOptions = DISH_CATEGORIES.map(function(c){ return '<option value="'+_esc(c)+'">'+(c||'Uncategorised')+'</option>'; }).join('');
-
-  return '<div style="margin-top:10px;border-top:1px solid #E8E2D8;padding-top:10px">'
+  setTimeout(function(){ _renderMenuState(prefix); _syncLibraryCheckboxes(prefix); }, 0);
+  return '<div id="jmcurrent-'+prefix+'"></div>'
+    +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#A09890;margin:4px 0 6px">From your library</div>'
+    +savedOpts
+    +'<div style="margin-top:10px;border-top:1px solid #E8E2D8;padding-top:10px">'
     +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#A09890;margin-bottom:8px">Build a custom menu</div>'
-    +'<input type="text" id="jcustom-'+prefix+'-name" class="form-input" placeholder="Menu name (e.g. 6-course dinner)" style="margin-bottom:8px;font-size:13px" value="'+_esc(customName)+'">'
-    +(dishes.length
-      ? '<div id="jcustom-'+prefix+'-dishes" style="max-height:160px;overflow-y:auto;margin-bottom:8px;border:1px solid #F0EBE2;border-radius:6px;padding:2px 6px">'+dishRows+'</div>'
-      : '<div id="jcustom-'+prefix+'-dishes" style="margin-bottom:8px;border:1px solid #F0EBE2;border-radius:6px;padding:6px 8px;font-size:12px;color:#A09890">No dishes saved yet — add one below</div>'
-    )
-    +'<div style="display:flex;gap:6px;align-items:center">'
+    +'<input type="text" id="jcustom-'+prefix+'-name" class="form-input" placeholder="Menu name (e.g. 6-course dinner)" style="margin-bottom:8px;font-size:13px">'
+    +'<div id="jcustom-'+prefix+'-dishes" style="max-height:160px;overflow-y:auto;margin-bottom:8px;border:1px solid #F0EBE2;border-radius:6px;padding:2px 6px">'+_buildDishCheckboxesHTML(prefix)+'</div>'
+    +'<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">'
     +'<input type="text" id="jcustom-'+prefix+'-newdish" class="form-input" placeholder="Add a dish…" style="flex:1;font-size:13px;padding:8px 10px" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addQuickDish(\''+prefix+'\');}">'
     +'<select id="jcustom-'+prefix+'-newcat" class="form-input" style="width:110px;font-size:12px;padding:8px 6px">'+catOptions+'</select>'
     +'<button type="button" onclick="addQuickDish(\''+prefix+'\')" style="padding:8px 12px;background:#1C2B1E;color:#C8A96E;border:none;border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0">+ Add</button>'
     +'</div>'
+    +'<button type="button" onclick="addCustomMenuToJob(\''+prefix+'\')" style="width:100%;padding:9px;background:#F5F0E8;color:#1C2B1E;border:1px solid #C8A96E;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">+ Add this menu to booking</button>'
     +'</div>';
 }
 
-function _getCustomMenuSnapshot(prefix){
-  var nameEl = document.getElementById('jcustom-'+prefix+'-name');
-  if(!nameEl) return null;
-  var name = (nameEl.value||'').trim();
-  if(!name) return null;
+function _renderMenuState(prefix){
+  var el = document.getElementById('jmcurrent-'+prefix);
+  if(!el) return;
+  var menus = _jobMenuState[prefix]||[];
+  if(!menus.length){ el.innerHTML=''; return; }
+  el.innerHTML = '<div style="margin-bottom:8px">'+menus.map(function(m,idx){
+    var chips = (m.dishes||[]).map(function(d){
+      return '<span style="display:inline-flex;align-items:center;gap:3px;background:#E8F5E9;border:1px solid #b8dfbf;border-radius:6px;padding:2px 7px;font-size:11px;color:#1C2B1E;margin:2px 2px 2px 0">'
+        +_esc(d.dish)+'<span onclick="removeDishFromJobMenu(\''+prefix+'\','+idx+',\''+d.id+'\')" style="cursor:pointer;color:#888;font-size:15px;line-height:1;margin-left:1px">×</span></span>';
+    }).join('');
+    return '<div style="background:#F0F8F1;border:1px solid #b8dfbf;border-radius:8px;padding:10px 12px;margin-bottom:6px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
+      +'<div style="font-size:13px;font-weight:700;color:#1C2B1E">'+_esc(m.name)+'</div>'
+      +'<button onclick="removeJobMenu(\''+prefix+'\','+idx+')" type="button" style="background:none;border:none;color:#A09890;font-size:20px;cursor:pointer;padding:0 0 0 8px;line-height:1">×</button>'
+      +'</div>'+(chips||'<span style="font-size:12px;color:#A09890">No dishes</span>')+'</div>';
+  }).join('')+'</div>';
+}
+
+function _syncLibraryCheckboxes(prefix){
+  var names = (_jobMenuState[prefix]||[]).map(function(m){ return m.name; });
+  (mSettings.savedMenus||[]).forEach(function(m){
+    var chk = document.getElementById('jmchk-'+prefix+'-'+m.id);
+    if(chk) chk.checked = names.indexOf(m.name)!==-1;
+  });
+}
+
+function toggleSavedMenuOnJob(prefix, menuId){
+  var saved = mSettings.savedMenus||[];
+  var menu = null;
+  for(var i=0;i<saved.length;i++){ if(String(saved[i].id)===String(menuId)){ menu=saved[i]; break; } }
+  if(!menu) return;
   var dishes = mSettings.savedDishes||[];
-  var selected = dishes.filter(function(d){
+  var dishMap = {};
+  dishes.forEach(function(d){ dishMap[d.id]=d; });
+  if(!_jobMenuState[prefix]) _jobMenuState[prefix]=[];
+  var menus = _jobMenuState[prefix];
+  var idx=-1;
+  for(var i=0;i<menus.length;i++){ if(menus[i].name===menu.name){ idx=i; break; } }
+  if(idx!==-1) menus.splice(idx,1);
+  else menus.push({name:menu.name, dishes:(menu.dishIds||[]).map(function(id){ return dishMap[id]; }).filter(Boolean)});
+  _renderMenuState(prefix);
+  _syncLibraryCheckboxes(prefix);
+}
+
+function removeJobMenu(prefix, idx){
+  if(!_jobMenuState[prefix]) return;
+  _jobMenuState[prefix].splice(idx,1);
+  _renderMenuState(prefix);
+  _syncLibraryCheckboxes(prefix);
+}
+
+function removeDishFromJobMenu(prefix, menuIdx, dishId){
+  if(!_jobMenuState[prefix]||!_jobMenuState[prefix][menuIdx]) return;
+  _jobMenuState[prefix][menuIdx].dishes = (_jobMenuState[prefix][menuIdx].dishes||[]).filter(function(d){ return String(d.id)!==String(dishId); });
+  _renderMenuState(prefix);
+}
+
+function addCustomMenuToJob(prefix){
+  var nameEl = document.getElementById('jcustom-'+prefix+'-name');
+  if(!nameEl) return;
+  var name = (nameEl.value||'').trim();
+  if(!name){ toast('Enter a menu name','err'); return; }
+  var allDishes = mSettings.savedDishes||[];
+  var selected = allDishes.filter(function(d){
     var el = document.getElementById('jcdish-'+prefix+'-'+d.id);
     return el && el.checked;
   });
-  if(!selected.length) return null;
-  return { name: name, dishes: selected.map(function(d){ return Object.assign({},d); }) };
+  if(!selected.length){ toast('Select at least one dish','err'); return; }
+  if(!_jobMenuState[prefix]) _jobMenuState[prefix]=[];
+  _jobMenuState[prefix].push({name:name, dishes:selected.map(function(d){ return Object.assign({},d); })});
+  _renderMenuState(prefix);
+  nameEl.value='';
+  allDishes.forEach(function(d){ var el=document.getElementById('jcdish-'+prefix+'-'+d.id); if(el) el.checked=false; });
+  toast('Menu added to booking ✓');
 }
 
 function addQuickDish(prefix){
@@ -1993,32 +2049,20 @@ function addQuickDish(prefix){
     var lbl = document.createElement('label');
     lbl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer';
     var chk = document.createElement('input');
-    chk.type = 'checkbox'; chk.id = 'jcdish-'+prefix+'-'+dish.id; chk.checked = true;
-    chk.style.cssText = 'accent-color:#1C2B1E;width:14px;height:14px;flex-shrink:0';
+    chk.type='checkbox'; chk.id='jcdish-'+prefix+'-'+dish.id; chk.checked=true;
+    chk.style.cssText='accent-color:#1C2B1E;width:14px;height:14px;flex-shrink:0';
     var span = document.createElement('span');
-    span.style.cssText = 'font-size:13px;color:#1C2B1E';
-    span.textContent = dish.dish;
+    span.style.cssText='font-size:13px;color:#1C2B1E';
+    span.textContent=dish.dish;
     lbl.appendChild(chk); lbl.appendChild(span);
     listEl.appendChild(lbl);
   }
-  nameEl.value = '';
+  nameEl.value='';
   toast('Dish added ✓');
 }
 
 function _getSelectedMenusSnapshot(prefix){
-  var saved = mSettings.savedMenus||[];
-  var dishes = mSettings.savedDishes||[];
-  var dishMap = {};
-  dishes.forEach(function(d){ dishMap[d.id]=d; });
-  var result = saved.filter(function(m){
-    var el = document.getElementById('jmenu-'+prefix+'-'+m.id);
-    return el && el.checked;
-  }).map(function(m){
-    return { name: m.name, dishes: (m.dishIds||[]).map(function(id){ return dishMap[id]; }).filter(Boolean) };
-  });
-  var custom = _getCustomMenuSnapshot(prefix);
-  if(custom) result.push(custom);
-  return result;
+  return (_jobMenuState[prefix]||[]).map(function(m){ return {name:m.name,dishes:(m.dishes||[]).slice()}; });
 }
 
 function renderJobMenuPicker(){
