@@ -1846,8 +1846,9 @@ function saveJobEdit(id){
     menus:     _getSelectedMenusSnapshot(id)
   };
   var found = false;
+  var updatedRec = null;
   for(var i=0;i<mRecords.length;i++){
-    if(mRecords[i].id===id){ Object.assign(mRecords[i],updates); saveToday(); found=true; break; }
+    if(mRecords[i].id===id){ Object.assign(mRecords[i],updates); saveToday(); updatedRec=mRecords[i]; found=true; break; }
   }
   if(!found){
     try {
@@ -1857,13 +1858,14 @@ function saveJobEdit(id){
         var lds=lk.replace('mise_','');
         var lrecs=getDayRecords(lds);
         for(var ri=0;ri<lrecs.length;ri++){
-          if(lrecs[ri].id===id){ Object.assign(lrecs[ri],updates); saveDayRecords(lds,lrecs); found=true; break; }
+          if(lrecs[ri].id===id){ Object.assign(lrecs[ri],updates); saveDayRecords(lds,lrecs); updatedRec=lrecs[ri]; found=true; break; }
         }
         if(found) break;
       }
     } catch(e){}
   }
   if(!found){ toast('Job not found','err'); return; }
+  if(updatedRec) mirrorJobToVeriqo(updatedRec);
   _editingJobId=null;
   updateDashboard();
   renderCalendar();
@@ -2466,11 +2468,13 @@ function mirrorJobToVeriqo(rec){
   try {
     var hRecs = JSON.parse(localStorage.getItem(hKey)||'[]');
     var mirrorId = 'mise_' + rec.id;
-    if(!hRecs.some(function(r){ return r.id === mirrorId; })){
-      var msg = (rec.jobType||'Job') + (rec.covers ? ' · ' + rec.covers + ' covers' : '') + (rec.notes ? ' · ' + rec.notes : '');
-      hRecs.push(Object.assign({}, rec, { id: mirrorId, sourceApp: 'carte', msg: msg, status: rec.status||'ok' }));
-      localStorage.setItem(hKey, JSON.stringify(hRecs));
-    }
+    var msg = (rec.jobType||'Job') + (rec.covers ? ' · ' + rec.covers + ' covers' : '') + (rec.notes ? ' · ' + rec.notes : '');
+    var mirrored = Object.assign({}, rec, { id: mirrorId, sourceApp: 'carte', msg: msg, status: rec.status||'ok' });
+    var idx = -1;
+    for(var i=0;i<hRecs.length;i++){ if(hRecs[i].id===mirrorId){ idx=i; break; } }
+    if(idx===-1) hRecs.push(mirrored);
+    else hRecs[idx] = mirrored;
+    localStorage.setItem(hKey, JSON.stringify(hRecs));
   } catch(e){}
 }
 function openVeriqo(){ window.location.href = 'app.html'; }
