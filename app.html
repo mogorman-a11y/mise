@@ -199,14 +199,20 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     </div>
 
     <!-- NEXT JOB BANNER -->
-    <div id="next-job-banner" onclick="openCarte()" style="display:none;background:#1C2B1E;border-radius:10px;padding:12px 14px;margin-bottom:16px;cursor:pointer;align-items:center;gap:12px">
-      <span style="font-size:22px;flex-shrink:0">📅</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:11px;color:#C8A96E;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Next booking · Carte</div>
-        <div id="next-job-client" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-        <div id="next-job-detail" style="font-size:12px;color:#b0c4b4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    <div id="next-job-banner" style="display:none;background:#1C2B1E;border-radius:10px;margin-bottom:16px;overflow:hidden">
+      <div onclick="toggleNextJobBanner()" style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px">
+        <span style="font-size:22px;flex-shrink:0">📅</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:#C8A96E;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Next booking · Carte</div>
+          <div id="next-job-client" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+          <div id="next-job-detail" style="font-size:12px;color:#b0c4b4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+        </div>
+        <svg id="next-job-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform 0.2s"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8A96E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      <div id="next-job-panel" style="display:none;padding:0 14px 14px;border-top:1px solid rgba(200,169,110,0.2)">
+        <div id="next-job-panel-content"></div>
+        <button onclick="openCarte()" style="width:100%;margin-top:14px;padding:11px;background:#C8A96E;color:#1C2B1E;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">View booking in Carte →</button>
+      </div>
     </div>
 
     <div class="summary-row">
@@ -2318,15 +2324,47 @@ function updateNextJobBanner() {
   upcoming.sort(function(a,b){ return a.eventDate<b.eventDate?-1:a.eventDate>b.eventDate?1:0; });
   if(!upcoming.length){ banner.style.display='none'; return; }
   var job = upcoming[0];
-  banner.style.display = 'flex';
+  banner.style.display = 'block';
+
   document.getElementById('next-job-client').textContent = job.client || 'Unnamed client';
   var parts = [];
   if(job.eventDate===TODAY) parts.push('Today');
-  else { var d=new Date(job.eventDate+'T12:00:00'); parts.push(d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})); }
+  else { var dd=new Date(job.eventDate+'T12:00:00'); parts.push(dd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})); }
   if(job.jobType) parts.push(job.jobType);
   if(job.covers) parts.push(job.covers+' guests');
   if(job.location) parts.push(job.location);
   document.getElementById('next-job-detail').textContent = parts.join(' · ');
+
+  // Build detail panel content
+  function njRow(label, val){
+    return '<div style="margin-top:10px"><div style="font-size:11px;color:#b0c4b4;margin-bottom:2px">'+label+'</div><div style="font-size:13px;color:#fff;line-height:1.4">'+val+'</div></div>';
+  }
+  var html = '';
+  var dateStr = job.eventDate===TODAY ? 'Today' : fmtDate(job.eventDate);
+  html += njRow('Date', dateStr + (job.eventTime ? ' at '+job.eventTime : ''));
+  if(job.jobType) html += njRow('Type', job.jobType);
+  if(job.covers)  html += njRow('Covers', job.covers+' guests');
+  if(job.location) html += njRow('Location', '<a href="https://maps.google.com/?q='+encodeURIComponent(job.location)+'" onclick="event.stopPropagation()" style="color:#C8A96E;text-decoration:none" target="_blank">'+job.location+' ↗</a>');
+  if(job.phone)   html += njRow('Phone', '<a href="tel:'+job.phone+'" onclick="event.stopPropagation()" style="color:#C8A96E;text-decoration:none">'+job.phone+'</a>');
+  if(job.email)   html += njRow('Email', '<a href="mailto:'+job.email+'" onclick="event.stopPropagation()" style="color:#C8A96E;text-decoration:none">'+job.email+'</a>');
+  if(job.notes)   html += njRow('Notes', job.notes);
+  if(job.menus&&job.menus.length){
+    var mHtml = job.menus.map(function(m){
+      var chips = (m.dishes||[]).map(function(d){ return '<span style="display:inline-block;background:rgba(255,255,255,0.08);border-radius:5px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:#e8e0d0">'+d.dish+'</span>'; }).join('');
+      return '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#C8A96E;margin-bottom:3px">'+m.name+'</div>'+(chips||'<span style="font-size:12px;color:#b0c4b4">No dishes</span>')+'</div>';
+    }).join('');
+    html += njRow('Menus', mHtml);
+  }
+  document.getElementById('next-job-panel-content').innerHTML = html;
+}
+
+function toggleNextJobBanner(){
+  var panel   = document.getElementById('next-job-panel');
+  var chevron = document.getElementById('next-job-chevron');
+  if(!panel) return;
+  var open = panel.style.display !== 'none';
+  panel.style.display   = open ? 'none' : 'block';
+  if(chevron) chevron.style.transform = open ? '' : 'rotate(90deg)';
 }
 
 function buildDayBlock(dateStr,recs,isToday) {
