@@ -381,8 +381,10 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
 
   <!-- ═══════════════════════════════════════ JOBS ════════════════════════ -->
   <div id="tab-jobs" class="section">
-    <div class="card">
-      <div class="card-title">Log New Job</div>
+    <button id="new-job-btn" onclick="toggleNewJobForm()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:#3A7D44;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px">＋ Book a New Job</button>
+
+    <div id="new-job-form" class="card" style="display:none">
+      <div class="card-title">New Booking</div>
       <div class="form-group">
         <label class="form-label">Client *</label>
         <div style="display:flex;gap:8px">
@@ -429,11 +431,16 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
         <label class="form-label">Menus</label>
         <div id="job-menu-picker" style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px"></div>
       </div>
-      <button class="btn-primary btn-green" onclick="logJob()" style="margin-top:12px">Log Job</button>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="logJob()">Save Booking</button>
+        <button onclick="toggleNewJobForm()" style="flex:0 0 auto;padding:12px 16px;background:#F5F0E8;color:#1C2B1E;border:1px solid #C8A96E;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit">Cancel</button>
+      </div>
     </div>
 
-    <div class="divider">All Jobs</div>
-    <div id="jobs-history"></div>
+    <div id="jobs-upcoming"></div>
+
+    <div id="jobs-past" style="display:none"></div>
+    <button id="jobs-past-btn" onclick="togglePastJobs()" style="display:none;width:100%;padding:12px;background:transparent;color:#7A7468;border:1px solid #E8E2D8;border-radius:10px;font-size:13px;cursor:pointer;font-family:inherit;margin-top:8px"></button>
   </div>
 
   <!-- ═══════════════════════════════════════ MORE ════════════════════════ -->
@@ -791,6 +798,8 @@ var _calSelectedDate = null;
 var _expandedClientId = null;
 var _expandedJobId    = null;
 var _editingJobId     = null;
+var _newJobFormOpen   = false;
+var _pastJobsOpen     = false;
 
 // ═══════════════════════════════════════════════════════ UTILITIES ═══════════
 function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -1071,10 +1080,30 @@ function updateDashboard(){
 function startNewJob(){
   showTab('jobs');
   setTimeout(function(){
+    if(!_newJobFormOpen) toggleNewJobForm();
     var el = document.getElementById('job-event-date');
     if(el && !el.value) el.value = TODAY;
     window.scrollTo(0,0);
   }, 80);
+}
+
+function toggleNewJobForm(){
+  _newJobFormOpen = !_newJobFormOpen;
+  var form = document.getElementById('new-job-form');
+  var btn  = document.getElementById('new-job-btn');
+  if(form) form.style.display = _newJobFormOpen ? 'block' : 'none';
+  if(btn)  btn.textContent    = _newJobFormOpen ? '✕  Cancel' : '＋ Book a New Job';
+  if(_newJobFormOpen){
+    var el = document.getElementById('job-event-date');
+    if(el && !el.value) el.value = TODAY;
+  }
+}
+
+function togglePastJobs(){
+  _pastJobsOpen = !_pastJobsOpen;
+  var el = document.getElementById('jobs-past');
+  if(el) el.style.display = _pastJobsOpen ? 'block' : 'none';
+  renderJobsHistory();
 }
 
 // ═══════════════════════════════════════════════════════ CLIENTS / CRM ══════
@@ -1364,6 +1393,10 @@ function calBookJob(ds){
 
 function calViewJob(id){
   _expandedJobId = id;
+  var job = getAllJobs().filter(function(j){ return j.id === id; })[0];
+  if(job && job.eventDate && job.eventDate < TODAY && !_pastJobsOpen){
+    _pastJobsOpen = true;
+  }
   showTab('jobs');
   setTimeout(function(){
     var el = document.querySelector('[data-job-id="'+id+'"]');
@@ -1721,102 +1754,130 @@ function logJob(){
 
   renderJobMenuPicker();
   updateDashboard();
+  if(_newJobFormOpen) toggleNewJobForm();
   renderJobsHistory();
-  toast(inCRM ? 'Job logged ✓' : 'Job logged ✓ (add client to CRM for full details)');
+  toast(inCRM ? 'Job saved ✓' : 'Job saved ✓ (add client to CRM for full details)');
 }
 
-function renderJobsHistory(){
-  var el = document.getElementById('jobs-history');
-  if(!el) return;
-  var jobs = getAllJobs();
-  if(jobs.length===0){ el.innerHTML='<p class="empty">No jobs logged yet.</p>'; return; }
+function _jobCardHTML(j){
+  var JOB_TYPES = ['Dinner party','Wedding','Corporate','Lunch','Canapes','Meal prep','Private class','Other'];
+  var isOpen    = _expandedJobId === j.id;
+  var isEditing = _editingJobId  === j.id;
+  var isMirrored = j.id && j.id.indexOf('veriqo_') === 0;
+  var bodyHtml = '';
 
+  if(isEditing){
+    var typeOpts = JOB_TYPES.map(function(t){
+      return '<option'+(j.jobType===t?' selected':'')+'>'+t+'</option>';
+    }).join('');
+    bodyHtml = '<div class="job-card-body open" onclick="event.stopPropagation()">'
+      + '<div class="form-group"><label class="form-label">Client</label>'
+      + '<input class="form-input" id="jedit-client-'+j.id+'" value="'+_esc(j.client||'')+'"></div>'
+      + '<div class="form-group"><label class="form-label">Location</label>'
+      + '<input class="form-input" id="jedit-location-'+j.id+'" value="'+_esc(j.location||'')+'"></div>'
+      + '<div class="form-row">'
+      + '<div class="form-group"><label class="form-label">Event date</label>'
+      + '<input class="form-input" type="date" id="jedit-eventdate-'+j.id+'" value="'+_esc(j.eventDate||'')+'"></div>'
+      + '<div class="form-group"><label class="form-label">Time</label>'
+      + '<input class="form-input" type="time" id="jedit-eventtime-'+j.id+'" value="'+_esc(j.eventTime||'')+'"></div>'
+      + '</div>'
+      + '<div class="form-row">'
+      + '<div class="form-group"><label class="form-label">Covers</label>'
+      + '<input class="form-input" type="number" id="jedit-covers-'+j.id+'" value="'+_esc(j.covers||'')+'"></div>'
+      + '<div class="form-group"><label class="form-label">Job type</label>'
+      + '<select class="form-input" id="jedit-jobtype-'+j.id+'"><option value="">Select…</option>'+typeOpts+'</select></div>'
+      + '</div>'
+      + '<div class="form-group"><label class="form-label">Notes</label>'
+      + '<input class="form-input" id="jedit-notes-'+j.id+'" value="'+_esc(j.notes||'')+'"></div>'
+      + '<div class="form-group"><label class="form-label">Menus</label>'
+      + '<div style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px">'
+      + _buildMenuPickerHTML(j.id, j.menus||[]) + '</div></div>'
+      + '<div style="display:flex;gap:8px;margin-top:4px">'
+      + '<button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="saveJobEdit(\''+j.id+'\')">Save</button>'
+      + '<button style="flex:0 0 auto;padding:12px 16px;background:#F5F0E8;color:#1C2B1E;border:1px solid #C8A96E;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="_editingJobId=null;renderJobsHistory()">Cancel</button>'
+      + '<button style="flex:0 0 auto;padding:12px 16px;background:#FBECEC;color:#8A2D2D;border:1px solid #E8C5C5;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="deleteJob(\''+j.id+'\')">Delete</button>'
+      + '</div></div>';
+  } else if(isOpen){
+    var editBtn = !isMirrored
+      ? '<div style="margin-top:10px"><button style="width:100%;padding:10px;background:#1C2B1E;color:#C8A96E;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();startJobEdit(\''+j.id+'\')">Edit job</button></div>'
+      : '';
+    bodyHtml = '<div class="job-card-body open" onclick="event.stopPropagation()">'
+      + (j.location ? '<div class="job-detail-row"><span class="job-detail-key">Location</span>'+_esc(j.location)+'</div>' : '')
+      + (j.eventTime ? '<div class="job-detail-row"><span class="job-detail-key">Time</span>'+_esc(j.eventTime)+'</div>' : '')
+      + (j.covers ? '<div class="job-detail-row"><span class="job-detail-key">Covers</span>'+_esc(j.covers)+'</div>' : '')
+      + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
+      + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
+      + (j.menus&&j.menus.length ? '<div style="margin-top:10px">'
+          + j.menus.map(function(m){
+              var dishChips = (m.dishes||[]).map(function(d){
+                return '<span style="display:inline-block;background:#F5F0E8;border:1px solid #E8E2D8;border-radius:6px;padding:2px 8px;font-size:12px;margin:2px 2px 2px 0;color:#1C2B1E">'+_esc(d.dish)+(d.allergens&&d.allergens.length?' <span style="color:#A09890;font-size:11px">('+_esc(d.allergens.join(', '))+')</span>':'')+'</span>';
+              }).join('');
+              return '<div style="margin-bottom:8px">'
+                +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#C8A96E;margin-bottom:4px">'+_esc(m.name)+'</div>'
+                +(dishChips||'<span style="font-size:12px;color:#A09890">No dishes</span>')
+                +'</div>';
+            }).join('')
+          +'</div>' : '')
+      + editBtn + '</div>';
+  }
+
+  return '<div class="job-card" data-job-id="'+j.id+'" onclick="toggleJobCard(\''+j.id+'\')">'
+    + '<div class="job-card-header">'
+    + '<div><div class="job-card-name">'+_esc(j.client||'Unnamed')+'</div>'
+    + '<div class="job-card-date">'+fmtDate(j.eventDate)+(j.jobType?' · '+_esc(j.jobType):'')+'</div>'
+    + (j.covers ? '<div class="job-card-meta">'+j.covers+' covers</div>' : '')
+    + '</div>'
+    + '<div style="font-size:16px;color:#C0B8B0">'+(isOpen||isEditing?'▲':'▼')+'</div>'
+    + '</div>'
+    + bodyHtml + '</div>';
+}
+
+function _jobsByMonth(jobs){
   var byMonth = {};
   jobs.forEach(function(j){
     var mo = (j.eventDate||j.date||'').slice(0,7);
     if(!byMonth[mo]) byMonth[mo]=[];
     byMonth[mo].push(j);
   });
-
-  var JOB_TYPES = ['Dinner party','Wedding','Corporate','Lunch','Canapes','Meal prep','Private class','Other'];
-  var months = Object.keys(byMonth).sort().reverse();
-  var exportBtn = '<button onclick="exportJobsPDF()" style="display:flex;align-items:center;gap:8px;width:100%;padding:11px 16px;background:#1C2B1E;color:#C8A96E;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px">📄 Export Booking Report PDF</button>';
-  el.innerHTML = exportBtn + months.map(function(mo){
+  return Object.keys(byMonth).sort().reverse().map(function(mo){
     var parts = mo.split('-');
     var moLabel = MONTHS[parseInt(parts[1],10)-1] + ' ' + parts[0];
-    var cards = byMonth[mo].map(function(j){
-      var isOpen    = _expandedJobId === j.id;
-      var isEditing = _editingJobId  === j.id;
-      var isMirrored = j.id && j.id.indexOf('veriqo_') === 0;
-      var bodyHtml = '';
-
-      if(isEditing){
-        var typeOpts = JOB_TYPES.map(function(t){
-          return '<option'+(j.jobType===t?' selected':'')+'>'+t+'</option>';
-        }).join('');
-        bodyHtml = '<div class="job-card-body open" onclick="event.stopPropagation()">'
-          + '<div class="form-group"><label class="form-label">Client</label>'
-          + '<input class="form-input" id="jedit-client-'+j.id+'" value="'+_esc(j.client||'')+'"></div>'
-          + '<div class="form-group"><label class="form-label">Location</label>'
-          + '<input class="form-input" id="jedit-location-'+j.id+'" value="'+_esc(j.location||'')+'"></div>'
-          + '<div class="form-row">'
-          + '<div class="form-group"><label class="form-label">Event date</label>'
-          + '<input class="form-input" type="date" id="jedit-eventdate-'+j.id+'" value="'+_esc(j.eventDate||'')+'"></div>'
-          + '<div class="form-group"><label class="form-label">Time</label>'
-          + '<input class="form-input" type="time" id="jedit-eventtime-'+j.id+'" value="'+_esc(j.eventTime||'')+'"></div>'
-          + '</div>'
-          + '<div class="form-row">'
-          + '<div class="form-group"><label class="form-label">Covers</label>'
-          + '<input class="form-input" type="number" id="jedit-covers-'+j.id+'" value="'+_esc(j.covers||'')+'"></div>'
-          + '<div class="form-group"><label class="form-label">Job type</label>'
-          + '<select class="form-input" id="jedit-jobtype-'+j.id+'"><option value="">Select…</option>'+typeOpts+'</select></div>'
-          + '</div>'
-          + '<div class="form-group"><label class="form-label">Notes</label>'
-          + '<input class="form-input" id="jedit-notes-'+j.id+'" value="'+_esc(j.notes||'')+'"></div>'
-          + '<div class="form-group"><label class="form-label">Menus</label>'
-          + '<div style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px">'
-          + _buildMenuPickerHTML(j.id, j.menus||[]) + '</div></div>'
-          + '<div style="display:flex;gap:8px;margin-top:4px">'
-          + '<button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="saveJobEdit(\''+j.id+'\')">Save</button>'
-          + '<button style="flex:0 0 auto;padding:12px 16px;background:#F5F0E8;color:#1C2B1E;border:1px solid #C8A96E;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="_editingJobId=null;renderJobsHistory()">Cancel</button>'
-          + '<button style="flex:0 0 auto;padding:12px 16px;background:#FBECEC;color:#8A2D2D;border:1px solid #E8C5C5;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="deleteJob(\''+j.id+'\')">Delete</button>'
-          + '</div></div>';
-      } else if(isOpen){
-        var editBtn = !isMirrored
-          ? '<div style="margin-top:10px"><button style="width:100%;padding:10px;background:#1C2B1E;color:#C8A96E;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();startJobEdit(\''+j.id+'\')">Edit job</button></div>'
-          : '';
-        bodyHtml = '<div class="job-card-body open" onclick="event.stopPropagation()">'
-          + (j.location ? '<div class="job-detail-row"><span class="job-detail-key">Location</span>'+_esc(j.location)+'</div>' : '')
-          + (j.eventTime ? '<div class="job-detail-row"><span class="job-detail-key">Time</span>'+_esc(j.eventTime)+'</div>' : '')
-          + (j.covers ? '<div class="job-detail-row"><span class="job-detail-key">Covers</span>'+_esc(j.covers)+'</div>' : '')
-          + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
-          + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
-          + (j.menus&&j.menus.length ? '<div style="margin-top:10px">'
-              + j.menus.map(function(m){
-                  var dishChips = (m.dishes||[]).map(function(d){
-                    return '<span style="display:inline-block;background:#F5F0E8;border:1px solid #E8E2D8;border-radius:6px;padding:2px 8px;font-size:12px;margin:2px 2px 2px 0;color:#1C2B1E">'+_esc(d.dish)+(d.allergens&&d.allergens.length?' <span style="color:#A09890;font-size:11px">('+_esc(d.allergens.join(', '))+')</span>':'')+'</span>';
-                  }).join('');
-                  return '<div style="margin-bottom:8px">'
-                    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#C8A96E;margin-bottom:4px">'+_esc(m.name)+'</div>'
-                    +(dishChips||'<span style="font-size:12px;color:#A09890">No dishes</span>')
-                    +'</div>';
-                }).join('')
-              +'</div>' : '')
-          + editBtn + '</div>';
-      }
-
-      return '<div class="job-card" data-job-id="'+j.id+'" onclick="toggleJobCard(\''+j.id+'\')">'
-        + '<div class="job-card-header">'
-        + '<div><div class="job-card-name">'+_esc(j.client||'Unnamed')+'</div>'
-        + '<div class="job-card-date">'+fmtDate(j.eventDate)+(j.jobType?' · '+_esc(j.jobType):'')+'</div>'
-        + (j.covers ? '<div class="job-card-meta">'+j.covers+' covers</div>' : '')
-        + '</div>'
-        + '<div style="font-size:16px;color:#C0B8B0">'+(isOpen||isEditing?'▲':'▼')+'</div>'
-        + '</div>'
-        + bodyHtml + '</div>';
-    }).join('');
-    return '<div class="month-group"><div class="month-label">'+moLabel+'</div>'+cards+'</div>';
+    return '<div class="month-group"><div class="month-label">'+moLabel+'</div>'
+      + byMonth[mo].map(_jobCardHTML).join('') + '</div>';
   }).join('');
+}
+
+function renderJobsHistory(){
+  var upcomingEl = document.getElementById('jobs-upcoming');
+  var pastEl     = document.getElementById('jobs-past');
+  var pastBtn    = document.getElementById('jobs-past-btn');
+  if(!upcomingEl) return;
+
+  var allJobs  = getAllJobs();
+  var upcoming = allJobs.filter(function(j){ return j.eventDate && j.eventDate >= TODAY; })
+                        .sort(function(a,b){ return a.eventDate.localeCompare(b.eventDate); });
+  var past     = allJobs.filter(function(j){ return !j.eventDate || j.eventDate < TODAY; })
+                        .sort(function(a,b){ return (b.eventDate||b.date||'').localeCompare(a.eventDate||a.date||''); });
+
+  if(upcoming.length === 0){
+    upcomingEl.innerHTML = '<p class="empty" style="margin-top:4px;margin-bottom:8px">No upcoming bookings</p>';
+  } else {
+    upcomingEl.innerHTML = '<div class="divider" style="margin-top:0">Upcoming</div>'
+      + upcoming.map(_jobCardHTML).join('');
+  }
+
+  if(pastEl){
+    var exportBtn = '<button onclick="exportJobsPDF()" style="display:flex;align-items:center;gap:8px;width:100%;padding:11px 16px;background:#1C2B1E;color:#C8A96E;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px">📄 Export Booking Report PDF</button>';
+    pastEl.innerHTML = past.length === 0
+      ? '<p class="empty">No previous bookings</p>'
+      : exportBtn + _jobsByMonth(past);
+    pastEl.style.display = _pastJobsOpen ? 'block' : 'none';
+  }
+
+  if(pastBtn){
+    pastBtn.style.display = past.length > 0 ? 'block' : 'none';
+    pastBtn.textContent   = (_pastJobsOpen ? '▲ Hide' : '▼ View') + ' previous bookings (' + past.length + ')';
+  }
 }
 
 function toggleJobCard(id){
