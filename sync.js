@@ -139,7 +139,10 @@ window.Mise.sync = (function () {
       var existing = [];
       try { existing = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) { existing = []; }
       jobs.forEach(function(job){
-        if (!existing.some(function(r){ return r.id === job.id; })) existing.push(job);
+        var idx = -1;
+        for(var i=0;i<existing.length;i++){ if(existing[i].id===job.id){ idx=i; break; } }
+        if(idx===-1) existing.push(job);
+        else existing[idx] = job;
       });
       try { localStorage.setItem(key, JSON.stringify(existing)); } catch(e) {}
       if (row.date === new Date().toISOString().slice(0, 10) && typeof records !== 'undefined') {
