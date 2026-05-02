@@ -2297,7 +2297,7 @@ function updateDashboard() {
   var prevDays=getAllDays().filter(function(d){return d!==TODAY;});
   document.getElementById('sub-records').textContent='Today + '+(prevDays.length?prevDays.length+' previous day'+(prevDays.length>1?'s':''):'no previous days');
 
-  var alerts=records.filter(function(r){return r.status!=='ok';});
+  var alerts=records.filter(function(r){return r.type!=='job'&&r.status!=='ok';});
   var ac=document.getElementById('alerts-container');
   if(!alerts.length){
     ac.innerHTML=records.length?'<div class="alert-strip none"><div class="alert-text"><strong>All clear</strong><div class="alert-sub">All checks within safe ranges.</div></div></div>':'';
@@ -2351,9 +2351,11 @@ function updateNextJobBanner() {
   if(job.menus&&job.menus.length){
     var mHtml = job.menus.map(function(m){
       var chips = (m.dishes||[]).map(function(d){ return '<span style="display:inline-block;background:rgba(255,255,255,0.08);border-radius:5px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:#e8e0d0">'+d.dish+'</span>'; }).join('');
-      return '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#C8A96E;margin-bottom:3px">'+m.name+'</div>'+(chips||'<span style="font-size:12px;color:#b0c4b4">No dishes</span>')+'</div>';
+      return '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#C8A96E;margin-bottom:3px">'+m.name+'</div>'+(chips||'<span style="font-size:12px;color:#b0c4b4">No dishes listed</span>')+'</div>';
     }).join('');
-    html += njRow('Menus', mHtml);
+    html += njRow('Menu', mHtml);
+  } else {
+    html += njRow('Menu', '<span style="color:#b0c4b4">No menu attached</span>');
   }
   document.getElementById('next-job-panel-content').innerHTML = html;
 }
