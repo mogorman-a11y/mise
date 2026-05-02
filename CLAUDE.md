@@ -242,10 +242,11 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 - Kitchen Assessment: fridge/freezer temps, condition, notes
 - Allergen Log: 14-allergen checkbox grid
 - Credentials: certificate tracker with 90-day expiry warning
-- Settings: profile, staff list
+- Settings: profile, staff list; also reachable via gold cog in header (always visible)
 - No Stripe paywall (Carte is free for now)
 - PWA: `mise-manifest.json`, Carte icons (`icons/carte-192.png`, `carte-512.png`, `carte-apple-touch.png`), install banner on home tab, "Save as app" in More menu
 - App switcher pill → Veriqo (semi-transparent background, Veriqo shield icon, "Veriqo" text)
+- **Settings cog in header** — gold `#C8A96E` cog button (always visible, right of title, left of Veriqo pill), calls `showTab('settings')`
 - Logo upload in Settings (`carte-logo-img`, `previewCarteLogo`, `clearCarteLogo`); stored in `mSettings.logo`; syncs to Veriqo
 - Booking report PDF: `exportJobsPDF()` / `buildJobsPDF()` — Carte-branded, jobs by month, menus as sub-rows
 - Menus on jobs: `job.menus = [{name, dishes:[...]}]` frozen snapshots; `_buildMenuPickerHTML(prefix, currentMenus)` / `_getSelectedMenusSnapshot(prefix)` / `renderJobMenuPicker()`
@@ -346,6 +347,12 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 - [ ] Finance app
 - [ ] Suite landing page at `getveriqo.co.uk`
 - [ ] Subscription packaging
+
+### Done (2026-05-02)
+- [x] **Fixed "Other" category dishes non-clickable in Carte** — Cross-app ID type mismatch: Veriqo-synced dish IDs are numeric (`Date.now()`), Carte IDs are strings (`uid()`). Strict `===` comparison in `_dishRowHTML`, `saveDishEdit`, and `deleteDish` always failed for synced dishes. Fixed with `String()` coercion at all three comparison sites.
+- [x] **Saved menus inline editing in Carte** — Converted from scroll-to-top form UX to inline expansion (matching dish library pattern). Added `_menuInlineEditHTML(m)` helper, `_editingMenuId` state variable, `saveMenuEdit(id)`, `cancelMenuEdit()`. `editMenu(id)` now toggles inline form in-place; `saveMenu()` is create-only. `event.stopPropagation()` on form inputs prevents card collapse while editing.
+- [x] **Landing page email field UX** — Made hero email capture more obvious: input is now a solid white box (was transparent-in-pill), added visible label "Enter your email to get started", changed placeholder to `you@yourkitchen.co.uk`, added shake animation (`@keyframes shake`, `.input-error` class) on empty-submit validation.
+- [x] **Settings cog in Carte header** — Gold (`#C8A96E`) cog icon added to the dark header bar, positioned between the title/logo and the Veriqo switcher pill. Always visible on every tab. Calls `showTab('settings')`.
 
 ### Done (2026-05-01)
 - [x] **Fixed Supabase SMTP** — Resend API key in Supabase SMTP settings was stale/never working. Created new `Veriqo` key in Resend, pasted into Supabase → Auth → SMTP Settings → Password. Both Veriqo magic link and forgot-password emails now send.
