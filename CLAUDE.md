@@ -10,7 +10,7 @@
 | **localStorage prefix** | `haccp_` | `mise_` |
 | **Settings object** | `settings` → `haccp_settings` | `mSettings` → `mise_settings` |
 | **Daily records** | `records[]` → `haccp_YYYY-MM-DD` | `mRecords[]` → `mise_YYYY-MM-DD` |
-| **Sync module** | `sync.js` (v7) | `mise-sync.js` (v4) |
+| **Sync module** | `sync.js` (v9) | `mise-sync.js` (v4) |
 | **Auth module** | `auth.js` (v8) | `auth.js` (v8) |
 
 **Paths:**
@@ -163,6 +163,9 @@ While shared tables don't exist yet, dishes/menus/clients/credentials are shared
 - Carte job records are mirrored to `haccp_records` with `sourceApp: 'carte'` prefix
 - Prefix check prevents re-import loops: a mirrored record is skipped if it already has the origin app's prefix
 - Mirrored Carte jobs include `msg` and `status` fields so Veriqo can display them correctly
+- **`mirrorJobToVeriqo` (mise.html) upserts** — replaces existing mirrored record by ID, so editing a job in Carte (e.g. adding a menu) propagates immediately to the Veriqo localStorage copy
+- **`saveJobEdit` calls `mirrorJobToVeriqo`** with the updated record after saving
+- **`_pullCarteJobs` (sync.js) upserts** — on every Supabase pull, existing Carte job entries in localStorage are replaced with the fresh Supabase data (not skipped if ID already present)
 
 ### Suite delete propagation
 
@@ -202,7 +205,7 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 - Records view — day blocks, expandable, export .txt + print-to-PDF
 - Settings: staff, unit names, alert thresholds, reminder checklists, brand profile (logo upload)
 - CRM / Customers: address book, tap-to-edit cards, clickable phone/email/map
-- Calendar: month grid, job indicators, unavailable toggle
+- **Next booking banner** — collapsible dark (`#1C2B1E`) banner above the stats row; shows soonest upcoming job (scans all `haccp_*` days for `type:'job'` with `eventDate >= TODAY`). First tap expands a detail panel: date/time, job type, covers, location (Google Maps link), phone, email, notes, menus with dish chips. Gold "View booking in Carte →" button at bottom. Hides if no upcoming jobs. `updateNextJobBanner()` / `toggleNextJobBanner()`. Alert strip excludes `type:'job'` records (they have no HACCP status field).
 - Approved Supplier Register
 - Menus & dish library (shared with Carte — see sync section)
 - Transport temperature log (with client autofill)
@@ -249,7 +252,15 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 - **Settings cog in header** — gold `#C8A96E` cog button (always visible, right of title, left of Veriqo pill), calls `showTab('settings')`
 - Logo upload in Settings (`carte-logo-img`, `previewCarteLogo`, `clearCarteLogo`); stored in `mSettings.logo`; syncs to Veriqo
 - Booking report PDF: `exportJobsPDF()` / `buildJobsPDF()` — Carte-branded, jobs by month, menus as sub-rows
-- Menus on jobs: `job.menus = [{name, dishes:[...]}]` frozen snapshots; `_buildMenuPickerHTML(prefix, currentMenus)` / `_getSelectedMenusSnapshot(prefix)` / `renderJobMenuPicker()`
+- Menus on jobs: `job.menus = [{name, dishes:[...]}]` frozen snapshots; state-based editor using `_jobMenuState[prefix]`
+  - `_buildMenuPickerHTML(prefix, currentMenus)` — initialises `_jobMenuState[prefix]` from existing menus; renders "From your library" checkboxes + "Build a custom menu" section; fires `setTimeout` to call `_renderMenuState` + `_syncLibraryCheckboxes`
+  - `_renderMenuState(prefix)` — renders currently-attached menus as removable green cards (× on whole menu, × on each dish chip)
+  - `toggleSavedMenuOnJob(prefix, menuId)` — adds/removes a saved library menu from state
+  - `removeJobMenu(prefix, idx)` / `removeDishFromJobMenu(prefix, menuIdx, dishId)` — mutate state and re-render
+  - `addCustomMenuToJob(prefix)` — commits name + selected dishes from the custom builder into state
+  - `addQuickDish(prefix)` — saves a new dish to `mSettings.savedDishes`, appends checkbox to custom builder list
+  - `_getSelectedMenusSnapshot(prefix)` — returns `_jobMenuState[prefix]` (used by `logJob` and `saveJobEdit`)
+  - `renderJobMenuPicker()` — re-initialises the log form picker after a job is saved
 
 **Key JS patterns:**
 - `saveSettings()` always calls `Mise.sync.saveSettings(mSettings)` if sync available
@@ -257,7 +268,7 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 - `getAllJobs()` / `getAllTypeRecords(type)` scan all `mise_*` localStorage keys
 - `getAddressBook()` — merges `mSettings.savedClients` + historical job records
 - `saveDayRecords(ds, arr)` fires `Mise.sync.saveDay()`
-- `_buildMenuPickerHTML(prefix, currentMenus)` — renders saved-menu checkboxes with dish preview; `prefix` is `'log'` for the log form or job ID for inline edit
+- `saveJobEdit(id)` calls `mirrorJobToVeriqo(updatedRec)` after saving so menu changes propagate immediately
 
 ---
 
@@ -333,7 +344,7 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 ### Short term (feature completion)
 - [x] **Veriqo PDF export** — already fully built: `buildPDFExport()` in `app.html`, `.txt` + PDF buttons per day, plus multi-day inspector range export
 - [x] **Carte PDF export** — `exportJobsPDF()` / `buildJobsPDF()` in `mise.html`; Carte-branded booking report grouped by month
-- [ ] **Veriqo calendar** — Veriqo has **no calendar at all** (CLAUDE.md was aspirational). Needs building from scratch — port Carte's `renderCalendar`, `getAllJobsByDate`, `calViewJob`, day-detail panel, unavailable toggle
+- [x] **Veriqo next-booking banner** — replaced full calendar with collapsible next-job banner (see Veriqo features above). Full calendar still not built if ever needed.
 - [ ] **Carte Stripe paywall** — currently free; add when selling Carte standalone or as suite bundle
 - [ ] **Clean up `api/test.js`** — debug file left in repo, should be deleted
 
@@ -348,7 +359,15 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 - [ ] Suite landing page at `getveriqo.co.uk`
 - [ ] Subscription packaging
 
-### Done (2026-05-02)
+### Done (2026-05-02, session 2)
+- [x] **Next booking banner in Veriqo** — dark collapsible banner on dashboard shows soonest upcoming Carte job. Tap to expand: date/time, type, covers, location (maps link), phone, email, notes, menus with dish chips. "View booking in Carte →" button. `updateNextJobBanner()` / `toggleNextJobBanner()`. Hides when no upcoming jobs.
+- [x] **Fixed alert strip "job · undefined"** — job records with no `status` field were leaking into the alert strip (`undefined !== 'ok'`). Fixed by excluding `type:'job'` from the alerts filter.
+- [x] **Redesigned job menu editor in Carte** — replaced checkbox-based picker with state-based UX (`_jobMenuState[prefix]`). Currently-attached menus shown as removable green cards; each dish has an × to remove it individually. Library menus are checkboxes (tick to add, untick to remove). Custom builder has name field + dish checkboxes + inline quick-add; "Add this menu to booking" commits to the card list. Works identically in log form and inline edit form.
+- [x] **Fixed `mirrorJobToVeriqo` upsert** — was add-only; now replaces existing mirror by ID so job edits (e.g. adding a menu in Carte) propagate to Veriqo.
+- [x] **`saveJobEdit` now calls `mirrorJobToVeriqo`** — previously edits to Carte jobs were never mirrored.
+- [x] **Fixed `_pullCarteJobs` upsert (sync.js v9)** — was add-only; now replaces existing entries so fresh Supabase data always wins on pull.
+
+### Done (2026-05-02, session 1)
 - [x] **Fixed "Other" category dishes non-clickable in Carte** — Cross-app ID type mismatch: Veriqo-synced dish IDs are numeric (`Date.now()`), Carte IDs are strings (`uid()`). Strict `===` comparison in `_dishRowHTML`, `saveDishEdit`, and `deleteDish` always failed for synced dishes. Fixed with `String()` coercion at all three comparison sites.
 - [x] **Saved menus inline editing in Carte** — Converted from scroll-to-top form UX to inline expansion (matching dish library pattern). Added `_menuInlineEditHTML(m)` helper, `_editingMenuId` state variable, `saveMenuEdit(id)`, `cancelMenuEdit()`. `editMenu(id)` now toggles inline form in-place; `saveMenu()` is create-only. `event.stopPropagation()` on form inputs prevents card collapse while editing.
 - [x] **Landing page email field UX** — Made hero email capture more obvious: input is now a solid white box (was transparent-in-pill), added visible label "Enter your email to get started", changed placeholder to `you@yourkitchen.co.uk`, added shake animation (`@keyframes shake`, `.input-error` class) on empty-submit validation.
