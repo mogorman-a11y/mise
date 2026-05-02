@@ -425,8 +425,8 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
         <input class="form-input" id="job-notes" placeholder="Dietary req, access details…">
       </div>
       <div class="form-group" style="margin-bottom:4px">
-        <label class="form-label">Menus <span style="font-size:11px;color:#A09890">(select from library)</span></label>
-        <div id="job-menu-picker" style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px;max-height:200px;overflow-y:auto"></div>
+        <label class="form-label">Menus</label>
+        <div id="job-menu-picker" style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px"></div>
       </div>
       <button class="btn-primary btn-green" onclick="logJob()" style="margin-top:12px">Log Job</button>
     </div>
@@ -1771,8 +1771,8 @@ function renderJobsHistory(){
           + '</div>'
           + '<div class="form-group"><label class="form-label">Notes</label>'
           + '<input class="form-input" id="jedit-notes-'+j.id+'" value="'+_esc(j.notes||'')+'"></div>'
-          + '<div class="form-group"><label class="form-label">Menus <span style="font-size:11px;color:#A09890">(select from library)</span></label>'
-          + '<div style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px;max-height:180px;overflow-y:auto">'
+          + '<div class="form-group"><label class="form-label">Menus</label>'
+          + '<div style="border:1px solid #E8E2D8;border-radius:8px;padding:4px 8px">'
           + _buildMenuPickerHTML(j.id, j.menus||[]) + '</div></div>'
           + '<div style="display:flex;gap:8px;margin-top:4px">'
           + '<button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="saveJobEdit(\''+j.id+'\')">Save</button>'
@@ -1901,12 +1901,13 @@ function deleteJob(id){
 // ══════════════════════════════════════════════════ JOB MENU HELPERS ══════════
 function _buildMenuPickerHTML(prefix, currentMenus){
   var saved = mSettings.savedMenus||[];
-  if(!saved.length) return '<div style="font-size:12px;color:#A09890;padding:6px 0">No saved menus yet — build one in the Menus tab first.</div>';
   var currentNames = (currentMenus||[]).map(function(m){ return m.name; });
+  var savedNames = saved.map(function(m){ return m.name; });
   var dishes = mSettings.savedDishes||[];
   var dishMap = {};
   dishes.forEach(function(d){ dishMap[d.id]=d; });
-  return saved.map(function(m){
+
+  var savedMenusHTML = saved.length ? saved.map(function(m){
     var chk = currentNames.indexOf(m.name)!==-1 ? ' checked' : '';
     var preview = (m.dishIds||[]).slice(0,3).map(function(id){ return dishMap[id]?_esc(dishMap[id].dish):''; }).filter(Boolean).join(', ');
     if((m.dishIds||[]).length>3) preview += '…';
@@ -1915,7 +1916,91 @@ function _buildMenuPickerHTML(prefix, currentMenus){
       +'<div><div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
       +(preview?'<div style="font-size:12px;color:#A09890;margin-top:1px">'+preview+'</div>':'')
       +'</div></label>';
-  }).join('');
+  }).join('') : '<div style="font-size:12px;color:#A09890;padding:6px 0 2px">No saved menus yet.</div>';
+
+  var existingCustom = (currentMenus||[]).filter(function(m){ return savedNames.indexOf(m.name)===-1; })[0]||null;
+  return savedMenusHTML + _buildCustomMenuHTML(prefix, existingCustom);
+}
+
+function _buildCustomMenuHTML(prefix, existingCustom){
+  var dishes = mSettings.savedDishes||[];
+  var existingDishIds = existingCustom ? (existingCustom.dishes||[]).map(function(d){ return d.id; }) : [];
+  var customName = existingCustom ? existingCustom.name : '';
+
+  var catMap = {};
+  dishes.forEach(function(d){ var c=d.category||''; if(!catMap[c]) catMap[c]=[]; catMap[c].push(d); });
+  var dishRows = '';
+  DISH_CATEGORIES.forEach(function(cat){
+    var group = catMap[cat]||[];
+    if(!group.length) return;
+    if(cat) dishRows += '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#C8A96E;padding:6px 4px 2px">'+_esc(cat)+'</div>';
+    group.forEach(function(d){
+      var chk = existingDishIds.indexOf(d.id)!==-1 ? ' checked' : '';
+      dishRows += '<label style="display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer">'
+        +'<input type="checkbox" id="jcdish-'+prefix+'-'+d.id+'" style="accent-color:#1C2B1E;width:14px;height:14px;flex-shrink:0"'+chk+'>'
+        +'<span style="font-size:13px;color:#1C2B1E">'+_esc(d.dish)+'</span>'
+        +(d.allergens&&d.allergens.length?' <span style="font-size:11px;color:#A09890">('+_esc(d.allergens.join(', '))+')</span>':'')
+        +'</label>';
+    });
+  });
+
+  var catOptions = DISH_CATEGORIES.map(function(c){ return '<option value="'+_esc(c)+'">'+(c||'Uncategorised')+'</option>'; }).join('');
+
+  return '<div style="margin-top:10px;border-top:1px solid #E8E2D8;padding-top:10px">'
+    +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#A09890;margin-bottom:8px">Build a custom menu</div>'
+    +'<input type="text" id="jcustom-'+prefix+'-name" class="form-input" placeholder="Menu name (e.g. 6-course dinner)" style="margin-bottom:8px;font-size:13px" value="'+_esc(customName)+'">'
+    +(dishes.length
+      ? '<div id="jcustom-'+prefix+'-dishes" style="max-height:160px;overflow-y:auto;margin-bottom:8px;border:1px solid #F0EBE2;border-radius:6px;padding:2px 6px">'+dishRows+'</div>'
+      : '<div id="jcustom-'+prefix+'-dishes" style="margin-bottom:8px;border:1px solid #F0EBE2;border-radius:6px;padding:6px 8px;font-size:12px;color:#A09890">No dishes saved yet — add one below</div>'
+    )
+    +'<div style="display:flex;gap:6px;align-items:center">'
+    +'<input type="text" id="jcustom-'+prefix+'-newdish" class="form-input" placeholder="Add a dish…" style="flex:1;font-size:13px;padding:8px 10px" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addQuickDish(\''+prefix+'\');}">'
+    +'<select id="jcustom-'+prefix+'-newcat" class="form-input" style="width:110px;font-size:12px;padding:8px 6px">'+catOptions+'</select>'
+    +'<button type="button" onclick="addQuickDish(\''+prefix+'\')" style="padding:8px 12px;background:#1C2B1E;color:#C8A96E;border:none;border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit;flex-shrink:0">+ Add</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function _getCustomMenuSnapshot(prefix){
+  var nameEl = document.getElementById('jcustom-'+prefix+'-name');
+  if(!nameEl) return null;
+  var name = (nameEl.value||'').trim();
+  if(!name) return null;
+  var dishes = mSettings.savedDishes||[];
+  var selected = dishes.filter(function(d){
+    var el = document.getElementById('jcdish-'+prefix+'-'+d.id);
+    return el && el.checked;
+  });
+  if(!selected.length) return null;
+  return { name: name, dishes: selected.map(function(d){ return Object.assign({},d); }) };
+}
+
+function addQuickDish(prefix){
+  var nameEl = document.getElementById('jcustom-'+prefix+'-newdish');
+  var catEl  = document.getElementById('jcustom-'+prefix+'-newcat');
+  var name = (nameEl.value||'').trim();
+  if(!name){ toast('Enter a dish name','err'); return; }
+  var cat = catEl ? catEl.value : '';
+  var dish = { id: uid(), dish: name, category: cat, allergens: [] };
+  if(!mSettings.savedDishes) mSettings.savedDishes = [];
+  mSettings.savedDishes.push(dish);
+  saveSettings();
+  var listEl = document.getElementById('jcustom-'+prefix+'-dishes');
+  if(listEl){
+    if(!listEl.querySelector('input[type="checkbox"]')) listEl.innerHTML = '';
+    var lbl = document.createElement('label');
+    lbl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 4px;cursor:pointer';
+    var chk = document.createElement('input');
+    chk.type = 'checkbox'; chk.id = 'jcdish-'+prefix+'-'+dish.id; chk.checked = true;
+    chk.style.cssText = 'accent-color:#1C2B1E;width:14px;height:14px;flex-shrink:0';
+    var span = document.createElement('span');
+    span.style.cssText = 'font-size:13px;color:#1C2B1E';
+    span.textContent = dish.dish;
+    lbl.appendChild(chk); lbl.appendChild(span);
+    listEl.appendChild(lbl);
+  }
+  nameEl.value = '';
+  toast('Dish added ✓');
 }
 
 function _getSelectedMenusSnapshot(prefix){
@@ -1923,15 +2008,15 @@ function _getSelectedMenusSnapshot(prefix){
   var dishes = mSettings.savedDishes||[];
   var dishMap = {};
   dishes.forEach(function(d){ dishMap[d.id]=d; });
-  return saved.filter(function(m){
+  var result = saved.filter(function(m){
     var el = document.getElementById('jmenu-'+prefix+'-'+m.id);
     return el && el.checked;
   }).map(function(m){
-    return {
-      name: m.name,
-      dishes: (m.dishIds||[]).map(function(id){ return dishMap[id]; }).filter(Boolean)
-    };
+    return { name: m.name, dishes: (m.dishIds||[]).map(function(id){ return dishMap[id]; }).filter(Boolean) };
   });
+  var custom = _getCustomMenuSnapshot(prefix);
+  if(custom) result.push(custom);
+  return result;
 }
 
 function renderJobMenuPicker(){
