@@ -1,5 +1,5 @@
-// carte-subscription.js — Carte paywall and subscription status
-// ──────────────────────────────────────────────────────────────
+// carte-subscription.js v3 — Carte paywall and subscription status
+// ──────────────────────────────────────────────────────────────────
 // Access rules:
 //   'trial'  + trial_ends_at in future          → full access
 //   'active' + plan in ['carte', 'suite']       → full access
@@ -222,9 +222,16 @@ window.Mise.carteSubscription = (function () {
   }
 
   // ── startCheckout ──────────────────────────────────────────────────────────
+  // Active subscribers are routed to _upgradeSubscription() to avoid double-billing.
   async function startCheckout(app, period) {
     app    = app    || 'carte';
     period = period || 'monthly';
+
+    // Active subscribers: swap price on existing subscription instead of new checkout
+    var profile = window.Mise && window.Mise.profile;
+    if (profile && profile.subscription_status === 'active') {
+      return _upgradeSubscription(app, period);
+    }
 
     try {
       var sessionResult = await supabaseClient.auth.getSession();
@@ -252,6 +259,47 @@ window.Mise.carteSubscription = (function () {
     } catch (err) {
       console.error('[Carte] Checkout error:', err);
       if (typeof toast === 'function') toast('Could not start checkout — please try again', false);
+    }
+  }
+
+  // ── _upgradeSubscription ───────────────────────────────────────────────────
+  // Called instead of startCheckout when the user already has an active subscription.
+  // Swaps the price on the existing Stripe subscription — no second subscription created.
+  async function _upgradeSubscription(app, period) {
+    try {
+      var sessionResult = await supabaseClient.auth.getSession();
+      var token = sessionResult.data.session && sessionResult.data.session.access_token;
+      if (!token) throw new Error('Not signed in');
+
+      var res = await fetch(
+        'https://yixrwyfodipfcbhjcszp.supabase.co/functions/v1/upgrade-subscription',
+        {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': 'Bearer ' + token,
+            'apikey':        SUPABASE_ANON,
+          },
+          body: JSON.stringify({ app: app, period: period }),
+        }
+      );
+
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upgrade failed');
+
+      // Update local profile so UI reflects the new plan immediately
+      if (window.Mise.profile) window.Mise.profile.subscription_plan = app;
+      if (typeof renderCarteSubscriptionCard === 'function') renderCarteSubscriptionCard();
+      hidePaywall();
+      _updateSwitcher(app, false);
+
+      var planName = app === 'suite' ? 'Suite'
+                   : app.charAt(0).toUpperCase() + app.slice(1);
+      if (typeof toast === 'function') toast('Plan upgraded to ' + planName + ' — you\'re all set!');
+
+    } catch (err) {
+      console.error('[Carte] Upgrade error:', err);
+      if (typeof toast === 'function') toast('Could not upgrade plan — please try again', false);
     }
   }
 
