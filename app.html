@@ -220,7 +220,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
       <div id="next-job-panel" style="display:none;padding:0 14px 14px;border-top:1px solid rgba(200,169,110,0.2)">
         <div id="next-job-panel-content"></div>
-        <button onclick="openCarte()" style="width:100%;margin-top:14px;padding:11px;background:#C8A96E;color:#1C2B1E;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">View booking in Carte →</button>
+        <button id="next-job-carte-btn" onclick="openCarte()" style="width:100%;margin-top:14px;padding:11px;background:#C8A96E;color:#1C2B1E;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">View booking in Carte →</button>
       </div>
     </div>
 
@@ -2367,6 +2367,10 @@ function updateNextJobBanner() {
     html += njRow('Menu', '<span style="color:#b0c4b4">No menu attached</span>');
   }
   document.getElementById('next-job-panel-content').innerHTML = html;
+
+  // Wire the "View booking in Carte" button to deep-link to this job
+  var carteBtn = document.getElementById('next-job-carte-btn');
+  if (carteBtn) carteBtn.onclick = function(){ openCarte(job.id); };
 }
 
 function toggleNextJobBanner(){
@@ -4520,12 +4524,12 @@ renderChecklists();
 initPrivateChefMode();
 showTab('home');
 renderAllSections();
-function openCarte(){ window.location.href = 'mise.html'; }
+function openCarte(jobId){ window.location.href = 'mise.html' + (jobId ? '?job=' + encodeURIComponent(jobId) : ''); }
 </script>
 
 <!-- Mise production modules — loaded after app script so they can wrap/extend it -->
 <script src="supabase.js?v=4"></script>
-<script src="auth.js?v=9"></script>
+<script src="auth.js?v=10"></script>
 <script src="sync.js?v=9"></script>
 <script src="subscription.js?v=5"></script>
 

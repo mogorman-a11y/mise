@@ -160,23 +160,98 @@ window.Mise.auth = (function () {
     var _urlFragment = (window.location.hash || '') + (window.location.search || '');
     var _isEmailConfirm = _urlFragment.includes('type=signup') || _urlFragment.includes('type=email_confirmation');
 
+    // Must register onAuthStateChange BEFORE getSession so PASSWORD_RECOVERY fires correctly.
+    var _signedIn = false;
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        _showPasswordResetForm();
+        return;
+      }
+      if (session && !_signedIn) {
+        _signedIn = true;
+        if (_isEmailConfirm) await _showEmailConfirmed();
+        await onSignedIn(session.user);
+      }
+    });
+
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        if (_isEmailConfirm) {
-          await _showEmailConfirmed();
-        }
+      if (session && !_signedIn) {
+        _signedIn = true;
+        if (_isEmailConfirm) await _showEmailConfirmed();
         await onSignedIn(session.user);
-        return;
       }
     } catch (e) {
       console.warn('[Veriqo] getSession error:', e);
     }
+  }
 
-    // No session — auth screen stays. Listen for OAuth redirect callbacks.
-    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      if (session) { await onSignedIn(session.user); }
+  // ── _showPasswordResetForm ─────────────────────────────────────────────────
+  // Shown when the user arrives via a password reset email link.
+  // Lets them set a new password, then signs them in.
+  function _showPasswordResetForm() {
+    hideAuthScreen();
+    if (document.getElementById('pw-reset-form')) return;
+
+    var cfg = window.MISE_AUTH_CONFIG || {};
+    var bg      = cfg.background   || '#f5f4f0';
+    var btnBg   = cfg.submitColor  || '#1a1a18';
+    var nameCol = cfg.nameColor    || '#1a1a18';
+    var logoHtml = cfg.logoHTML || '<svg width="40" height="40" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:10px"><defs><linearGradient id="pwbg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1B3A5C"/><stop offset="100%" stop-color="#1B5C72"/></linearGradient><linearGradient id="pwsg" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#pwbg)"/><path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#pwsg)"/><polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+    var appName = cfg.name || 'Veriqo';
+
+    var html = '<div id="pw-reset-form" style="position:fixed;inset:0;background:' + bg + ';z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">'
+      + '<div style="max-width:360px;width:100%">'
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">'
+      + logoHtml
+      + '<div style="font-size:22px;font-weight:700;color:' + nameCol + ';letter-spacing:-0.3px">' + appName + '</div>'
+      + '</div>'
+      + '<div style="font-size:20px;font-weight:700;color:' + nameCol + ';margin-bottom:6px">Set a new password</div>'
+      + '<div style="font-size:14px;color:#666;margin-bottom:20px">Enter your new password below.</div>'
+      + '<div id="pw-reset-msg" style="display:none;margin-bottom:12px"></div>'
+      + '<input id="pw-reset-input" type="password" placeholder="New password" autocomplete="new-password"'
+      + ' style="width:100%;padding:13px 14px;border:1.5px solid #d5d4d0;border-radius:10px;font-size:15px;box-sizing:border-box;font-family:inherit;margin-bottom:12px;background:#fff;color:#1a1a18">'
+      + '<button id="pw-reset-btn" onclick="Mise.auth._submitPasswordReset()"'
+      + ' style="width:100%;padding:14px;background:' + btnBg + ';color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Set new password</button>'
+      + '</div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    // Allow Enter key to submit
+    document.getElementById('pw-reset-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') Mise.auth._submitPasswordReset();
     });
+  }
+
+  // ── _submitPasswordReset ───────────────────────────────────────────────────
+  async function _submitPasswordReset() {
+    var input = document.getElementById('pw-reset-input');
+    var btn   = document.getElementById('pw-reset-btn');
+    var msg   = document.getElementById('pw-reset-msg');
+    if (!input || !btn) return;
+
+    var pw = input.value.trim();
+    if (pw.length < 8) {
+      msg.style.cssText = 'display:block;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:10px 12px;font-size:13px';
+      msg.textContent = 'Password must be at least 8 characters.';
+      return;
+    }
+
+    btn.textContent = 'Saving…';
+    btn.disabled = true;
+
+    try {
+      var result = await supabaseClient.auth.updateUser({ password: pw });
+      if (result.error) throw result.error;
+      // updateUser fires SIGNED_IN via onAuthStateChange — just remove the form
+      var el = document.getElementById('pw-reset-form');
+      if (el) el.remove();
+    } catch (err) {
+      msg.style.cssText = 'display:block;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:10px 12px;font-size:13px';
+      msg.textContent = err.message || 'Could not update password — please try again.';
+      btn.textContent = 'Set new password';
+      btn.disabled = false;
+    }
   }
 
   // ── _togglePw ──────────────────────────────────────────────────────────────
@@ -393,8 +468,11 @@ window.Mise.auth = (function () {
 
   // ── resetPassword ──────────────────────────────────────────────────────────
   async function resetPassword(email) {
+    // Redirect to the current app (Veriqo = /app, Carte = /mise) so the
+    // PASSWORD_RECOVERY event fires on the right page.
+    var appPath = window.MISE_AUTH_CONFIG ? '/mise' : '/app';
     var result = await supabaseClient.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/?reset=true'
+      redirectTo: window.location.origin + appPath
     });
     if (result.error) throw result.error;
   }
@@ -513,6 +591,6 @@ window.Mise.auth = (function () {
   }
 
   // Expose internal tab/form handlers so onclick attributes in injected HTML can call them
-  return { init, login, signup, loginGoogle, logout, resetPassword, _tab, _submit, _forgot, _google, _togglePw };
+  return { init, login, signup, loginGoogle, logout, resetPassword, _submitPasswordReset, _tab, _submit, _forgot, _google, _togglePw };
 
 })();

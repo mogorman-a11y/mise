@@ -56,6 +56,9 @@ window.Mise.carteSubscription = (function () {
         hidePaywall();
         _updateSwitcher(plan, inTrial);
         _injectTrialBanner(status, trialEnd);
+        if (!profile.onboarded) {
+          setTimeout(_showWelcomeModal, 500);
+        }
         if (_pendingSuccess) {
           _pendingSuccess = false;
           setTimeout(function () {
@@ -270,6 +273,70 @@ window.Mise.carteSubscription = (function () {
     header.insertAdjacentElement('afterend', banner);
   }
 
+  // ── _showWelcomeModal ──────────────────────────────────────────────────────
+  function _showWelcomeModal() {
+    if (document.getElementById('carte-welcome')) return;
+
+    var html = '<div id="carte-welcome" style="position:fixed;inset:0;background:rgba(28,43,30,0.65);z-index:9900;display:flex;align-items:center;justify-content:center;padding:20px;-webkit-overflow-scrolling:touch">'
+      + '<div style="background:#F5F0E8;border-radius:20px;max-width:360px;width:100%;padding:32px 24px 28px;box-shadow:0 8px 40px rgba(0,0,0,0.25)">'
+
+      + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">'
+      +   '<svg width="40" height="40" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:10px">'
+      +     '<rect width="60" height="60" rx="14" fill="#1C2B1E"/>'
+      +     '<path d="M44.1,15.9 A20,20 0 1,0 44.1,44.1 L39.2,39.2 A13,13 0 1,0 39.2,20.8 Z" fill="#C8A96E"/>'
+      +   '</svg>'
+      +   '<div>'
+      +     '<div style="font-size:20px;font-weight:700;color:#1C2B1E;letter-spacing:-0.3px">Welcome to Carte</div>'
+      +     '<div style="font-size:12px;color:#C8A96E;margin-top:1px;font-weight:600">A few things to know before you start</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">'
+
+      + '<div style="display:flex;gap:12px;align-items:flex-start">'
+      +   '<span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px">👥</span>'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#1C2B1E;margin-bottom:2px">Start with your clients</div>'
+      +     '<div style="font-size:13px;color:#5A544E;line-height:1.5">Add your regular clients first — their details auto-fill into jobs and transport logs, saving you time.</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div style="display:flex;gap:12px;align-items:flex-start">'
+      +   '<span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px">🍽️</span>'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#1C2B1E;margin-bottom:2px">Build your dish library</div>'
+      +     '<div style="font-size:13px;color:#5A544E;line-height:1.5">Add your dishes once, then build saved menus to attach to any booking in seconds.</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div style="display:flex;gap:12px;align-items:flex-start">'
+      +   '<span style="font-size:20px;line-height:1;flex-shrink:0;margin-top:1px">⚙️</span>'
+      +   '<div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#1C2B1E;margin-bottom:2px">Set up your profile in Settings</div>'
+      +     '<div style="font-size:13px;color:#5A544E;line-height:1.5">Tap the gold ⚙️ icon in the top-right corner to add your business name, staff, and logo.</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '</div>'
+
+      + '<button onclick="Mise.carteSubscription._dismissWelcomeModal()" '
+      +   'style="width:100%;padding:14px;background:#1C2B1E;color:#F5F0E8;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit">Got it, let\'s start →</button>'
+
+      + '</div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+
+  // ── _dismissWelcomeModal ───────────────────────────────────────────────────
+  async function _dismissWelcomeModal() {
+    var el = document.getElementById('carte-welcome');
+    if (el) el.remove();
+    if (!_userId) return;
+    try {
+      await supabaseClient.from('profiles').update({ onboarded: true }).eq('id', _userId);
+    } catch (e) {}
+  }
+
   // ── _featureRow (internal) ─────────────────────────────────────────────────
   function _featureRow(icon, text) {
     return '<div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06)">'
@@ -278,6 +345,6 @@ window.Mise.carteSubscription = (function () {
       + '</div>';
   }
 
-  return { check, showPaywall, hidePaywall, startCheckout };
+  return { check, showPaywall, hidePaywall, startCheckout, _dismissWelcomeModal };
 
 })();

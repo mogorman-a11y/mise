@@ -691,10 +691,200 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
       </div>
     </div>
 
+    <!-- SUBSCRIPTION CARD — populated by renderCarteSubscriptionCard() on tab open -->
+    <div class="card" style="margin-bottom:12px" id="carte-subscription-card"></div>
+
     <div class="card">
       <div class="card-title">Suite</div>
       <div style="font-size:13px;color:#5A544E;line-height:1.45">Carte syncs clients, jobs, menus, dishes, and credentials with Veriqo automatically when you are signed in.</div>
       <button class="btn-primary btn-green" onclick="openVeriqo()" style="margin-top:12px">Open Veriqo</button>
+    </div>
+
+    <div style="font-size:11px;font-weight:600;color:#A09890;text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 8px">Support &amp; legal</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+      <button onclick="showTab('help')"
+        style="width:100%;padding:13px 16px;background:#fff;border:1px solid #E2DDD5;border-radius:10px;font-size:14px;font-weight:600;color:#1C2B1E;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;text-align:left">
+        <span>❓ Help &amp; getting started</span><span style="color:#C8A96E;font-size:16px">›</span>
+      </button>
+      <button onclick="showTab('legal')"
+        style="width:100%;padding:13px 16px;background:#fff;border:1px solid #E2DDD5;border-radius:10px;font-size:14px;font-weight:600;color:#1C2B1E;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;text-align:left">
+        <span>🔒 Privacy &amp; legal</span><span style="color:#C8A96E;font-size:16px">›</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ HELP ══════════════ -->
+  <div id="tab-help" class="section">
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Getting started</div>
+      <div style="font-size:14px;color:#444;line-height:1.6">
+        <p style="margin-bottom:10px">Carte is your private chef business hub — clients, bookings, menus, and records in one place, synced across all your devices.</p>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="background:#1C2B1E;color:#C8A96E;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">1</span>
+            <span><strong>Set up your profile</strong> — tap the gold ⚙️ in the top-right to add your business name, logo, and staff. These appear on booking reports and PDF exports.</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="background:#1C2B1E;color:#C8A96E;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">2</span>
+            <span><strong>Add your clients</strong> — tap Clients in the nav. Client details auto-fill into jobs and transport logs so you only type them once.</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="background:#1C2B1E;color:#C8A96E;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">3</span>
+            <span><strong>Build your dish library</strong> — tap Menus &amp; Dishes. Add dishes once, group them into saved menus, then attach any menu to a booking.</span>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="background:#1C2B1E;color:#C8A96E;font-size:12px;font-weight:700;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">4</span>
+            <span><strong>Log a booking</strong> — tap Jobs and use <em>+ Book a New Job</em>. Fill in the date, client, covers, and menu. Upcoming jobs appear on your home dashboard.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Jobs &amp; bookings</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Each job stores the date, time, client, location, covers, job type, notes, and one or more menus. Menus on jobs are frozen snapshots — editing your library later won't change past bookings.</p>
+        <p>Upcoming jobs are shown soonest-first at the top of the Jobs tab. Past bookings are grouped by month under <em>View previous bookings</em>.</p>
+        <p>The <strong>Calendar</strong> tab shows all bookings at a glance. Tap a day to see what's booked, tap a job to open it directly.</p>
+        <p>Your next upcoming booking also appears as a banner on the home screen — tap it to see full details.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Booking PDF reports</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Tap <strong>Jobs</strong>, scroll to the bottom, and tap <em>Export PDF</em> to generate a branded booking report — all jobs grouped by month, with menus listed underneath each booking.</p>
+        <p>On iPhone, tap the share icon in Safari and choose <em>Save to Files</em> or <em>Print</em>. On Android, use the browser menu to save as PDF.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Kitchen records</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Carte includes record types for private chef compliance:</p>
+        <div style="background:#F5F0E8;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">
+          <div>🚗 <strong>Transport Temps</strong> — log food temperatures in transit</div>
+          <div>🍳 <strong>Kitchen Assessment</strong> — check client kitchens before service</div>
+          <div>🌾 <strong>Allergen Log</strong> — record 14-allergen information per service</div>
+          <div>📜 <strong>Credentials</strong> — track certifications with 90-day expiry alerts</div>
+        </div>
+        <p>These are in the <strong>More</strong> tab.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Syncing with Veriqo</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Carte and Veriqo share the same account. Clients, menus, dishes, and credentials sync automatically between both apps every time you sign in.</p>
+        <p>Jobs booked in Carte also appear in Veriqo's <em>Next Booking</em> banner, so you can see your upcoming work in either app.</p>
+        <p>The Suite plan gives you full access to both apps under one subscription.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Account &amp; subscription</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Sign in with your email address or Google. Your data is tied to your account and syncs across every device you sign in to.</p>
+        <p><strong>Trial:</strong> New accounts get a free trial with full access. Your trial end date is shown in Settings under <em>Subscription</em>.</p>
+        <p><strong>Subscribing:</strong> Carte is £12/month or £120/year. The annual plan saves you two months. To get both Carte and Veriqo, the Suite plan is £20/month or £200/year.</p>
+        <p><strong>Managing your subscription:</strong> Active subscribers can tap <em>Manage subscription →</em> in Settings to open the Stripe billing portal.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-title">Contact &amp; support</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <p>Got a question, found a bug, or want to request a feature?</p>
+        <a href="mailto:hello@getveriqo.co.uk"
+          style="display:inline-flex;align-items:center;gap:8px;padding:11px 14px;background:#F5F0E8;border:1px solid #D4C9B5;border-radius:8px;font-size:14px;font-weight:600;color:#1C2B1E;text-decoration:none">
+          ✉️ hello@getveriqo.co.uk
+        </a>
+        <p style="font-size:12px;color:#aaa;margin-top:4px">We aim to reply within one working day.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════ LEGAL ══════════════ -->
+  <div id="tab-legal" class="section">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">About Carte</div>
+      <div style="font-size:14px;color:#444;line-height:1.6">
+        <p>Carte is a product of <strong>Mise Labs</strong>. We build tools for food professionals.</p>
+        <p style="margin-top:8px">Questions or concerns? Email us at <a href="mailto:hello@getveriqo.co.uk" style="color:#C8A96E;font-weight:600;text-decoration:none">hello@getveriqo.co.uk</a></p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Privacy — what we collect</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>We collect only what is needed to run the service:</p>
+        <div style="background:#F5F0E8;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">
+          <div>📧 <strong>Email address</strong> — to identify your account</div>
+          <div>🏢 <strong>Business name &amp; your name</strong> — shown on PDF exports</div>
+          <div>👥 <strong>Client information</strong> — names, addresses, and contact details you add</div>
+          <div>📅 <strong>Booking records</strong> — job dates, covers, menus, and notes you create</div>
+          <div>🖼️ <strong>Logo</strong> — if you upload one, stored with your profile</div>
+        </div>
+        <p>We do <strong>not</strong> sell your data. We do not use it for advertising. We do not share it with third parties except Supabase (our cloud database provider, based in the EU).</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">How your data is stored</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>Your data is stored in two places: on your device (in your browser's local storage) and in our cloud database (Supabase, EU servers). Both copies are protected — only you can access your own records.</p>
+        <p>We use row-level security so no other user can read your data, even if they know your user ID.</p>
+        <p>Data is retained for as long as your account is active. You can request deletion at any time by emailing <a href="mailto:hello@getveriqo.co.uk" style="color:#C8A96E;text-decoration:none;font-weight:600">hello@getveriqo.co.uk</a>.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Your rights (UK GDPR)</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <p>Under UK data protection law you have the right to:</p>
+        <div style="background:#F5F0E8;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">
+          <div>• Access the data we hold about you</div>
+          <div>• Correct inaccurate data</div>
+          <div>• Request deletion of your data</div>
+          <div>• Export your data (your booking records are exportable as PDFs at any time)</div>
+          <div>• Object to processing</div>
+        </div>
+        <p>To exercise any of these rights, email <a href="mailto:hello@getveriqo.co.uk" style="color:#C8A96E;text-decoration:none;font-weight:600">hello@getveriqo.co.uk</a>.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Terms of use</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+        <p>By using Carte you agree to these terms:</p>
+        <div style="background:#F5F0E8;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">
+          <div>• Carte is a business management tool. It does not replace professional legal or financial advice.</div>
+          <div>• You are responsible for ensuring your records and client information are accurate.</div>
+          <div>• Do not use Carte to store sensitive personal data beyond what is needed to manage bookings.</div>
+          <div>• We may update these terms. Continued use of the app means you accept any changes.</div>
+        </div>
+        <p>Carte is provided in good faith. Mise Labs accepts no liability for losses arising from inaccurate records or reliance on the app as a sole business management method.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Cookies &amp; tracking</div>
+      <div style="font-size:14px;color:#444;line-height:1.6">
+        <p>Carte uses browser local storage and session cookies only to keep you signed in and to save your settings. We do not use advertising cookies or third-party analytics.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-title">Contact</div>
+      <div style="font-size:14px;color:#444;line-height:1.6;display:flex;flex-direction:column;gap:6px">
+        <p>Carte is a product of Mise Labs.</p>
+        <a href="mailto:hello@getveriqo.co.uk"
+          style="display:inline-flex;align-items:center;gap:8px;padding:11px 14px;background:#F5F0E8;border:1px solid #D4C9B5;border-radius:8px;font-size:14px;font-weight:600;color:#1C2B1E;text-decoration:none">
+          ✉️ hello@getveriqo.co.uk
+        </a>
+        <p style="font-size:12px;color:#aaa;margin-top:4px">Last updated: May 2026</p>
+      </div>
     </div>
   </div>
 
@@ -973,12 +1163,12 @@ function addressBookLookup(key){
 // ═══════════════════════════════════════════════════════ NAVIGATION ══════════
 var _homeScrollPos = 0;
 var _NAV_TABS = ['home','clients','calendar','menus','more'];
-var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','settings','install'];
+var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','settings','install','help','legal'];
 var _TITLES = {
   clients:'Clients', calendar:'Calendar', menus:'Menus & Dishes', jobs:'Jobs',
   more:'More', transport:'Transport Temps', assess:'Kitchen Assessment',
   allergen:'Allergen Log', credentials:'Credentials', settings:'Settings',
-  install:'Save as App'
+  install:'Save as App', help:'Help & Getting Started', legal:'Privacy & Legal'
 };
 
 function goHome(){ showTab('home'); }
@@ -1006,7 +1196,7 @@ function showTab(name){
   // Nav button active state
   _NAV_TABS.forEach(function(t){
     var btn = document.getElementById('nav-'+t);
-    if(btn) btn.classList.toggle('active', t===name || (t==='more' && ['more','assess','allergen','credentials','settings','install'].indexOf(name)!==-1));
+    if(btn) btn.classList.toggle('active', t===name || (t==='more' && ['more','assess','allergen','credentials','settings','install','help','legal'].indexOf(name)!==-1));
   });
 
   _activeTab = name;
@@ -1021,7 +1211,7 @@ function showTab(name){
   if(name==='assess')      { populateStaffSelects(); populateClientSelects(); renderAssessList(); }
   if(name==='allergen')    { populateClientSelects(); renderAllergenList(); }
   if(name==='credentials') { populateStaffSelects(); renderCredentialsList(); }
-  if(name==='settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); }
+  if(name==='settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); renderCarteSubscriptionCard(); }
 
   // Set date fields to today if empty
   ['tr-date','as-date'].forEach(function(id){
@@ -2467,6 +2657,90 @@ function deleteCred(id){
 }
 
 // ═══════════════════════════════════════════════════════ SETTINGS ══════════
+// ── Subscription card in Settings ─────────────────────────────────────────────
+function renderCarteSubscriptionCard() {
+  var card = document.getElementById('carte-subscription-card');
+  if (!card) return;
+  var profile = window.Mise && window.Mise.profile;
+  if (!profile) return;
+
+  var status   = profile.subscription_status;
+  var plan     = profile.subscription_plan || null;
+  var trialEnd = profile.trial_ends_at ? new Date(profile.trial_ends_at) : null;
+  var inTrial  = status === 'trial' && trialEnd && trialEnd > new Date();
+  var daysLeft = inTrial ? Math.ceil((trialEnd - new Date()) / (1000*60*60*24)) : 0;
+
+  var planLabel = plan === 'suite' ? 'Carte + Veriqo Suite' : plan === 'carte' ? 'Carte' : plan === 'veriqo' ? 'Veriqo' : 'Free trial';
+  var badge, body, actions;
+
+  if (status === 'active') {
+    badge = '<span style="display:inline-block;background:rgba(58,125,68,0.15);color:#3A7D44;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">ACTIVE</span>'
+          + '<span style="display:inline-block;margin-left:6px;font-size:11px;color:#A09890">' + planLabel + '</span>';
+    body  = '<div style="font-size:13px;color:#5A544E;margin-top:8px">Your subscription is active. Use the link below to cancel, update your payment method, or view invoices.</div>';
+    var upgradeRow = (plan === null || plan === 'carte')
+      ? '<div style="margin-top:10px;background:rgba(200,169,110,0.12);border:1px solid rgba(200,169,110,0.3);border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+        + '<span style="font-size:12px;color:#C8A96E">Add Veriqo — upgrade to Suite for £20/mo</span>'
+        + '<button onclick="Mise.carteSubscription.startCheckout(\'suite\',\'monthly\')" style="flex-shrink:0;padding:5px 12px;background:#C8A96E;color:#1C2B1E;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Upgrade →</button>'
+        + '</div>'
+      : '';
+    actions = '<button onclick="openCartePortal(this)" style="margin-top:14px;width:100%;padding:11px;background:#1C2B1E;color:#F5F0E8;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Manage subscription →</button>'
+            + upgradeRow;
+  } else if (inTrial) {
+    var dayWord = daysLeft === 1 ? 'day' : 'days';
+    badge  = '<span style="display:inline-block;background:rgba(200,169,110,0.15);color:#92400e;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">FREE TRIAL</span>';
+    body   = '<div style="font-size:13px;color:#5A544E;margin-top:8px">' + daysLeft + ' ' + dayWord + ' remaining. Subscribe to keep full access to Carte.</div>';
+    actions = '<div style="display:flex;gap:8px;margin-top:14px">'
+      + '<button onclick="Mise.carteSubscription.startCheckout(\'carte\',\'monthly\')" style="flex:1;padding:11px;background:#fff;border:2px solid #D0C8BE;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1C2B1E">£12/month</button>'
+      + '<button onclick="Mise.carteSubscription.startCheckout(\'carte\',\'annual\')" style="flex:1;padding:11px;background:#C8A96E;border:2px solid #C8A96E;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1C2B1E">£120/year</button>'
+      + '</div>'
+      + '<div style="margin-top:8px;text-align:center"><button onclick="Mise.carteSubscription.startCheckout(\'suite\',\'monthly\')" style="background:none;border:none;color:#C8A96E;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">Or get both apps — Suite £20/month</button></div>';
+  } else {
+    var isExpiredTrial = status === 'trial';
+    badge  = '<span style="display:inline-block;background:#fde8e8;color:#A32D2D;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">' + (isExpiredTrial ? 'TRIAL ENDED' : 'INACTIVE') + '</span>';
+    body   = '<div style="font-size:13px;color:#5A544E;margin-top:8px">Subscribe to restore full access to Carte.</div>';
+    actions = '<div style="display:flex;gap:8px;margin-top:14px">'
+      + '<button onclick="Mise.carteSubscription.startCheckout(\'carte\',\'monthly\')" style="flex:1;padding:11px;background:#fff;border:2px solid #D0C8BE;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1C2B1E">£12/month</button>'
+      + '<button onclick="Mise.carteSubscription.startCheckout(\'carte\',\'annual\')" style="flex:1;padding:11px;background:#C8A96E;border:2px solid #C8A96E;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1C2B1E">£120/year</button>'
+      + '</div>'
+      + '<div style="margin-top:8px;text-align:center"><button onclick="Mise.carteSubscription.startCheckout(\'suite\',\'monthly\')" style="background:none;border:none;color:#C8A96E;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">Or get both apps — Suite £20/month</button></div>';
+  }
+
+  card.innerHTML = '<div class="card-title">Subscription</div>'
+    + '<div style="padding-top:4px">'
+    + badge + body + actions
+    + '</div>';
+}
+
+async function openCartePortal(btn) {
+  var orig = btn.textContent;
+  btn.textContent = 'Opening…';
+  btn.disabled = true;
+  try {
+    var sessionResult = await supabaseClient.auth.getSession();
+    var token = sessionResult.data.session && sessionResult.data.session.access_token;
+    if (!token) throw new Error('Not signed in');
+    var res = await fetch(
+      'https://yixrwyfodipfcbhjcszp.supabase.co/functions/v1/create-portal-session',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + token,
+          'apikey':        SUPABASE_ANON,
+        },
+      }
+    );
+    var data = await res.json();
+    if (!res.ok || !data.url) throw new Error(data.error || 'Could not open portal');
+    window.location.href = data.url;
+  } catch (err) {
+    console.error('[Carte] Portal error:', err);
+    btn.textContent = orig;
+    btn.disabled = false;
+    if (typeof toast === 'function') toast('Could not open — please try again', false);
+  }
+}
+
 function loadProfileUI(){
   var fields = {
     'set-chef-name':'chefName',
@@ -2657,13 +2931,30 @@ function renderAllSections(){
   var aDate = document.getElementById('as-date');
   if(aDate) aDate.value = TODAY;
 })();
+
+// Deep link from Veriqo "View booking in Carte" button: ?job=ID
+(function(){
+  var _djId = new URLSearchParams(window.location.search).get('job');
+  if (!_djId) return;
+  window.history.replaceState({}, '', '/mise'); // clean URL immediately
+  // Poll until auth + sync have run (Mise.profile set = app ready)
+  var _djAttempts = 0;
+  var _djTimer = setInterval(function(){
+    _djAttempts++;
+    if (typeof calViewJob === 'function' && window.Mise && window.Mise.profile) {
+      clearInterval(_djTimer);
+      calViewJob(decodeURIComponent(_djId));
+    }
+    if (_djAttempts > 60) clearInterval(_djTimer); // give up after 6s
+  }, 100);
+})();
 </script>
 
 <!-- Mise shared modules -->
 <script src="supabase.js?v=4"></script>
 <script src="mise-sync.js?v=5"></script>
-<script src="carte-subscription.js?v=1"></script>
-<script src="auth.js?v=9"></script>
+<script src="carte-subscription.js?v=2"></script>
+<script src="auth.js?v=10"></script>
 <script>
 window.MISE_AUTH_CONFIG = {
   name: 'Carte',
