@@ -12,7 +12,7 @@
 | **Daily records** | `records[]` → `haccp_YYYY-MM-DD` | `mRecords[]` → `mise_YYYY-MM-DD` |
 | **Sync module** | `sync.js` (v9) | `mise-sync.js` (v5) |
 | **Auth module** | `auth.js` (v12) | `auth.js` (v12) |
-| **Subscription module** | `subscription.js` (v6) | `carte-subscription.js` (v2) |
+| **Subscription module** | `subscription.js` (v7) | `carte-subscription.js` (v3) |
 
 **Paths:**
 - Working files: `/Users/michael/Library/CloudStorage/GoogleDrive-mike@sideordercatering.co.uk/My Drive/APPS/HACCP APP/files/`
@@ -42,7 +42,7 @@ rm -rf /private/tmp/mise-deploy && git clone https://github.com/mogorman-a11y/mi
 - **Auth:** Supabase Auth (email/password + Google OAuth + magic link) via shared `auth.js`
 - **Cloud sync:** Supabase Postgres via `sync.js` (Veriqo) + `mise-sync.js` (Carte)
 - **Transactional email:** Resend (`hello@getveriqo.co.uk`) — Carte magic link via `api/carte-magic-link.js`; Veriqo magic link + password reset (both apps) via `api/auth-link.js`
-- **Subscription:** Stripe via `subscription.js` (Veriqo) + `carte-subscription.js` (Carte) + Supabase Edge Functions (`create-checkout`, `stripe-webhook`)
+- **Subscription:** Stripe via `subscription.js` (Veriqo) + `carte-subscription.js` (Carte) + Supabase Edge Functions (`create-checkout`, `upgrade-subscription`, `stripe-webhook`, `create-portal-session`)
 - **PWA:** `sw.js` (network-first for app pages, cache-first for assets), `manifest.json` (Veriqo), `mise-manifest.json` (Carte)
 - **Hosting:** Vercel — `getveriqo.co.uk` DNS points to Vercel, previously GitHub Pages
 
@@ -166,20 +166,27 @@ App switcher pills (Carte↔Veriqo) are visible only during trial or on `suite` 
 ### Checkout flow (new subscriber)
 
 1. User clicks a price button on a paywall
-2. `startCheckout(app, period)` posts `{app, period}` to the `create-checkout` Supabase edge function
-3. Edge function maps `app+period` to the correct Stripe price env var, creates a Checkout session with `metadata:{userId, plan:app}`, returns the Stripe-hosted URL
-4. User pays; Stripe fires `checkout.session.completed` to the `stripe-webhook` edge function
-5. Webhook writes `subscription_status='active'` and `subscription_plan=app` to `profiles`
-6. User lands on `/?checkout=success` (Veriqo/Suite) or `/mise?checkout=success` (Carte); success toast shown
+2. `startCheckout(app, period)` checks `window.Mise.profile.subscription_status` — if already `active`, routes to `_upgradeSubscription()` instead (see below)
+3. Otherwise posts `{app, period}` to the `create-checkout` Supabase edge function
+4. Edge function maps `app+period` to the correct Stripe price env var, creates a Checkout session with `metadata:{userId, plan:app}`, returns the Stripe-hosted URL
+5. User pays; Stripe fires `checkout.session.completed` to the `stripe-webhook` edge function
+6. Webhook writes `subscription_status='active'` and `subscription_plan=app` to `profiles`
+7. User lands on `/?checkout=success` (Veriqo/Suite) or `/mise?checkout=success` (Carte); success toast shown
+
+### Upgrade flow (existing active subscriber changing plan)
+
+`startCheckout()` detects `subscription_status === 'active'` and calls `_upgradeSubscription(app, period)` instead, which posts `{app, period}` to the `upgrade-subscription` Supabase edge function. That function:
+1. Looks up `stripe_subscription_id` from `profiles` (falls back to listing active subs for the customer)
+2. Retrieves the subscription, gets the item ID
+3. Calls `stripe.subscriptions.update` with the new price and `proration_behavior: 'create_prorations'`
+4. Updates `subscription_plan` in `profiles`
+
+On success the paywall is hidden, the switcher pill updated, and a toast shown — no page redirect. **No second subscription is ever created.**
 
 ### Upsell logic (existing subscriber hits the other app)
 
 - Veriqo subscriber opens Carte → "Add Carte to your suite" — Suite (£20) is primary CTA, Carte-only (£12) is secondary
 - Carte subscriber opens Veriqo → "Add Veriqo to your suite" — Suite (£20) is primary CTA, Veriqo-only (£12) is secondary
-
-### ⚠️ Known gap — upgrades create a second subscription
-
-Clicking "Upgrade to Suite" when already on a single-app plan starts a new £20/month Stripe subscription without cancelling the existing £12/month one — the user gets double-billed. Low risk while user count is small; handle manually via Stripe portal. Fix before scaling: build a dedicated upgrade flow that calls the Stripe API to swap the price on the existing subscription instead of creating a new checkout.
 
 ### Monitoring users
 
@@ -325,14 +332,27 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 
 ---
 
-## Serverless Functions (`api/`)
+## Serverless Functions
+
+### Vercel (`api/`)
 
 | File | Purpose |
 |---|---|
 | `api/auth-link.js` | Admin generateLink + branded Resend email for Veriqo magic link, Veriqo reset, and Carte reset (`{email, type, app}`) |
 | `api/carte-magic-link.js` | Admin generateLink + Carte-branded Resend email for Carte magic link specifically |
-| `api/create-checkout.js` | Stripe checkout session (Veriqo/Carte/Suite subscriptions) |
-| `api/stripe-webhook.js` | Stripe webhook handler — writes `subscription_status` + `subscription_plan` to `profiles` |
+| `api/create-checkout.js` | Stub — real checkout logic is in the Supabase edge function |
+| `api/stripe-webhook.js` | Stub — real webhook logic is in the Supabase edge function |
+
+### Supabase Edge Functions (`supabase/functions/`)
+
+| Function | Purpose |
+|---|---|
+| `create-checkout` | Creates a Stripe Checkout session for new subscribers; maps `{app, period}` to correct price env var |
+| `upgrade-subscription` | Swaps price on existing Stripe subscription for active subscribers upgrading plans — prevents double-billing |
+| `stripe-webhook` | Handles `checkout.session.completed`, `subscription.updated/deleted`, `invoice.payment_failed`; writes status + plan to `profiles` |
+| `create-portal-session` | Returns a Stripe billing portal URL so subscribers can manage payment details |
+| `send-push-notifications` | Sends Web Push notifications to subscribed devices |
+| `capture-lead` | Writes email + source to the `leads` table from the landing page form |
 
 ---
 
@@ -383,6 +403,8 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 
 ### Short term
 - [ ] Test Carte checkout end-to-end with a real payment (use promo code for 100% off)
+- [ ] Suite upsell discovery — single-app subscribers see a discoverable "Try [other app]" link rather than a hidden pill
+- [ ] Trial lifecycle emails — welcome (day 1), mid-trial nudge (day 7), expiry warning (day 13) via Supabase cron + Resend
 
 ### Medium term (suite migration)
 - [ ] Run `shared-suite-schema.sql` in Supabase
@@ -394,6 +416,9 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 - [ ] Finance app
 - [ ] Suite landing page at `getveriqo.co.uk`
 - [ ] Subscription packaging
+
+### Done (2026-05-03, session 4)
+- [x] **Fixed double-billing on plan upgrades** — New `upgrade-subscription` Supabase edge function swaps the price on the user's existing Stripe subscription (with `proration_behavior: 'create_prorations'`) instead of creating a new one. `startCheckout()` in both `subscription.js` (v7) and `carte-subscription.js` (v3) now checks `subscription_status === 'active'` and routes to `_upgradeSubscription()`. On success: paywall hidden, switcher updated, success toast — no page redirect needed.
 
 ### Done (2026-05-03, session 3)
 - [x] **Fixed magic link + password reset for both apps** — New `api/auth-link.js` handles Veriqo magic link, Veriqo reset, and Carte reset via admin `generateLink` + `hashed_token` + branded Resend email. `auth.js` (v12): `_sendMagicLink` (Veriqo) and `_forgot` (both apps) POST to `/api/auth-link`; `init()` handles `?token_hash=...&type=magiclink|recovery` via `verifyOtp`; `_showingResetForm` flag blocks premature `onSignedIn` during password reset; `_submitPasswordReset` explicitly calls `onSignedIn` after `updateUser`. `supabase.js` (v5): added `flowType:'implicit'`.
