@@ -19,6 +19,8 @@
 - Repo: `https://github.com/mogorman-a11y/mise` (branch: `main`)
 - Supabase: `https://yixrwyfodipfcbhjcszp.supabase.co`
 
+**Landing page:** `index.html` is a standalone marketing page served at `getveriqo.co.uk/`. It is NOT a copy of `app.html`. It has a small inline JS snippet that redirects already-authenticated users (detected via `sb-*-auth-token` in localStorage) straight to `/app`. Do not overwrite `index.html` with the app shell.
+
 **Deploy:**
 ```bash
 cp "files/app.html" /private/tmp/mise-deploy/app.html   # repeat for each changed file
@@ -230,17 +232,13 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 **Tabs:** Home, Clients, Calendar, Menus, More (→ Transport, Assess, Allergen, Credentials, Settings, Save as app)
 
 **Features:**
-- Dashboard: greeting, next-booking card, stats strip, quick-action buttons, nav tile grid
+- Dashboard: greeting, next-booking card (tappable — calls `calViewJob(id)` to open Jobs tab with that booking expanded), stats strip, quick-action buttons, nav tile grid
 - Clients CRM: add/edit/delete, tap-to-expand cards, clickable phone/email/maps
 - Calendar: month grid, job indicators, unavailable dates, day detail panel, book-job button
   - Tapping a job in the calendar day panel calls `calViewJob(id)` → switches to Jobs tab and scrolls to that job card
   - `getAllJobsByDate()` deduplicates by ID (same pattern as `getAllJobs()`)
 - Menus: dish library (same DISH_CATEGORIES as Veriqo), saved menus (multi-dish picker)
-- Jobs: log job with client autofill, history grouped by month, expandable + inline editable cards
-  - Cards have 3 states: collapsed / expanded read-only / inline edit form (fields prefixed `jedit-`)
-  - Veriqo-mirrored jobs (id starts `veriqo_`) are read-only (no Edit button)
-  - `startJobEdit(id)`, `saveJobEdit(id)`, `deleteJob(id)` functions
-  - `_expandedJobId` and `_editingJobId` track card state
+- Jobs tab: "＋ Book a New Job" button opens collapsible form (closes on save); upcoming jobs (soonest-first) shown immediately; "▼ View previous bookings" toggle at bottom for past jobs grouped by month. Cards: 3 states (collapsed / read-only / inline edit, fields prefixed `jedit-`). Mirrored jobs (`veriqo_` prefix) read-only. State vars: `_expandedJobId`, `_editingJobId`, `_newJobFormOpen`, `_pastJobsOpen`. Helpers: `_jobCardHTML(j)`, `_jobsByMonth(jobs)`. `calViewJob(id)` auto-opens past section for historical jobs.
 - Transport: temp log with client autofill, warm-temp warning
 - Kitchen Assessment: fridge/freezer temps, condition, notes
 - Allergen Log: 14-allergen checkbox grid
@@ -252,15 +250,7 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 - **Settings cog in header** — gold `#C8A96E` cog button (always visible, right of title, left of Veriqo pill), calls `showTab('settings')`
 - Logo upload in Settings (`carte-logo-img`, `previewCarteLogo`, `clearCarteLogo`); stored in `mSettings.logo`; syncs to Veriqo
 - Booking report PDF: `exportJobsPDF()` / `buildJobsPDF()` — Carte-branded, jobs by month, menus as sub-rows
-- Menus on jobs: `job.menus = [{name, dishes:[...]}]` frozen snapshots; state-based editor using `_jobMenuState[prefix]`
-  - `_buildMenuPickerHTML(prefix, currentMenus)` — initialises `_jobMenuState[prefix]` from existing menus; renders "From your library" checkboxes + "Build a custom menu" section; fires `setTimeout` to call `_renderMenuState` + `_syncLibraryCheckboxes`
-  - `_renderMenuState(prefix)` — renders currently-attached menus as removable green cards (× on whole menu, × on each dish chip)
-  - `toggleSavedMenuOnJob(prefix, menuId)` — adds/removes a saved library menu from state
-  - `removeJobMenu(prefix, idx)` / `removeDishFromJobMenu(prefix, menuIdx, dishId)` — mutate state and re-render
-  - `addCustomMenuToJob(prefix)` — commits name + selected dishes from the custom builder into state
-  - `addQuickDish(prefix)` — saves a new dish to `mSettings.savedDishes`, appends checkbox to custom builder list
-  - `_getSelectedMenusSnapshot(prefix)` — returns `_jobMenuState[prefix]` (used by `logJob` and `saveJobEdit`)
-  - `renderJobMenuPicker()` — re-initialises the log form picker after a job is saved
+- Menus on jobs: `job.menus = [{name, dishes:[...]}]` frozen snapshots; state-based editor using `_jobMenuState[prefix]` — "From your library" checkboxes + "Build a custom menu" section; `_getSelectedMenusSnapshot(prefix)` returns the snapshot for saving
 
 **Key JS patterns:**
 - `saveSettings()` always calls `Mise.sync.saveSettings(mSettings)` if sync available
@@ -279,15 +269,6 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 | `api/carte-magic-link.js` | Generates Supabase magic link server-side + sends Carte-branded email via Resend |
 | `api/create-checkout.js` | Stripe checkout session (Veriqo subscription) |
 | `api/stripe-webhook.js` | Stripe webhook handler |
-
-**`carte-magic-link.js` flow:**
-1. Receives POST `{ email, redirectTo }`
-2. Creates Supabase admin client with `SUPABASE_SERVICE_ROLE_KEY`
-3. Calls `supabase.auth.admin.generateLink({ type:'magiclink', email, options:{ redirectTo } })`
-4. Extracts `data.properties.hashed_token` (NOT `action_link` — the old Supabase verify URL approach caused PKCE failures)
-5. Builds `redirectTo?token_hash=HASH&type=magiclink` — a direct URL to the Carte app
-6. POSTs to `https://api.resend.com/emails` with Carte-branded HTML email containing that URL
-7. Returns `{ ok: true }` or 500 JSON on error
 
 ---
 
@@ -336,17 +317,8 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 
 ## Roadmap / Next Steps
 
-### Immediate (reliability)
-- [x] **Resend domain DNS** — already verified on resend.com
-- [x] **Veriqo email deliverability** — Supabase SMTP switched to `smtp.resend.com:465`, sender `hello@getveriqo.co.uk`
-- [x] **Carte magic link end-to-end** — was broken in three layers: (1) Resend API key stale in Supabase SMTP, (2) redirect going to Veriqo due to missing allow-list entry, (3) PKCE mismatch on auth callback. Fixed by: new Resend SMTP key, adding `/mise` to Supabase redirect URLs, and switching to `token_hash` + `verifyOtp()` approach in `carte-magic-link.js` + `auth.js`.
-
-### Short term (feature completion)
-- [x] **Veriqo PDF export** — already fully built: `buildPDFExport()` in `app.html`, `.txt` + PDF buttons per day, plus multi-day inspector range export
-- [x] **Carte PDF export** — `exportJobsPDF()` / `buildJobsPDF()` in `mise.html`; Carte-branded booking report grouped by month
-- [x] **Veriqo next-booking banner** — replaced full calendar with collapsible next-job banner (see Veriqo features above). Full calendar still not built if ever needed.
+### Short term
 - [ ] **Carte Stripe paywall** — currently free; add when selling Carte standalone or as suite bundle
-- [ ] **Clean up `api/test.js`** — debug file left in repo, should be deleted
 
 ### Medium term (suite migration)
 - [ ] Run `shared-suite-schema.sql` in Supabase
@@ -359,56 +331,19 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 - [ ] Suite landing page at `getveriqo.co.uk`
 - [ ] Subscription packaging
 
+### Done (2026-05-03)
+- [x] **SEO / LLMO / GEO visibility overhaul** — `index.html` rewritten as a standalone marketing landing page with `<meta name="description">`, OG tags, Twitter Card, JSON-LD structured data (`Organization` + `SoftwareApplication` for both apps), ~300 words of crawlable body copy, and a logged-in redirect to `/app`. `app.html` and `mise.html` both got meta description, canonical URL, `noindex` (auth-gated pages), and OG tags. New `llms.txt` at root describes both apps in plain text for AI crawler discoverability. `sitemap.xml` updated to include `/mise` and refreshed `lastmod` dates. Google Search Console: sitemap submitted at `https://getveriqo.co.uk/sitemap.xml`.
+
+### Done (2026-05-02, session 3)
+- [x] **Deleted `api/test.js`** — debug stub removed from repo and deployed
+- [x] **Next booking banner in Carte is tappable** — `#dash-next` has `onclick="calViewJob(this.dataset.jobId)"`. `data-job-id` set when banner renders. "View →" label added top-right. `:active` opacity fade for touch feedback.
+- [x] **Redesigned Carte Jobs tab** — "＋ Book a New Job" button leads the tab; form is collapsible (hidden by default, closes on save). Upcoming bookings shown immediately below sorted soonest-first. Past jobs behind "▼ View previous bookings" toggle at the bottom. Extracted `_jobCardHTML(j)` and `_jobsByMonth(jobs)` helpers to avoid duplication. `calViewJob` auto-opens past section for historical jobs.
+
 ### Done (2026-05-02, session 2)
-- [x] **Next booking banner in Veriqo** — dark collapsible banner on dashboard shows soonest upcoming Carte job. Tap to expand: date/time, type, covers, location (maps link), phone, email, notes, menus with dish chips. "View booking in Carte →" button. `updateNextJobBanner()` / `toggleNextJobBanner()`. Hides when no upcoming jobs.
-- [x] **Fixed alert strip "job · undefined"** — job records with no `status` field were leaking into the alert strip (`undefined !== 'ok'`). Fixed by excluding `type:'job'` from the alerts filter.
-- [x] **Redesigned job menu editor in Carte** — replaced checkbox-based picker with state-based UX (`_jobMenuState[prefix]`). Currently-attached menus shown as removable green cards; each dish has an × to remove it individually. Library menus are checkboxes (tick to add, untick to remove). Custom builder has name field + dish checkboxes + inline quick-add; "Add this menu to booking" commits to the card list. Works identically in log form and inline edit form.
-- [x] **Fixed `mirrorJobToVeriqo` upsert** — was add-only; now replaces existing mirror by ID so job edits (e.g. adding a menu in Carte) propagate to Veriqo.
-- [x] **`saveJobEdit` now calls `mirrorJobToVeriqo`** — previously edits to Carte jobs were never mirrored.
-- [x] **Fixed `_pullCarteJobs` upsert (sync.js v9)** — was add-only; now replaces existing entries so fresh Supabase data always wins on pull.
-
-### Done (2026-05-02, session 1)
-- [x] **Fixed "Other" category dishes non-clickable in Carte** — Cross-app ID type mismatch: Veriqo-synced dish IDs are numeric (`Date.now()`), Carte IDs are strings (`uid()`). Strict `===` comparison in `_dishRowHTML`, `saveDishEdit`, and `deleteDish` always failed for synced dishes. Fixed with `String()` coercion at all three comparison sites.
-- [x] **Saved menus inline editing in Carte** — Converted from scroll-to-top form UX to inline expansion (matching dish library pattern). Added `_menuInlineEditHTML(m)` helper, `_editingMenuId` state variable, `saveMenuEdit(id)`, `cancelMenuEdit()`. `editMenu(id)` now toggles inline form in-place; `saveMenu()` is create-only. `event.stopPropagation()` on form inputs prevents card collapse while editing.
-- [x] **Landing page email field UX** — Made hero email capture more obvious: input is now a solid white box (was transparent-in-pill), added visible label "Enter your email to get started", changed placeholder to `you@yourkitchen.co.uk`, added shake animation (`@keyframes shake`, `.input-error` class) on empty-submit validation.
-- [x] **Settings cog in Carte header** — Gold (`#C8A96E`) cog icon added to the dark header bar, positioned between the title/logo and the Veriqo switcher pill. Always visible on every tab. Calls `showTab('settings')`.
-
-### Done (2026-05-01)
-- [x] **Fixed Supabase SMTP** — Resend API key in Supabase SMTP settings was stale/never working. Created new `Veriqo` key in Resend, pasted into Supabase → Auth → SMTP Settings → Password. Both Veriqo magic link and forgot-password emails now send.
-- [x] **Fixed Carte magic link redirecting to Veriqo** — Supabase was overriding `redirectTo` with its Site URL because `/mise` wasn't in the allowed redirect list. Added `https://getveriqo.co.uk/mise` and `https://getveriqo.co.uk/**` to Supabase → Auth → URL Configuration → Redirect URLs.
-- [x] **Fixed Carte magic link auth (PKCE mismatch)** — After landing on `/mise`, users weren't being signed in. Root cause: Supabase JS v2 uses PKCE by default; admin-generated links have no client-side verifier, so the code exchange silently failed. Fix: `carte-magic-link.js` now extracts `hashed_token` and sends `?token_hash=...&type=magiclink` directly to the app; `auth.js init()` detects this and calls `supabaseClient.auth.verifyOtp()` directly — no Supabase redirect, no PKCE required.
-- [x] **Re-cloned deploy directory** — `/private/tmp/mise-deploy/.git` was missing `HEAD` and `config` files (corrupted, likely from a reboot). Re-cloned from GitHub.
-
-### Done (2026-04-29)
-- [x] **Dish library inline edit in Carte** — converted from confusing scroll-to-top-form UX to Veriqo-style inline expansion. `_dishRowHTML(d)`, `editDish(id)`, `saveDishEdit(id)`, `cancelDishEdit()`. Fixed uncategorised dishes being non-clickable. `addDish()` is now add-only (no longer reuses `_editingDishId`)
-- [x] **Cross-app profile sync** — name, company, logo now sync bidirectionally. `sync.js` (v8) `_mirrorSettingsToCarte` overwrites `businessName`/`chefName`/`logo`; `mise-sync.js` (v5) `_mirrorSettingsToVeriqo` mirrors back. `_mergeSuiteData` in both modules seeds profile fields additively on cross-pull (only fills if target empty)
-- [x] **Logo upload in Carte Settings** — `previewCarteLogo`, `clearCarteLogo`, `carte-logo-img/preview` elements. `saveProfile()` now also updates the `profiles` Supabase table. `loadProfileUI()` restores logo from `mSettings.logo`
-- [x] **Resend DNS + Supabase SMTP** — Resend domain already verified; Supabase SMTP switched to Resend for Veriqo auth emails
-- [x] **Carte booking report PDF** — `exportJobsPDF()` / `buildJobsPDF()` in `mise.html`. Carte-branded (forest/gold), jobs grouped by month, Date/Client/Details columns, footer ref number. Button appears at top of jobs list when jobs exist
-- [x] **Menus on job bookings** — `job.menus` stores frozen snapshots `[{name, dishes:[...full objects]}]`. Log New Job + inline edit form both have a menu picker (`_buildMenuPickerHTML`, `_getSelectedMenusSnapshot`, `renderJobMenuPicker`). Expanded job card shows menus with dish chips. PDF sub-rows show dishes grouped by course with allergen notes
-- [x] **Menu creator dish picker grouped by category** — `renderMenuDishSelect()` now groups dishes under gold category headers in DISH_CATEGORIES order, matching dish library UX
-
-### Done (2026-04-28)
-- [x] Fixed Carte calendar duplication — `getAllJobsByDate()` now deduplicates by ID
-- [x] Carte job cards now inline-editable (3-state: collapsed / read-only / edit form); Veriqo-mirrored jobs read-only
-- [x] Fixed Carte jobs showing as "undefined" in Veriqo — added `msg` + `status` fields in `mirrorJobToVeriqo()` and `_pullCarteJobs()`
-- [x] Carte login page branded separately via `window.MISE_AUTH_CONFIG` — Veriqo unchanged
-- [x] App switcher redesigned as pill-shaped branded chips in both apps
-- [x] Magic link "Email me a sign-in link" promoted to full-width button (peer to Google button) in both apps
-- [x] Carte PWA — `mise-manifest.json`, Carte icons (gold C on dark forest), install banner on home tab, "Save as app" in More menu
-- [x] Carte-branded magic link emails via Resend + Vercel serverless function (`api/carte-magic-link.js`) — Veriqo uses Supabase OTP unchanged
-- [x] Migrated hosting from GitHub Pages to Vercel — serverless functions now active
-- [x] Clean URLs: `getveriqo.co.uk/mise` and `getveriqo.co.uk/app` (no `.html` required)
-
-### Done (2026-04-27)
-- [x] Created missing `mise_records` Supabase table (was causing all Carte daily record sync to fail silently)
-- [x] Fixed Veriqo→Carte settings sync (was one-directional — added `_mirrorSettingsToCarte` call at end of `_pullSettings`)
-- [x] Fixed Carte calendar job tap — `calViewJob(id)` + `data-job-id` on job cards + onclick on calendar rows
-- [x] Fixed menu edit/delete buttons in Veriqo (IDs were unquoted in onclick, causing ReferenceErrors)
-- [x] Added `deleteSuiteMenu` + `deleteSuiteDish` to both sync modules — deletions now propagate to the other app's Supabase settings so cross-pull doesn't resurrect deleted items
-- [x] Sync made cloud-authoritative (full replace on pull, not merge-into-existing)
-- [x] All Supabase upsert results now checked for errors; toasts shown on failure
-- [x] Visibility change listener added to both sync modules (re-syncs when tab regains focus)
+- [x] **Next booking banner in Veriqo** — collapsible dark banner shows soonest upcoming Carte job; tap to expand detail panel. `updateNextJobBanner()` / `toggleNextJobBanner()`.
+- [x] **Fixed alert strip "job · undefined"** — excluded `type:'job'` records from HACCP alert strip filter.
+- [x] **Redesigned job menu editor in Carte** — state-based UX (`_jobMenuState[prefix]`); attached menus as removable cards; library checkboxes; custom builder with inline quick-add.
+- [x] **Fixed sync upserts** — `mirrorJobToVeriqo`, `saveJobEdit`, and `_pullCarteJobs` were all add-only; now replace by ID so edits propagate correctly.
 
 ---
 
