@@ -133,6 +133,62 @@ window.MISE_AUTH_CONFIG = {
 
 ---
 
+## Subscription & Paywall
+
+### Plans and pricing
+
+| Plan | Monthly | Annual | Access |
+|---|---|---|---|
+| `veriqo` | £12 | £120 | Veriqo only |
+| `carte` | £12 | £120 | Carte only |
+| `suite` | £20 | £200 | Both apps |
+
+`subscription_plan` is stored on the `profiles` row. Always lowercase. `null` = trial or legacy Veriqo subscriber (treated as `veriqo` for access purposes).
+
+### Access rules
+
+| `subscription_status` | `subscription_plan` | Veriqo access | Carte access |
+|---|---|---|---|
+| `trial` (in date) | any | ✅ | ✅ |
+| `active` | `null` or `veriqo` | ✅ | ❌ paywall |
+| `active` | `carte` | ❌ paywall | ✅ |
+| `active` | `suite` | ✅ | ✅ |
+| `trial` (expired) / `cancelled` / `past_due` | any | ❌ paywall | ❌ paywall |
+
+App switcher pills (Carte↔Veriqo) are visible only during trial or on `suite` plan.
+
+### Checkout flow (new subscriber)
+
+1. User clicks a price button on a paywall
+2. `startCheckout(app, period)` posts `{app, period}` to the `create-checkout` Supabase edge function
+3. Edge function maps `app+period` to the correct Stripe price env var, creates a Checkout session with `metadata:{userId, plan:app}`, returns the Stripe-hosted URL
+4. User pays; Stripe fires `checkout.session.completed` to the `stripe-webhook` edge function
+5. Webhook writes `subscription_status='active'` and `subscription_plan=app` to `profiles`
+6. User lands on `/?checkout=success` (Veriqo/Suite) or `/mise?checkout=success` (Carte); success toast shown
+
+### Upsell logic (existing subscriber hits the other app)
+
+- Veriqo subscriber opens Carte → "Add Carte to your suite" — Suite (£20) is primary CTA, Carte-only (£12) is secondary
+- Carte subscriber opens Veriqo → "Add Veriqo to your suite" — Suite (£20) is primary CTA, Veriqo-only (£12) is secondary
+
+### ⚠️ Known gap — upgrades create a second subscription
+
+Clicking "Upgrade to Suite" when already on a single-app plan starts a new £20/month Stripe subscription without cancelling the existing £12/month one — the user gets double-billed. Low risk while user count is small; handle manually via Stripe portal. Fix before scaling: build a dedicated upgrade flow that calls the Stripe API to swap the price on the existing subscription instead of creating a new checkout.
+
+### Monitoring users
+
+Run this view in **Supabase → SQL Editor** (create once):
+```sql
+CREATE VIEW profiles_with_email AS
+SELECT p.id, u.email, p.business_name, p.chef_name,
+       p.subscription_status, p.subscription_plan,
+       p.trial_ends_at, p.stripe_customer_id, p.onboarded, u.created_at
+FROM profiles p JOIN auth.users u ON u.id = p.id;
+```
+Then use **Table Editor → Views → profiles_with_email** to see all users with email + plan status. Sort by `trial_ends_at` to find trials about to expire.
+
+---
+
 ## Sync Architecture
 
 ### How it works
