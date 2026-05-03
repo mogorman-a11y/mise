@@ -10,9 +10,9 @@
 | **localStorage prefix** | `haccp_` | `mise_` |
 | **Settings object** | `settings` → `haccp_settings` | `mSettings` → `mise_settings` |
 | **Daily records** | `records[]` → `haccp_YYYY-MM-DD` | `mRecords[]` → `mise_YYYY-MM-DD` |
-| **Sync module** | `sync.js` (v9) | `mise-sync.js` (v4) |
-| **Auth module** | `auth.js` (v9) | `auth.js` (v9) |
-| **Subscription module** | `subscription.js` (v5) | `carte-subscription.js` (v1) |
+| **Sync module** | `sync.js` (v9) | `mise-sync.js` (v5) |
+| **Auth module** | `auth.js` (v12) | `auth.js` (v12) |
+| **Subscription module** | `subscription.js` (v6) | `carte-subscription.js` (v2) |
 
 **Paths:**
 - Working files: `/Users/michael/Library/CloudStorage/GoogleDrive-mike@sideordercatering.co.uk/My Drive/APPS/HACCP APP/files/`
@@ -41,7 +41,7 @@ rm -rf /private/tmp/mise-deploy && git clone https://github.com/mogorman-a11y/mi
 - **Frontend:** Single-file vanilla HTML/CSS/JS — no framework, no bundler
 - **Auth:** Supabase Auth (email/password + Google OAuth + magic link) via shared `auth.js`
 - **Cloud sync:** Supabase Postgres via `sync.js` (Veriqo) + `mise-sync.js` (Carte)
-- **Transactional email:** Resend (`hello@getveriqo.co.uk`) — Carte magic link via `api/carte-magic-link.js`, Veriqo magic link via Supabase OTP
+- **Transactional email:** Resend (`hello@getveriqo.co.uk`) — Carte magic link via `api/carte-magic-link.js`; Veriqo magic link + password reset (both apps) via `api/auth-link.js`
 - **Subscription:** Stripe via `subscription.js` (Veriqo) + `carte-subscription.js` (Carte) + Supabase Edge Functions (`create-checkout`, `stripe-webhook`)
 - **PWA:** `sw.js` (network-first for app pages, cache-first for assets), `manifest.json` (Veriqo), `mise-manifest.json` (Carte)
 - **Hosting:** Vercel — `getveriqo.co.uk` DNS points to Vercel, previously GitHub Pages
@@ -116,16 +116,22 @@ window.MISE_AUTH_CONFIG = {
 // app.html sets nothing — auth.js defaults to Veriqo branding
 ```
 
-**Magic link flow:**
-- Veriqo: calls `supabaseClient.auth.signInWithOtp()` directly (Supabase sends the email via Resend SMTP)
-- Carte: `auth.js` POSTs `{ email, redirectTo }` to `/api/carte-magic-link` → Vercel function calls `auth.admin.generateLink()`, extracts `data.properties.hashed_token`, builds `https://getveriqo.co.uk/mise?token_hash=HASH&type=magiclink`, sends Carte-branded email via Resend
+**Magic link / password reset flow (all paths):**
 
-**Carte magic link auth callback:** `auth.js init()` detects `?token_hash=...&type=magiclink` in the URL and calls `supabaseClient.auth.verifyOtp({ token_hash, type: 'magiclink' })` directly. This bypasses Supabase's `/verify` redirect endpoint, avoiding a PKCE code-exchange mismatch that occurs because admin-generated links have no client-side PKCE verifier.
+All four auth email flows use the admin `generateLink` + `token_hash` + `verifyOtp` approach — no PKCE, works cross-browser, works regardless of which device opens the email link.
 
-**Resend API keys (two separate keys):**
-- `Carte Send` key → Vercel env var `RESEND_API_KEY` (used by `carte-magic-link.js`)
-- `Veriqo` key → Supabase SMTP Password field (used for Veriqo OTP emails)
-- Both keys show in resend.com → API keys. If Supabase SMTP stops working, the Veriqo key in Supabase may be stale — generate a new one and paste it into Supabase → Auth → SMTP Settings → Password.
+| Path | Sends email via | Lands on | Client-side handler |
+|---|---|---|---|
+| Veriqo magic link | `api/auth-link.js` (type=magiclink, app=veriqo) | `/app?token_hash=...&type=magiclink` | `verifyOtp({token_hash, type:'magiclink'})` → `onSignedIn` |
+| Carte magic link | `api/carte-magic-link.js` | `/mise?token_hash=...&type=magiclink` | same |
+| Veriqo reset | `api/auth-link.js` (type=recovery, app=veriqo) | `/app?token_hash=...&type=recovery` | `verifyOtp({token_hash, type:'recovery'})` → show reset form |
+| Carte reset | `api/auth-link.js` (type=recovery, app=carte) | `/mise?token_hash=...&type=recovery` | same |
+
+**`_showingResetForm` flag:** Set to `true` after `verifyOtp({type:'recovery'})` establishes a session. Blocks `onSignedIn` from firing via `onAuthStateChange`/`getSession` while the reset form is showing. Cleared to `false` after `updateUser({password})` succeeds, then `getSession()` is called explicitly to load the app.
+
+**Resend API key:** Single `RESEND_API_KEY` Vercel env var used by both `carte-magic-link.js` and `auth-link.js`. Veriqo no longer uses Supabase SMTP for any auth emails.
+
+**`supabase.js` `flowType: 'implicit'`:** Set on the client (v5) — beneficial for Google OAuth hash processing even though all token_hash flows bypass PKCE entirely.
 
 **Supabase redirect URLs** (Authentication → URL Configuration): `https://getveriqo.co.uk`, `https://getveriqo.co.uk/app`, `https://getveriqo.co.uk/mise`, `https://getveriqo.co.uk/**` — all four are set.
 
@@ -300,7 +306,7 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 - Kitchen Assessment: fridge/freezer temps, condition, notes
 - Allergen Log: 14-allergen checkbox grid
 - Credentials: certificate tracker with 90-day expiry warning
-- Settings: profile, staff list; also reachable via gold cog in header (always visible)
+- Settings: profile, staff list, subscription card (`renderCarteSubscriptionCard()`), Help tab, Privacy/Legal tab; also reachable via gold cog in header (always visible)
 - No Stripe paywall (Carte is free for now)
 - PWA: `mise-manifest.json`, Carte icons (`icons/carte-192.png`, `carte-512.png`, `carte-apple-touch.png`), install banner on home tab, "Save as app" in More menu
 - App switcher pill → Veriqo (semi-transparent background, Veriqo shield icon, "Veriqo" text)
@@ -323,9 +329,10 @@ Veriqo's `logCustomerJob()` stores customers as job records in `records[]`, NOT 
 
 | File | Purpose |
 |---|---|
-| `api/carte-magic-link.js` | Generates Supabase magic link server-side + sends Carte-branded email via Resend |
-| `api/create-checkout.js` | Stripe checkout session (Veriqo subscription) |
-| `api/stripe-webhook.js` | Stripe webhook handler |
+| `api/auth-link.js` | Admin generateLink + branded Resend email for Veriqo magic link, Veriqo reset, and Carte reset (`{email, type, app}`) |
+| `api/carte-magic-link.js` | Admin generateLink + Carte-branded Resend email for Carte magic link specifically |
+| `api/create-checkout.js` | Stripe checkout session (Veriqo/Carte/Suite subscriptions) |
+| `api/stripe-webhook.js` | Stripe webhook handler — writes `subscription_status` + `subscription_plan` to `profiles` |
 
 ---
 
@@ -387,6 +394,13 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 - [ ] Finance app
 - [ ] Suite landing page at `getveriqo.co.uk`
 - [ ] Subscription packaging
+
+### Done (2026-05-03, session 3)
+- [x] **Fixed magic link + password reset for both apps** — New `api/auth-link.js` handles Veriqo magic link, Veriqo reset, and Carte reset via admin `generateLink` + `hashed_token` + branded Resend email. `auth.js` (v12): `_sendMagicLink` (Veriqo) and `_forgot` (both apps) POST to `/api/auth-link`; `init()` handles `?token_hash=...&type=magiclink|recovery` via `verifyOtp`; `_showingResetForm` flag blocks premature `onSignedIn` during password reset; `_submitPasswordReset` explicitly calls `onSignedIn` after `updateUser`. `supabase.js` (v5): added `flowType:'implicit'`.
+- [x] **Carte subscription card in settings** — `renderCarteSubscriptionCard()` + `openCartePortal()` added to `mise.html`; shows trial/active/expired states with Carte branding; Stripe portal link when active.
+- [x] **Carte welcome modal** — `carte-subscription.js` (v2): shows on first login when `!profile.onboarded`; Carte-branded; `_dismissWelcomeModal()` sets `onboarded: true` in Supabase.
+- [x] **Help & Privacy tabs in Carte settings** — `tab-help` (getting started guide) and `tab-legal` (privacy/GDPR/terms) added to `mise.html`; accessible from settings nav buttons; activate More nav tab.
+- [x] **Fixed Veriqo subscription card stuck on Loading** — `subscription.js` (v6): calls `renderSubscriptionCard()` immediately after setting `window.Mise.profile` so card populates regardless of tab open timing.
 
 ### Done (2026-05-03, session 2)
 - [x] **Carte paywall + Suite pricing** — `carte-subscription.js` (v1): Carte-branded dark paywall with Carte-only (£12/mo, £120/yr) and Suite (£20/mo, £200/yr) options. `subscription.js` (v5): plan-aware Veriqo access, Carte pill hidden for Veriqo-only subscribers, suite upgrade nudge. `auth.js` (v9): calls `Mise.carteSubscription.check()` after sync if present. `app.html`: `id="carte-switcher-btn"`, `renderSubscriptionCard` shows plan name and suite upgrade for Veriqo-only active subscribers. `mise.html`: `id="veriqo-switcher-btn"`, loads `carte-subscription.js`. Edge functions updated: `create-checkout` accepts `{app, period}` params and routes to correct Stripe price; `stripe-webhook` writes `subscription_plan` on checkout. `profiles` table has new `subscription_plan` column (values: `null`=trial/legacy, `veriqo`, `carte`, `suite`). Paywall upsell: Veriqo subscriber hitting Carte sees "Upgrade to Suite" as primary CTA; Carte subscriber hitting Veriqo sees the same in reverse.
