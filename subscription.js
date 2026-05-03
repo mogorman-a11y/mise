@@ -67,6 +67,7 @@ window.Mise.subscription = (function () {
       var inTrial  = status === 'trial' && trialEnd && trialEnd > new Date();
 
       window.Mise.profile = profile;
+      if (typeof renderSubscriptionCard === 'function') renderSubscriptionCard();
 
       // Veriqo access: active with veriqo/suite/null plan, or in trial
       var hasAccess = inTrial || (status === 'active' && (plan === null || plan === 'veriqo' || plan === 'suite'));
