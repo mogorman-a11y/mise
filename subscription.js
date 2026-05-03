@@ -1,4 +1,4 @@
-// subscription.js v7 — Veriqo paywall and subscription status
+// subscription.js v8 — Veriqo paywall and subscription status
 // ─────────────────────────────────────────────────────────────
 // Access rules:
 //   'trial'  + trial_ends_at in future            → full access
@@ -8,8 +8,9 @@
 //   'cancelled' or 'past_due'                     → paywall
 //
 // App switcher (Carte pill) visibility:
-//   trial OR plan = 'suite'  → show
-//   plan = 'veriqo' or null  → hide (Veriqo-only subscriber)
+//   trial OR plan = 'suite'  → full branded pill
+//   plan = 'veriqo' or null  → muted "Try Carte →" discovery link
+//   other active             → hidden
 //
 // PDF export is ALWAYS available even behind the paywall.
 
@@ -95,11 +96,19 @@ window.Mise.subscription = (function () {
   }
 
   // ── _updateSwitcher ────────────────────────────────────────────────────────
-  // Show the Carte pill only during trial or on the suite plan.
   function _updateSwitcher(plan, inTrial) {
     var btn = document.getElementById('carte-switcher-btn');
     if (!btn) return;
-    btn.style.display = (inTrial || plan === 'suite') ? '' : 'none';
+    if (inTrial || plan === 'suite') {
+      btn.style.cssText = 'display:flex;align-items:center;gap:6px;padding:7px 11px;background:#1C2B1E;border:1px solid #2E4030;border-radius:10px;cursor:pointer;flex-shrink:0';
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 60 60" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="60" rx="14" fill="#1C2B1E"/><path d="M44.1,15.9 A20,20 0 1,0 44.1,44.1 L39.2,39.2 A13,13 0 1,0 39.2,20.8 Z" fill="#C8A96E"/></svg>'
+        + '<span style="font-size:13px;font-weight:600;color:#C8A96E;font-family:inherit;letter-spacing:-0.2px">Carte</span>';
+    } else if (plan === 'veriqo' || plan === null) {
+      btn.style.cssText = 'display:flex;align-items:center;gap:4px;padding:5px 10px;background:none;border:1px solid #e5e4de;border-radius:10px;cursor:pointer;flex-shrink:0';
+      btn.innerHTML = '<span style="font-size:12px;color:#aaa;font-family:inherit">Try Carte →</span>';
+    } else {
+      btn.style.display = 'none';
+    }
   }
 
   // ── showPaywall ────────────────────────────────────────────────────────────

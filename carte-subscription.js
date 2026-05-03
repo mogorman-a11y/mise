@@ -1,4 +1,4 @@
-// carte-subscription.js v3 — Carte paywall and subscription status
+// carte-subscription.js v4 — Carte paywall and subscription status
 // ──────────────────────────────────────────────────────────────────
 // Access rules:
 //   'trial'  + trial_ends_at in future          → full access
@@ -8,8 +8,9 @@
 //   'cancelled' or 'past_due'                   → paywall
 //
 // App switcher (Veriqo pill) visibility:
-//   trial OR plan = 'suite'  → show
-//   plan = 'carte'           → hide (Carte-only subscriber)
+//   trial OR plan = 'suite'  → full branded pill
+//   plan = 'carte'           → muted "Try Veriqo →" discovery link
+//   other active             → hidden
 
 window.Mise = window.Mise || {};
 window.Mise.carteSubscription = (function () {
@@ -75,11 +76,19 @@ window.Mise.carteSubscription = (function () {
   }
 
   // ── _updateSwitcher ────────────────────────────────────────────────────────
-  // Show the Veriqo pill only during trial or on the suite plan.
   function _updateSwitcher(plan, inTrial) {
     var btn = document.getElementById('veriqo-switcher-btn');
     if (!btn) return;
-    btn.style.display = (inTrial || plan === 'suite') ? '' : 'none';
+    if (inTrial || plan === 'suite') {
+      btn.style.cssText = 'display:flex;align-items:center;gap:6px;padding:7px 11px;background:rgba(255,255,255,0.11);border:1px solid rgba(255,255,255,0.18);border-radius:10px;cursor:pointer;flex-shrink:0';
+      btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 512 512" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="miseSwitchShield" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="#1B3A5C"/><path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#miseSwitchShield)"/><polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>'
+        + '<span style="font-size:13px;font-weight:600;color:#F5F0E8;font-family:inherit;letter-spacing:-0.2px">Veriqo</span>';
+    } else if (plan === 'carte') {
+      btn.style.cssText = 'display:flex;align-items:center;gap:4px;padding:5px 10px;background:none;border:1px solid rgba(255,255,255,0.15);border-radius:10px;cursor:pointer;flex-shrink:0';
+      btn.innerHTML = '<span style="font-size:12px;color:rgba(245,240,232,0.4);font-family:inherit">Try Veriqo →</span>';
+    } else {
+      btn.style.display = 'none';
+    }
   }
 
   // ── showPaywall ────────────────────────────────────────────────────────────
