@@ -84,10 +84,14 @@ Deno.serve(async (req) => {
     case 'checkout.session.completed': {
       const session    = event.data.object as Stripe.CheckoutSession;
       const userId     = session.metadata?.userId;
+      const plan       = session.metadata?.plan || 'veriqo';
       const customerId = session.customer as string;
       const subId      = session.subscription as string;
 
-      const updateData: Record<string, unknown> = { subscription_status: 'active' };
+      const updateData: Record<string, unknown> = {
+        subscription_status: 'active',
+        subscription_plan:   plan,
+      };
 
       if (subId) {
         try {

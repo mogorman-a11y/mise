@@ -170,7 +170,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     </button>
-    <button onclick="openCarte()" style="display:flex;align-items:center;gap:6px;padding:7px 11px;background:#1C2B1E;border:1px solid #2E4030;border-radius:10px;cursor:pointer;flex-shrink:0" aria-label="Open Carte">
+    <button id="carte-switcher-btn" onclick="openCarte()" style="display:flex;align-items:center;gap:6px;padding:7px 11px;background:#1C2B1E;border:1px solid #2E4030;border-radius:10px;cursor:pointer;flex-shrink:0" aria-label="Open Carte">
       <svg width="20" height="20" viewBox="0 0 60 60" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
         <rect width="60" height="60" rx="14" fill="#1C2B1E"/>
         <path d="M44.1,15.9 A20,20 0 1,0 44.1,44.1 L39.2,39.2 A13,13 0 1,0 39.2,20.8 Z" fill="#C8A96E"/>
@@ -3782,33 +3782,44 @@ function renderSubscriptionCard() {
   if (!profile) return;
 
   var status   = profile.subscription_status;
+  var plan     = profile.subscription_plan || null;
   var trialEnd = profile.trial_ends_at ? new Date(profile.trial_ends_at) : null;
   var inTrial  = status === 'trial' && trialEnd && trialEnd > new Date();
   var daysLeft = inTrial ? Math.ceil((trialEnd - new Date()) / (1000*60*60*24)) : 0;
 
+  var planLabel = plan === 'suite' ? 'Veriqo + Carte Suite' : plan === 'carte' ? 'Carte' : 'Veriqo';
   var badge, body, actions;
 
   if (status === 'active') {
-    badge   = '<span style="display:inline-block;background:#eaf7ec;color:#2D7A3A;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">ACTIVE</span>';
+    badge   = '<span style="display:inline-block;background:#eaf7ec;color:#2D7A3A;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">ACTIVE</span>'
+            + '<span style="display:inline-block;margin-left:6px;font-size:11px;color:#888">' + planLabel + '</span>';
     body    = '<div style="font-size:13px;color:#555;margin-top:8px">Your subscription is active. Use the link below to cancel, update your payment method, or view invoices.</div>';
-    actions = '<button onclick="openPortal(this)" style="margin-top:14px;width:100%;padding:11px;background:#1B3A5C;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Manage subscription →</button>';
+    var upgradeRow = (plan === 'veriqo' || plan === null)
+      ? '<div style="margin-top:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+        + '<span style="font-size:12px;color:#15803d">Add Carte — upgrade to Suite for £20/mo</span>'
+        + '<button onclick="Mise.subscription.startCheckout(\'suite\',\'monthly\')" style="flex-shrink:0;padding:5px 12px;background:#2D7A3A;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">Upgrade →</button>'
+        + '</div>'
+      : '';
+    actions = '<button onclick="openPortal(this)" style="margin-top:14px;width:100%;padding:11px;background:#1B3A5C;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Manage subscription →</button>'
+            + upgradeRow;
   } else if (inTrial) {
     var dayWord = daysLeft === 1 ? 'day' : 'days';
     badge   = '<span style="display:inline-block;background:#fef9ec;color:#92400e;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">FREE TRIAL</span>';
     body    = '<div style="font-size:13px;color:#555;margin-top:8px">' + daysLeft + ' ' + dayWord + ' remaining. Subscribe before your trial ends to keep your records and stay compliant.</div>';
     actions = '<div style="display:flex;gap:8px;margin-top:14px">'
-      + '<button onclick="Mise.subscription.startCheckout(\'monthly\')" style="flex:1;padding:11px;background:#fff;border:2px solid #e5e4de;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1a1a18">£12/month</button>'
-      + '<button onclick="Mise.subscription.startCheckout(\'annual\')" style="flex:1;padding:11px;background:#2D7A3A;border:2px solid #2D7A3A;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#fff">£120/year</button>'
-      + '</div>';
+      + '<button onclick="Mise.subscription.startCheckout(\'veriqo\',\'monthly\')" style="flex:1;padding:11px;background:#fff;border:2px solid #e5e4de;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1a1a18">£12/month</button>'
+      + '<button onclick="Mise.subscription.startCheckout(\'veriqo\',\'annual\')" style="flex:1;padding:11px;background:#2D7A3A;border:2px solid #2D7A3A;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#fff">£120/year</button>'
+      + '</div>'
+      + '<div style="margin-top:8px;text-align:center"><button onclick="Mise.subscription.startCheckout(\'suite\',\'monthly\')" style="background:none;border:none;color:#2D7A3A;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">Or get both apps — Suite £20/month</button></div>';
   } else {
-    // cancelled, past_due, or expired trial
-    var isExpiredTrial = status === 'trial'; // trial with past end date
+    var isExpiredTrial = status === 'trial';
     badge   = '<span style="display:inline-block;background:#fde8e8;color:#A32D2D;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">' + (isExpiredTrial ? 'TRIAL ENDED' : 'INACTIVE') + '</span>';
     body    = '<div style="font-size:13px;color:#555;margin-top:8px">Subscribe to restore full access to your HACCP records.</div>';
     actions = '<div style="display:flex;gap:8px;margin-top:14px">'
-      + '<button onclick="Mise.subscription.startCheckout(\'monthly\')" style="flex:1;padding:11px;background:#fff;border:2px solid #e5e4de;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1a1a18">£12/month</button>'
-      + '<button onclick="Mise.subscription.startCheckout(\'annual\')" style="flex:1;padding:11px;background:#2D7A3A;border:2px solid #2D7A3A;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#fff">£120/year</button>'
-      + '</div>';
+      + '<button onclick="Mise.subscription.startCheckout(\'veriqo\',\'monthly\')" style="flex:1;padding:11px;background:#fff;border:2px solid #e5e4de;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1a1a18">£12/month</button>'
+      + '<button onclick="Mise.subscription.startCheckout(\'veriqo\',\'annual\')" style="flex:1;padding:11px;background:#2D7A3A;border:2px solid #2D7A3A;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#fff">£120/year</button>'
+      + '</div>'
+      + '<div style="margin-top:8px;text-align:center"><button onclick="Mise.subscription.startCheckout(\'suite\',\'monthly\')" style="background:none;border:none;color:#2D7A3A;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">Or get both apps — Suite £20/month</button></div>';
   }
 
   card.innerHTML = '<div class="card-title">Subscription</div>'

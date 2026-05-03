@@ -4,8 +4,17 @@
 // Called by subscription.js when the user clicks "Subscribe now".
 //
 // Secrets required (set via: supabase secrets set KEY=value):
-//   STRIPE_SECRET_KEY   — sk_live_... (or sk_test_... while testing)
-//   STRIPE_PRICE_ID     — price_... from your Stripe product
+//   STRIPE_SECRET_KEY                — sk_live_... (or sk_test_... while testing)
+//   STRIPE_PRICE_ID                  — Veriqo monthly price_...
+//   STRIPE_PRICE_ID_ANNUAL           — Veriqo annual  price_...
+//   STRIPE_PRICE_ID_CARTE_MONTHLY    — Carte  monthly price_...
+//   STRIPE_PRICE_ID_CARTE_ANNUAL     — Carte  annual  price_...
+//   STRIPE_PRICE_ID_SUITE_MONTHLY    — Suite  monthly price_...
+//   STRIPE_PRICE_ID_SUITE_ANNUAL     — Suite  annual  price_...
+//
+// Body params:
+//   app    — 'veriqo' | 'carte' | 'suite'  (default: 'veriqo')
+//   period — 'monthly' | 'annual'           (default: 'monthly')
 //
 // Built-in Supabase secrets (auto-available in edge functions):
 //   SUPABASE_URL
@@ -60,11 +69,19 @@ Deno.serve(async (req) => {
     const email  = user.email!;
 
     // ── 1b. Determine which price to use ───────────────────────────────────
-    const body = await req.json().catch(() => ({}));
-    const PRICE_MONTHLY = Deno.env.get('STRIPE_PRICE_ID')!;
-    const PRICE_ANNUAL  = Deno.env.get('STRIPE_PRICE_ID_ANNUAL')!;
-    // Only allow known price IDs — reject anything else
-    const priceId = body.priceId === PRICE_ANNUAL ? PRICE_ANNUAL : PRICE_MONTHLY;
+    const body   = await req.json().catch(() => ({}));
+    const app    = ['veriqo', 'carte', 'suite'].includes(body.app) ? body.app : 'veriqo';
+    const period = body.period === 'annual' ? 'annual' : 'monthly';
+
+    const priceEnvKey: Record<string, string> = {
+      veriqo_monthly: 'STRIPE_PRICE_ID',
+      veriqo_annual:  'STRIPE_PRICE_ID_ANNUAL',
+      carte_monthly:  'STRIPE_PRICE_ID_CARTE_MONTHLY',
+      carte_annual:   'STRIPE_PRICE_ID_CARTE_ANNUAL',
+      suite_monthly:  'STRIPE_PRICE_ID_SUITE_MONTHLY',
+      suite_annual:   'STRIPE_PRICE_ID_SUITE_ANNUAL',
+    };
+    const priceId = Deno.env.get(priceEnvKey[`${app}_${period}`])!;
 
     // ── 2. Init Stripe ──────────────────────────────────────────────────────
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
@@ -96,16 +113,17 @@ Deno.serve(async (req) => {
 
     // ── 4. Create Checkout session ──────────────────────────────────────────
     // allow_promotion_codes: true → testers enter their 100%-off code at checkout
+    const successBase = app === 'carte' ? 'https://getveriqo.co.uk/mise' : 'https://getveriqo.co.uk';
     const session = await stripe.checkout.sessions.create({
       customer:             customerId,
       payment_method_types: ['card'],
       mode:                 'subscription',
       line_items:           [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
-      success_url:          'https://getveriqo.co.uk/?checkout=success',
-      cancel_url:           'https://getveriqo.co.uk/',
-      metadata:             { userId },
-      subscription_data:    { metadata: { userId } },
+      success_url:          `${successBase}?checkout=success`,
+      cancel_url:           successBase,
+      metadata:             { userId, plan: app },
+      subscription_data:    { metadata: { userId, plan: app } },
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

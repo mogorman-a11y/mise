@@ -414,6 +414,9 @@ window.Mise.auth = (function () {
     if (window.Mise && window.Mise.subscription) {
       await Mise.subscription.check(user.id);
     }
+    if (window.Mise && window.Mise.carteSubscription) {
+      await Mise.carteSubscription.check(user.id);
+    }
 
     // Re-render app with synced data
     if (typeof loadSettings       === 'function') loadSettings();
