@@ -1,12 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" },
-    { "src": "**", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1.js" },
-    { "src": "/mise", "dest": "/mise.html" },
-    { "src": "/app", "dest": "/app.html" }
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/trial-emails",
+      "schedule": "0 9 * * *"
+    }
   ]
 }
