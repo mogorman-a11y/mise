@@ -1,4 +1,4 @@
-// carte-subscription.js v4 — Carte paywall and subscription status
+// carte-subscription.js v5 — Carte paywall and subscription status
 // ──────────────────────────────────────────────────────────────────
 // Access rules:
 //   'trial'  + trial_ends_at in future          → full access
@@ -18,12 +18,16 @@ window.Mise.carteSubscription = (function () {
   var _userId = null;
 
   // ── Post-checkout redirect handling ────────────────────────────────────────
+  // localStorage fallback survives an auth redirect eating the ?checkout=success param.
   var _pendingSuccess = false;
   (function () {
     var params = new URLSearchParams(window.location.search);
     if (params.get('checkout') === 'success') {
       _pendingSuccess = true;
+      localStorage.setItem('carte_checkout_success', '1');
       window.history.replaceState({}, '', '/mise');
+    } else if (localStorage.getItem('carte_checkout_success')) {
+      _pendingSuccess = true;
     }
   })();
 
@@ -49,6 +53,7 @@ window.Mise.carteSubscription = (function () {
       var inTrial  = status === 'trial' && trialEnd && trialEnd > new Date();
 
       window.Mise.profile = profile;
+      if (typeof renderCarteSubscriptionCard === 'function') renderCarteSubscriptionCard();
 
       // Carte access: active with carte/suite plan, or in trial
       var hasAccess = inTrial || (status === 'active' && (plan === 'carte' || plan === 'suite'));
@@ -60,8 +65,9 @@ window.Mise.carteSubscription = (function () {
         if (!profile.onboarded) {
           setTimeout(_showWelcomeModal, 500);
         }
-        if (_pendingSuccess) {
+        if (_pendingSuccess && status === 'active') {
           _pendingSuccess = false;
+          localStorage.removeItem('carte_checkout_success');
           setTimeout(function () {
             if (typeof toast === 'function') toast('🎉 Subscription activated — you\'re all set!');
           }, 600);
