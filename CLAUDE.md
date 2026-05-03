@@ -11,7 +11,8 @@
 | **Settings object** | `settings` → `haccp_settings` | `mSettings` → `mise_settings` |
 | **Daily records** | `records[]` → `haccp_YYYY-MM-DD` | `mRecords[]` → `mise_YYYY-MM-DD` |
 | **Sync module** | `sync.js` (v9) | `mise-sync.js` (v4) |
-| **Auth module** | `auth.js` (v8) | `auth.js` (v8) |
+| **Auth module** | `auth.js` (v9) | `auth.js` (v9) |
+| **Subscription module** | `subscription.js` (v5) | `carte-subscription.js` (v1) |
 
 **Paths:**
 - Working files: `/Users/michael/Library/CloudStorage/GoogleDrive-mike@sideordercatering.co.uk/My Drive/APPS/HACCP APP/files/`
@@ -41,7 +42,7 @@ rm -rf /private/tmp/mise-deploy && git clone https://github.com/mogorman-a11y/mi
 - **Auth:** Supabase Auth (email/password + Google OAuth + magic link) via shared `auth.js`
 - **Cloud sync:** Supabase Postgres via `sync.js` (Veriqo) + `mise-sync.js` (Carte)
 - **Transactional email:** Resend (`hello@getveriqo.co.uk`) — Carte magic link via `api/carte-magic-link.js`, Veriqo magic link via Supabase OTP
-- **Subscription:** Stripe via `subscription.js` + `api/` Vercel serverless functions (Veriqo only)
+- **Subscription:** Stripe via `subscription.js` (Veriqo) + `carte-subscription.js` (Carte) + Supabase Edge Functions (`create-checkout`, `stripe-webhook`)
 - **PWA:** `sw.js` (network-first for app pages, cache-first for assets), `manifest.json` (Veriqo), `mise-manifest.json` (Carte)
 - **Hosting:** Vercel — `getveriqo.co.uk` DNS points to Vercel, previously GitHub Pages
 
@@ -85,7 +86,7 @@ All tables have RLS enabled (users can only access their own rows).
 
 | Table | App | PK | Key columns |
 |---|---|---|---|
-| `profiles` | Both | `id` | `business_name`, `chef_name`, `subscription_status`, `trial_ends_at`, `stripe_customer_id`, `logo`, `onboarded` |
+| `profiles` | Both | `id` | `business_name`, `chef_name`, `subscription_status`, `subscription_plan`, `trial_ends_at`, `stripe_customer_id`, `logo`, `onboarded` |
 | `settings` | Veriqo | `id` (user_id) | `config` (JSON), `updated_at` |
 | `haccp_records` | Veriqo | `(user_id, date)` | `records` (JSON array) |
 | `mise_settings` | Carte | `id` (user_id) | `config` (JSON), `updated_at` |
@@ -318,7 +319,7 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 ## Roadmap / Next Steps
 
 ### Short term
-- [ ] **Carte Stripe paywall** — currently free; add when selling Carte standalone or as suite bundle
+- [ ] Test Carte checkout end-to-end with a real payment (use promo code for 100% off)
 
 ### Medium term (suite migration)
 - [ ] Run `shared-suite-schema.sql` in Supabase
@@ -330,6 +331,9 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 - [ ] Finance app
 - [ ] Suite landing page at `getveriqo.co.uk`
 - [ ] Subscription packaging
+
+### Done (2026-05-03, session 2)
+- [x] **Carte paywall + Suite pricing** — `carte-subscription.js` (v1): Carte-branded dark paywall with Carte-only (£12/mo, £120/yr) and Suite (£20/mo, £200/yr) options. `subscription.js` (v5): plan-aware Veriqo access, Carte pill hidden for Veriqo-only subscribers, suite upgrade nudge. `auth.js` (v9): calls `Mise.carteSubscription.check()` after sync if present. `app.html`: `id="carte-switcher-btn"`, `renderSubscriptionCard` shows plan name and suite upgrade for Veriqo-only active subscribers. `mise.html`: `id="veriqo-switcher-btn"`, loads `carte-subscription.js`. Edge functions updated: `create-checkout` accepts `{app, period}` params and routes to correct Stripe price; `stripe-webhook` writes `subscription_plan` on checkout. `profiles` table has new `subscription_plan` column (values: `null`=trial/legacy, `veriqo`, `carte`, `suite`). Paywall upsell: Veriqo subscriber hitting Carte sees "Upgrade to Suite" as primary CTA; Carte subscriber hitting Veriqo sees the same in reverse.
 
 ### Done (2026-05-03)
 - [x] **SEO / LLMO / GEO visibility overhaul** — `index.html` rewritten as a standalone marketing landing page with `<meta name="description">`, OG tags, Twitter Card, JSON-LD structured data (`Organization` + `SoftwareApplication` for both apps), ~300 words of crawlable body copy, and a logged-in redirect to `/app`. `app.html` and `mise.html` both got meta description, canonical URL, `noindex` (auth-gated pages), and OG tags. New `llms.txt` at root describes both apps in plain text for AI crawler discoverability. `sitemap.xml` updated to include `/mise` and refreshed `lastmod` dates. Google Search Console: sitemap submitted at `https://getveriqo.co.uk/sitemap.xml`.
@@ -353,6 +357,6 @@ Shared nouns (first-class data once migrated): clients, jobs, dishes, menus, sta
 - Commit message format: `Claude: <short description>`
 - Never delete working functionality, remove tables, expose secrets, or skip RLS.
 - If uncertain about a destructive action, stop and explain.
-- Bump `?v=N` query string on script tags when changing `sync.js`, `mise-sync.js`, or `auth.js` (cache busting).
+- Bump `?v=N` query string on script tags when changing `sync.js`, `mise-sync.js`, `auth.js`, `subscription.js`, or `carte-subscription.js` (cache busting).
 - After edits: copy files to `/private/tmp/mise-deploy/`, `git add`, `git commit`, `git push`.
 - Priority order: reliability > workflow completion > usability > feature expansion > polish.
