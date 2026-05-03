@@ -12,6 +12,10 @@ window.Mise.auth = (function () {
   // Track which tab is active on the auth screen
   let _currentTab = 'signin';
 
+  // Set true when the password reset form is showing — prevents onSignedIn
+  // from firing in the background while the user is entering a new password.
+  var _showingResetForm = false;
+
   // ── Auth overlay HTML ──────────────────────────────────────────────────────
   function _buildAuthHTML() {
     var cfg = window.MISE_AUTH_CONFIG || {};
@@ -138,12 +142,15 @@ window.Mise.auth = (function () {
   async function init() {
     showAuthScreen(); // show immediately — removes itself if session found
 
-    // Carte magic link: token_hash + type=magiclink delivered in URL query string.
-    // The client calls verifyOtp() directly, bypassing Supabase's /verify redirect
-    // so there is no PKCE code-exchange mismatch from server-generated admin links.
+    // token_hash in URL — used by both magic links and password reset links.
+    // Links are generated server-side via api/auth-link.js (and api/carte-magic-link.js)
+    // using the admin API. verifyOtp() is called directly — no Supabase redirect needed,
+    // no PKCE code-verifier required, works in any browser.
+    _showingResetForm = false;
     var _sp = new URLSearchParams(window.location.search);
     var _tokenHash = _sp.get('token_hash');
-    if (_tokenHash && _sp.get('type') === 'magiclink') {
+    var _linkType  = _sp.get('type');
+    if (_tokenHash && _linkType === 'magiclink') {
       try {
         var _vr = await supabaseClient.auth.verifyOtp({ token_hash: _tokenHash, type: 'magiclink' });
         if (_vr.error) throw _vr.error;
@@ -151,6 +158,17 @@ window.Mise.auth = (function () {
         if (_vr.data && _vr.data.session) { await onSignedIn(_vr.data.session.user); return; }
       } catch (_ve) {
         _setMsg('This sign-in link has expired or already been used. Please request a new one.', 'error');
+      }
+    } else if (_tokenHash && _linkType === 'recovery') {
+      try {
+        var _pr = await supabaseClient.auth.verifyOtp({ token_hash: _tokenHash, type: 'recovery' });
+        if (_pr.error) throw _pr.error;
+        window.history.replaceState(null, '', window.location.pathname);
+        _showingResetForm = true;
+        _showPasswordResetForm();
+        // Don't return — continue so onAuthStateChange is registered below.
+      } catch (_pe) {
+        _setMsg('This password reset link has expired or already been used. Please request a new one.', 'error');
       }
     }
 
@@ -164,10 +182,10 @@ window.Mise.auth = (function () {
     var _signedIn = false;
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        _showPasswordResetForm();
+        if (!_showingResetForm) { _showingResetForm = true; _showPasswordResetForm(); }
         return;
       }
-      if (session && !_signedIn) {
+      if (session && !_signedIn && !_showingResetForm) {
         _signedIn = true;
         if (_isEmailConfirm) await _showEmailConfirmed();
         await onSignedIn(session.user);
@@ -176,7 +194,7 @@ window.Mise.auth = (function () {
 
     try {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session && !_signedIn) {
+      if (session && !_signedIn && !_showingResetForm) {
         _signedIn = true;
         if (_isEmailConfirm) await _showEmailConfirmed();
         await onSignedIn(session.user);
@@ -243,9 +261,11 @@ window.Mise.auth = (function () {
     try {
       var result = await supabaseClient.auth.updateUser({ password: pw });
       if (result.error) throw result.error;
-      // updateUser fires SIGNED_IN via onAuthStateChange — just remove the form
       var el = document.getElementById('pw-reset-form');
       if (el) el.remove();
+      _showingResetForm = false;
+      var s = await supabaseClient.auth.getSession();
+      if (s.data && s.data.session) { await onSignedIn(s.data.session.user); }
     } catch (err) {
       msg.style.cssText = 'display:block;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:8px;padding:10px 12px;font-size:13px';
       msg.textContent = err.message || 'Could not update password — please try again.';
@@ -386,14 +406,21 @@ window.Mise.auth = (function () {
         btn.textContent = 'Send magic link'; btn.disabled = false;
       }
     } else {
-      // Veriqo — use Supabase OTP directly (unchanged)
-      var result = await supabaseClient.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redirectTo } });
-      if (result.error) {
-        _setMsg(_friendlyError(result.error.message), 'error');
-        btn.textContent = 'Send magic link'; btn.disabled = false;
-      } else {
+      // Veriqo — use admin API via our endpoint (same approach as Carte magic link,
+      // avoids PKCE redirect issues regardless of Supabase project settings)
+      try {
+        var res = await fetch('/api/auth-link', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email: email, type: 'magiclink', app: 'veriqo' }),
+        });
+        var json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to send');
         _setMsg('Check your inbox — we\'ve sent you a sign-in link.', 'ok');
         btn.textContent = 'Email sent ✓';
+      } catch (err) {
+        _setMsg(err.message || 'Something went wrong — please try again.', 'error');
+        btn.textContent = 'Send magic link'; btn.disabled = false;
       }
     }
   }
@@ -402,8 +429,15 @@ window.Mise.auth = (function () {
   async function _forgot() {
     var email = (document.getElementById('auth-email').value || '').trim();
     if (!email) { _setMsg('Enter your email address first.', 'error'); return; }
+    var app = window.MISE_AUTH_CONFIG ? 'carte' : 'veriqo';
     try {
-      await resetPassword(email);
+      var res = await fetch('/api/auth-link', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email: email, type: 'recovery', app: app }),
+      });
+      var json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to send');
       _setMsg('Reset link sent — check your inbox.', 'ok');
     } catch (err) {
       _setMsg(_friendlyError(err.message), 'error');
