@@ -445,9 +445,10 @@ window.Mise.auth = (function () {
 
   // ── loginGoogle ────────────────────────────────────────────────────────────
   async function loginGoogle() {
+    var appPath = window.MISE_AUTH_CONFIG ? '/mise' : '/app';
     var result = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: window.location.origin + appPath }
     });
     if (result.error) throw result.error;
     // Page redirects away — onAuthStateChange handles the return visit
