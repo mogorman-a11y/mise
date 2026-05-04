@@ -492,13 +492,7 @@ window.Mise.auth = (function () {
   async function logout() {
     if (window.posthog) posthog.reset();
     await supabaseClient.auth.signOut();
-    // Clear in-memory app state
-    if (typeof records !== 'undefined') records.length = 0;
-    // Remove the account card from settings
-    var el = document.getElementById('mise-account-card');
-    if (el) el.remove();
-    // Show the auth screen
-    showAuthScreen();
+    window.location.reload();
   }
 
   // ── resetPassword ──────────────────────────────────────────────────────────
