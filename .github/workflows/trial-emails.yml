@@ -1,0 +1,16 @@
+name: Trial lifecycle emails
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger trial emails
+        run: |
+          curl -sf -X POST https://getveriqo.co.uk/api/trial-emails \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
