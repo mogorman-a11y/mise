@@ -20,8 +20,9 @@
 
   /* ── Text ────────────────────────────────────────────────── */
   --vq-ink:          #1a1a18;
-  --vq-muted:        #888888;
-  --vq-subtle:       #aaaaaa;
+  --vq-muted:        #5a5752;   /* darkened: ~5.1:1 on cream — WCAG AA */
+  --vq-subtle:       #7a7870;   /* darkened from #aaa for body use */
+  --vq-subtle-decorative: #aaaaaa; /* purely decorative, non-essential */
   --vq-disabled:     #cccccc;
 
   /* ── Status ──────────────────────────────────────────────── */
@@ -66,6 +67,26 @@
   --vq-shadow-sm:    0 1px 3px rgba(0,0,0,0.08);
   --vq-shadow-md:    0 4px 12px rgba(0,0,0,0.10);
   --vq-shadow-lg:    0 8px 24px rgba(0,0,0,0.12);
+
+  /* ── Semantic aliases (map to primitives above) ─────────── */
+  --color-bg-cream:          var(--vq-bg);
+  --color-bg-card:           var(--vq-surface);
+  --color-brand-green:       var(--vq-green);
+  --color-brand-green-soft:  var(--vq-green-light);
+  --color-text-primary:      var(--vq-ink);
+  --color-text-secondary:    var(--vq-muted);      /* #5a5752 */
+  --color-text-tertiary:     var(--vq-subtle);     /* #7a7870 */
+  --color-border-subtle:     var(--vq-border);
+  --color-accent-alert:      var(--vq-fail);
+  --color-accent-warning:    var(--vq-warn);
+
+  /* ── Type scale ──────────────────────────────────────────── */
+  --vq-text-xs:    11px;
+  --vq-text-sm:    13px;
+  --vq-text-md:    14px;
+  --vq-text-lg:    16px;
+  --vq-text-xl:    18px;
+  --vq-text-2xl:   22px;
 
   /* ── Shell layout ────────────────────────────────────────── */
   --shell-nav-height:     60px;    /* bottom nav height on mobile */
