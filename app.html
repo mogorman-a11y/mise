@@ -3460,6 +3460,7 @@ function vqIcon(name, size) {
   }
 
   function showModule(name) {
+    if (navigator.vibrate) navigator.vibrate(10);
     // Hide all panels + deactivate nav tabs
     document.querySelectorAll('.module-panel').forEach(function(p) { p.classList.remove('active'); });
     document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
