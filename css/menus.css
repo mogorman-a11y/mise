@@ -16,11 +16,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .form-input { width: 100%; padding: 10px 12px; border: 1px solid #D0C8BE; border-radius: 8px; background: #fff; color: var(--vq-ink); font-size: 14px; font-family: inherit; -webkit-appearance: none; }
 .form-input:focus { outline: none; border-color: #3A7D44; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.btn-primary { width: 100%; padding: 13px; background: var(--vq-ink); color: #F5F0E8; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; font-family: inherit; }
+.btn-primary { width: 100%; padding: 13px; background: var(--vq-green); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; font-family: inherit; }
 .btn-primary:active { opacity: 0.8; }
-.btn-green { background: #3A7D44; color: #fff; }
-.btn-gold { background: #C8A96E; color: var(--vq-ink); }
-.btn-secondary { width: 100%; padding: 11px; background: transparent; color: var(--vq-ink); border: 1px solid #D0C8BE; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px; font-family: inherit; }
+.btn-secondary { width: 100%; padding: 11px; background: transparent; color: var(--vq-green); border: 1.5px solid var(--vq-green); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; font-family: inherit; }
 .divider { font-size: 11px; color: #A09890; margin: 14px 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .log-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid #F0EBE2; }
 .log-row:last-child { border-bottom: none; }
@@ -37,7 +35,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .add-row { display: flex; gap: 8px; margin-top: 10px; }
 .add-row input { flex: 1; padding: 9px 12px; border: 1px solid #D0C8BE; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; color: var(--vq-ink); }
 .add-row input:focus { outline: none; border-color: #3A7D44; }
-.btn-add { padding: 9px 16px; background: var(--vq-ink); color: #F5F0E8; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-add { padding: 9px 16px; background: var(--vq-green); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
 .setting-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #F0EBE2; }
 .setting-item:last-child { border-bottom: none; }
 .setting-item-name { flex: 1; font-size: 14px; color: var(--vq-ink); }

@@ -153,8 +153,8 @@
     transition: opacity 0.15s;
   }
   .btn:active { opacity: 0.8; }
-  .btn-primary { background: var(--gold); color: var(--text); width: 100%; }
-  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border-em); width: 100%; }
+  .btn-primary { background: var(--gold); color: #fff; width: 100%; }
+  .btn-secondary { background: transparent; color: var(--gold); border: 1.5px solid var(--gold); width: 100%; font-weight: 600; }
   .btn-ghost { background: none; color: #5A544E; border: 1px solid var(--border-em); }
 
   /* METRICS */
