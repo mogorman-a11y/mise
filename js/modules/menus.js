@@ -219,7 +219,6 @@ var _TITLES = {
   install:'Save as App', help:'Help & Getting Started', legal:'Privacy & Legal'
 };
 
-function goHome(){ showTab('home'); }
 
 function showTab(name){
   if(name !== 'home') _homeScrollPos = window.scrollY || 0;
