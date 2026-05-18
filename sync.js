@@ -434,6 +434,8 @@ window.Mise.sync = (function () {
     if (typeof renderSavedMenus === 'function') renderSavedMenus();
     if (typeof renderCalendar === 'function') renderCalendar();
     if (typeof updateDashboard === 'function') updateDashboard();
+    if (typeof updateHaccpDashboard === 'function') updateHaccpDashboard();
+    if (typeof syncTileToggles === 'function') syncTileToggles();
     if (typeof renderAllSections === 'function') renderAllSections();
     if (typeof updateNextJobBanner === 'function') updateNextJobBanner();
     document.dispatchEvent(new CustomEvent('vq:sync-complete'));
