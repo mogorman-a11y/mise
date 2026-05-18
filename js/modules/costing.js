@@ -2670,7 +2670,7 @@
 
     // ═══════════════════════════════════════════════════════ PORTAL ═══
     function openVeriqo() { window.location.href = '/app'; }
-    function openCarte() { window.location.href = '/mise'; }
+    function openCarte() { if (typeof showModule === 'function') showModule('menus'); else window.location.href = '/app'; }
 
     async function openYieldPortal() {
       try {
@@ -2708,6 +2708,44 @@
         calculateCosting();
       }
     });
+
+// ═══════════════════════════════════════════════════════ MODULE EXPORT ═══
+// Exposes init() for the unified app shell (showModule calls this on first visit)
+window.modules = window.modules || {};
+window.modules.costing = {
+  init: function() {
+    // Hydrate in-memory state from localStorage immediately
+    loadLocalData();
+    renderDashboard();
+    renderQuotes();
+    renderInvoices();
+    renderJobs();
+    renderSettings();
+
+    // Init yieldSync with the authenticated user and pull remote data
+    var profile = window.Mise && window.Mise.profile;
+    var uid = profile && profile.id;
+    if (uid && window.Mise && window.Mise.yieldSync) {
+      var sb = (typeof supabaseClient !== 'undefined') ? supabaseClient : null;
+      Promise.resolve(window.Mise.yieldSync.init(sb, uid)).then(function() {
+        return loadRemoteData();
+      }).then(function() {
+        renderDashboard();
+        renderQuotes();
+        renderInvoices();
+        renderJobs();
+      }).catch(function(e) {
+        console.warn('[Costing] remote sync failed:', e);
+      });
+    }
+
+    // Check subscription / paywall
+    if (uid && window.Mise.yieldSubscription) {
+      window.Mise.yieldSubscription.check(uid);
+    }
+    renderStripeConnectCard();
+  }
+};
 
 // Unified shell stubs
 function openVeriqo() { if (typeof showModule === 'function') showModule('haccp'); }

@@ -120,7 +120,7 @@ async function setEmailPref(optedIn){
 function saveSettings(){
   try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch(e){}
   // Optional cloud sync via shared Mise.sync if available
-  if (window.Mise && window.Mise.sync) Mise.sync.saveSettings(mSettings);
+  if (window.Mise && window.Mise.sync) Mise.sync.saveSettings(mSettings, 'menus');
 }
 
 // ═══════════════════════════════════════════════════════ RECORDS ════════════
@@ -129,7 +129,7 @@ function loadToday(){
 }
 function saveToday(){
   try { localStorage.setItem('mise_'+TODAY, JSON.stringify(mRecords)); } catch(e){}
-  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(TODAY, mRecords);
+  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(TODAY, mRecords, 'menus');
 }
 function getDayRecords(ds){
   try { return JSON.parse(localStorage.getItem('mise_'+ds) || '[]'); } catch(e){ return []; }
@@ -138,7 +138,7 @@ function saveDayRecords(ds, arr){
   try { localStorage.setItem('mise_'+ds, JSON.stringify(arr)); } catch(e){}
   // Strip Yield-sourced jobs before syncing to mise_records — they live in the shared jobs table only
   var carteRecords = arr.filter(function(r){ return !r._fromYield; });
-  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(ds, carteRecords);
+  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(ds, carteRecords, 'menus');
 }
 function getAllJobs(){
   var all = []; var seen = {};
@@ -2435,8 +2435,6 @@ function toggleVeriqoSync(val){
 
 function mirrorJobToVeriqo(rec){ /* Phase 3: replaced by Mise.sync.saveJob */ }
 function openVeriqo(){ window.location.href = '/app'; }
-function openYield(){ window.location.href = '/yield'; }
-
 // ── Carte install banner ──────────────────────────────────────────────────────
 var _carteInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', function(e){

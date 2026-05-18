@@ -203,7 +203,7 @@ window.Mise = window.Mise || {};
         await _sb.from('jobs').upsert({
           id: String(quote.id),
           user_id: _uid,
-          title: 'Event',
+          title: quote.client_name ? 'Event — ' + quote.client_name : 'Event',
           job_date: quote.event_date,
           headcount: parseInt(quote.covers) || null,
           notes: quote.notes || null,
@@ -219,14 +219,21 @@ window.Mise = window.Mise || {};
           },
           updated_at: new Date().toISOString()
         }, { onConflict: 'id' });
-      } catch (e) {}
+        // Immediately refresh Menus + HACCP local state so the job appears without reload
+        if (window.Mise && window.Mise.sync && window.Mise.sync.refreshSharedJobs) {
+          window.Mise.sync.refreshSharedJobs();
+        }
+      } catch (e) { console.warn('[Yield] syncQuoteToCarte failed:', e.message); }
     },
 
     removeQuoteFromCarte: async function (quoteId) {
       if (!_sb || !_uid || !quoteId) return;
       try {
         await _sb.from('jobs').delete().eq('id', String(quoteId)).eq('user_id', _uid);
-      } catch (e) {}
+        if (window.Mise && window.Mise.sync && window.Mise.sync.refreshSharedJobs) {
+          window.Mise.sync.refreshSharedJobs();
+        }
+      } catch (e) { console.warn('[Yield] removeQuoteFromCarte failed:', e.message); }
     },
 
     getSharedMenus: function () { return _lsArr('yield_menus'); },

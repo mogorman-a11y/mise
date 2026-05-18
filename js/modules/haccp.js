@@ -402,7 +402,7 @@ var _homeScrollPos = 0;
 function toggleTile(key, enabled) {
   settings.enabledTiles[key] = enabled;
   saveSettings();
-  updateDashboard();
+  updateHaccpDashboard();
 }
 
 function syncTileToggles() {
@@ -431,6 +431,29 @@ function toggleSettingsSection(id) {
 }
 function haccpHome(){ haccpTab('home'); }
 function goHome(){ haccpHome(); } // alias kept for any remaining inline refs
+function _getTodayJob() {
+  // Check in-memory records (today already loaded)
+  for (var i = 0; i < records.length; i++) {
+    if (records[i].type === 'job' && records[i].eventDate === TODAY) return records[i];
+  }
+  // Check haccp_ localStorage (HACCP-entered jobs)
+  var hRecs = getDayRecords(TODAY);
+  for (var i = 0; i < hRecs.length; i++) {
+    if (hRecs[i].type === 'job' && hRecs[i].eventDate === TODAY) return hRecs[i];
+  }
+  // Check mise_ localStorage (Menus/Carte-entered jobs)
+  try {
+    var mRaw = localStorage.getItem('mise_' + TODAY);
+    if (mRaw) {
+      var mRecs = JSON.parse(mRaw);
+      for (var j = 0; j < mRecs.length; j++) {
+        if (mRecs[j].type === 'job' && mRecs[j].eventDate === TODAY) return mRecs[j];
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 function haccpTab(name) {
   if(name !== 'home') _homeScrollPos = window.scrollY || window.pageYOffset || 0;
   document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
@@ -446,7 +469,26 @@ function haccpTab(name) {
   if(name==='inspector') renderInspector();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
   if(name==='incident') { var _itf=document.getElementById('inc-time'); if(_itf&&!_itf.value) _itf.value=_incidentNowLocal(); }
-  updateDashboard();
+  // Auto-fill client/location from today's booking — only when field is empty
+  if (name === 'kitchenassess' || name === 'transport' || name === 'allergen') {
+    var _tj = _getTodayJob();
+    if (_tj) {
+      var _clientLoc = (_tj.client || '') + (_tj.location ? ' — ' + _tj.location : '');
+      if (name === 'kitchenassess') {
+        var _ka = document.getElementById('ka-client');
+        if (_ka && !_ka.value) _ka.value = _clientLoc;
+      }
+      if (name === 'allergen') {
+        var _al = document.getElementById('al-client');
+        if (_al && !_al.value) _al.value = _tj.client || '';
+      }
+      if (name === 'transport') {
+        var _tr = document.getElementById('tr-destination');
+        if (_tr && !_tr.value) _tr.value = _clientLoc;
+      }
+    }
+  }
+  updateHaccpDashboard();
   if(name === 'home') { var pos = _homeScrollPos; requestAnimationFrame(function(){ window.scrollTo(0, pos); }); }
   else { window.scrollTo(0, 0); }
   if(window.posthog) posthog.capture('tab_viewed', { tab: name });
@@ -497,7 +539,7 @@ function logChecklist(type) {
   items.forEach(function(item){ var el=_getChk(item.id); if(el) el.checked=false; });
   if (document.getElementById(notesId)) document.getElementById(notesId).value='';
   if (isPCType) renderSection_PC(type); else renderChecklistLog(type);
-  updateDashboard();
+  updateHaccpDashboard();
   if(status==='ok') toast('Saved — '+msg); else toast('Saved — '+msg,'warn');
 }
 
@@ -557,7 +599,7 @@ function logFridge() {
   records.push({type:'fridge',unit:unit,by:by,temp:temp,time:time,notes:notes,status:status,msg:msg});
   saveToday(); document.getElementById('fridge-temp').value=''; document.getElementById('fridge-notes').value=''; document.getElementById('fridge-time').value=now();
   if(isNA)toggleNA('fridge-temp',naBtn);
-  renderSection('fridge'); updateDashboard();
+  renderSection('fridge'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+unit+' '+msg); else if(status==='warn')toast('Warning — '+msg,'warn'); else toast('Alert — '+msg,false);
 }
 
@@ -575,7 +617,7 @@ function logCooking() {
   else{status='ok';msg=temp+'°C — safe';}
   records.push({type:'cooking',food:food,temp:temp,time:time,chef:chef,status:status,msg:msg});
   saveToday(); document.getElementById('cook-food').value=''; document.getElementById('cook-temp').value=''; document.getElementById('cook-time').value=now();
-  renderSection('cooking'); updateDashboard();
+  renderSection('cooking'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
 }
 
@@ -598,7 +640,7 @@ function logCooling() {
   saveToday();
   document.getElementById('cool-food').value=''; document.getElementById('cool-start-temp').value=''; document.getElementById('cool-end-temp').value='';
   document.getElementById('cool-start-time').value=now(); document.getElementById('cool-end-time').value=now();
-  renderSection('cooling'); updateDashboard();
+  renderSection('cooling'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+food+' '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
 }
 
@@ -617,7 +659,7 @@ function logReheating() {
   else{status='ok';msg=temp+'°C — safe to serve';}
   records.push({type:'reheating',food:food,temp:temp,time:time,chef:chef,notes:notes,status:status,msg:msg});
   saveToday(); document.getElementById('reheat-food').value=''; document.getElementById('reheat-temp').value=''; document.getElementById('reheat-notes').value=''; document.getElementById('reheat-time').value=now();
-  renderSection('reheating'); updateDashboard();
+  renderSection('reheating'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
 }
 
@@ -669,7 +711,7 @@ function logDelivery() {
   document.getElementById('del-chilled-temp').value=''; document.getElementById('del-chilled-cond').selectedIndex=0;
   document.getElementById('del-frozen-temp').value=''; document.getElementById('del-frozen-cond').selectedIndex=0;
   document.getElementById('del-time').value=now(); clearPhoto();
-  renderSection('delivery'); updateDashboard();
+  renderSection('delivery'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+supplier); else if(status==='warn')toast('Warning — '+supplier,'warn'); else toast('Alert — '+supplier,false);
 }
 
@@ -684,7 +726,7 @@ function logCleaning() {
   records.push({type:'cleaning',task:task,time:time,by:by,chem:chem,status:'ok',msg:'Completed by '+by});
   saveToday(); document.getElementById('clean-chem').value=''; document.getElementById('clean-time').value=now();
   if(isNA)toggleNA('clean-chem',naBtn);
-  renderSection('cleaning'); updateDashboard(); toast('Saved — '+task+' completed');
+  renderSection('cleaning'); updateHaccpDashboard(); toast('Saved — '+task+' completed');
 }
 
 // --- PROBE ---
@@ -699,7 +741,7 @@ function logProbe() {
   var msg=result+' ('+reading+'°C)';
   records.push({type:'probe',probeId:id,reading:reading,date:date,result:result,by:by,time:now(),status:status,msg:msg});
   saveToday(); document.getElementById('probe-reading').value=''; document.getElementById('probe-id').value='';
-  renderSection('probe'); updateDashboard();
+  renderSection('probe'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+id+' passed'); else toast('Alert — '+id+' failed',false);
 }
 
@@ -714,7 +756,7 @@ function logPest() {
   var msg=type+(location?' at '+location:'');
   records.push({type:'pest',pestType:type,location:location,date:date,action:action,by:by,time:now(),status:status,msg:msg});
   saveToday(); document.getElementById('pest-location').value=''; document.getElementById('pest-action').value=''; document.getElementById('pest-date').value=todayStr();
-  renderSection('pest'); updateDashboard(); toast('Saved — pest record logged');
+  renderSection('pest'); updateHaccpDashboard(); toast('Saved — pest record logged');
 }
 
 // --- ILLNESS ---
@@ -728,7 +770,7 @@ function logIllness() {
   var msg=type;
   records.push({type:'illness',staff:staff,illnessType:type,symptoms:symptoms,date:date,by:by,time:now(),status:status,msg:msg});
   saveToday(); document.getElementById('illness-symptoms').value=''; document.getElementById('illness-date').value=todayStr();
-  renderSection('illness'); updateDashboard();
+  renderSection('illness'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+staff+' return to work logged'); else toast('Saved — '+staff+' stood down','warn');
 }
 
@@ -754,7 +796,7 @@ function logIncident() {
   var locationObj = _incidentLocation ? Object.assign({}, _incidentLocation, { text: locationText || _incidentLocation.text }) : (locationText ? { text: locationText } : null);
   var msg = type + ' — ' + severity + ' severity. ' + description + (action ? ' Action: ' + action : '');
   records.push({ type:'incident', incidentType:type, severity:severity, incidentTime:incidentTime, location:locationObj, description:description, action:action, by:by, photos:_incidentPhotos.slice(), loggedAt:now(), time:now(), status:status, msg:msg });
-  saveToday(); renderSection_PC('incident'); updateDashboard();
+  saveToday(); renderSection_PC('incident'); updateHaccpDashboard();
   document.getElementById('inc-description').value = '';
   document.getElementById('inc-action').value = '';
   document.getElementById('inc-location').value = '';
@@ -952,7 +994,7 @@ function hideFilter() {
   });
 }
 
-function updateDashboard() {
+function updateHaccpDashboard() {
   var ok=0,warn=0,fail=0;
   records.forEach(function(r){if(r.status==='ok')ok++;else if(r.status==='warn')warn++;else if(r.status==='fail')fail++;});
   document.getElementById('stat-ok').textContent=ok;
@@ -1020,11 +1062,14 @@ function updateDashboard() {
 function updateNextJobBanner() {
   var banner = document.getElementById('next-job-banner');
   if (!banner) return;
-  var allJobs = [];
-  getAllDays().filter(function(d){return d!==TODAY;}).forEach(function(d){
-    getDayRecords(d).forEach(function(r){ if(r.type==='job'&&r.eventDate) allJobs.push(r); });
-  });
-  records.forEach(function(r){ if(r.type==='job'&&r.eventDate) allJobs.push(r); });
+  var allJobs = []; var _seenJobIds = {};
+  function _addJob(r){ if(r.type==='job'&&r.eventDate&&!_seenJobIds[r.id]){ _seenJobIds[r.id]=true; allJobs.push(r); } }
+  // haccp_ keys (all days including today)
+  getAllDays().forEach(function(d){ getDayRecords(d).forEach(_addJob); });
+  // in-memory today records
+  records.forEach(_addJob);
+  // mise_ key for today — catches jobs booked in the Menus module
+  try { var _m=localStorage.getItem('mise_'+TODAY); if(_m) JSON.parse(_m).forEach(_addJob); } catch(e){};
   var upcoming = allJobs.filter(function(r){ return r.eventDate>=TODAY; });
   upcoming.sort(function(a,b){ return a.eventDate<b.eventDate?-1:a.eventDate>b.eventDate?1:0; });
   if(!upcoming.length){ banner.style.display='none'; return; }
@@ -1370,7 +1415,7 @@ function togglePrivateChefMode(on) {
     populateSelect('tr-by','staff');
     populateSelect('ms-by','staff');
   }
-  updateDashboard();
+  updateHaccpDashboard();
 }
 
 function initPrivateChefMode() {
@@ -2105,7 +2150,7 @@ function custEditJob(recIdx) {
   records.splice(recIdx, 1);
   saveToday();
   renderSection_PC('customers');
-  updateDashboard();
+  updateHaccpDashboard();
 
   // Scroll to top of customers form
   var tab = document.getElementById('tab-customers');
@@ -2440,7 +2485,7 @@ function logCustomerJob() {
   if (banner) banner.style.display = 'none';
 
   renderSection_PC('customers');
-  updateDashboard();
+  updateHaccpDashboard();
   toast(conflicts.length
     ? '⚠️ Saved — ' + conflicts.length + ' allergen conflict' + (conflicts.length > 1 ? 's' : '')
     : 'Saved — job logged for ' + client,
@@ -2473,7 +2518,7 @@ function logKitchenAssess() {
   saveToday();
   document.getElementById('ka-client').value=''; document.getElementById('ka-fridge-temp').value=''; document.getElementById('ka-notes').value=''; clearKaPhoto();
   items.forEach(function(item){ var el=document.getElementById('chk-'+item.id); if(el) el.checked=false; });
-  renderSection('kitchenassess'); updateDashboard();
+  renderSection('kitchenassess'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — kitchen assessment complete'); else if(status==='warn')toast('Warning — issues noted','warn'); else toast('Alert — kitchen unsuitable',false);
 }
 
@@ -2490,7 +2535,7 @@ function logAllergen() {
   saveToday();
   document.getElementById('al-client').value=''; document.getElementById('al-dish').value=''; document.getElementById('al-notes').value='';
   ALLERGENS_14.forEach(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
-  renderSection('allergen'); updateDashboard();
+  renderSection('allergen'); updateHaccpDashboard();
   toast('Saved — allergen record for '+dish);
 }
 
@@ -2514,7 +2559,7 @@ function logTransport() {
   document.getElementById('tr-food').value=''; document.getElementById('tr-destination').value='';
   document.getElementById('tr-start-temp').value=''; document.getElementById('tr-end-temp').value='';
   document.getElementById('tr-start-time').value=now(); document.getElementById('tr-end-time').value=now();
-  renderSection('transport'); updateDashboard();
+  renderSection('transport'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+food+' '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
 }
 
@@ -2536,7 +2581,7 @@ function logCredential() {
   document.getElementById('cred-issued').value=''; document.getElementById('cred-expiry').value='';
   document.getElementById('cred-issuer').value=''; document.getElementById('cred-ref').value='';
   clearCredPhoto();
-  renderCredentials(); updateDashboard();
+  renderCredentials(); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+type); else if(status==='warn')toast('Warning — '+type+' expiring soon','warn'); else toast('Alert — '+type+' has expired',false);
 }
 
@@ -3452,8 +3497,28 @@ renderChecklists();
 initPrivateChefMode();
 haccpTab('home');
 renderAllSections();
-function openCarte(jobId){ window.location.href = '/mise' + (jobId ? '?job=' + encodeURIComponent(jobId) : ''); }
-function openYield(){ window.location.href = '/yield'; }
+function openCarte(jobId) {
+  if (typeof showModule === 'function') {
+    showModule('menus');
+    if (jobId) {
+      // Navigate to Jobs tab and expand the job card
+      setTimeout(function() {
+        if (typeof showTab === 'function') showTab('jobs');
+        setTimeout(function() {
+          if (typeof toggleJobCard === 'function') toggleJobCard(String(jobId));
+          // Scroll the expanded card into view
+          setTimeout(function() {
+            var el = document.querySelector('[data-job-id="' + jobId + '"]');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }, 50);
+      }, 150);
+    }
+  } else {
+    window.location.href = '/app';
+  }
+}
+function openYield() { if (typeof showModule === 'function') showModule('costing'); else window.location.href = '/app'; }
 
 function _printNextJobAllergenMatrix(job) {
   var jobDishes = [];
