@@ -423,7 +423,7 @@ function renderClientList(){
     var isOpen = _expandedClientId === c.id;
     var quickBtns = '';
     if(c.phone) quickBtns += '<a class="contact-link" href="tel:'+_esc(c.phone)+'" onclick="event.stopPropagation()"><span class="contact-icon">📞</span>Call</a>';
-    if(c.email) quickBtns += '<a class="contact-link" href="mailto:'+_esc(c.email)+'" onclick="event.stopPropagation()"><span class="contact-icon">✉️</span>Email</a>';
+    if(c.email) quickBtns += '<a class="contact-link" href="mailto:'+_esc(c.email)+'" onclick="event.stopPropagation()"><span class="contact-icon" style="display:inline-flex;align-items:center">'+vqIcon('mail',14)+'</span>Email</a>';
     if(c.address) quickBtns += '<a class="contact-link" href="https://maps.apple.com/?q='+encodeURIComponent(c.address)+'" target="_blank" onclick="event.stopPropagation()"><span class="contact-icon">📍</span>Map</a>';
     var headerHtml = '<div class="client-card-header" onclick="clientToggle(\''+c.id+'\')">'
       + '<div class="client-avatar">'+_esc(initials)+'</div>'
@@ -451,7 +451,7 @@ function renderClientList(){
 
       var contactsHtml = '';
       if(c.phone) contactsHtml += '<a class="contact-link" href="tel:'+_esc(c.phone)+'"><span class="contact-icon">📞</span>'+_esc(c.phone)+'</a>';
-      if(c.email) contactsHtml += '<a class="contact-link" href="mailto:'+_esc(c.email)+'"><span class="contact-icon">✉️</span>'+_esc(c.email)+'</a>';
+      if(c.email) contactsHtml += '<a class="contact-link" href="mailto:'+_esc(c.email)+'"><span class="contact-icon" style="display:inline-flex;align-items:center">'+vqIcon('mail',14)+'</span>'+_esc(c.email)+'</a>';
       if(c.address) contactsHtml += '<a class="contact-link" href="https://maps.apple.com/?q='+encodeURIComponent(c.address)+'" target="_blank"><span class="contact-icon">📍</span>'+_esc(c.address)+'</a>';
 
       bodyHtml = '<div class="client-body">'
@@ -1091,9 +1091,9 @@ function _jobCardHTML(j){
     var editBtn = !isMirrored
       ? '<div style="margin-top:10px"><button style="width:100%;padding:10px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();startJobEdit(\''+j.id+'\')">Edit job</button></div>'
       : '';
-    var allergenBtn = '<div style="margin-top:8px"><button style="width:100%;padding:10px;background:none;color:#2D7A3A;border:1px solid #2D7A3A;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();generateAllergenMatrix(\''+j.id+'\')">📋 Print Allergen Matrix</button></div>';
+    var allergenBtn = '<div style="margin-top:8px"><button style="width:100%;padding:10px;background:none;color:#2D7A3A;border:1px solid #2D7A3A;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px" onclick="event.stopPropagation();generateAllergenMatrix(\''+j.id+'\')">'+vqIcon('file-text',15)+' Print Allergen Matrix</button></div>';
     var isJobPast = j.eventDate && j.eventDate < TODAY;
-    var followUpBtn = isJobPast ? '<div style="margin-top:8px"><button style="width:100%;padding:10px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();draftFollowUpEmail(\''+j.id+'\')">✉️ Draft Follow-up Email</button></div>' : '';
+    var followUpBtn = isJobPast ? '<div style="margin-top:8px"><button style="width:100%;padding:10px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px" onclick="event.stopPropagation();draftFollowUpEmail(\''+j.id+'\')">'+vqIcon('mail',15)+' Draft Follow-up Email</button></div>' : '';
     bodyHtml = '<div class="job-card-body open" onclick="event.stopPropagation()">'
       + (j.location ? '<div class="job-detail-row"><span class="job-detail-key">Location</span>'+_esc(j.location)+'</div>' : '')
       + (j.eventTime ? '<div class="job-detail-row"><span class="job-detail-key">Time</span>'+_esc(j.eventTime)+'</div>' : '')
@@ -1119,11 +1119,11 @@ function _jobCardHTML(j){
       + '<button onclick="event.stopPropagation();toggleJobPayment(\''+j.id+'\',\'tabDepositPaid\')" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;'+(j.tabDepositPaid?'background:#EAF4EC;color:#1C6B2A;border:1px solid #A8D5B0':'background:#f5f4f0;color:#2D7A3A;border:1px solid #2D7A3A')+'">'+(j.tabDepositPaid?'✓ Paid':'Mark paid')+'</button>'
       + '</div>'
       + '<div style="display:flex;gap:8px">'
-      + '<span style="flex:1;font-size:13px;color:#1C2B1E;line-height:1.4">💰 Balance</span>'
+      + '<span style="flex:1;font-size:13px;color:#1C2B1E;line-height:1.4;display:inline-flex;align-items:center;gap:6px">'+vqIcon('coins',13)+' Balance</span>'
       + '<button onclick="event.stopPropagation();toggleJobPayment(\''+j.id+'\',\'tabBalancePaid\')" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;'+(j.tabBalancePaid?'background:#EAF4EC;color:#1C6B2A;border:1px solid #A8D5B0':'background:#f5f4f0;color:#2D7A3A;border:1px solid #2D7A3A')+'">'+(j.tabBalancePaid?'✓ Paid':'Mark paid')+'</button>'
       + '</div>'
       + '</div>'
-      + '<div style="margin-top:8px"><button style="width:100%;padding:10px;background:none;color:#2D7A3A;border:1px solid rgba(45,122,58,0.4);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent" onclick="event.stopPropagation();openSaveTemplateModal(\''+j.id+'\')">💾 Save as template</button></div>'
+      + '<div style="margin-top:8px"><button style="width:100%;padding:10px;background:none;color:#2D7A3A;border:1px solid rgba(45,122,58,0.4);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:8px" onclick="event.stopPropagation();openSaveTemplateModal(\''+j.id+'\')">'+vqIcon('save',15)+' Save as template</button></div>'
       + editBtn + '</div>';
   }
 
@@ -1178,7 +1178,7 @@ function renderJobsHistory(){
   }
 
   if(pastEl){
-    var exportBtn = '<button onclick="exportJobsPDF()" style="display:flex;align-items:center;gap:8px;width:100%;padding:11px 16px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px">📄 Export Booking Report PDF</button>';
+    var exportBtn = '<button onclick="exportJobsPDF()" style="display:flex;align-items:center;gap:8px;width:100%;padding:11px 16px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:14px">'+vqIcon('file-down',16)+' Export Booking Report PDF</button>';
     pastEl.innerHTML = past.length === 0
       ? '<p class="empty">No previous bookings</p>'
       : exportBtn + _jobsByMonth(past);
@@ -1543,7 +1543,7 @@ function _renderJobMenuLibrary() {
 
   if (menus.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:36px 16px">'
-      + '<div style="font-size:36px;margin-bottom:12px">📖</div>'
+      + '<div style="margin-bottom:12px;color:#7A8A7C">'+vqIcon('book-open',36)+'</div>'
       + '<div style="font-size:14px;color:#7A8A7C;line-height:1.5">No saved menus yet.<br>Go to the Menus tab to build your library,<br>or use the Custom Menu tab.</div>'
       + '</div>';
     return;

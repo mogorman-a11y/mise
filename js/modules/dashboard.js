@@ -49,14 +49,14 @@ window.modules.dashboard = (function () {
 
   // ── HACCP KPI card ────────────────────────────────────────
   function _haccpCard(canAccess) {
-    if (!canAccess) return _lockedCard('haccp', '🛡️', 'HACCP', 'Digital food safety logs, temp checks & allergen compliance.', 'Industry avg: 2 temp breaches/week');
+    if (!canAccess) return _lockedCard('haccp', vqIcon('shield-check', 20), 'HACCP', 'Digital food safety logs, temp checks & allergen compliance.', 'Industry avg: 2 temp breaches/week');
     var records = _getHaccpRecords();
     var todayCount = records.today;
     var totalDays  = records.totalDays;
     var overdueCount = records.overdue;
     var statusClass = overdueCount > 0 ? 'warn' : 'ok';
     var statusText  = overdueCount > 0 ? overdueCount + ' overdue' : 'All clear';
-    return _kpiCard('haccp', '🛡️', 'HACCP',
+    return _kpiCard('haccp', vqIcon('shield-check', 20), 'HACCP',
       '<div class="db-kpi-row">' +
         '<div class="db-kpi"><span class="db-kpi-num">' + todayCount + '</span><span class="db-kpi-label">Logs today</span></div>' +
         '<div class="db-kpi"><span class="db-kpi-num">' + totalDays + '</span><span class="db-kpi-label">Days on record</span></div>' +
@@ -67,9 +67,9 @@ window.modules.dashboard = (function () {
 
   // ── Menus KPI card ────────────────────────────────────────
   function _menusCard(canAccess) {
-    if (!canAccess) return _lockedCard('menus', '📋', 'Menus', 'Dish specs, allergen tracking and professional menu builder.', 'Industry avg: 24 dishes per chef');
+    if (!canAccess) return _lockedCard('menus', vqIcon('clipboard-list', 20), 'Menus', 'Dish specs, allergen tracking and professional menu builder.', 'Industry avg: 24 dishes per chef');
     var data = _getMenusData();
-    return _kpiCard('menus', '📋', 'Menus',
+    return _kpiCard('menus', vqIcon('clipboard-list', 20), 'Menus',
       '<div class="db-kpi-row">' +
         '<div class="db-kpi"><span class="db-kpi-num">' + data.dishes + '</span><span class="db-kpi-label">Dishes</span></div>' +
         '<div class="db-kpi"><span class="db-kpi-num">' + data.menus + '</span><span class="db-kpi-label">Saved menus</span></div>' +
@@ -80,10 +80,10 @@ window.modules.dashboard = (function () {
 
   // ── Costing KPI card ──────────────────────────────────────
   function _costingCard(canAccess) {
-    if (!canAccess) return _lockedCard('costing', '💰', 'Costing', 'Food cost calculator, GP% tracking, quotes and invoices.', 'Industry avg GP: 68%');
+    if (!canAccess) return _lockedCard('costing', vqIcon('coins', 20), 'Costing', 'Food cost calculator, GP% tracking, quotes and invoices.', 'Industry avg GP: 68%');
     var data = _getCostingData();
     var gpClass = data.gp >= 65 ? 'ok' : data.gp >= 50 ? 'warn' : 'fail';
-    return _kpiCard('costing', '💰', 'Costing',
+    return _kpiCard('costing', vqIcon('coins', 20), 'Costing',
       '<div class="db-kpi-row">' +
         '<div class="db-kpi db-kpi-' + gpClass + '"><span class="db-kpi-num">' + (data.gp > 0 ? data.gp + '%' : '—') + '</span><span class="db-kpi-label">Avg GP</span></div>' +
         '<div class="db-kpi"><span class="db-kpi-num">' + data.openQuotes + '</span><span class="db-kpi-label">Open quotes</span></div>' +

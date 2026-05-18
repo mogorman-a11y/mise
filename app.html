@@ -132,7 +132,7 @@
     </div>
     <!-- INSTALL BANNER — shown when not yet saved as an app -->
     <div id="install-banner" style="display:none;background:#f0f8f1;border:1px solid #b8dfbf;border-radius:10px;padding:12px 14px;margin-bottom:16px;align-items:flex-start;gap:10px">
-      <span style="font-size:22px;flex-shrink:0">📲</span>
+      <span style="flex-shrink:0;color:#2D7A3A"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span>
       <div style="flex:1">
         <div style="font-size:14px;font-weight:600;color:#1a1a18;margin-bottom:4px">Add Veriqo to your home screen</div>
         <div id="install-banner-body" style="font-size:13px;color:#555;line-height:1.5"></div>
@@ -143,7 +143,7 @@
     <!-- NEXT JOB BANNER -->
     <div id="next-job-banner" style="display:none;background:#1C2B1E;border-radius:10px;margin-bottom:16px;overflow:hidden">
       <div onclick="toggleNextJobBanner()" style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px">
-        <span style="font-size:22px;flex-shrink:0">📅</span>
+        <span style="flex-shrink:0;color:#2D7A3A"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></span>
         <div style="flex:1;min-width:0">
           <div style="font-size:11px;color:var(--vq-green);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Next booking · Menus</div>
           <div id="next-job-client" style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
@@ -154,8 +154,8 @@
       <div id="next-job-panel" style="display:none;padding:0 14px 14px;border-top:1px solid rgba(45,122,58,0.2)">
         <div id="next-job-panel-content"></div>
         <button id="next-job-carte-btn" onclick="openCarte()" style="width:100%;margin-top:14px;padding:11px;background:var(--vq-green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">View booking in Menus →</button>
-        <button id="next-job-allergen-btn" style="display:none;width:100%;margin-top:8px;padding:11px;background:none;color:var(--vq-green);border:1px solid var(--vq-green);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">📋 Print Allergen Matrix</button>
-        <button id="next-job-share-btn" style="display:none;width:100%;margin-top:8px;padding:11px;background:none;color:var(--vq-green);border:1px solid var(--vq-green);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">🔗 Share with Freelancer</button>
+        <button id="next-job-allergen-btn" style="display:none;width:100%;margin-top:8px;padding:11px;background:none;color:var(--vq-green);border:1px solid var(--vq-green);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:none;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg> Print Allergen Matrix</button>
+        <button id="next-job-share-btn" style="display:none;width:100%;margin-top:8px;padding:11px;background:none;color:var(--vq-green);border:1px solid var(--vq-green);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg> Share with Freelancer</button>
       </div>
     </div>
 
@@ -310,7 +310,7 @@
       </div>
       <div id="tile-records" class="tile tile-wide" onclick="haccpTab('records')">
         <div class="tile-wide-inner">
-          <span class="tile-icon-sm">📋</span>
+          <span class="tile-icon-sm"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>
           <div><div class="tile-label">Records</div><div class="tile-sub" id="sub-records">Today &amp; previous days</div></div>
         </div>
       </div>
@@ -1319,7 +1319,7 @@
         <label class="toggle-switch"><input type="checkbox" id="toggle-incident" onchange="toggleTile('incident',this.checked)"><span class="toggle-slider"></span></label>
       </div>
       <div class="tile-toggle-hdr" style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:20px;line-height:1;flex-shrink:0">📋</span>
+        <span style="line-height:1;flex-shrink:0;display:inline-flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>
         <span style="flex:1;font-size:14px;font-weight:600;color:#1a1a18">Records</span>
         <label class="toggle-switch"><input type="checkbox" id="toggle-records" onchange="toggleTile('records',this.checked)"><span class="toggle-slider"></span></label>
       </div>
@@ -1655,7 +1655,7 @@
       </div>
 
       <div id="menus-install-banner" style="display:none;background:#EAF4EC;border:1px solid #A8D5B0;border-radius:10px;padding:12px 14px;margin-bottom:16px;align-items:flex-start;gap:10px">
-        <span style="font-size:22px;flex-shrink:0">📲</span>
+        <span style="flex-shrink:0;color:#2D7A3A"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span>
         <div style="flex:1">
           <div style="font-size:14px;font-weight:600;color:#1C2B1E;margin-bottom:4px">Add Veriqo to your home screen</div>
           <div id="menus-install-banner-body" style="font-size:13px;color:#555;line-height:1.5"></div>
@@ -1673,7 +1673,7 @@
         <div class="next-meta" id="dash-next-meta"></div>
       </div>
       <div id="dash-no-next" class="card" style="display:none;text-align:center;padding:20px 14px">
-        <div style="font-size:32px;margin-bottom:8px">📅</div>
+        <div style="margin-bottom:8px;color:var(--vq-muted)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
         <div style="font-size:14px;font-weight:600;color:#1C2B1E">No upcoming bookings</div>
         <div style="font-size:13px;color:#A09890;margin-top:4px">Tap "New Job" to log your next event</div>
       </div>
@@ -1681,7 +1681,7 @@
       <!-- Balance warning banner — populated by updateDashboard() -->
       <div id="dash-balance-warn" style="display:none;background:#EAF4EC;border:1px solid #A8D5B0;border-radius:10px;padding:12px 14px;margin-bottom:12px;cursor:pointer" onclick="showTab('jobs')">
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:18px">⚠️</span>
+          <span style="color:#854F0B;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
           <div style="flex:1">
             <div id="dash-balance-warn-text" style="font-size:13px;font-weight:600;color:#8A6820"></div>
             <div style="font-size:12px;color:#A09890;margin-top:2px">Tap to view jobs →</div>
@@ -1698,32 +1698,32 @@
 
       <!-- Quick actions -->
       <div class="quick-actions" id="dash-quick-actions">
-        <button class="quick-btn qa-dark" onclick="startNewJob()">➕ New Job</button>
-        <button class="quick-btn qa-gold" onclick="showTab('clients')">👥 Clients</button>
+        <button class="quick-btn qa-dark" onclick="startNewJob()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> New Job</button>
+        <button class="quick-btn qa-gold" onclick="showTab('clients')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Clients</button>
       </div>
       <div style="text-align:center;">
-        <button class="btn" style="background: none; border: 1px solid #2D7A3A; color: #2D7A3A; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 10px;" onclick="showProfileGeneratorModal()">📄 Create Profile PDF</button>
+        <button class="btn" style="background: none; border: 1px solid #2D7A3A; color: #2D7A3A; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 10px; display:inline-flex; align-items:center; gap:6px;" onclick="showProfileGeneratorModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg> Create Profile PDF</button>
       </div>
 
       <!-- Nav tiles -->
       <div class="nav-tiles">
         <div class="nav-tile" onclick="showTab('calendar')">
-          <div class="nav-tile-icon">📅</div>
+          <div class="nav-tile-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
           <div class="nav-tile-label">Calendar</div>
           <div class="nav-tile-sub" id="tile-sub-calendar">View bookings</div>
         </div>
         <div class="nav-tile" onclick="showTab('menus')">
-          <div class="nav-tile-icon">📖</div>
+          <div class="nav-tile-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
           <div class="nav-tile-label">Menus</div>
-          <div class="nav-tile-sub" id="tile-sub-menus">Dishes & courses</div>
+          <div class="nav-tile-sub" id="tile-sub-menus">Dishes &amp; courses</div>
         </div>
         <div class="nav-tile" onclick="showTab('jobs')">
-          <div class="nav-tile-icon">🍽️</div>
+          <div class="nav-tile-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></div>
           <div class="nav-tile-label">Jobs</div>
           <div class="nav-tile-sub" id="tile-sub-jobs">All bookings</div>
         </div>
         <div class="nav-tile" onclick="showTab('more')">
-          <div class="nav-tile-icon">⋯</div>
+          <div class="nav-tile-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
           <div class="nav-tile-label">More</div>
           <div class="nav-tile-sub">Transport, assess…</div>
         </div>
@@ -1759,7 +1759,7 @@
         <button class="btn-primary btn-green" onclick="addClient()" style="margin-top:12px">Save Client</button>
       </div>
       <div style="margin:14px 0 0">
-        <button onclick="openIntakeFormModal()" style="width:100%;padding:13px;background:#EAF4EC;color:#1C6B2A;border:1px solid #2D7A3A;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">📋 Send Intake Form</button>
+        <button onclick="openIntakeFormModal()" style="width:100%;padding:13px;background:#EAF4EC;color:#1C6B2A;border:1px solid #2D7A3A;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg> Send Intake Form</button>
         <p style="font-size:12px;color:#A09890;margin-top:6px;text-align:center">Share a link — client fills in their own details</p>
       </div>
       <div class="divider">Your Clients</div>
@@ -1907,7 +1907,7 @@
           <div id="jmcurrent-log"></div>
           <button type="button" onclick="openJobMenuBuilder('log')" style="background:rgba(45,122,58,0.08);border:1px dashed #2D7A3A;color:#2D7A3A;width:100%;padding:12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;margin-top:6px;-webkit-tap-highlight-color:transparent">+ Attach or Build a Menu</button>
         </div>
-        <button type="button" onclick="openSaveTemplateModal('form')" style="width:100%;margin-bottom:8px;padding:10px;background:none;color:#2D7A3A;border:1px solid rgba(45,122,58,0.4);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent">💾 Save as template</button>
+        <button type="button" onclick="openSaveTemplateModal('form')" style="width:100%;margin-bottom:8px;padding:10px;background:none;color:#2D7A3A;border:1px solid rgba(45,122,58,0.4);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save as template</button>
         <div style="display:flex;gap:8px;margin-top:4px">
           <button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="logJob()">Save Booking</button>
           <button onclick="toggleNewJobForm()" style="flex:0 0 auto;padding:12px 16px;background:#f5f4f0;color:#1C2B1E;border:1px solid #2D7A3A;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit">Cancel</button>
@@ -1924,12 +1924,12 @@
     <div id="tab-more" class="section">
       <div class="card" style="margin-bottom:0;padding:4px 14px">
         <div class="more-item" onclick="showTab('assess')">
-          <div class="more-icon">📋</div>
+          <div class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></div>
           <div><div class="more-name">Kitchen Assessment</div><div class="more-sub">Pre-job checklist & fridge temps</div></div>
           <div class="more-arrow">›</div>
         </div>
         <div class="more-item" onclick="showTab('allergen')">
-          <div class="more-icon">⚠️</div>
+          <div class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
           <div><div class="more-name">Allergen Log</div><div class="more-sub">Record allergens per dish/client</div></div>
           <div class="more-arrow">›</div>
         </div>
@@ -1944,7 +1944,7 @@
           <div class="more-arrow">›</div>
         </div>
         <div class="more-item" onclick="showTab('install')">
-          <div class="more-icon">📲</div>
+          <div class="more-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></div>
           <div><div class="more-name">Save as app</div><div class="more-sub">Add Veriqo to your home screen</div></div>
           <div class="more-arrow">›</div>
         </div>
@@ -2574,7 +2574,7 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px;">
         <button class="btn btn-primary" onclick="showScreen('costing')">+ New Costing</button>
         <button class="btn btn-secondary" onclick="showScreen('quotes')">+ New Quote</button>
-        <button class="btn btn-secondary" onclick="showRecordPaymentModal()">💰 Record Payment</button>
+        <button class="btn btn-secondary" onclick="showRecordPaymentModal()" style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg> Record Payment</button>
       </div>
     </div>
 
@@ -2637,7 +2637,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <label class="form-label" style="margin-bottom:0">Ingredients</label>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn btn-ghost" style="font-size:12px;padding:6px 9px" onclick="showMenuLibraryModal()">📋 Menu Library</button>
+              <button class="btn btn-ghost" style="font-size:12px;padding:6px 9px;display:inline-flex;align-items:center;gap:5px" onclick="showMenuLibraryModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg> Menu Library</button>
               <button class="btn btn-ghost" style="font-size:12px;padding:6px 9px" onclick="showCostingLibraryModal()">📚 Costing Library</button>
               <button id="scan-receipt-btn" class="btn btn-ghost" style="font-size:12px;padding:6px 9px;color:var(--gold);border-color:rgba(201,168,76,0.4)" onclick="document.getElementById('scan-receipt-input').click()">✨ Scan Receipt</button>
               <input type="file" id="scan-receipt-input" accept="image/*,.pdf,application/pdf" style="display:none" onchange="handleScanReceipt(event)">
@@ -3377,7 +3377,7 @@
 
     <button class="nav-tab" id="nav-tab-menus" onclick="showModule('menus')" aria-label="Menus">
       <span class="nav-icon">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 10h18M3 15h18M3 20h11"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         <span class="nav-lock" id="nav-lock-menus" style="display:none">🔒</span>
       </span>
       <span class="nav-label">Menus</span>
@@ -3385,7 +3385,7 @@
 
     <button class="nav-tab" id="nav-tab-costing" onclick="showModule('costing')" aria-label="Costing">
       <span class="nav-icon">
-        <span style="font-size:19px;font-weight:700;line-height:1;font-family:Georgia,serif">£</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>
         <span class="nav-lock" id="nav-lock-costing" style="display:none">🔒</span>
       </span>
       <span class="nav-label">Costing</span>
@@ -3403,6 +3403,33 @@
 
 </div><!-- /.app -->
 <div class="toast" id="toast"></div>
+
+<!-- ── Icon helper — returns Lucide-style inline SVG strings ── -->
+<script>
+function vqIcon(name, size) {
+  size = size || 20;
+  var a = 'width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;flex-shrink:0"';
+  var p = {
+    'shield-check':   '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+    'clipboard-list': '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+    'coins':          '<circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/>',
+    'calendar':       '<rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+    'book-open':      '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+    'users':          '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    'file-text':      '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/>',
+    'share-2':        '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>',
+    'file-down':      '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/>',
+    'mail':           '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+    'save':           '<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>',
+    'smartphone':     '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
+    'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    'layout-grid':    '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/>',
+    'plus':           '<path d="M5 12h14"/><path d="M12 5v14"/>'
+  };
+  if (!p[name]) return '';
+  return '<svg '+a+'>'+p[name]+'</svg>';
+}
+</script>
 
 <script src="js/modules/dashboard.js?v=2"></script>
 <script src="js/modules/haccp.js?v=1"></script>
@@ -3489,9 +3516,9 @@
 
   function buildTeaseScreen(name) {
     var meta = {
-      haccp:   { icon: '🛡️', label: 'HACCP',   value: 'Stay compliant with digital food safety logs, temp checks, and allergen records.' },
-      menus:   { icon: '📋', label: 'Menus',    value: 'Build dish specs, manage allergens, and share professional menus instantly.' },
-      costing: { icon: '💰', label: 'Costing',  value: 'Track ingredient costs, calculate GP%, and protect your margins automatically.' }
+      haccp:   { icon: vqIcon('shield-check', 40), label: 'HACCP',   value: 'Stay compliant with digital food safety logs, temp checks, and allergen records.' },
+      menus:   { icon: vqIcon('clipboard-list', 40), label: 'Menus',    value: 'Build dish specs, manage allergens, and share professional menus instantly.' },
+      costing: { icon: vqIcon('coins', 40), label: 'Costing',  value: 'Track ingredient costs, calculate GP%, and protect your margins automatically.' }
     };
     var m = meta[name] || { icon: '🔒', label: name, value: '' };
 
@@ -3601,7 +3628,7 @@
 <!-- ═══════════════ SHARE WITH FREELANCER MODAL ═══════════════ -->
 <div id="shareFreelancerModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9995;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeShareFreelancerModal()">
   <div style="background:#f5f4f0;border-radius:18px 18px 0 0;width:100%;max-width:480px;padding:24px 20px 32px;max-height:80vh;overflow-y:auto">
-    <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:4px">🔗 Share with Freelancer</div>
+    <div style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:4px;display:flex;align-items:center;gap:8px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg> Share with Freelancer</div>
     <div style="font-size:13px;color:#666;margin-bottom:20px;line-height:1.5">They'll get a link to view the event details and log HACCP records directly into your Veriqo account.</div>
     <label style="display:flex;align-items:center;gap:12px;padding:14px;background:#fff;border-radius:10px;cursor:pointer;margin-bottom:20px;border:1px solid #e0ddd8">
       <input type="checkbox" id="share-can-edit" style="width:18px;height:18px;accent-color:#2D7A3A;cursor:pointer;flex-shrink:0">
