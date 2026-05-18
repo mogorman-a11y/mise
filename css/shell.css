@@ -198,6 +198,23 @@ body {
   }
 }
 
+/* ── Module greeting block ───────────────────────────────── */
+.vq-module-greeting {
+  padding: 16px 16px 4px;
+}
+.vq-module-greeting-hello {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--vq-ink);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+.vq-module-greeting-biz {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
 /* ── Locked module tease screen ───────────────────────────── */
 .module-tease {
   display: flex;

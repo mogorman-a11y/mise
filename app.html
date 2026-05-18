@@ -66,21 +66,6 @@
   ══════════════════════════════════════════════════════════ -->
   <div id="module-dashboard" class="module-panel active">
     <div class="placeholder-panel">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-        <svg width="36" height="36" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:9px">
-          <defs>
-            <linearGradient id="dbg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1B3A5C"/><stop offset="100%" stop-color="#1B5C72"/></linearGradient>
-            <linearGradient id="dsg" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient>
-          </defs>
-          <rect width="512" height="512" rx="112" fill="url(#dbg)"/>
-          <path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#dsg)"/>
-          <polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
-        <div>
-          <div style="font-size:22px;font-weight:800;color:var(--vq-ink);letter-spacing:-0.5px">Veri<span style="color:var(--vq-green)">qo</span></div>
-          <div style="font-size:12px;color:var(--vq-green);font-weight:600">Kitchen Management System</div>
-        </div>
-      </div>
       <div id="dashboard-content"></div>
     </div>
   </div>
@@ -114,21 +99,9 @@
 
   <!-- HOME -->
   <div id="tab-home" class="home">
-    <div style="margin-bottom:20px;display:flex;align-items:center;gap:14px">
-      <svg width="56" height="56" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;border-radius:14px">
-        <defs>
-          <linearGradient id="hbg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1B3A5C"/><stop offset="100%" stop-color="#1B5C72"/></linearGradient>
-          <linearGradient id="hsg" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient>
-        </defs>
-        <rect width="512" height="512" rx="112" fill="url(#hbg)"/>
-        <path d="M278 82 Q146 112 146 112 L146 295 Q146 388 278 438 Q410 388 410 295 L410 112 Z" fill="#1B5C72"/>
-        <path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#hsg)"/>
-        <polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-      <div>
-        <div style="font-size:24px;font-weight:800;color:#1a1a18;letter-spacing:-0.5px">Veri<span style="color:#2D7A3A">qo</span></div>
-        <div style="font-size:13px;color:#2D7A3A;margin-top:2px;font-weight:600">Food Safety. Inspection Ready.</div>
-      </div>
+    <div class="vq-module-greeting" style="padding-left:0;padding-right:0;margin-bottom:16px">
+      <div class="vq-module-greeting-hello" id="haccp-greeting-hello">Good morning</div>
+      <div class="vq-module-greeting-biz" id="haccp-greeting-biz"></div>
     </div>
     <!-- INSTALL BANNER — shown when not yet saved as an app -->
     <div id="install-banner" style="display:none;background:#f0f8f1;border:1px solid #b8dfbf;border-radius:10px;padding:12px 14px;margin-bottom:16px;align-items:flex-start;gap:10px">
@@ -1638,20 +1611,9 @@
 
     <!-- ═══════════════════════════════════════ HOME / DASHBOARD ═══════════════ -->
     <div id="menus-tab-home" class="home">
-      <div style="margin-bottom:20px;display:flex;align-items:center;gap:14px;padding-top:4px">
-        <svg width="56" height="56" viewBox="0 0 512 512" style="flex-shrink:0;border-radius:14px" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="mhombg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1B3A5C"/><stop offset="100%" stop-color="#1B5C72"/></linearGradient>
-            <linearGradient id="mhomsg" x1="10%" y1="0%" x2="90%" y2="100%"><stop offset="0%" stop-color="#52D05C"/><stop offset="100%" stop-color="#1EA040"/></linearGradient>
-          </defs>
-          <rect width="512" height="512" rx="112" fill="url(#mhombg)"/>
-          <path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#mhomsg)"/>
-          <polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
-        <div>
-          <div style="font-size:26px;font-weight:800;color:var(--vq-ink);letter-spacing:-0.8px">Veri<span style="color:var(--vq-green)">qo</span> <span style="font-size:16px;font-weight:600;color:var(--vq-muted)">Menus</span></div>
-          <div style="font-size:13px;color:var(--vq-green);margin-top:2px;font-weight:600">Clients, bookings &amp; menus.</div>
-        </div>
+      <div class="vq-module-greeting" style="padding-left:0;padding-right:0;margin-bottom:16px">
+        <div class="vq-module-greeting-hello" id="menus-greeting-hello">Good morning</div>
+        <div class="vq-module-greeting-biz" id="menus-greeting-biz"></div>
       </div>
 
       <div id="menus-install-banner" style="display:none;background:#EAF4EC;border:1px solid #A8D5B0;border-radius:10px;padding:12px 14px;margin-bottom:16px;align-items:flex-start;gap:10px">
@@ -3500,6 +3462,25 @@ function vqIcon(name, size) {
       if (name === 'menus') { var el=document.getElementById('menus-header-date'); if(el) el.textContent=dateStr; }
       if (name === 'costing') { var el=document.getElementById('costing-header-date'); if(el) el.textContent=dateStr; }
     })();
+
+    // Populate module greeting blocks (HACCP + Menus home screens)
+    if (name === 'haccp' || name === 'menus') {
+      (function() {
+        var profile = {};
+        try { profile = JSON.parse(localStorage.getItem('veriqo_profile') || '{}'); } catch(e) {}
+        if (window.Mise && window.Mise.profile) profile = window.Mise.profile;
+        var hour = new Date().getHours();
+        var greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+        var firstName = (profile.chef_name || profile.business_name || '').split(' ')[0];
+        var helloText = greet + (firstName ? ', ' + firstName : '');
+        var bizText = profile.business_name || '';
+        var pfx = name === 'haccp' ? 'haccp' : 'menus';
+        var hEl = document.getElementById(pfx + '-greeting-hello');
+        var bEl = document.getElementById(pfx + '-greeting-biz');
+        if (hEl) hEl.textContent = helloText;
+        if (bEl) bEl.textContent = bizText;
+      })();
+    }
 
     // Persist last module
     try { localStorage.setItem('vq_last_module', name); } catch(e) {}
