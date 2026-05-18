@@ -160,6 +160,15 @@ input:checked + .toggle-slider:before { transform: translateX(18px); }
 .cred-soon { color: #8A6820; }
 .cred-exp { color: #8A2D2D; }
 
+/* Button system */
+.vq-btn { display:inline-flex; align-items:center; gap:8px; padding:13px 16px; border:none; border-radius:var(--vq-radius-md); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; -webkit-tap-highlight-color:transparent; }
+.vq-btn:active { opacity:0.85; }
+.vq-btn-primary    { background:var(--vq-green); color:#fff; }
+.vq-btn-secondary  { background:transparent; color:var(--vq-green); border:1.5px solid var(--vq-green); }
+.vq-btn-destructive{ background:#A32D2D; color:#fff; }
+.vq-btn-neutral    { background:transparent; color:var(--color-text-secondary); border:1px solid var(--vq-border); }
+.vq-btn-full       { width:100%; justify-content:center; }
+
 /* SIDEBAR NAV — hidden on mobile */
 .sidebar-nav { display: none; }
 
