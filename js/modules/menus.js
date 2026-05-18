@@ -317,6 +317,10 @@ function updateDashboard(){
   document.getElementById('dash-stat-clients').textContent  = clients;
   document.getElementById('dash-stat-upcoming').textContent = upcoming.length;
   document.getElementById('dash-stat-month').textContent    = monthJobs;
+  var lblC = document.getElementById('dash-lbl-clients');
+  if (lblC) lblC.textContent = clients === 1 ? 'Client' : 'Clients';
+  var lblU = document.getElementById('dash-lbl-upcoming');
+  if (lblU) lblU.textContent = upcoming.length === 1 ? 'Upcoming' : 'Upcoming';
   var statsEl = document.getElementById('dash-stats-strip');
   if(statsEl) statsEl.style.display = cfg.showStats !== false ? '' : 'none';
   var qaEl = document.getElementById('dash-quick-actions');

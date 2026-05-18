@@ -401,7 +401,7 @@
       const openInvoices = yInvoices.filter(inv => inv.status !== 'paid');
 
       if (openInvoices.length === 0) {
-        container.innerHTML = '<p style="color:var(--muted);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-align:center;padding:20px 0;line-height:1.7;">No open tabs.<br>Cost a menu to generate your first quote.</p>';
+        container.innerHTML = '<p style="color:var(--muted);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-align:center;padding:20px 0;line-height:1.7;">No open invoices.<br>Cost a menu to generate your first quote.</p>';
         return;
       }
 

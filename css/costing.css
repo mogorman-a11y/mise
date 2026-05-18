@@ -6,7 +6,7 @@
     --border: #E2DDD5;
     --border-em: #D0C8BE;
     --text: #1C2B1E;
-    --muted: #A09890;
+    --muted: var(--vq-muted);  /* #5a5752 — WCAG AA on cream */
     --hint: #C0B8B0;
     --gold: var(--vq-green);
     --gold-dim: var(--vq-green-dark);

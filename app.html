@@ -1653,8 +1653,8 @@
 
       <!-- Stats -->
       <div class="stats-strip" id="dash-stats-strip">
-        <div class="stat-tile" onclick="showTab('clients')" style="cursor:pointer"><div class="stat-num" id="dash-stat-clients">0</div><div class="stat-label">Clients</div></div>
-        <div class="stat-tile" onclick="showTab('jobs')" style="cursor:pointer"><div class="stat-num" id="dash-stat-upcoming">0</div><div class="stat-label">Upcoming</div></div>
+        <div class="stat-tile" onclick="showTab('clients')" style="cursor:pointer"><div class="stat-num" id="dash-stat-clients">0</div><div class="stat-label" id="dash-lbl-clients">Clients</div></div>
+        <div class="stat-tile" onclick="showTab('jobs')" style="cursor:pointer"><div class="stat-num" id="dash-stat-upcoming">0</div><div class="stat-label" id="dash-lbl-upcoming">Upcoming</div></div>
         <div class="stat-tile" onclick="showTab('calendar')" style="cursor:pointer"><div class="stat-num" id="dash-stat-month">0</div><div class="stat-label">This month</div></div>
       </div>
 
@@ -1662,9 +1662,6 @@
       <div class="quick-actions" id="dash-quick-actions">
         <button class="quick-btn vq-btn vq-btn-primary" onclick="startNewJob()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg> New Job</button>
         <button class="quick-btn vq-btn vq-btn-secondary" onclick="showTab('clients')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Clients</button>
-      </div>
-      <div style="text-align:center;">
-        <button class="btn" style="background: none; border: 1px solid #2D7A3A; color: #2D7A3A; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 10px; display:inline-flex; align-items:center; gap:6px;" onclick="showProfileGeneratorModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg> Create Profile PDF</button>
       </div>
 
       <!-- Nav tiles -->
@@ -1725,6 +1722,9 @@
         <p style="font-size:12px;color:#A09890;margin-top:6px;text-align:center">Share a link — client fills in their own details</p>
       </div>
       <div class="divider">Your Clients</div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="vq-btn vq-btn-neutral" style="font-size:12px;padding:7px 12px" onclick="showProfileGeneratorModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg> Create Profile PDF</button>
+      </div>
       <div id="clients-list"><p class="empty">No clients yet. Add one above.</p></div>
     </div>
 
@@ -2481,7 +2481,7 @@
           </div>
           <div>
             <div class="metric" id="metric-open-tabs">£0</div>
-            <div class="metric-label">Open tabs</div>
+            <div class="metric-label">Open invoices</div>
             <div class="metric-trend" id="trend-open-tabs"></div>
           </div>
           <div>
@@ -2518,9 +2518,9 @@
 
       <!-- OPEN TABS PANEL -->
       <div class="card">
-        <div class="card-title">Open Tabs</div>
+        <div class="card-title">Open Invoices</div>
         <div id="open-tabs-list">
-          <p style="color:var(--muted);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-align:center;padding:20px 0;line-height:1.7;">No open tabs.<br>Cost a menu to generate your first quote.</p>
+          <p style="color:var(--muted);font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;text-align:center;padding:20px 0;line-height:1.7;">No open invoices.<br>Cost a menu to generate your first quote.</p>
         </div>
       </div>
 

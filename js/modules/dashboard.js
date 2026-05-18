@@ -82,10 +82,12 @@ window.modules.dashboard = (function () {
   function _costingCard(canAccess) {
     if (!canAccess) return _lockedCard('costing', vqIcon('coins', 20), 'Costing', 'Food cost calculator, GP% tracking, quotes and invoices.', 'Industry avg GP: 68%');
     var data = _getCostingData();
-    var gpClass = data.gp >= 65 ? 'ok' : data.gp >= 50 ? 'warn' : 'fail';
+    var gpClass = data.gp > 0 ? (data.gp >= 65 ? 'ok' : data.gp >= 50 ? 'warn' : 'fail') : '';
+    var gpDisplay = data.gp > 0 ? data.gp + '%' : '—';
+    var gpHint = data.gp === 0 ? '<span class="db-kpi-hint">Add costings to calculate</span>' : '';
     return _kpiCard('costing', vqIcon('coins', 20), 'Costing',
       '<div class="db-kpi-row">' +
-        '<div class="db-kpi db-kpi-' + gpClass + '"><span class="db-kpi-num">' + (data.gp > 0 ? data.gp + '%' : '—') + '</span><span class="db-kpi-label">Avg GP</span></div>' +
+        '<div class="db-kpi db-kpi-' + gpClass + '"><span class="db-kpi-num">' + gpDisplay + '</span><span class="db-kpi-label">Avg GP</span>' + gpHint + '</div>' +
         '<div class="db-kpi"><span class="db-kpi-num">' + data.openQuotes + '</span><span class="db-kpi-label">Open quotes</span></div>' +
       '</div>'
     );
