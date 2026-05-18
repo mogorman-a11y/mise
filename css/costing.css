@@ -1,9 +1,9 @@
   :root {
-    --bg: #F5F0E8;
+    --bg: #f5f4f0;
     --surface: #FFFFFF;
-    --surface-el: #F5F0E8;
-    --surface-deep: #EDE9E1;
-    --border: #E2DDD5;
+    --surface-el: #f5f4f0;
+    --surface-deep: #eeede9;
+    --border: #e5e4de;
     --border-em: #D0C8BE;
     --text: #1C2B1E;
     --muted: var(--vq-muted);  /* #5a5752 — WCAG AA on cream */
