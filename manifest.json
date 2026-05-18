@@ -1,0 +1,25 @@
+{
+  "name": "Veriqo",
+  "short_name": "Veriqo",
+  "description": "Kitchen Management System — HACCP, Menus, Costing in one place.",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1B3A5C",
+  "theme_color": "#2D7A3A",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

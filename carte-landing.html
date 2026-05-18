@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carte — Private Chef Business Management App | Bookings, Clients &amp; Menus</title>
+<meta name="description" content="Manage client bookings, build menus, track jobs and share data with your compliance app. The organiser built for UK private chefs. 14-day free trial — no credit card required.">
+<link rel="canonical" href="https://getveriqo.co.uk/carte">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://getveriqo.co.uk/carte">
+<meta property="og:title" content="Carte — Private Chef Business Management App | Bookings, Clients &amp; Menus">
+<meta property="og:description" content="Manage client bookings, build menus, track jobs and share data with your compliance app. The organiser built for UK private chefs. 14-day free trial.">
+<meta property="og:image" content="https://getveriqo.co.uk/icons/carte-192.png">
+<meta property="og:site_name" content="Carte by Mise Labs">
+<meta property="og:locale" content="en_GB">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Carte — Private Chef Business Management App">
+<meta name="twitter:description" content="Manage client bookings, build menus and track jobs. The organiser built for UK private chefs. 14-day free trial.">
+<meta name="twitter:image" content="https://getveriqo.co.uk/icons/carte-192.png">
+
+<link rel="manifest" href="mise-manifest.json">
+<link rel="icon" type="image/png" href="icons/carte-192.png">
+<link rel="apple-touch-icon" href="icons/carte-apple-touch.png">
+<meta name="theme-color" content="#1C2B1E">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://getveriqo.co.uk/#carte-app",
+      "name": "Carte",
+      "operatingSystem": "Web, iOS (PWA), Android (PWA)",
+      "applicationCategory": "BusinessApplication",
+      "description": "Private chef business management app. Manage clients, bookings, menus, and kitchen records from one place.",
+      "offers": {
+        "@type": "Offer",
+        "price": "12",
+        "priceCurrency": "GBP",
+        "description": "£12/month — 14-day free trial, no credit card required"
+      },
+      "url": "https://getveriqo.co.uk/mise",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Mise Labs",
+        "url": "https://getveriqo.co.uk"
+      }
+    }
+  ]
+}
+</script>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: #F5F0E8; color: #1a1a18; line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+
+/* Header */
+.site-header { background: #1C2B1E; border-bottom: 1px solid rgba(200,169,110,0.2); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; color: #C8A96E; }
+.logo img { width: 32px; height: 32px; border-radius: 8px; }
+.header-nav { display: flex; gap: 8px; }
+.btn-sm { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; border: none; display: inline-block; }
+.btn-sm-outline { background: transparent; color: #C8A96E; border: 1.5px solid rgba(200,169,110,0.4) !important; }
+.btn-sm-gold { background: #C8A96E; color: #1C2B1E; }
+.btn-sm-yield { background: #0E0E0D; color: #C9A84C; }
+@media (max-width: 480px) { .header-nav .btn-sm-outline.hide-mobile { display: none; } }
+
+/* Hero */
+.hero { padding: 64px 20px 56px; text-align: center; max-width: 680px; margin: 0 auto; }
+.hero-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #C8A96E; margin-bottom: 14px; }
+.hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 20px; color: #1C2B1E; }
+.hero p { font-size: 17px; color: #555; max-width: 520px; margin: 0 auto 36px; line-height: 1.65; }
+.cta-group { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.btn-primary { display: inline-block; padding: 16px 36px; background: #1C2B1E; color: #C8A96E; border-radius: 10px; font-size: 16px; font-weight: 700; }
+.btn-primary:active { opacity: 0.85; }
+.cta-subtext { font-size: 12px; color: #999; text-align: center; }
+
+/* Features */
+.features { padding: 56px 20px; max-width: 860px; margin: 0 auto; }
+.features-header { text-align: center; margin-bottom: 48px; }
+.features-header h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 10px; color: #1C2B1E; }
+.features-header p { font-size: 15px; color: #555; max-width: 480px; margin: 0 auto; line-height: 1.65; }
+.feature-split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; margin-bottom: 64px; }
+.feature-split.reverse { direction: rtl; }
+.feature-split.reverse > * { direction: ltr; }
+@media (max-width: 640px) { .feature-split { grid-template-columns: 1fr; gap: 28px; } .feature-split.reverse { direction: ltr; } }
+.feature-text h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; color: #1C2B1E; }
+.feature-text p { font-size: 15px; color: #555; line-height: 1.7; margin-bottom: 18px; }
+.feature-list { list-style: none; }
+.feature-list li { font-size: 14px; color: #444; padding-left: 22px; position: relative; line-height: 1.5; margin-bottom: 8px; }
+.feature-list li::before { content: '\2713'; position: absolute; left: 0; font-weight: 700; color: #C8A96E; }
+.mockup-wrap { position: relative; }
+.mockup-img { width: 100%; max-width: 280px; margin: 0 auto; border-radius: 20px; box-shadow: 0 24px 64px rgba(28,43,30,0.15); border: 1px solid rgba(200,169,110,0.2); display: block; background: #e8e0d0; aspect-ratio: 9/19; object-fit: cover; }
+@media (max-width: 640px) { .mockup-img { max-width: 220px; } }
+
+/* Testimonials */
+.testimonials { padding: 56px 20px; background: #1C2B1E; }
+.testimonials-inner { max-width: 860px; margin: 0 auto; }
+.testimonials h2 { font-size: 22px; font-weight: 700; color: #C8A96E; text-align: center; margin-bottom: 32px; }
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 640px) { .testimonials-grid { grid-template-columns: 1fr; } }
+.testimonial-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(200,169,110,0.15); border-radius: 14px; padding: 24px; }
+.testimonial-stars { color: #C8A96E; font-size: 16px; margin-bottom: 12px; }
+.testimonial-text { font-size: 14px; color: #ccc; line-height: 1.7; margin-bottom: 16px; font-style: italic; }
+.testimonial-name { font-size: 14px; font-weight: 700; color: #fff; }
+.testimonial-role { font-size: 12px; color: #888; margin-top: 2px; }
+
+/* Pricing */
+.pricing { padding: 56px 20px; background: #fff; border-top: 1px solid #e5e4de; border-bottom: 1px solid #e5e4de; }
+.pricing-inner { max-width: 680px; margin: 0 auto; text-align: center; }
+.pricing h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.pricing-sub { font-size: 15px; color: #666; margin-bottom: 32px; }
+.pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; text-align: left; }
+@media (max-width: 520px) { .pricing-grid { grid-template-columns: 1fr; } }
+.price-card { background: #fafaf7; border: 1px solid #e5e4de; border-radius: 16px; padding: 24px; }
+.price-card.featured { background: #1C2B1E; border-color: #1C2B1E; color: #fff; }
+.price-card-tag { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 8px; }
+.price-card.featured .price-card-tag { color: #C8A96E; }
+.price-card-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.price-card-price { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-top: 12px; }
+.price-card-period { font-size: 14px; color: #888; }
+.price-card.featured .price-card-period { color: #aaa; }
+.price-card-annual { font-size: 13px; color: #666; margin-top: 4px; }
+.price-card.featured .price-card-annual { color: #C8A96E; }
+.price-card-features { list-style: none; padding: 14px 0 0; font-size: 14px; }
+.price-card-features li { padding: 4px 0; color: #444; }
+.price-card.featured .price-card-features li { color: #ddd; }
+.price-card-cta { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e4de; }
+.price-card.featured .price-card-cta { border-top-color: rgba(255,255,255,0.08); }
+.cta-gold { display: block; padding: 13px 20px; background: #1C2B1E; color: #C8A96E; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; }
+.cta-suite { display: block; padding: 13px 20px; background: #C8A96E; color: #1C2B1E; border-radius: 8px; font-size: 14px; font-weight: 700; text-align: center; }
+.price-cta-subtext { font-size: 11px; color: #999; text-align: center; margin-top: 8px; }
+.price-card.featured .price-cta-subtext { color: rgba(200,169,110,0.6); }
+.pricing-note { font-size: 13px; color: #999; margin-top: 22px; }
+
+/* Final CTA */
+.final-cta { padding: 64px 20px; text-align: center; max-width: 580px; margin: 0 auto; }
+.final-cta h2 { font-size: 26px; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.01em; color: #1C2B1E; }
+.final-cta p { font-size: 15px; color: #555; margin-bottom: 32px; line-height: 1.65; }
+
+/* Footer */
+.site-footer { padding: 32px 20px; text-align: center; font-size: 13px; color: #999; background: #fff; border-top: 1px solid #e5e4de; }
+.site-footer a { color: #666; margin: 0 8px; }
+.footer-links { margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/" class="logo">
+    <img src="icons/carte-192.png" alt="Carte logo" width="32" height="32">
+    Carte
+  </a>
+  <nav class="header-nav" aria-label="Site navigation">
+    <a href="/veriqo" class="btn-sm btn-sm-outline hide-mobile">Veriqo</a>
+    <a href="/yield-info" class="btn-sm btn-sm-yield">Yield</a>
+    <a href="/mise" class="btn-sm btn-sm-gold">Open app</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="hero-heading">
+    <p class="hero-eyebrow">Private chef business management</p>
+    <h1 id="hero-heading">Your private chef business, beautifully organised</h1>
+    <p>Carte is the business management companion built for private chefs. Manage clients, schedule bookings, build menus, and keep all your kitchen records in one place.</p>
+    <div class="cta-group">
+      <a href="/mise" class="btn-primary">Start free trial &rarr;</a>
+      <p class="cta-subtext">Set up your first menu in under 2 minutes. No credit card required.</p>
+    </div>
+  </section>
+
+  <section class="features" aria-label="Carte features">
+    <div class="features-header">
+      <h2>Everything a private chef needs<br>to run a professional business</h2>
+      <p>From your first client enquiry to a completed event — Carte keeps every job, every menu, and every client detail exactly where you need it.</p>
+    </div>
+
+    <div class="feature-split">
+      <div class="feature-text">
+        <h3>Client CRM &amp; booking calendar</h3>
+        <p>Keep a full history for every client — contact details, dietary requirements, past menus, and notes. Schedule bookings on a calendar view, manage unavailable dates, and never double-book again.</p>
+        <ul class="feature-list">
+          <li>Client address book with full history</li>
+          <li>Monthly calendar with booking indicators</li>
+          <li>Unavailable date blocking</li>
+          <li>First inquiry script templates</li>
+        </ul>
+      </div>
+      <div class="mockup-wrap">
+        <img src="images/carte-calendar.png" alt="Carte booking calendar screen" class="mockup-img" width="280" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feature-split reverse">
+      <div class="feature-text">
+        <h3>Menu &amp; dish library</h3>
+        <p>Build a dish library with allergen information, then combine dishes into reusable menus. When you attach a menu to a booking, Carte freezes a snapshot of it — so a future change to your library never affects a past event.</p>
+        <ul class="feature-list">
+          <li>Dish library with 14-allergen tagging</li>
+          <li>Saved menu templates</li>
+          <li>Frozen per-event menu snapshots</li>
+          <li>✨ Magic Menu Importer (photo → dishes)</li>
+        </ul>
+      </div>
+      <div class="mockup-wrap">
+        <img src="images/carte-menus.png" alt="Carte menu builder screen" class="mockup-img" width="280" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feature-split">
+      <div class="feature-text">
+        <h3>Shared data with Veriqo &amp; Yield</h3>
+        <p>Clients and menus you add in Carte flow automatically into Veriqo and Yield. A booking in Carte becomes a job in Yield's quote pipeline and an allergen matrix in Veriqo. Enter once — flow everywhere.</p>
+        <ul class="feature-list">
+          <li>Allergen matrix auto-generated per event</li>
+          <li>Jobs appear in Yield for costing &amp; invoicing</li>
+          <li>Freelancer access link for event-day handoff</li>
+          <li>Positioning one-pager PDF export</li>
+        </ul>
+      </div>
+      <div class="mockup-wrap">
+        <img src="images/carte-interface.png" alt="Carte dashboard screen" class="mockup-img" width="280" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" aria-labelledby="pricing-heading">
+    <div class="pricing-inner">
+      <h2 id="pricing-heading">Simple pricing</h2>
+      <p class="pricing-sub">Start with a 14-day free trial of everything. No credit card required.</p>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-card-tag">Carte only</div>
+          <div class="price-card-name">Organisation</div>
+          <div><span class="price-card-price">£12</span> <span class="price-card-period">/ month</span></div>
+          <div class="price-card-annual">or £120 / year — two months free</div>
+          <ul class="price-card-features">
+            <li>Full CRM, calendar &amp; menus</li>
+            <li>Unlimited clients &amp; bookings</li>
+            <li>Cloud sync + PWA install</li>
+          </ul>
+          <div class="price-card-cta">
+            <a href="/mise" class="cta-gold">Start free trial &rarr;</a>
+            <p class="price-cta-subtext">No credit card required</p>
+          </div>
+        </div>
+        <div class="price-card featured">
+          <div class="price-card-tag">Best value</div>
+          <div class="price-card-name">Suite — all three apps</div>
+          <div><span class="price-card-price">£28</span> <span class="price-card-period">/ month</span></div>
+          <div class="price-card-annual">or £280 / year — save £56 vs monthly</div>
+          <ul class="price-card-features">
+            <li>Veriqo + Carte + Yield</li>
+            <li>Shared client, menu &amp; job data</li>
+            <li>Saves £8 / month vs buying separately</li>
+          </ul>
+          <div class="price-card-cta">
+            <a href="/mise" class="cta-suite">Start 14-day free trial &rarr;</a>
+            <p class="price-cta-subtext">Set up in under 2 minutes. No credit card.</p>
+          </div>
+        </div>
+      </div>
+      <p class="pricing-note">All plans: 14-day free trial &nbsp;&middot;&nbsp; cancel any time &nbsp;&middot;&nbsp; UK VAT inclusive</p>
+    </div>
+  </section>
+
+  <section class="final-cta" aria-label="Call to action">
+    <h2>Ready to get organised?</h2>
+    <p>Join private chefs across the UK who use Carte to manage their clients, bookings, and menus without the chaos of spreadsheets and paper notes.</p>
+    <div class="cta-group">
+      <a href="/mise" class="btn-primary">Start your free trial &rarr;</a>
+      <p class="cta-subtext">Set up your first menu in under 2 minutes. No credit card required.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>Veriqo, Carte and Yield are products of Mise Labs, operated by <a href="https://www.sideordercatering.co.uk" rel="noopener">Side Order Catering</a> &nbsp;&middot;&nbsp; <a href="mailto:hello@getveriqo.co.uk">hello@getveriqo.co.uk</a></p>
+  <nav class="footer-links" aria-label="Footer navigation">
+    <a href="/veriqo">Veriqo</a>
+    <a href="/carte">Carte</a>
+    <a href="/yield-info">Yield</a>
+    <a href="/resources">Resources</a>
+    <a href="/">Home</a>
+  </nav>
+</footer>
+
+</body>
+</html>

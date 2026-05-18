@@ -1,0 +1,48 @@
+# Veriqo
+
+Veriqo is a HACCP food safety compliance web app for private chefs and mobile caterers in the UK.
+
+- Homepage: https://getveriqo.co.uk
+- App: https://getveriqo.co.uk/app
+- Operated by: Side Order Catering
+- Contact: hello@getveriqo.co.uk
+
+## What Veriqo does
+
+Veriqo helps private chefs and mobile caterers meet UK food hygiene law record-keeping requirements. Features include:
+
+- Fridge and freezer temperature logs
+- Cooking, cooling, and reheating temperature records
+- Delivery and transport temperature logs
+- Cleaning and disinfection records
+- Opening and closing checklists
+- Allergen declarations and cross-contamination records
+- Pest control logs
+- Staff illness and injury records
+- Staff credentials and certificate tracker with 90-day expiry warnings
+- Approved supplier register
+- Customer and job records for private chef engagements
+- Menu and dish library
+
+Veriqo is designed to meet the record-keeping requirements of the UK Food Safety Act 1990 and the Food Standards Agency's Safer Food Better Business guidance for caterers.
+
+## Carte
+
+Carte is the companion business management app for private chefs, available at https://getveriqo.co.uk/mise
+
+Features include:
+
+- Client CRM with contact history
+- Job booking calendar
+- Menu and dish library (shared with Veriqo)
+- Frozen menu snapshots attached to bookings
+- Kitchen assessments
+- Allergen logs
+- Transport temperature records
+- Certificate and credential tracking
+
+## How the apps relate
+
+Veriqo and Carte share one account and one data layer. Clients, menus, dishes, and job bookings sync between both apps automatically. A chef uses Veriqo for daily HACCP compliance records and Carte for business organisation.
+
+Both apps are installable as progressive web apps (PWA) on iPhone and Android.

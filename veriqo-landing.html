@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veriqo — HACCP Compliance App for Private Chefs &amp; Mobile Caterers</title>
+<meta name="description" content="Log fridge temps, cooking records, allergen declarations and cleaning checklists from your phone. Built for UK private chefs under the Food Safety Act. 14-day free trial — no credit card required.">
+<link rel="canonical" href="https://getveriqo.co.uk/veriqo">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://getveriqo.co.uk/veriqo">
+<meta property="og:title" content="Veriqo — HACCP Compliance App for Private Chefs &amp; Mobile Caterers">
+<meta property="og:description" content="Log fridge temps, cooking records, allergen declarations and cleaning checklists from your phone. Built for UK private chefs. 14-day free trial.">
+<meta property="og:image" content="https://getveriqo.co.uk/icons/icon-192.png">
+<meta property="og:site_name" content="Veriqo">
+<meta property="og:locale" content="en_GB">
+
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Veriqo — HACCP Compliance App for Private Chefs">
+<meta name="twitter:description" content="Log fridge temps, cooking records, allergen declarations and cleaning checklists from your phone. 14-day free trial.">
+<meta name="twitter:image" content="https://getveriqo.co.uk/icons/icon-192.png">
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#2D7A3A">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://getveriqo.co.uk/#veriqo-app",
+      "name": "Veriqo",
+      "operatingSystem": "Web, iOS (PWA), Android (PWA)",
+      "applicationCategory": "BusinessApplication",
+      "description": "HACCP food safety compliance app for private chefs and mobile caterers in the UK. Log fridge and freezer temperatures, cooking records, cooling logs, cleaning checklists, allergen declarations, pest control, staff illness records, credentials and more.",
+      "offers": {
+        "@type": "Offer",
+        "price": "12",
+        "priceCurrency": "GBP",
+        "description": "£12/month — 14-day free trial, no credit card required"
+      },
+      "url": "https://getveriqo.co.uk/app",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Mise Labs",
+        "url": "https://getveriqo.co.uk"
+      }
+    }
+  ]
+}
+</script>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: #f5f4f0; color: #1a1a18; line-height: 1.6; }
+a { color: inherit; text-decoration: none; }
+
+/* Header */
+.site-header { background: #fff; border-bottom: 1px solid #e5e4de; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+.logo img { width: 32px; height: 32px; border-radius: 8px; }
+.header-nav { display: flex; gap: 8px; }
+.btn-sm { padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; border: none; display: inline-block; }
+.btn-sm-outline { background: transparent; color: #1a1a18; border: 1.5px solid #d0cfc8 !important; }
+.btn-sm-green { background: #2D7A3A; color: #fff; }
+.btn-sm-yield { background: #0E0E0D; color: #C9A84C; }
+@media (max-width: 480px) { .header-nav .btn-sm-outline.hide-mobile { display: none; } }
+
+/* Hero */
+.hero { padding: 64px 20px 56px; text-align: center; max-width: 680px; margin: 0 auto; }
+.hero-eyebrow { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #2D7A3A; margin-bottom: 14px; }
+.hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 20px; }
+.hero p { font-size: 17px; color: #555; max-width: 520px; margin: 0 auto 36px; line-height: 1.65; }
+.cta-group { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.btn-primary { display: inline-block; padding: 16px 36px; background: #2D7A3A; color: #fff; border-radius: 10px; font-size: 16px; font-weight: 700; }
+.btn-primary:active { opacity: 0.85; }
+.cta-subtext { font-size: 12px; color: #999; text-align: center; }
+
+/* Features */
+.features { padding: 56px 20px; max-width: 860px; margin: 0 auto; }
+.features-header { text-align: center; margin-bottom: 48px; }
+.features-header h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 10px; }
+.features-header p { font-size: 15px; color: #555; max-width: 480px; margin: 0 auto; line-height: 1.65; }
+.feature-split { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; margin-bottom: 64px; }
+.feature-split.reverse { direction: rtl; }
+.feature-split.reverse > * { direction: ltr; }
+@media (max-width: 640px) { .feature-split { grid-template-columns: 1fr; gap: 28px; } .feature-split.reverse { direction: ltr; } }
+.feature-text h3 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+.feature-text p { font-size: 15px; color: #555; line-height: 1.7; margin-bottom: 18px; }
+.feature-list { list-style: none; }
+.feature-list li { font-size: 14px; color: #444; padding-left: 22px; position: relative; line-height: 1.5; margin-bottom: 8px; }
+.feature-list li::before { content: '\2713'; position: absolute; left: 0; font-weight: 700; color: #2D7A3A; }
+.mockup-wrap { position: relative; }
+.mockup-img { width: 100%; max-width: 280px; margin: 0 auto; border-radius: 20px; box-shadow: 0 24px 64px rgba(0,0,0,0.13); border: 1px solid #e5e4de; display: block; background: #f0efea; aspect-ratio: 9/19; object-fit: cover; }
+@media (max-width: 640px) { .mockup-img { max-width: 220px; } }
+
+/* Testimonials */
+.testimonials { padding: 56px 20px; background: #1a1a18; }
+.testimonials-inner { max-width: 860px; margin: 0 auto; }
+.testimonials h2 { font-size: 22px; font-weight: 700; color: #fff; text-align: center; margin-bottom: 32px; }
+.testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 640px) { .testimonials-grid { grid-template-columns: 1fr; } }
+.testimonial-card { background: #2a2a28; border-radius: 14px; padding: 24px; }
+.testimonial-stars { color: #2D7A3A; font-size: 16px; margin-bottom: 12px; }
+.testimonial-text { font-size: 14px; color: #ccc; line-height: 1.7; margin-bottom: 16px; font-style: italic; }
+.testimonial-name { font-size: 14px; font-weight: 700; color: #fff; }
+.testimonial-role { font-size: 12px; color: #888; margin-top: 2px; }
+
+/* Pricing */
+.pricing { padding: 56px 20px; background: #fff; border-top: 1px solid #e5e4de; border-bottom: 1px solid #e5e4de; }
+.pricing-inner { max-width: 680px; margin: 0 auto; text-align: center; }
+.pricing h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.pricing-sub { font-size: 15px; color: #666; margin-bottom: 32px; }
+.pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; text-align: left; }
+@media (max-width: 520px) { .pricing-grid { grid-template-columns: 1fr; } }
+.price-card { background: #fafaf7; border: 1px solid #e5e4de; border-radius: 16px; padding: 24px; }
+.price-card.featured { background: #1a1a18; border-color: #1a1a18; color: #fff; }
+.price-card-tag { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #888; margin-bottom: 8px; }
+.price-card.featured .price-card-tag { color: #C9A84C; }
+.price-card-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.price-card-price { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-top: 12px; }
+.price-card-period { font-size: 14px; color: #888; }
+.price-card.featured .price-card-period { color: #aaa; }
+.price-card-annual { font-size: 13px; color: #666; margin-top: 4px; }
+.price-card.featured .price-card-annual { color: #C9A84C; }
+.price-card-features { list-style: none; padding: 14px 0 0; font-size: 14px; }
+.price-card-features li { padding: 4px 0; color: #444; }
+.price-card.featured .price-card-features li { color: #ddd; }
+.price-card-cta { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e4de; }
+.price-card.featured .price-card-cta { border-top-color: rgba(255,255,255,0.08); }
+.cta-green { display: block; padding: 13px 20px; background: #2D7A3A; color: #fff; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; }
+.cta-suite { display: block; padding: 13px 20px; background: #C9A84C; color: #0E0E0D; border-radius: 8px; font-size: 14px; font-weight: 700; text-align: center; }
+.price-cta-subtext { font-size: 11px; color: #999; text-align: center; margin-top: 8px; }
+.price-card.featured .price-cta-subtext { color: #666; }
+.pricing-note { font-size: 13px; color: #999; margin-top: 22px; }
+
+/* Final CTA */
+.final-cta { padding: 64px 20px; text-align: center; max-width: 580px; margin: 0 auto; }
+.final-cta h2 { font-size: 26px; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.01em; }
+.final-cta p { font-size: 15px; color: #555; margin-bottom: 32px; line-height: 1.65; }
+
+/* FSA strip */
+.fsa-strip { background: #1a1a18; padding: 40px 20px; }
+.fsa-strip-inner { max-width: 680px; margin: 0 auto; }
+.fsa-stars { font-size: 24px; letter-spacing: 4px; color: #2D7A3A; margin-bottom: 12px; }
+.fsa-strip h2 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+.fsa-strip p { font-size: 14px; color: #aaa; line-height: 1.7; }
+
+/* Footer */
+.site-footer { padding: 32px 20px; text-align: center; font-size: 13px; color: #999; border-top: 1px solid #e5e4de; }
+.site-footer a { color: #666; margin: 0 8px; }
+.footer-links { margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/" class="logo">
+    <img src="icons/icon-192.png" alt="Veriqo logo" width="32" height="32">
+    Veriqo
+  </a>
+  <nav class="header-nav" aria-label="Site navigation">
+    <a href="/carte" class="btn-sm btn-sm-outline hide-mobile">Carte</a>
+    <a href="/yield-info" class="btn-sm btn-sm-yield">Yield</a>
+    <a href="/app" class="btn-sm btn-sm-green">Open app</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" aria-labelledby="hero-heading">
+    <p class="hero-eyebrow">HACCP compliance for private chefs</p>
+    <h1 id="hero-heading">Pass your EHO inspection with confidence</h1>
+    <p>Veriqo replaces paper-based HACCP records with a phone-based system built specifically for private chefs and mobile caterers operating under UK food hygiene law.</p>
+    <div class="cta-group">
+      <a href="/app" class="btn-primary">Start free trial &rarr;</a>
+      <p class="cta-subtext">Set up your first menu in under 2 minutes. No credit card required.</p>
+    </div>
+  </section>
+
+  <section class="features" aria-label="Veriqo features">
+    <div class="features-header">
+      <h2>Everything you need to keep<br>your records inspection-ready</h2>
+      <p>Every log type an environmental health officer expects to see — organised, date-stamped, and exportable on demand.</p>
+    </div>
+
+    <div class="feature-split">
+      <div class="feature-text">
+        <h3>Temperature monitoring</h3>
+        <p>Log fridge, freezer, cooking, cooling, and reheating temperatures in seconds. Set custom thresholds and get warned when a reading is out of range. Every record is date-stamped and stored securely in the cloud.</p>
+        <ul class="feature-list">
+          <li>Fridge and freezer daily checks</li>
+          <li>Cooking and probe temperature logs</li>
+          <li>Cooling and reheating records</li>
+          <li>Delivery and transport temperatures</li>
+        </ul>
+      </div>
+      <div class="mockup-wrap">
+        <img src="images/veriqo-interface.png" alt="Veriqo temperature logging screen" class="mockup-img" width="280" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feature-split reverse">
+      <div class="feature-text">
+        <h3>Allergen declarations &amp; cross-contamination</h3>
+        <p>Record the 14 UK-regulated allergens for every dish you serve. Carte menus flow directly into Veriqo, so your allergen matrix updates automatically when you book a job — no double entry.</p>
+        <ul class="feature-list">
+          <li>Allergen declarations per dish and menu</li>
+          <li>Cross-contamination records</li>
+          <li>Auto-populated from Carte bookings</li>
+          <li>Printable allergen matrix per event</li>
+        </ul>
+      </div>
+      <div class="mockup-wrap">
+        <img src="images/veriqo-allergens.png" alt="Veriqo allergen declaration screen" class="mockup-img" width="280" loading="lazy">
+      </div>
+    </div>
+
+    <div class="feature-split">
+      <div class="feature-text">
+        <h3>Cleaning, credentials &amp; compliance records</h3>
+        <p>From daily cleaning logs to your annual food hygiene certificate — Veriqo tracks it all. Get a 90-day alert when a credential is about to expire and share your entire compliance history with an EHO in one tap.</p>
+        <ul class="feature-list">
+          <li>Cleaning and disinfection records</li>
+          <li>Opening and closing checklists</li>
+          <li>Staff illness and injury logs</li>
+          <li>Pest control records</li>
+          <li>Certificate and credentials tracker</li>
+          <li>Approved supplier register</li>
+        </ul>
+      </div>
+      <div class="mockup-wrap">
+        <img src="images/veriqo-dashboard.png" alt="Veriqo compliance dashboard" class="mockup-img" width="280" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <section class="fsa-strip" aria-labelledby="fsa-heading">
+    <div class="fsa-strip-inner">
+      <div class="fsa-stars" aria-hidden="true">★★★★★</div>
+      <h2 id="fsa-heading">Built to support your 5-star food hygiene rating</h2>
+      <p>The Food Standards Agency rates every UK food business on a 0–5 scale. A top rating isn't just about being clean on the day — an EHO will assess your confidence in food safety management, and that confidence comes from documented records. Veriqo gives you a complete, date-stamped paper trail ready to show at any time.</p>
+    </div>
+  </section>
+
+  <section class="pricing" aria-labelledby="pricing-heading">
+    <div class="pricing-inner">
+      <h2 id="pricing-heading">Simple pricing</h2>
+      <p class="pricing-sub">Start with a 14-day free trial of everything. No credit card required.</p>
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="price-card-tag">Veriqo only</div>
+          <div class="price-card-name">Compliance</div>
+          <div><span class="price-card-price">£12</span> <span class="price-card-period">/ month</span></div>
+          <div class="price-card-annual">or £120 / year — two months free</div>
+          <ul class="price-card-features">
+            <li>All HACCP record types</li>
+            <li>Unlimited records</li>
+            <li>Cloud sync + PWA install</li>
+          </ul>
+          <div class="price-card-cta">
+            <a href="/app" class="cta-green">Start free trial &rarr;</a>
+            <p class="price-cta-subtext">No credit card required</p>
+          </div>
+        </div>
+        <div class="price-card featured">
+          <div class="price-card-tag">Best value</div>
+          <div class="price-card-name">Suite — all three apps</div>
+          <div><span class="price-card-price">£28</span> <span class="price-card-period">/ month</span></div>
+          <div class="price-card-annual">or £280 / year — save £56 vs monthly</div>
+          <ul class="price-card-features">
+            <li>Veriqo + Carte + Yield</li>
+            <li>Shared client, menu &amp; job data</li>
+            <li>Saves £8 / month vs buying separately</li>
+          </ul>
+          <div class="price-card-cta">
+            <a href="/app" class="cta-suite">Start 14-day free trial &rarr;</a>
+            <p class="price-cta-subtext">Set up in under 2 minutes. No credit card.</p>
+          </div>
+        </div>
+      </div>
+      <p class="pricing-note">All plans: 14-day free trial &nbsp;&middot;&nbsp; cancel any time &nbsp;&middot;&nbsp; UK VAT inclusive</p>
+    </div>
+  </section>
+
+  <section class="final-cta" aria-label="Call to action">
+    <h2>Ready to make compliance effortless?</h2>
+    <p>Join private chefs and mobile caterers across the UK who use Veriqo to stay inspection-ready every day — not just when an EHO calls.</p>
+    <div class="cta-group">
+      <a href="/app" class="btn-primary">Start your free trial &rarr;</a>
+      <p class="cta-subtext">Set up your first menu in under 2 minutes. No credit card required.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>Veriqo, Carte and Yield are products of Mise Labs, operated by <a href="https://www.sideordercatering.co.uk" rel="noopener">Side Order Catering</a> &nbsp;&middot;&nbsp; <a href="mailto:hello@getveriqo.co.uk">hello@getveriqo.co.uk</a></p>
+  <nav class="footer-links" aria-label="Footer navigation">
+    <a href="/veriqo">Veriqo</a>
+    <a href="/carte">Carte</a>
+    <a href="/yield-info">Yield</a>
+    <a href="/resources">Resources</a>
+    <a href="/">Home</a>
+  </nav>
+</footer>
+
+</body>
+</html>

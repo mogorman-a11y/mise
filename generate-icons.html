@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mise — Icon Generator</title>
+<style>
+  body { font-family: -apple-system, sans-serif; padding: 40px; background: #f5f4f0; }
+  h2 { margin-bottom: 20px; }
+  .row { display: flex; gap: 40px; align-items: flex-start; margin-bottom: 30px; }
+  canvas { border-radius: 22%; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  a { display: block; margin-top: 10px; padding: 8px 16px; background: #3B6D11; color: #fff;
+      border-radius: 8px; text-decoration: none; font-size: 14px; font-weight: 600; text-align: center; }
+</style>
+</head>
+<body>
+<h2>Mise Icon Generator</h2>
+<p style="margin-bottom:24px;color:#555">Click each download link, save into the <code>icons/</code> folder with the exact filename shown.</p>
+
+<div class="row">
+  <div>
+    <canvas id="c192" width="192" height="192"></canvas>
+    <a id="dl192" download="icon-192.png">Download icon-192.png</a>
+  </div>
+  <div>
+    <canvas id="c512" width="512" height="512"></canvas>
+    <a id="dl512" download="icon-512.png">Download icon-512.png</a>
+  </div>
+  <div>
+    <canvas id="c180" width="180" height="180"></canvas>
+    <a id="dl180" download="apple-touch-icon.png">Download apple-touch-icon.png</a>
+  </div>
+</div>
+
+<script>
+function drawIcon(canvas) {
+  var s = canvas.width;
+  var ctx = canvas.getContext('2d');
+  var r = s * 0.22;
+
+  // Rounded square background — dark
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.lineTo(s - r, 0);
+  ctx.quadraticCurveTo(s, 0, s, r);
+  ctx.lineTo(s, s - r);
+  ctx.quadraticCurveTo(s, s, s - r, s);
+  ctx.lineTo(r, s);
+  ctx.quadraticCurveTo(0, s, 0, s - r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.closePath();
+  ctx.fillStyle = '#1a1a18';
+  ctx.fill();
+
+  // Mise logo — tent/chevron shape matching the app SVG exactly
+  // SVG viewBox is 0 0 100 100, scale to canvas size
+  var sc  = s / 100;
+  var lw  = 9 * sc;
+
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth   = lw;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+
+  // Tent: left pillar up, peak at centre-high, right pillar down
+  // Original SVG: M22 76 L22 28 L50 56 L78 28 L78 76
+  // Peak is at y=28 (top), valley dip is at y=56 (mid) — this is the key:
+  // the peak goes UP to 28, so centre dips to 56. That's the Mise chevron.
+  ctx.beginPath();
+  ctx.moveTo(22 * sc, 76 * sc);
+  ctx.lineTo(22 * sc, 28 * sc);
+  ctx.lineTo(50 * sc, 56 * sc);
+  ctx.lineTo(78 * sc, 28 * sc);
+  ctx.lineTo(78 * sc, 76 * sc);
+  ctx.stroke();
+
+  // Baseline
+  ctx.beginPath();
+  ctx.moveTo(22 * sc, 76 * sc);
+  ctx.lineTo(78 * sc, 76 * sc);
+  ctx.stroke();
+}
+
+['c192','c512','c180'].forEach(function(id) {
+  var canvas = document.getElementById(id);
+  drawIcon(canvas);
+});
+
+document.getElementById('dl192').href = document.getElementById('c192').toDataURL('image/png');
+document.getElementById('dl512').href = document.getElementById('c512').toDataURL('image/png');
+document.getElementById('dl180').href = document.getElementById('c180').toDataURL('image/png');
+</script>
+</body>
+</html>

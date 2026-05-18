@@ -1,0 +1,96 @@
+/* dashboard.css — Veriqo Dashboard module styles */
+
+.dashboard-wrap {
+  padding: 20px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.db-greeting {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--vq-ink);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+/* ── KPI cards ───────────────────────────────────────────── */
+.db-card {
+  background: var(--vq-surface);
+  border: 1px solid var(--vq-border);
+  border-radius: var(--vq-radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.db-card:active { transform: scale(0.98); }
+.db-card.db-card-locked { cursor: default; }
+.db-card.db-card-locked:active { transform: none; }
+
+.db-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.db-card-icon  { font-size: 20px; line-height: 1; }
+.db-card-label { font-size: 15px; font-weight: 700; color: var(--vq-ink); flex: 1; }
+.db-card-arrow { font-size: 18px; color: var(--vq-muted); }
+.db-lock-badge { font-size: 14px; }
+
+/* ── KPI row ─────────────────────────────────────────────── */
+.db-kpi-row {
+  display: flex;
+  gap: 12px;
+}
+.db-kpi {
+  flex: 1;
+  background: var(--vq-surface-alt);
+  border-radius: var(--vq-radius-md);
+  padding: 10px 12px;
+  text-align: center;
+}
+.db-kpi-num   { display: block; font-size: 22px; font-weight: 700; color: var(--vq-ink); }
+.db-kpi-label { display: block; font-size: 11px; color: var(--vq-muted); margin-top: 2px; }
+
+.db-kpi.db-kpi-ok   .db-kpi-num { color: var(--vq-ok); }
+.db-kpi.db-kpi-warn .db-kpi-num { color: var(--vq-warn); }
+.db-kpi.db-kpi-fail .db-kpi-num { color: var(--vq-fail); }
+
+/* ── Locked card content ─────────────────────────────────── */
+.db-locked-value {
+  font-size: 13px;
+  color: var(--vq-muted);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.db-benchmark {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vq-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+.db-upgrade-btn {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  background: var(--vq-green);
+  color: #fff;
+  border: none;
+  border-radius: var(--vq-radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--vq-font);
+  text-align: center;
+}
+.db-upgrade-btn:active { opacity: 0.85; }
+
+/* ── Desktop ─────────────────────────────────────────────── */
+@media (min-width: 768px) {
+  .dashboard-wrap { max-width: 720px; }
+}

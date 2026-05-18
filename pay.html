@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Quote — Yield</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0E0E0D;
+    color: #F0EDE6;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; }
+
+  /* Header */
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding-top: 4px;
+  }
+  .logo-row svg { width: 28px; height: 28px; flex-shrink: 0; }
+  .logo-text { font-family: 'Instrument Serif', serif; font-size: 18px; color: #C9A84C; }
+  .business-name { font-size: 13px; color: #7A7870; margin-left: auto; text-align: right; }
+
+  /* Cards */
+  .card {
+    background: #181817;
+    border: 1px solid #2E2E2B;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .card-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #4A4A47;
+    margin-bottom: 12px;
+  }
+
+  /* Event hero */
+  .event-client { font-family: 'Instrument Serif', serif; font-size: 22px; color: #F0EDE6; margin-bottom: 4px; }
+  .event-meta { font-size: 13px; color: #7A7870; }
+
+  /* Status badge */
+  .status-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid;
+  }
+  .badge-sent    { background: rgba(74,158,202,0.1); border-color: rgba(74,158,202,0.4); color: #4A9ECA; }
+  .badge-accepted { background: rgba(76,175,122,0.1); border-color: rgba(76,175,122,0.4); color: #4CAF7A; }
+  .badge-declined { background: rgba(212,95,74,0.1); border-color: rgba(212,95,74,0.4); color: #D45F4A; }
+
+  /* Financial breakdown */
+  .fin-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 0; font-size: 14px;
+  }
+  .fin-row + .fin-row { border-top: 1px solid #222220; }
+  .fin-label { color: #7A7870; }
+  .fin-value { font-weight: 600; }
+  .fin-row.total .fin-label { color: #F0EDE6; font-weight: 600; }
+  .fin-row.total .fin-value { color: #C9A84C; font-size: 18px; font-family: 'Instrument Serif', serif; }
+  .extras-label { font-size: 12px; color: #4A4A47; }
+
+  /* Payment status */
+  .pay-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0;
+  }
+  .pay-item + .pay-item { border-top: 1px solid #222220; }
+  .pay-item-left {}
+  .pay-item-name { font-weight: 600; color: #F0EDE6; font-size: 14px; }
+  .pay-item-amt  { font-size: 13px; color: #7A7870; margin-top: 2px; }
+  .pay-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; font-weight: 600; border: 1px solid;
+  }
+  .pay-chip.paid    { background: rgba(76,175,122,0.1); border-color: rgba(76,175,122,0.4); color: #4CAF7A; }
+  .pay-chip.pending { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.25); color: #C9A84C; }
+
+  /* Payment instructions */
+  .instructions {
+    font-size: 13px; color: #7A7870; white-space: pre-wrap; line-height: 1.7;
+  }
+
+  /* CTA */
+  .cta-btn {
+    width: 100%; padding: 15px; border-radius: 8px; font-size: 15px; font-weight: 600;
+    font-family: 'Instrument Sans', sans-serif; cursor: not-allowed;
+    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3); color: #C9A84C;
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;
+  }
+  .cta-sub { font-size: 12px; color: #4A4A47; text-align: center; margin-top: 8px; }
+
+  /* Notes */
+  .notes-text { font-size: 13px; color: #7A7870; line-height: 1.7; white-space: pre-wrap; }
+
+  /* Loading skeleton */
+  .skeleton { background: #222220; border-radius: 6px; animation: pulse 1.4s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Error */
+  .error-card { text-align: center; padding: 40px 24px; }
+  .error-icon { font-size: 32px; margin-bottom: 12px; }
+  .error-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; }
+  .error-msg { font-size: 14px; color: #7A7870; line-height: 1.6; }
+
+  /* Footer */
+  .footer { text-align: center; font-size: 12px; color: #4A4A47; margin-top: 32px; }
+  .footer a { color: #7A7870; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logo-row">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+      <path d="M26 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+      <path d="M16 17L16 28" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <span class="logo-text">Yield</span>
+    <span class="business-name" id="chef-business-name"></span>
+  </div>
+
+  <div id="content">
+    <!-- Loading skeleton -->
+    <div class="card" id="loading-state">
+      <div class="skeleton" style="height:14px;width:60%;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:26px;width:80%;margin-bottom:6px;"></div>
+      <div class="skeleton" style="height:14px;width:45%;"></div>
+    </div>
+    <div class="card" id="loading-state-2">
+      <div class="skeleton" style="height:14px;width:40%;margin-bottom:14px;"></div>
+      <div class="skeleton" style="height:14px;width:100%;margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px;width:100%;margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:20px;width:50%;margin-top:4px;"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Powered by <a href="https://getveriqo.co.uk">Yield by Mise Labs</a>
+</div>
+
+<script>
+  var quoteId = new URLSearchParams(window.location.search).get('q');
+
+  function fmt(n) {
+    return '£' + parseFloat(n || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function statusBadge(status) {
+    var map = {
+      sent:     ['badge-sent',     'Awaiting Acceptance'],
+      accepted: ['badge-accepted', 'Accepted'],
+      declined: ['badge-declined', 'Declined'],
+      expired:  ['badge-declined', 'Expired']
+    };
+    var cfg = map[status] || ['badge-sent', status];
+    return '<span class="badge ' + cfg[0] + '">' + cfg[1] + '</span>';
+  }
+
+  function render(data) {
+    var q = data.quote;
+    var chef = data.chef;
+
+    // Business name in header
+    var bn = document.getElementById('chef-business-name');
+    if (bn && chef.business_name) bn.textContent = chef.business_name;
+
+    // Extras rows
+    var extrasHTML = '';
+    (q.extras || []).forEach(function(e) {
+      extrasHTML += '<div class="fin-row">' +
+        '<span class="fin-label extras-label">+ ' + (e.label || 'Extra') + '</span>' +
+        '<span class="fin-value" style="font-size:13px;color:#7A7870">' + fmt(e.amount) + '</span>' +
+        '</div>';
+    });
+
+    // Payment status items
+    var depChip = q.deposit_paid
+      ? '<span class="pay-chip paid">✓ Paid</span>'
+      : '<span class="pay-chip pending">Pending</span>';
+    var balChip = q.balance_paid
+      ? '<span class="pay-chip paid">✓ Paid</span>'
+      : (q.deposit_paid ? '<span class="pay-chip pending">Pending</span>' : '<span class="pay-chip pending" style="opacity:0.5">Awaiting deposit</span>');
+
+    // CTA — shown only if something is still outstanding
+    var allPaid = q.deposit_paid && q.balance_paid;
+    var ctaHTML = '';
+    if (!allPaid) {
+      if (chef.card_payments_enabled) {
+        // Real Stripe Checkout — direct charge to chef's Connect account
+        var payType = !q.deposit_paid ? 'deposit' : 'balance';
+        var payAmt = payType === 'deposit' ? q.deposit_amount : q.balance_amount;
+        var payLabel = payType === 'deposit' ? 'Pay Deposit' : 'Pay Balance';
+        ctaHTML = '<button class="cta-btn" id="cta-pay-btn" onclick="startCheckout(\'' + payType + '\')">' +
+          '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="5" width="12" height="9" rx="2" stroke="#C9A84C" stroke-width="1.5"/><path d="M5 5V4a3 3 0 0 1 6 0v1" stroke="#C9A84C" stroke-width="1.5"/></svg>' +
+          payLabel + ' · ' + fmt(payAmt) + '</button>' +
+          '<p class="cta-sub">Secure card payment via Stripe. Funds go directly to your chef.</p>';
+      } else {
+        ctaHTML = '<button class="cta-btn" disabled>' +
+          '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="5" width="12" height="9" rx="2" stroke="#C9A84C" stroke-width="1.5"/><path d="M5 5V4a3 3 0 0 1 6 0v1" stroke="#C9A84C" stroke-width="1.5"/></svg>' +
+          'Pay Online</button>' +
+          '<p class="cta-sub">Online card payments coming soon — pay using the details below for now.</p>';
+      }
+    }
+
+    // Notes
+    var notesHTML = q.notes ? '<div class="card"><div class="card-label">Notes from your chef</div><p class="notes-text">' + q.notes + '</p></div>' : '';
+
+    // Payment instructions
+    var instrHTML = chef.payment_instructions ? '<div class="card"><div class="card-label">How to pay</div><p class="instructions">' + chef.payment_instructions + '</p></div>' : '';
+
+    document.getElementById('content').innerHTML =
+      '<div class="card">' +
+        '<div class="card-label">Your Quote · ' + (quoteId || '').slice(-8).toUpperCase() + '</div>' +
+        '<div class="event-client">' + (q.client_name || 'Guest') + '</div>' +
+        '<div class="event-meta">' + fmtDate(q.event_date) + (q.covers ? ' · ' + q.covers + ' covers' : '') + '</div>' +
+        '<div class="status-row">' + statusBadge(q.status) + (allPaid ? '<span class="badge badge-accepted">Fully paid</span>' : '') + '</div>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div class="card-label">Financial Summary</div>' +
+        '<div class="fin-row"><span class="fin-label">Catering (' + q.covers + ' × ' + fmt(q.price_per_head) + '/head)</span><span class="fin-value">' + fmt(q.catering_subtotal) + '</span></div>' +
+        extrasHTML +
+        (q.vat_enabled ? (
+          '<div class="fin-row"><span class="fin-label">Subtotal (ex. VAT)</span><span class="fin-value" style="color:#7A7870">' + fmt(q.subtotal) + '</span></div>' +
+          '<div class="fin-row"><span class="fin-label">VAT (' + q.vat_rate + '%)</span><span class="fin-value" style="color:#7A7870">' + fmt(q.vat_amount) + '</span></div>'
+        ) : '') +
+        '<div class="fin-row total"><span class="fin-label">' + (q.vat_enabled ? 'Total inc. VAT' : 'Grand Total') + '</span><span class="fin-value">' + fmt(q.grand_total) + '</span></div>' +
+      '</div>' +
+
+      '<div class="card">' +
+        '<div class="card-label">Payment Schedule</div>' +
+        '<div class="pay-item"><div class="pay-item-left"><div class="pay-item-name">Deposit (' + q.deposit_pct + '%)</div><div class="pay-item-amt">' + fmt(q.deposit_amount) + '</div></div>' + depChip + '</div>' +
+        '<div class="pay-item"><div class="pay-item-left"><div class="pay-item-name">Balance</div><div class="pay-item-amt">' + fmt(q.balance_amount) + '</div></div>' + balChip + '</div>' +
+      '</div>' +
+
+      instrHTML +
+      notesHTML +
+
+      (ctaHTML ? '<div>' + ctaHTML + '</div>' : '');
+  }
+
+  function showError(msg) {
+    document.getElementById('content').innerHTML =
+      '<div class="card error-card">' +
+        '<div class="error-icon">🍽</div>' +
+        '<div class="error-title">' + (msg === 'not_sent' ? 'Not available yet' : 'Quote not found') + '</div>' +
+        '<div class="error-msg">' +
+          (msg === 'not_sent'
+            ? 'Your chef hasn\'t sent this quote yet. Check back once they\'ve confirmed the details with you.'
+            : 'This link may have expired or the quote reference is incorrect. Please contact your chef directly.') +
+        '</div>' +
+      '</div>';
+  }
+
+  function startCheckout(type) {
+    var btn = document.getElementById('cta-pay-btn');
+    if (btn) { btn.disabled = true; btn.innerHTML = 'Opening secure checkout…'; }
+    fetch('/api/stripe-connect?action=checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ quoteId: quoteId, type: type })
+    })
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
+      .then(function(r) {
+        if (!r.ok || !r.data.url) {
+          alert(r.data.error || 'Could not open checkout. Please try again or contact your chef.');
+          if (btn) { btn.disabled = false; btn.innerHTML = 'Try again'; }
+          return;
+        }
+        window.location.href = r.data.url;
+      })
+      .catch(function() {
+        alert('Could not open checkout. Please check your connection and try again.');
+        if (btn) { btn.disabled = false; btn.innerHTML = 'Try again'; }
+      });
+  }
+
+  function maybeRenderReturnBanner() {
+    var sp = new URLSearchParams(window.location.search);
+    var status = sp.get('status');
+    if (!status) return;
+    var content = document.getElementById('content');
+    if (!content) return;
+    var banner = '';
+    if (status === 'success') {
+      var which = sp.get('type') === 'balance' ? 'balance' : 'deposit';
+      banner =
+        '<div class="card" style="background:#1F3A1F;border-color:#3FA63F;color:#E8F5E9;">' +
+          '<div style="font-weight:700;margin-bottom:4px;">Payment received ✓</div>' +
+          '<div style="font-size:13px;">Your ' + which + ' has been paid. We are confirming with your chef now — the status below will update within a minute.</div>' +
+        '</div>';
+    } else if (status === 'cancelled') {
+      banner =
+        '<div class="card" style="background:#3A2E1F;border-color:#C9A84C;color:#F4E6BE;">' +
+          '<div style="font-weight:700;margin-bottom:4px;">Payment cancelled</div>' +
+          '<div style="font-size:13px;">No charge was made. You can try again whenever you are ready.</div>' +
+        '</div>';
+    }
+    if (banner) {
+      content.insertAdjacentHTML('afterbegin', banner);
+    }
+    // Strip the status params so a refresh doesn't re-show the banner
+    if (window.history && window.history.replaceState) {
+      var clean = '/pay?q=' + encodeURIComponent(quoteId);
+      window.history.replaceState(null, '', clean);
+    }
+  }
+
+  if (!quoteId) {
+    showError('not_found');
+  } else {
+    fetch('/api/get-quote?q=' + encodeURIComponent(quoteId))
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); })
+      .then(function(r) {
+        if (r.status === 403) { showError('not_sent'); return; }
+        if (!r.ok || !r.data.quote) { showError('not_found'); return; }
+        render(r.data);
+        maybeRenderReturnBanner();
+      })
+      .catch(function() { showError('not_found'); });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Client Details Form — Carte</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F5F0E8;color:#2C2B27;min-height:100vh}
+.page{max-width:480px;margin:0 auto;padding:0 0 60px}
+
+/* Top bar */
+.top-bar{background:#1C2B1E;padding:max(20px,env(safe-area-inset-top)) 20px 0}
+.top-bar-inner{display:flex;align-items:center;gap:10px;padding-bottom:20px}
+.chef-logo{width:42px;height:42px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.chef-logo-placeholder{width:42px;height:42px;border-radius:10px;background:#C8A96E;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:700;color:#1C2B1E}
+.top-names{flex:1;min-width:0}
+.top-business{font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-top:1px}
+.top-badge{font-size:10px;font-weight:600;letter-spacing:0.06em;color:#C8A96E;white-space:nowrap;padding:4px 8px;border:1px solid rgba(200,169,110,0.3);border-radius:6px;flex-shrink:0}
+
+/* Content */
+.section{padding:20px 16px 0}
+.intro-card{background:#1C2B1E;border-radius:14px;padding:20px;margin-bottom:4px}
+.intro-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:-0.01em}
+.intro-body{font-size:14px;color:rgba(255,255,255,0.62);line-height:1.6}
+
+/* Form card */
+.form-card{background:#fff;border-radius:14px;padding:20px;margin-top:12px}
+.form-card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#C8A96E;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-group:last-of-type{margin-bottom:0}
+.form-label{display:block;font-size:12px;font-weight:600;color:#8A7E72;margin-bottom:5px}
+.form-label .req{color:#C8A96E}
+.form-input{width:100%;padding:12px 13px;border:1.5px solid #E0D9CE;border-radius:9px;font-size:15px;color:#2C2B27;background:#FAF8F5;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none;transition:border-color 0.15s}
+.form-input:focus{border-color:#C8A96E;background:#fff}
+textarea.form-input{resize:none;min-height:80px;line-height:1.5}
+.form-hint{font-size:12px;color:#A09890;margin-top:4px}
+
+.btn-submit{width:100%;padding:15px;background:#C8A96E;color:#1C2B1E;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:18px;letter-spacing:-0.01em;transition:opacity 0.15s}
+.btn-submit:active{opacity:0.82}
+.btn-submit:disabled{opacity:0.45;cursor:not-allowed}
+
+.required-note{font-size:12px;color:#A09890;text-align:center;margin-top:10px}
+
+/* States */
+.state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:40px 24px}
+.state-icon{font-size:48px;margin-bottom:16px}
+.state-title{font-size:22px;font-weight:700;color:#2C2B27;margin-bottom:10px;letter-spacing:-0.02em}
+.state-body{font-size:15px;color:#8A7E72;line-height:1.65;max-width:300px}
+.state-body strong{color:#2C2B27}
+
+/* Error */
+.err-card{background:#FBF0F0;border:1px solid #E8C5C5;border-radius:14px;padding:24px;margin:20px 16px 0;text-align:center}
+.err-icon{font-size:32px;margin-bottom:10px}
+.err-title{font-size:16px;font-weight:700;color:#8A2D2D;margin-bottom:6px}
+.err-body{font-size:14px;color:#6B4040;line-height:1.55}
+
+/* Powered by */
+.powered{text-align:center;margin-top:28px;font-size:11px;color:#C4B9A8;padding:0 16px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;white-space:nowrap;opacity:0;transition:opacity 0.2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.toast.ok{background:#1C2B1E;color:#C8A96E}
+.toast.err{background:#8A2D2D;color:#fff}
+
+/* Loading skeleton */
+.skeleton{height:14px;border-radius:6px;background:#E8E0D4;animation:pulse 1.4s ease infinite;margin-bottom:8px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
+</head>
+<body>
+
+<!-- Top bar: replaced by JS with real branding -->
+<div class="top-bar" id="top-bar">
+  <div class="top-bar-inner">
+    <div class="chef-logo-placeholder" id="logo-placeholder">C</div>
+    <div class="top-names">
+      <div class="top-business skeleton" style="height:15px;width:140px;background:rgba(255,255,255,0.1)"></div>
+      <div class="skeleton" style="height:11px;width:80px;margin-top:5px;background:rgba(255,255,255,0.07)"></div>
+    </div>
+    <div class="top-badge">Carte</div>
+  </div>
+</div>
+
+<!-- Loading / Error / Form states -->
+<div id="state-loading" class="section" style="padding-top:24px">
+  <div class="intro-card">
+    <div class="skeleton" style="height:18px;width:70%;background:rgba(255,255,255,0.12)"></div>
+    <div class="skeleton" style="height:13px;width:90%;margin-top:10px;background:rgba(255,255,255,0.08)"></div>
+    <div class="skeleton" style="height:13px;width:60%;background:rgba(255,255,255,0.08)"></div>
+  </div>
+</div>
+
+<div id="state-error" style="display:none"></div>
+
+<div id="state-success" class="state-screen" style="display:none">
+  <div class="state-icon">✅</div>
+  <div class="state-title">Thanks!</div>
+  <div class="state-body" id="success-body">Your details have been sent. <strong>Your chef</strong> will be in touch.</div>
+</div>
+
+<div id="state-form" style="display:none">
+  <div class="section">
+    <div class="intro-card">
+      <div class="intro-title" id="intro-title">Your details</div>
+      <div class="intro-body" id="intro-body">Fill in your information below. Your chef will use this to tailor your experience.</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">About you</div>
+
+      <div class="form-group">
+        <label class="form-label" for="fi-name">Full name <span class="req">*</span></label>
+        <input class="form-input" id="fi-name" type="text" placeholder="e.g. Jane Williams" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fi-email">Email address <span class="req">*</span></label>
+        <input class="form-input" id="fi-email" type="email" placeholder="jane@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fi-phone">Phone number</label>
+        <input class="form-input" id="fi-phone" type="tel" placeholder="07700 900000" autocomplete="tel">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fi-address">Home address</label>
+        <input class="form-input" id="fi-address" type="text" placeholder="Full address" autocomplete="street-address">
+      </div>
+    </div>
+
+    <div class="form-card" style="margin-top:12px">
+      <div class="form-card-title">Food & preferences</div>
+
+      <div class="form-group">
+        <label class="form-label" for="fi-dietary">Dietary requirements & allergies</label>
+        <textarea class="form-input" id="fi-dietary" placeholder="e.g. Vegetarian, nut allergy, gluten-free..."></textarea>
+        <div class="form-hint">Include any allergies or intolerances for everyone attending.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fi-prefs">Preferences & notes for your chef</label>
+        <textarea class="form-input" id="fi-prefs" placeholder="Anything else your chef should know — likes, dislikes, occasions, style of dining..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="fi-submit" onclick="submitIntakeForm()">Send my details</button>
+    <div class="required-note">* Required fields</div>
+    <div class="powered">Powered by <strong>Carte</strong> · Private chef business management</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+<script>
+var SUPABASE_URL  = 'https://yixrwyfodipfcbhjcszp.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeHJ3eWZvZGlwZmNiaGpjc3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODg3MDIsImV4cCI6MjA5MTY2NDcwMn0.nXbnQ5iOxFEM5xWUP-p1a9hNyIlVe0xex0wQxZ9L4UE';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+var _token = null;
+var _config = null;
+
+function show(id) {
+  ['state-loading','state-error','state-success','state-form'].forEach(function(s){
+    document.getElementById(s).style.display = s === id ? (id === 'state-form' ? 'block' : 'flex') : 'none';
+  });
+  if(id === 'state-loading') document.getElementById('state-loading').style.display = 'block';
+}
+
+function toast(msg, type) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + (type || 'ok') + ' show';
+  setTimeout(function(){ el.className = 'toast ' + (type || 'ok'); }, 2400);
+}
+
+function showError(reason) {
+  var titles = {
+    not_found:    'Link not recognised',
+    expired:      'Link has expired',
+    already_used: 'Already submitted'
+  };
+  var bodies = {
+    not_found:    'This intake link is no longer valid. Ask your chef for a new one.',
+    expired:      'This intake link has passed its expiry date. Ask your chef to send a new one.',
+    already_used: 'Details have already been submitted via this link. Contact your chef directly if you need to make changes.'
+  };
+  var title = titles[reason] || 'Something went wrong';
+  var body  = bodies[reason] || 'Please try again or contact your chef directly.';
+
+  document.getElementById('state-error').innerHTML =
+    '<div class="err-card"><div class="err-icon">🔒</div>'
+    + '<div class="err-title">' + title + '</div>'
+    + '<div class="err-body">' + body + '</div></div>';
+  show('state-error');
+}
+
+function renderBranding(cfg) {
+  var topBar = document.getElementById('top-bar');
+  var logoHtml;
+  if (cfg.logo) {
+    logoHtml = '<img class="chef-logo" src="' + cfg.logo + '" alt="Logo">';
+  } else {
+    var initials = (cfg.business_name || cfg.chef_name || 'C').charAt(0).toUpperCase();
+    logoHtml = '<div class="chef-logo-placeholder">' + initials + '</div>';
+  }
+  var businessName = cfg.business_name || cfg.chef_name || 'Your Chef';
+  topBar.innerHTML =
+    '<div class="top-bar-inner">'
+    + logoHtml
+    + '<div class="top-names">'
+    + '<div class="top-business">' + _esc(businessName) + '</div>'
+    + '<div class="top-sub">Private Chef</div>'
+    + '</div>'
+    + '<div class="top-badge">Carte</div>'
+    + '</div>';
+
+  var label = cfg.label;
+  document.getElementById('intro-title').textContent = label ? label : 'Your details';
+  document.getElementById('intro-body').textContent =
+    'Fill in your information below. ' + _esc(businessName) + ' will use this to tailor your experience — you only need to do this once.';
+  document.getElementById('success-body').innerHTML =
+    'Your details have been sent. <strong>' + _esc(businessName) + '</strong> will be in touch.';
+}
+
+function _esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function init() {
+  var params = new URLSearchParams(window.location.search);
+  _token = params.get('t');
+  if (!_token) { showError('not_found'); return; }
+
+  try {
+    var res = await sb.rpc('get_intake_config', { p_token: _token });
+    if (res.error) throw res.error;
+    var cfg = res.data;
+    _config = cfg;
+    if (!cfg.is_valid) { showError(cfg.reason); return; }
+    renderBranding(cfg);
+    show('state-form');
+  } catch(e) {
+    console.error('[Carte intake] init:', e);
+    showError('not_found');
+  }
+}
+
+async function submitIntakeForm() {
+  var name  = (document.getElementById('fi-name').value || '').trim();
+  var email = (document.getElementById('fi-email').value || '').trim();
+  if (!name)  { toast('Please enter your full name', 'err'); document.getElementById('fi-name').focus(); return; }
+  if (!email) { toast('Please enter your email address', 'err'); document.getElementById('fi-email').focus(); return; }
+
+  var btn = document.getElementById('fi-submit');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  var data = {
+    name:        name,
+    email:       email,
+    phone:       (document.getElementById('fi-phone').value || '').trim(),
+    address:     (document.getElementById('fi-address').value || '').trim(),
+    dietary:     (document.getElementById('fi-dietary').value || '').trim(),
+    preferences: (document.getElementById('fi-prefs').value || '').trim()
+  };
+
+  try {
+    var res = await sb.rpc('submit_intake_form', { p_token: _token, p_data: data });
+    if (res.error) throw res.error;
+    show('state-success');
+  } catch(e) {
+    console.error('[Carte intake] submit:', e);
+    var msg = e && e.message;
+    if (msg && msg.includes('invalid_token')) {
+      showError('already_used');
+    } else {
+      toast('Something went wrong — please try again', 'err');
+      btn.textContent = 'Send my details';
+      btn.disabled = false;
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+/* haccp.css — HACCP module styles
+   Depends on tokens.css + shell.css */
+
+/* ── HACCP home layout ────────────────────────────────────── */
+.home { padding: 16px; }
+.summary-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
+.stat { background: var(--vq-surface); border-radius: var(--vq-radius-md); padding: 10px 6px; text-align: center; border: 1px solid var(--vq-border); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform 0.1s; }
+.stat:active { transform: scale(0.96); }
+.stat-num { font-size: 20px; font-weight: 700; }
+.stat-label { font-size: 10px; color: var(--vq-muted); margin-top: 2px; }
+
+/* ── Tile grid ────────────────────────────────────────────── */
+.tile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile { background: var(--vq-surface); border-radius: var(--vq-radius-lg); border: 1px solid var(--vq-border); padding: 14px 12px 12px; cursor: pointer; text-align: center; transition: transform 0.1s; position: relative; -webkit-tap-highlight-color: transparent; }
+.tile:active { transform: scale(0.97); }
+.tile-wide { grid-column: 1/-1; padding: 12px 14px; text-align: left; }
+.tile-wide-inner { display: flex; align-items: center; gap: 12px; }
+.tile-icon { font-size: 32px; margin-bottom: 6px; line-height: 1; }
+.tile-icon-sm { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.tile-label { font-size: 15px; font-weight: 600; color: var(--vq-ink); }
+.tile-sub { font-size: 12px; color: var(--vq-muted); margin-top: 4px; }
+.tile-badge { position: absolute; top: 12px; right: 12px; min-width: 22px; height: 22px; border-radius: 11px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+.tile-badge.ok   { background: var(--vq-ok-bg);   color: var(--vq-ok-text); }
+.tile-badge.warn { background: var(--vq-warn-bg);  color: var(--vq-warn-text); }
+.tile-badge.fail { background: var(--vq-fail-bg);  color: var(--vq-fail-text); }
+.tile-badge.none { display: none; }
+
+/* ── Alert strips ─────────────────────────────────────────── */
+.alerts-section { margin-bottom: 16px; }
+.alert-strip { padding: 10px 14px; border-radius: var(--vq-radius-md); margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; justify-content: space-between; }
+.alert-strip.warn { background: var(--vq-warn-bg); }
+.alert-strip.fail { background: var(--vq-fail-bg); }
+.alert-strip.none { background: var(--vq-surface); border: 1px solid var(--vq-border); }
+.alert-text strong { font-weight: 600; display: block; font-size: 13px; color: var(--vq-warn-text); }
+.alert-strip.fail .alert-text strong { color: var(--vq-fail-text); }
+.alert-strip.none .alert-text strong { color: #5f5e5a; }
+.alert-sub { font-size: 12px; color: var(--vq-muted); margin-top: 2px; }
+
+/* ── Section panels (HACCP sub-views) ─────────────────────── */
+.header { background: var(--vq-surface); border-bottom: 1px solid var(--vq-border); padding: 16px; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; }
+.back-btn { font-size: 22px; cursor: pointer; line-height: 1; padding: 4px 6px 4px 0; display: none; color: var(--vq-ink); background: none; border: none; font-family: var(--vq-font); }
+.header-text { flex: 1; }
+.header-text h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+.header-text p { font-size: 12px; color: var(--vq-muted); margin-top: 2px; }
+
+.section { display: none; padding: 16px; padding-bottom: 40px; }
+.section.active { display: block; }
+
+/* ── Cards ────────────────────────────────────────────────── */
+.card { background: var(--vq-surface); border: 1px solid var(--vq-border); border-radius: var(--vq-radius-md); padding: 14px; margin-bottom: 12px; }
+.card-title { font-size: 11px; font-weight: 600; color: var(--vq-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── Badges ───────────────────────────────────────────────── */
+.alert-badge { display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 600; margin-left: 6px; white-space: nowrap; }
+.badge-ok   { background: var(--vq-ok-bg);   color: var(--vq-ok-text); }
+.badge-warn { background: var(--vq-warn-bg);  color: var(--vq-warn-text); }
+.badge-fail { background: var(--vq-fail-bg);  color: var(--vq-fail-text); }
+.badge-miss { background: var(--vq-surface-alt); color: #5f5e5a; }
+
+/* ── Log rows ─────────────────────────────────────────────── */
+.log-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--vq-rule); }
+.log-row:last-child { border-bottom: none; }
+.log-name { font-size: 14px; }
+.log-time { font-size: 12px; color: var(--vq-muted); margin-top: 2px; }
+
+/* ── Forms ────────────────────────────────────────────────── */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 13px; color: #555; margin-bottom: 6px; display: block; }
+.form-input { width: 100%; padding: 10px 12px; border: 1px solid var(--vq-border-mid); border-radius: var(--vq-radius-sm); background: var(--vq-surface); color: var(--vq-ink); font-size: 14px; font-family: var(--vq-font); -webkit-appearance: none; }
+.form-input:focus { outline: none; border-color: #888; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.btn-primary { width: 100%; padding: 13px; background: var(--vq-ink); color: #fff; border: none; border-radius: var(--vq-radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; font-family: var(--vq-font); }
+.btn-primary:active { opacity: 0.8; }
+.na-btn { display:inline-block; margin-top:6px; padding:5px 10px; font-size:12px; font-weight:600; color:var(--vq-muted); background:#f0efeb; border:1px solid #d0cfc8; border-radius:var(--vq-radius-sm); cursor:pointer; font-family:var(--vq-font); }
+.na-btn-active { color:#fff; background:#888; border-color:#888; }
+.btn-secondary { width: 100%; padding: 11px; background: transparent; color: var(--vq-ink); border: 1px solid var(--vq-border-mid); border-radius: var(--vq-radius-sm); font-size: 14px; cursor: pointer; margin-top: 8px; font-family: var(--vq-font); }
+.btn-remove { background: none; border: none; color: var(--vq-fail); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; font-family: var(--vq-font); flex-shrink: 0; }
+
+/* ── Misc UI ──────────────────────────────────────────────── */
+.divider { font-size: 11px; color: #aaa; margin: 14px 0 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.card-toggle { cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+.card-toggle .divider-arrow { font-size: 10px; transition: transform 0.2s; display: inline-block; color: #aaa; }
+.card-toggle.collapsed .divider-arrow { transform: rotate(-90deg); }
+.settings-collapsible { overflow: hidden; transition: max-height 0.25s ease; max-height: 0; }
+
+.tile-toggle-hdr { padding: 13px 0; border-bottom: 1px solid var(--vq-rule); }
+.tile-toggle-hdr:last-child { border-bottom: none; }
+
+.toggle-switch { position: relative; display: inline-block; width: 44px; height: 26px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--vq-border-mid); border-radius: 26px; transition: background 0.2s; }
+.toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: var(--vq-shadow-sm); }
+.toggle-switch input:checked + .toggle-slider { background: var(--vq-green); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+.empty { font-size: 13px; color: #aaa; padding: 8px 0; line-height: 1.5; }
+.info-icon { display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:#e8e7e3;border:none;color:#999;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--vq-font);margin-left:6px;vertical-align:middle;flex-shrink:0;font-style:normal; }
+.info-icon:active { background:#d8d7d3; }
+.tooltip-bubble { position:fixed;z-index:9800;background:var(--vq-ink);color:#fff;font-size:12px;line-height:1.55;padding:10px 14px;border-radius:var(--vq-radius-md);max-width:260px;box-shadow:var(--vq-shadow-md); }
+
+/* Old .toast — kept for HACCP inline JS compat; shell.css !important rules reposition it */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 13px; padding: 10px 20px; border-radius: 20px; display: none; z-index: 99; white-space: nowrap; font-family: var(--vq-font); }
+.toast.show { display: block; }
+
+/* ── Day/log blocks ───────────────────────────────────────── */
+.day-block { background: var(--vq-surface); border: 1px solid var(--vq-border); border-radius: var(--vq-radius-md); margin-bottom: 10px; overflow: hidden; }
+.day-block-header { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.day-block-title { font-size: 14px; font-weight: 600; }
+.day-block-meta { font-size: 12px; color: var(--vq-muted); margin-top: 2px; }
+.day-block-body { padding: 0 14px 12px; border-top: 1px solid var(--vq-rule); display: none; }
+.day-block-body.open { display: block; }
+.day-stat-row { display: flex; gap: 8px; padding: 10px 0 6px; }
+.day-stat { background: var(--vq-bg); border-radius: var(--vq-radius-sm); padding: 6px 10px; text-align: center; flex: 1; }
+.day-stat-num { font-size: 16px; font-weight: 700; }
+.day-stat-label { font-size: 10px; color: var(--vq-muted); }
+.today-label { display: inline-block; font-size: 10px; font-weight: 700; background: var(--vq-ink); color: #fff; border-radius: 4px; padding: 2px 6px; margin-left: 8px; vertical-align: middle; }
+
+/* ── Checklists ───────────────────────────────────────────── */
+.checklist-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--vq-rule); }
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item label { flex: 1; font-size: 14px; color: var(--vq-ink); cursor: pointer; }
+.checklist-item input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; flex-shrink: 0; accent-color: var(--vq-ink); }
+.checklist-item .check-note { font-size: 12px; color: var(--vq-muted); display: block; margin-top: 2px; }
+
+/* ── Settings items ───────────────────────────────────────── */
+.setting-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--vq-rule); }
+.setting-item:last-child { border-bottom: none; }
+.setting-item-name { flex: 1; font-size: 14px; }
+.setting-item-default { font-size: 11px; color: #aaa; margin-left: 4px; }
+
+/* ── Add-row inputs ───────────────────────────────────────── */
+.add-row { display: flex; gap: 8px; margin-top: 10px; }
+.add-row input { flex: 1; padding: 9px 12px; border: 1px solid var(--vq-border-mid); border-radius: var(--vq-radius-sm); font-size: 14px; font-family: var(--vq-font); background: var(--vq-surface); color: var(--vq-ink); }
+.add-row input:focus { outline: none; border-color: #888; }
+.btn-add { padding: 9px 16px; background: var(--vq-ink); color: #fff; border: none; border-radius: var(--vq-radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--vq-font); white-space: nowrap; }
+
+.info-box { background: var(--vq-bg); border-radius: var(--vq-radius-sm); padding: 10px 12px; font-size: 12px; color: #666; margin-bottom: 14px; line-height: 1.5; }
+
+/* ── Job segment buttons ──────────────────────────────────── */
+.jseg-btn { flex:1; padding:10px 4px; border:none; background:var(--vq-bg); color:var(--vq-muted); font-size:12px; font-weight:600; font-family:var(--vq-font); cursor:pointer; border-top:1px solid var(--vq-border); border-left:1px solid var(--vq-border); }
+.jseg-btn:first-child { border-left:none; border-radius:0 0 0 12px; }
+.jseg-last { border-radius:0 0 12px 0; }
+.jseg-active { background:var(--vq-ink) !important; color:#fff !important; }
+
+/* ── Desktop adjustments ──────────────────────────────────── */
+@media (min-width: 768px) {
+  .tile-grid { grid-template-columns: repeat(4, 1fr); }
+}

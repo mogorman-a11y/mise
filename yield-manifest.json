@@ -1,0 +1,27 @@
+{
+  "name": "Yield — Know your yield.",
+  "short_name": "Yield",
+  "description": "Finance app for private chefs. Manage costing, quotes, invoices, payments and jobs from one place.",
+  "start_url": "/yield.html",
+  "display": "standalone",
+  "background_color": "#0E0E0D",
+  "theme_color": "#0E0E0D",
+  "orientation": "portrait-primary",
+  "categories": ["business", "finance", "productivity"],
+  "lang": "en-GB",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icons/yield-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/yield-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

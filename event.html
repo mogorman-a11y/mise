@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Event Briefing — Veriqo</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a2e1c;min-height:100vh}
+.page{max-width:480px;margin:0 auto;padding-bottom:60px}
+.top-bar{background:#2D7A3A;padding:max(16px,env(safe-area-inset-top)) 16px 0}
+.top-bar-inner{display:flex;align-items:center;gap:10px;padding-bottom:16px}
+.top-logo-name{font-size:15px;font-weight:700;color:#fff}
+.top-logo-sub{font-size:11px;color:rgba(255,255,255,0.65)}
+.section{padding:12px 16px 0}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:0;box-shadow:0 1px 3px rgba(0,0,0,0.07)}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:#2D7A3A;margin-bottom:12px}
+.detail-row{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0ec;font-size:14px;align-items:flex-start}
+.detail-row:last-child{border-bottom:none}
+.detail-key{color:#6b7d6e;min-width:84px;flex-shrink:0;font-size:13px}
+.detail-val{color:#1a2e1c;word-break:break-word;flex:1}
+.client-banner{background:linear-gradient(135deg,#2D7A3A 0%,#1e5a29 100%);border-radius:14px;padding:20px;color:#fff}
+.client-name{font-size:20px;font-weight:700;letter-spacing:-0.02em;margin-bottom:6px}
+.client-meta{font-size:13px;opacity:0.78;margin-bottom:3px;display:flex;align-items:baseline;gap:6px}
+.client-diet{margin-top:10px;background:rgba(255,255,255,0.12);border-radius:8px;padding:10px;font-size:13px;color:rgba(255,255,255,0.88)}
+.client-diet-label{font-size:10px;text-transform:uppercase;letter-spacing:0.07em;opacity:0.65;margin-bottom:4px}
+.menu-section-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#2D7A3A;margin:12px 0 6px}
+.menu-section-name:first-child{margin-top:0}
+.dish-chip{display:inline-flex;align-items:center;gap:4px;background:#f5f4f0;border:1px solid #e5e4e0;border-radius:20px;padding:4px 10px;font-size:12px;margin:2px 2px 2px 0;color:#1a2e1c;flex-wrap:wrap}
+.allergen-pill{background:#fff3cd;color:#856404;border-radius:8px;padding:1px 6px;font-size:10px;font-weight:700;white-space:nowrap}
+.tabs-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0 16px}
+.tabs-scroll::-webkit-scrollbar{display:none}
+.tabs{display:flex;gap:6px;padding:12px 0 4px;min-width:max-content}
+.tab{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:#e8e8e4;color:#6b7d6e;white-space:nowrap;font-family:inherit}
+.tab.active{background:#2D7A3A;color:#fff}
+.form-label{display:block;font-size:12px;font-weight:600;color:#6b7d6e;margin-bottom:4px;margin-top:14px}
+.form-label:first-of-type{margin-top:0}
+.form-input{width:100%;padding:11px 13px;border:1.5px solid #dddcd8;border-radius:9px;font-size:14px;color:#1a2e1c;background:#fff;font-family:inherit;outline:none;-webkit-appearance:none;appearance:none}
+.form-input:focus{border-color:#2D7A3A}
+select.form-input{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7d6e' fill='none' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.form-row{display:flex;gap:10px}
+.form-row .fg{flex:1;min-width:0}
+.temp-hint{font-size:12px;color:#6b7d6e;margin-top:4px}
+.btn-submit{width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:16px;letter-spacing:-0.01em}
+.btn-submit:active{opacity:0.85}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed}
+.btn-secondary{width:100%;padding:13px;background:#f5f4f0;color:#2D7A3A;border:1.5px solid #2D7A3A;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:12px}
+.log-header{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#6b7d6e;padding:16px 0 6px;border-top:1px solid #f0f0ec;margin-top:16px}
+.log-entry{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f8f8f6}
+.log-entry:last-child{border-bottom:none}
+.log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.log-dot.ok{background:#2D7A3A}
+.log-dot.warn{background:#f59e0b}
+.log-dot.fail{background:#ef4444}
+.log-body{flex:1;min-width:0}
+.log-msg{color:#1a2e1c;font-size:13px;font-weight:600;word-break:break-word}
+.log-meta{color:#6b7d6e;font-size:12px;margin-top:1px}
+.log-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;flex-shrink:0;margin-top:2px}
+.log-badge.ok{background:#d1fae5;color:#065f46}
+.log-badge.warn{background:#fef3c7;color:#92400e}
+.log-badge.fail{background:#fee2e2;color:#991b1b}
+.state-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:32px}
+.state-screen h2{font-size:20px;font-weight:700;margin-bottom:8px;color:#1a2e1c}
+.state-screen p{font-size:14px;color:#6b7d6e;max-width:280px;line-height:1.6}
+.cta{background:#1a2e1c;border-radius:16px;padding:24px;margin:12px 16px 0;text-align:center}
+.cta h3{font-size:17px;font-weight:700;color:#fff;margin-bottom:6px}
+.cta p{font-size:13px;color:#8aad90;line-height:1.55;margin-bottom:18px}
+.cta-btn{display:block;width:100%;padding:14px;background:#2D7A3A;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;font-family:inherit}
+.cta-sub{font-size:11px;color:#4d7a54;margin-top:10px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:11px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;white-space:nowrap;opacity:0;transition:opacity 0.2s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="top-bar">
+    <div class="top-bar-inner">
+      <svg width="34" height="34" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <rect width="60" height="60" rx="14" fill="rgba(255,255,255,0.15)"/>
+        <path d="M30 10 L48 18 L48 30 C48 41 30 50 30 50 C30 50 12 41 12 30 L12 18 Z" fill="rgba(255,255,255,0.18)"/>
+        <path d="M22 30 L28 36 L38 24" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <div class="top-logo-name">Veriqo</div>
+        <div class="top-logo-sub">Event Briefing</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+<script>
+var SUPABASE_URL  = 'https://yixrwyfodipfcbhjcszp.supabase.co';
+var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpeHJ3eWZvZGlwZmNiaGpjc3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODg3MDIsImV4cCI6MjA5MTY2NDcwMn0.nXbnQ5iOxFEM5xWUP-p1a9hNyIlVe0xex0wQxZ9L4UE';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+var TODAY = new Date().toISOString().slice(0,10);
+var _token = null;
+var _jobData = null;
+var _clientData = null;
+var _canEdit = false;
+var _activeTab = 'fridge';
+var _sessionLogs = [];
+var _byName = localStorage.getItem('freelancer_name') || '';
+
+var TABS = [
+  {id:'fridge',       label:'🧊 Fridge'},
+  {id:'cooking',      label:'🔥 Cooked Food'},
+  {id:'cooling',      label:'❄️ Cooling'},
+  {id:'reheating',    label:'♨️ Reheating'},
+  {id:'delivery',     label:'🚚 Deliveries'},
+  {id:'cleaning',     label:'🧹 Cleaning'},
+  {id:'transport',    label:'🚗 Transport'},
+  {id:'kitchenassess',label:'📋 Kitchen'}
+];
+
+var THRESH = {
+  'fridge-warn':5,'fridge-fail':8,
+  'freezer-warn':-18,'freezer-fail':-12,
+  'cooking-warn':75,'cooking-fail':75,
+  'reheat-warn':75,'reheat-fail':75,
+  'cooling-warn':5,'cooling-fail':8,
+  'delivery-warn':5,'delivery-fail':8,
+  'transport-warn':5,'transport-fail':8
+};
+
+// ── Utils ──────────────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function nowTime(){var d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function fmtDate(d){if(!d)return'';var dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+function getBy(){return _byName||'Freelancer';}
+
+function toast(msg,type){
+  var el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=type==='err'?'#991b1b':type==='warn'?'#a16207':'#1a2e1c';
+  el.style.color='#fff';
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2800);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+async function init(){
+  var params=new URLSearchParams(window.location.search);
+  _token=params.get('t');
+  if(!_token){renderError('No access link','This link looks incomplete. Ask the chef to share it again.');return;}
+  renderLoading();
+  try{
+    var res=await sb.rpc('get_job_for_freelancer',{p_token:_token});
+    if(res.error||!res.data){renderError('Link expired or invalid','This access link has expired or is no longer valid. Ask the chef to generate a new one.');return;}
+    _jobData=res.data.job;
+    _clientData=res.data.client||null;
+    _canEdit=!!res.data.can_edit;
+    renderPage();
+  }catch(e){renderError('Could not load event','Check your internet connection and try again.');}
+}
+
+function renderLoading(){
+  document.getElementById('app').innerHTML='<div class="state-screen"><p>Loading event details…</p></div>';
+}
+function renderError(title,msg){
+  document.getElementById('app').innerHTML=
+    '<div class="state-screen"><div style="font-size:48px;margin-bottom:16px">🔒</div>'
+    +'<h2>'+esc(title)+'</h2><p>'+esc(msg)+'</p></div>'
+    +ctaHTML();
+}
+
+// ── Main page ──────────────────────────────────────────────────────────────
+function renderPage(){
+  var j=_jobData;
+  var c=_clientData;
+  var meta=j.metadata||{};
+  var menus=meta.menus||[];
+
+  // Name input
+  var nameHtml='<div class="section" style="padding-top:16px">'
+    +'<div class="card">'
+    +'<div class="card-title" style="margin-bottom:8px">Your Name</div>'
+    +'<div style="display:flex;gap:8px;align-items:center">'
+    +'<input class="form-input" id="your-name" placeholder="How should your records be signed?" value="'+esc(_byName)+'" style="flex:1">'
+    +'<button onclick="saveName()" style="padding:11px 14px;background:#2D7A3A;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Save</button>'
+    +'</div></div></div>';
+
+  // Client banner
+  var clientName=(c&&c.name)||meta.client_name||'';
+  var clientHtml='';
+  if(clientName){
+    var lines='<div class="client-name">'+esc(clientName)+'</div>';
+    if(c&&c.address)lines+='<div class="client-meta"><span>📍</span><span>'+esc(c.address)+'</span></div>';
+    if(c&&c.phone)lines+='<div class="client-meta"><span>📞</span><a href="tel:'+esc(c.phone)+'" style="color:rgba(255,255,255,0.85);text-decoration:none">'+esc(c.phone)+'</a></div>';
+    if(c&&c.email)lines+='<div class="client-meta"><span>✉️</span><a href="mailto:'+esc(c.email)+'" style="color:rgba(255,255,255,0.85);text-decoration:none">'+esc(c.email)+'</a></div>';
+    if(c&&c.notes)lines+='<div class="client-diet"><div class="client-diet-label">Notes &amp; Dietary</div>'+esc(c.notes)+'</div>';
+    clientHtml='<div class="section" style="padding-top:12px"><div class="client-banner">'+lines+'</div></div>';
+  }
+
+  // Event info
+  var isToday=j.job_date===TODAY;
+  var dateBadge=isToday
+    ?'&nbsp;<span style="background:rgba(45,122,58,0.12);color:#2D7A3A;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">TODAY</span>'
+    :(j.job_date>TODAY?'&nbsp;<span style="background:#f0f0ec;color:#6b7d6e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px">UPCOMING</span>':'');
+  var infoRows='';
+  if(j.job_date)   infoRows+=detailRow('Date',fmtDate(j.job_date)+dateBadge);
+  if(j.start_time) infoRows+=detailRow('Time',esc(j.start_time));
+  if(j.location)   infoRows+=detailRow('Location','<a href="https://maps.google.com/?q='+encodeURIComponent(j.location)+'" style="color:#2D7A3A;text-decoration:none" target="_blank">'+esc(j.location)+' ↗</a>');
+  if(j.headcount)  infoRows+=detailRow('Covers',esc(j.headcount)+' guests');
+  if(j.title)      infoRows+=detailRow('Type',esc(j.title));
+  if(j.notes)      infoRows+=detailRow('Notes',esc(j.notes));
+  var infoHtml='<div class="section" style="padding-top:12px"><div class="card"><div class="card-title">Event Details</div>'+infoRows+'</div></div>';
+
+  // Menu & allergens
+  var menuHtml='';
+  if(menus.length){
+    var mc=menus.map(function(m){
+      var dishes=m.dishes||[];
+      var chips=dishes.map(function(d){
+        var allergens=d.allergens||[];
+        var pills=allergens.map(function(a){return '<span class="allergen-pill">'+esc(a)+'</span>';}).join(' ');
+        return '<div class="dish-chip">'+esc(d.dish||d.name||'')+(pills?' '+pills:'')+'</div>';
+      }).join('');
+      return '<div class="menu-section-name">'+esc(m.name)+'</div>'
+        +(chips||'<span style="font-size:12px;color:#9aada0">No dishes listed</span>');
+    }).join('');
+    menuHtml='<div class="section" style="padding-top:12px"><div class="card"><div class="card-title">Menu &amp; Allergens</div>'+mc+'</div></div>';
+  }
+
+  // Edit section
+  var editHtml='';
+  if(_canEdit){
+    editHtml='<div class="section" style="padding-top:12px"><div class="card" style="border:1.5px solid #2D7A3A">'
+      +'<div class="card-title">Update Event Details</div>'
+      +'<p style="font-size:13px;color:#6b7d6e;margin-bottom:14px">These changes sync to the chef\'s Carte booking.</p>'
+      +'<label class="form-label" style="margin-top:0">Covers</label>'
+      +'<input class="form-input" id="edit-covers" type="number" placeholder="Number of guests" value="'+esc(j.headcount||'')+'">'
+      +'<label class="form-label">Notes</label>'
+      +'<textarea class="form-input" id="edit-notes" rows="3" style="resize:vertical">'+esc(j.notes||'')+'</textarea>'
+      +'<button class="btn-secondary" onclick="saveEdits()" id="edit-save-btn">Save Changes</button>'
+      +'</div></div>';
+  }
+
+  // HACCP header + tabs
+  var haccpHeader='<div style="padding:16px 16px 0"><p style="font-size:13px;color:#6b7d6e;font-weight:600">HACCP Records</p></div>';
+  var tabBar='<div class="tabs-scroll"><div class="tabs" id="tabs-bar">'
+    +TABS.map(function(t){return '<button class="tab'+(t.id===_activeTab?' active':'')+'" onclick="switchTab(\''+t.id+'\')">'+t.label+'</button>';}).join('')
+    +'</div></div>';
+  var tabContent='<div class="section" style="padding-top:6px"><div class="card" id="tab-content-area"></div></div>';
+
+  document.getElementById('app').innerHTML=
+    nameHtml
+    +clientHtml
+    +infoHtml
+    +menuHtml
+    +editHtml
+    +haccpHeader
+    +tabBar
+    +tabContent
+    +ctaHTML();
+
+  renderTabContent();
+}
+
+function detailRow(k,v){
+  return '<div class="detail-row"><span class="detail-key">'+k+'</span><span class="detail-val">'+v+'</span></div>';
+}
+
+// ── Name ───────────────────────────────────────────────────────────────────
+function saveName(){
+  var v=(document.getElementById('your-name').value||'').trim();
+  _byName=v;
+  localStorage.setItem('freelancer_name',v);
+  toast(v?'Records will show "'+v+'"':'Name cleared');
+  renderTabContent();
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function switchTab(id){
+  _activeTab=id;
+  document.getElementById('tabs-bar').innerHTML=
+    TABS.map(function(t){return '<button class="tab'+(t.id===_activeTab?' active':'')+'" onclick="switchTab(\''+t.id+'\')">'+t.label+'</button>';}).join('');
+  renderTabContent();
+}
+
+function renderTabContent(){
+  var el=document.getElementById('tab-content-area');
+  if(!el)return;
+  el.innerHTML=formHTML(_activeTab)+logsHTML(_activeTab);
+}
+
+// ── Forms ──────────────────────────────────────────────────────────────────
+function formHTML(tab){
+  var by=esc(getBy());
+  var t=nowTime();
+  switch(tab){
+    case 'fridge':return ''
+      +'<div class="card-title">Fridge / Freezer Temperature</div>'
+      +'<label class="form-label" style="margin-top:0">Unit name</label>'
+      +'<input class="form-input" id="fr-unit" placeholder="e.g. Fridge 1, Chest Freezer" autocomplete="off">'
+      +'<label class="form-label">Temperature (°C)</label>'
+      +'<input class="form-input" id="fr-temp" type="number" step="0.1" placeholder="e.g. 3" style="font-size:22px;font-weight:700">'
+      +'<p class="temp-hint">Fridge: pass ≤5°C · Freezer: pass ≤−18°C</p>'
+      +'<div class="form-row" style="margin-top:14px">'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Time</label><input class="form-input" id="fr-time" type="time" value="'+t+'"></div>'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Checked by</label><input class="form-input" id="fr-by" value="'+by+'" autocomplete="off"></div>'
+      +'</div>'
+      +'<label class="form-label">Notes</label>'
+      +'<input class="form-input" id="fr-notes" placeholder="Any observations…" autocomplete="off">'
+      +'<button class="btn-submit" id="fr-btn" onclick="submitFridge()">Log Fridge Temp</button>';
+
+    case 'cooking':return ''
+      +'<div class="card-title">Cooked Food Temperature</div>'
+      +'<label class="form-label" style="margin-top:0">Food item</label>'
+      +'<input class="form-input" id="ck-food" placeholder="e.g. Chicken breast, Beef fillet" autocomplete="off">'
+      +'<label class="form-label">Core temperature (°C)</label>'
+      +'<input class="form-input" id="ck-temp" type="number" step="0.1" placeholder="e.g. 78" style="font-size:22px;font-weight:700">'
+      +'<p class="temp-hint">Must reach ≥75°C to pass</p>'
+      +'<div class="form-row" style="margin-top:14px">'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Time</label><input class="form-input" id="ck-time" type="time" value="'+t+'"></div>'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Chef</label><input class="form-input" id="ck-chef" value="'+by+'" autocomplete="off"></div>'
+      +'</div>'
+      +'<button class="btn-submit" id="ck-btn" onclick="submitCooking()">Log Cooked Temp</button>';
+
+    case 'cooling':return ''
+      +'<div class="card-title">Cooling Record</div>'
+      +'<label class="form-label" style="margin-top:0">Food item</label>'
+      +'<input class="form-input" id="cl-food" placeholder="e.g. Rice, Sauce, Stock" autocomplete="off">'
+      +'<div class="form-row" style="margin-top:14px">'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Start temp (°C)</label><input class="form-input" id="cl-start-temp" type="number" step="0.1" placeholder="e.g. 90"></div>'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Start time</label><input class="form-input" id="cl-start-time" type="time" value="'+t+'"></div>'
+      +'</div>'
+      +'<div class="form-row">'
+      +'<div class="fg"><label class="form-label">End temp (°C)</label><input class="form-input" id="cl-end-temp" type="number" step="0.1" placeholder="e.g. 4"></div>'
+      +'<div class="fg"><label class="form-label">End time</label><input class="form-input" id="cl-end-time" type="time" value="'+t+'"></div>'
+      +'</div>'
+      +'<p class="temp-hint">Must cool to ≤8°C within 90 minutes</p>'
+      +'<label class="form-label">Method</label>'
+      +'<select class="form-input" id="cl-method"><option>Blast chiller</option><option>Ice bath</option><option>Refrigerator</option><option>Ambient + refrigerator</option></select>'
+      +'<label class="form-label">Completed by</label>'
+      +'<input class="form-input" id="cl-by" value="'+by+'" autocomplete="off">'
+      +'<button class="btn-submit" id="cl-btn" onclick="submitCooling()">Log Cooling</button>';
+
+    case 'reheating':return ''
+      +'<div class="card-title">Reheating Record</div>'
+      +'<label class="form-label" style="margin-top:0">Food item</label>'
+      +'<input class="form-input" id="rh-food" placeholder="e.g. Soup, Sauce, Stew" autocomplete="off">'
+      +'<label class="form-label">Core temperature (°C)</label>'
+      +'<input class="form-input" id="rh-temp" type="number" step="0.1" placeholder="e.g. 78" style="font-size:22px;font-weight:700">'
+      +'<p class="temp-hint">Must reach ≥75°C to pass</p>'
+      +'<div class="form-row" style="margin-top:14px">'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Time</label><input class="form-input" id="rh-time" type="time" value="'+t+'"></div>'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Chef</label><input class="form-input" id="rh-chef" value="'+by+'" autocomplete="off"></div>'
+      +'</div>'
+      +'<label class="form-label">Notes</label>'
+      +'<input class="form-input" id="rh-notes" placeholder="Any observations…" autocomplete="off">'
+      +'<button class="btn-submit" id="rh-btn" onclick="submitReheating()">Log Reheating</button>';
+
+    case 'delivery':return ''
+      +'<div class="card-title">Delivery Record</div>'
+      +'<label class="form-label" style="margin-top:0">Supplier</label>'
+      +'<input class="form-input" id="dl-supplier" placeholder="e.g. ABC Meats, Fresh Direct" autocomplete="off">'
+      +'<div class="form-row" style="margin-top:14px">'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Delivery temp (°C)</label><input class="form-input" id="dl-temp" type="number" step="0.1" placeholder="Optional"></div>'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Time</label><input class="form-input" id="dl-time" type="time" value="'+t+'"></div>'
+      +'</div>'
+      +'<label class="form-label">Condition</label>'
+      +'<select class="form-input" id="dl-condition"><option>Satisfactory</option><option>Minor issues noted</option><option>Rejected</option></select>'
+      +'<label class="form-label">Invoice / reference</label>'
+      +'<input class="form-input" id="dl-invoice" placeholder="Optional" autocomplete="off">'
+      +'<label class="form-label">Received by</label>'
+      +'<input class="form-input" id="dl-by" value="'+by+'" autocomplete="off">'
+      +'<label class="form-label">Notes</label>'
+      +'<input class="form-input" id="dl-notes" placeholder="Any issues to flag…" autocomplete="off">'
+      +'<button class="btn-submit" id="dl-btn" onclick="submitDelivery()">Log Delivery</button>';
+
+    case 'cleaning':return ''
+      +'<div class="card-title">Cleaning Record</div>'
+      +'<label class="form-label" style="margin-top:0">Task / area cleaned</label>'
+      +'<input class="form-input" id="cn-task" placeholder="e.g. Chopping boards, Work surfaces" autocomplete="off">'
+      +'<label class="form-label">Chemical / product used</label>'
+      +'<input class="form-input" id="cn-chem" placeholder="e.g. Diversey P3, Chlorine spray" autocomplete="off">'
+      +'<div class="form-row" style="margin-top:14px">'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Time</label><input class="form-input" id="cn-time" type="time" value="'+t+'"></div>'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Completed by</label><input class="form-input" id="cn-by" value="'+by+'" autocomplete="off"></div>'
+      +'</div>'
+      +'<button class="btn-submit" id="cn-btn" onclick="submitCleaning()">Log Cleaning</button>';
+
+    case 'transport':return ''
+      +'<div class="card-title">Transport Temperature</div>'
+      +'<label class="form-label" style="margin-top:0">Food item</label>'
+      +'<input class="form-input" id="tr-food" placeholder="e.g. Canapés, Main course" autocomplete="off">'
+      +'<label class="form-label">Destination</label>'
+      +'<input class="form-input" id="tr-dest" placeholder="e.g. Venue, Client address" autocomplete="off">'
+      +'<div class="form-row" style="margin-top:14px">'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Departure temp (°C)</label><input class="form-input" id="tr-start-temp" type="number" step="0.1" placeholder="e.g. 3"></div>'
+      +'<div class="fg"><label class="form-label" style="margin-top:0">Departure time</label><input class="form-input" id="tr-start-time" type="time" value="'+t+'"></div>'
+      +'</div>'
+      +'<div class="form-row">'
+      +'<div class="fg"><label class="form-label">Arrival temp (°C)</label><input class="form-input" id="tr-end-temp" type="number" step="0.1" placeholder="e.g. 5"></div>'
+      +'<div class="fg"><label class="form-label">Arrival time</label><input class="form-input" id="tr-end-time" type="time" value="'+t+'"></div>'
+      +'</div>'
+      +'<label class="form-label">Method</label>'
+      +'<select class="form-input" id="tr-method"><option>Insulated cool box</option><option>Refrigerated vehicle</option><option>Chilled bag</option><option>Hot box</option><option>Ambient</option></select>'
+      +'<label class="form-label">Driver / responsible</label>'
+      +'<input class="form-input" id="tr-by" value="'+by+'" autocomplete="off">'
+      +'<button class="btn-submit" id="tr-btn" onclick="submitTransport()">Log Transport</button>';
+
+    case 'kitchenassess':return ''
+      +'<div class="card-title">Kitchen Assessment</div>'
+      +'<label class="form-label" style="margin-top:0">Overall condition</label>'
+      +'<select class="form-input" id="ka-condition">'
+      +'<option>Satisfactory — kitchen clean and well-organised</option>'
+      +'<option>Minor issues — noted, corrective action taken</option>'
+      +'<option>Significant issues — remedial action required</option>'
+      +'<option>Unsuitable — food production not commenced</option>'
+      +'</select>'
+      +'<label class="form-label">Fridge temp at venue (°C)</label>'
+      +'<input class="form-input" id="ka-fridge-temp" type="number" step="0.1" placeholder="Optional">'
+      +'<label class="form-label">Notes / corrective actions</label>'
+      +'<textarea class="form-input" id="ka-notes" rows="3" style="resize:vertical" placeholder="Observations, actions taken…"></textarea>'
+      +'<label class="form-label">Assessed by</label>'
+      +'<input class="form-input" id="ka-by" value="'+by+'" autocomplete="off">'
+      +'<button class="btn-submit" id="ka-btn" onclick="submitKitchenAssess()">Log Assessment</button>';
+  }
+  return '';
+}
+
+function logsHTML(tab){
+  var recs=_sessionLogs.filter(function(r){return r.type===tab;});
+  if(!recs.length)return'';
+  return '<div class="log-header">Logged this session ('+recs.length+')</div>'
+    +recs.slice().reverse().map(function(r){
+      var s=r.status==='ok'?'ok':r.status==='warn'?'warn':'fail';
+      var badge=s==='ok'?'PASS':s==='warn'?'WARN':'FAIL';
+      return '<div class="log-entry">'
+        +'<div class="log-dot '+s+'"></div>'
+        +'<div class="log-body"><div class="log-msg">'+esc(r._displayMsg||r.msg||'')+'</div>'
+        +'<div class="log-meta">'+esc(r.time||'')+(r.by&&r.by!=='Freelancer'?' · '+esc(r.by):'')+'</div></div>'
+        +'<span class="log-badge '+s+'">'+badge+'</span>'
+        +'</div>';
+    }).join('');
+}
+
+// ── Submit core ────────────────────────────────────────────────────────────
+async function _submit(rec,btnId){
+  var btn=btnId?document.getElementById(btnId):null;
+  var origText=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    var res=await sb.rpc('log_freelancer_haccp',{p_token:_token,p_date:TODAY,p_record:rec});
+    if(res.error)throw res.error;
+    _sessionLogs.push(rec);
+    renderTabContent();
+    var t=rec.status==='ok'?'Saved ✓':rec.status==='warn'?'⚠ Saved — warning noted':'✗ Saved — FAIL recorded';
+    toast(t,rec.status==='fail'?'err':rec.status==='warn'?'warn':null);
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent=origText;}
+    toast('Could not save — check your connection','err');
+    console.error('[event]',e);
+  }
+}
+
+// ── 8 submit functions ─────────────────────────────────────────────────────
+function submitFridge(){
+  var unit=(document.getElementById('fr-unit').value||'').trim()||'Fridge';
+  var raw=document.getElementById('fr-temp').value;
+  var time=document.getElementById('fr-time').value;
+  var by=(document.getElementById('fr-by').value||'').trim()||getBy();
+  var notes=document.getElementById('fr-notes').value;
+  if(raw===''){toast('Please enter a temperature','err');return;}
+  var temp=parseFloat(raw);
+  if(isNaN(temp)){toast('Please enter a valid temperature','err');return;}
+  var isFreezer=unit.toLowerCase().includes('freezer');
+  var status,msg;
+  if(isFreezer){
+    if(temp>THRESH['freezer-fail']){status='fail';msg=temp+'°C — freezer must be below '+THRESH['freezer-fail']+'°C';}
+    else if(temp>THRESH['freezer-warn']){status='warn';msg=temp+'°C — approaching limit';}
+    else{status='ok';msg=temp+'°C';}
+  }else{
+    if(temp>THRESH['fridge-fail']){status='fail';msg=temp+'°C — fridge must be below '+THRESH['fridge-fail']+'°C';}
+    else if(temp>THRESH['fridge-warn']){status='warn';msg=temp+'°C — approaching limit';}
+    else{status='ok';msg=temp+'°C';}
+  }
+  _submit({type:'fridge',unit:unit,by:by,temp:temp,time:time,notes:notes,status:status,msg:msg,_displayMsg:unit+' — '+msg},'fr-btn');
+}
+
+function submitCooking(){
+  var food=(document.getElementById('ck-food').value||'').trim();
+  var raw=document.getElementById('ck-temp').value;
+  var time=document.getElementById('ck-time').value;
+  var chef=(document.getElementById('ck-chef').value||'').trim()||getBy();
+  if(!food){toast('Please enter the food item','err');return;}
+  if(raw===''){toast('Please enter a temperature','err');return;}
+  var temp=parseFloat(raw);
+  if(isNaN(temp)){toast('Please enter a valid temperature','err');return;}
+  var status,msg;
+  if(temp<THRESH['cooking-fail']){status='fail';msg=temp+'°C — must reach '+THRESH['cooking-fail']+'°C minimum';}
+  else if(temp<THRESH['cooking-warn']){status='warn';msg=temp+'°C — borderline';}
+  else{status='ok';msg=temp+'°C — safe';}
+  _submit({type:'cooking',food:food,temp:temp,time:time,chef:chef,status:status,msg:msg,_displayMsg:food+' — '+msg},'ck-btn');
+}
+
+function submitCooling(){
+  var food=(document.getElementById('cl-food').value||'').trim();
+  var startRaw=document.getElementById('cl-start-temp').value;
+  var startTime=document.getElementById('cl-start-time').value;
+  var endRaw=document.getElementById('cl-end-temp').value;
+  var endTime=document.getElementById('cl-end-time').value;
+  var method=document.getElementById('cl-method').value;
+  var by=(document.getElementById('cl-by').value||'').trim()||getBy();
+  if(!food){toast('Please enter the food item','err');return;}
+  if(endRaw===''){toast('Please enter the end temperature','err');return;}
+  var endTemp=parseFloat(endRaw);
+  if(isNaN(endTemp)){toast('Please enter a valid end temperature','err');return;}
+  var status,msg;
+  if(endTemp>THRESH['cooling-fail']){status='fail';msg='End temp '+endTemp+'°C — must be below '+THRESH['cooling-fail']+'°C';}
+  else if(endTemp>THRESH['cooling-warn']){status='warn';msg='End temp '+endTemp+'°C — borderline';}
+  else{status='ok';msg='Cooled to '+endTemp+'°C';}
+  var startTemp=startRaw!==''?parseFloat(startRaw):null;
+  _submit({type:'cooling',food:food,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,method:method,by:by,time:startTime,status:status,msg:msg,_displayMsg:food+' — '+msg},'cl-btn');
+}
+
+function submitReheating(){
+  var food=(document.getElementById('rh-food').value||'').trim();
+  var raw=document.getElementById('rh-temp').value;
+  var time=document.getElementById('rh-time').value;
+  var chef=(document.getElementById('rh-chef').value||'').trim()||getBy();
+  var notes=document.getElementById('rh-notes').value;
+  if(!food){toast('Please enter the food item','err');return;}
+  if(raw===''){toast('Please enter a temperature','err');return;}
+  var temp=parseFloat(raw);
+  if(isNaN(temp)){toast('Please enter a valid temperature','err');return;}
+  var status,msg;
+  if(temp<THRESH['reheat-fail']){status='fail';msg=temp+'°C — must reach '+THRESH['reheat-fail']+'°C';}
+  else if(temp<THRESH['reheat-warn']){status='warn';msg=temp+'°C — borderline';}
+  else{status='ok';msg=temp+'°C — safe to serve';}
+  _submit({type:'reheating',food:food,temp:temp,time:time,chef:chef,notes:notes,status:status,msg:msg,_displayMsg:food+' — '+msg},'rh-btn');
+}
+
+function submitDelivery(){
+  var supplier=(document.getElementById('dl-supplier').value||'').trim();
+  var raw=document.getElementById('dl-temp').value;
+  var time=document.getElementById('dl-time').value;
+  var condition=document.getElementById('dl-condition').value;
+  var invoice=(document.getElementById('dl-invoice').value||'').trim();
+  var by=(document.getElementById('dl-by').value||'').trim()||getBy();
+  var notes=document.getElementById('dl-notes').value;
+  if(!supplier){toast('Please enter the supplier','err');return;}
+  var temp=raw!==''?parseFloat(raw):null;
+  if(raw!==''&&isNaN(temp)){toast('Please enter a valid temperature','err');return;}
+  var status,msg;
+  if(condition==='Rejected'){status='fail';msg='Delivery rejected';}
+  else if(temp!==null&&temp>THRESH['delivery-fail']){status='fail';msg=temp+'°C — above safe temp';}
+  else if((temp!==null&&temp>THRESH['delivery-warn'])||condition==='Minor issues noted'){status='warn';msg=temp!==null?temp+'°C — issues noted':'Issues noted';}
+  else{status='ok';msg=temp!==null?(temp+'°C — '+condition):condition;}
+  _submit({type:'delivery',supplier:supplier,temp:temp,time:time,invoice:invoice,by:by,condition:condition,notes:notes,status:status,msg:msg,_displayMsg:supplier+' — '+msg},'dl-btn');
+}
+
+function submitCleaning(){
+  var task=(document.getElementById('cn-task').value||'').trim();
+  var chem=(document.getElementById('cn-chem').value||'').trim()||'N/A';
+  var time=document.getElementById('cn-time').value;
+  var by=(document.getElementById('cn-by').value||'').trim()||getBy();
+  if(!task){toast('Please enter the task or area','err');return;}
+  _submit({type:'cleaning',task:task,chem:chem,time:time,by:by,status:'ok',msg:'Completed by '+by,_displayMsg:task+(chem&&chem!=='N/A'?' — '+chem:'')},'cn-btn');
+}
+
+function submitTransport(){
+  var food=(document.getElementById('tr-food').value||'').trim();
+  var dest=(document.getElementById('tr-dest').value||'').trim();
+  var startRaw=document.getElementById('tr-start-temp').value;
+  var startTime=document.getElementById('tr-start-time').value;
+  var endRaw=document.getElementById('tr-end-temp').value;
+  var endTime=document.getElementById('tr-end-time').value;
+  var method=document.getElementById('tr-method').value;
+  var by=(document.getElementById('tr-by').value||'').trim()||getBy();
+  if(!food){toast('Please enter the food item','err');return;}
+  if(endRaw===''){toast('Please enter the arrival temperature','err');return;}
+  var endTemp=parseFloat(endRaw);
+  if(isNaN(endTemp)){toast('Please enter a valid arrival temperature','err');return;}
+  var status,msg;
+  if(endTemp>THRESH['transport-fail']){status='fail';msg='Arrived at '+endTemp+'°C — above safe temp';}
+  else if(endTemp>THRESH['transport-warn']){status='warn';msg='Arrived at '+endTemp+'°C — borderline';}
+  else{status='ok';msg='Arrived safely at '+endTemp+'°C';}
+  var startTemp=startRaw!==''?parseFloat(startRaw):null;
+  _submit({type:'transport',food:food,destination:dest,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,method:method,by:by,time:startTime,status:status,msg:msg,_displayMsg:food+(dest?' → '+dest:'')+' — '+msg},'tr-btn');
+}
+
+function submitKitchenAssess(){
+  var condition=document.getElementById('ka-condition').value;
+  var fridgeRaw=document.getElementById('ka-fridge-temp').value;
+  var notes=document.getElementById('ka-notes').value;
+  var by=(document.getElementById('ka-by').value||'').trim()||getBy();
+  var fridgeTemp=fridgeRaw!==''?parseFloat(fridgeRaw):null;
+  var fridgeFail=fridgeTemp!==null&&fridgeTemp>THRESH['fridge-fail'];
+  var fridgeWarn=fridgeTemp!==null&&fridgeTemp>THRESH['fridge-warn'];
+  var status=condition.indexOf('Unsuitable')===0||fridgeFail?'fail':condition.indexOf('Minor')===0||condition.indexOf('Significant')===0||fridgeWarn?'warn':'ok';
+  var msg=condition.split(' —')[0]+(fridgeTemp!==null?' · Fridge: '+fridgeTemp+'°C':'');
+  _submit({type:'kitchenassess',condition:condition,fridgeTemp:fridgeTemp,notes:notes,by:by,time:nowTime(),status:status,msg:msg,_displayMsg:msg},'ka-btn');
+}
+
+// ── Edit ───────────────────────────────────────────────────────────────────
+async function saveEdits(){
+  var btn=document.getElementById('edit-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  try{
+    var res=await sb.rpc('update_job_for_freelancer',{
+      p_token:_token,
+      p_covers:(document.getElementById('edit-covers').value||'').trim(),
+      p_notes:(document.getElementById('edit-notes').value||'').trim()
+    });
+    if(res.error)throw res.error;
+    toast('Changes saved ✓');
+  }catch(e){toast('Could not save changes','err');}
+  if(btn){btn.disabled=false;btn.textContent='Save Changes';}
+}
+
+// ── CTA ────────────────────────────────────────────────────────────────────
+function ctaHTML(){
+  return '<div class="cta" style="margin-bottom:32px">'
+    +'<div style="margin-bottom:14px">'
+    +'<svg width="48" height="48" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">'
+    +'<rect width="60" height="60" rx="14" fill="#2D7A3A"/>'
+    +'<path d="M30 10 L48 18 L48 30 C48 41 30 50 30 50 C30 50 12 41 12 30 L12 18 Z" fill="rgba(255,255,255,0.15)"/>'
+    +'<path d="M22 30 L28 36 L38 24" stroke="#fff" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'</svg></div>'
+    +'<h3>Track your own HACCP records</h3>'
+    +'<p>Veriqo is the food safety app built for private chefs. Log temperature checks, cleaning records, and deliveries — always inspection-ready, always on your phone.</p>'
+    +'<a href="https://www.getveriqo.co.uk" class="cta-btn">Try Veriqo free for 14 days →</a>'
+    +'<div class="cta-sub">No credit card needed · For UK private chefs &amp; caterers</div>'
+    +'</div>';
+}
+
+init();
+</script>
+</body>
+</html>

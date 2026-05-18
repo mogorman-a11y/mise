@@ -1,0 +1,74 @@
+/* tokens.css — Veriqo unified design tokens
+   All CSS custom properties for the app.
+   Module-specific overrides live in their own CSS files. */
+
+:root {
+  /* ── Primary palette (Veriqo green) ─────────────────────── */
+  --vq-green:        #2D7A3A;
+  --vq-green-dark:   #1a4a23;
+  --vq-green-mid:    #245f2e;
+  --vq-green-light:  #EAF3DE;
+  --vq-green-pale:   #f0f8f1;
+
+  /* ── Neutral / surface ───────────────────────────────────── */
+  --vq-bg:           #f5f4f0;
+  --vq-surface:      #ffffff;
+  --vq-surface-alt:  #f9f8f5;
+  --vq-border:       #e5e4de;
+  --vq-border-mid:   #d4d2cb;
+  --vq-rule:         #f0efe8;
+
+  /* ── Text ────────────────────────────────────────────────── */
+  --vq-ink:          #1a1a18;
+  --vq-muted:        #888888;
+  --vq-subtle:       #aaaaaa;
+  --vq-disabled:     #cccccc;
+
+  /* ── Status ──────────────────────────────────────────────── */
+  --vq-ok:           #2D7A3A;
+  --vq-ok-bg:        #EAF3DE;
+  --vq-ok-text:      #2D7A3A;
+  --vq-warn:         #854F0B;
+  --vq-warn-bg:      #FAEEDA;
+  --vq-warn-text:    #854F0B;
+  --vq-fail:         #A32D2D;
+  --vq-fail-bg:      #FCEBEB;
+  --vq-fail-text:    #A32D2D;
+  --vq-info:         #1a5c8c;
+  --vq-info-bg:      #e3f0fb;
+
+  /* ── Costing module accent (gold) ────────────────────────── */
+  --vq-gold:         #C9A84C;
+  --vq-gold-dark:    #0E0E0D;
+  --vq-gold-surface: #fdf9f0;
+  --vq-gold-border:  #e8d89a;
+
+  /* ── Typography ──────────────────────────────────────────── */
+  --vq-font:         -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --vq-font-serif:   'Instrument Serif', Georgia, serif;
+  --vq-font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* ── Spacing ─────────────────────────────────────────────── */
+  --vq-space-xs:     4px;
+  --vq-space-sm:     8px;
+  --vq-space-md:     12px;
+  --vq-space-lg:     16px;
+  --vq-space-xl:     24px;
+  --vq-space-2xl:    32px;
+
+  /* ── Radii ───────────────────────────────────────────────── */
+  --vq-radius-sm:    6px;
+  --vq-radius-md:    10px;
+  --vq-radius-lg:    14px;
+  --vq-radius-xl:    18px;
+
+  /* ── Shadows ─────────────────────────────────────────────── */
+  --vq-shadow-sm:    0 1px 3px rgba(0,0,0,0.08);
+  --vq-shadow-md:    0 4px 12px rgba(0,0,0,0.10);
+  --vq-shadow-lg:    0 8px 24px rgba(0,0,0,0.12);
+
+  /* ── Shell layout ────────────────────────────────────────── */
+  --shell-nav-height:     60px;    /* bottom nav height on mobile */
+  --shell-sidebar-width:  220px;   /* sidebar width on desktop */
+  --shell-max-width:      480px;   /* max content width on mobile */
+}

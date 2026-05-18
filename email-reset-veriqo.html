@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reset your Veriqo password</title>
+</head>
+<body style="margin:0;padding:0;background:#f5f4f0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f4f0;padding:40px 16px">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding-bottom:28px">
+              <!-- Veriqo shield SVG -->
+              <svg width="48" height="48" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 12px">
+                <defs>
+                  <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#1B3A5C"/>
+                    <stop offset="100%" stop-color="#1B5C72"/>
+                  </linearGradient>
+                  <linearGradient id="sg" x1="10%" y1="0%" x2="90%" y2="100%">
+                    <stop offset="0%" stop-color="#52D05C"/>
+                    <stop offset="100%" stop-color="#1EA040"/>
+                  </linearGradient>
+                </defs>
+                <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+                <path d="M278 82 Q146 112 146 112 L146 295 Q146 388 278 438 Q410 388 410 295 L410 112 Z" fill="#1B5C72"/>
+                <path d="M250 82 Q118 112 118 112 L118 295 Q118 388 250 438 Q382 388 382 295 L382 112 Z" fill="url(#sg)"/>
+                <polyline points="163,295 228,368 366,212" stroke="white" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              <div style="font-size:22px;font-weight:700;color:#1a1a18;letter-spacing:-0.3px">Veriqo</div>
+              <div style="font-size:13px;color:#2D7A3A;font-weight:600;margin-top:2px">HACCP food safety compliance</div>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background:#ffffff;border-radius:16px;padding:32px 28px;box-shadow:0 2px 12px rgba(0,0,0,0.07)">
+
+              <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#1a1a18;letter-spacing:-0.3px">Reset your password</h1>
+              <p style="margin:0 0 24px;font-size:15px;color:#555;line-height:1.6">
+                We received a request to reset the password for your Veriqo account. Click the button below to choose a new password.
+              </p>
+
+              <!-- CTA button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+                <tr>
+                  <td align="center">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;padding:15px 32px;background:#2D7A3A;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;border-radius:10px;letter-spacing:0.01em">
+                      Reset password →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 16px;font-size:13px;color:#888;line-height:1.6">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="margin:0 0 24px;font-size:12px;color:#2D7A3A;word-break:break-all;line-height:1.5">
+                {{ .ConfirmationURL }}
+              </p>
+
+              <hr style="border:none;border-top:1px solid #f0f0ec;margin:0 0 20px">
+
+              <p style="margin:0;font-size:12px;color:#aaa;line-height:1.6">
+                If you didn't request a password reset, you can safely ignore this email. Your password won't change until you click the link above.
+                This link expires in 1 hour.
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:24px">
+              <p style="margin:0;font-size:12px;color:#aaa">
+                Sent by <strong style="color:#888">Veriqo</strong> · <a href="https://getveriqo.co.uk" style="color:#2D7A3A;text-decoration:none">getveriqo.co.uk</a>
+              </p>
+              <p style="margin:6px 0 0;font-size:11px;color:#bbb">
+                A product of Mise Labs · <a href="mailto:hello@getveriqo.co.uk" style="color:#bbb;text-decoration:none">hello@getveriqo.co.uk</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

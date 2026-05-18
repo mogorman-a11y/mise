@@ -1,0 +1,22 @@
+# ⚠ THIS FILE IS ADVISORY ONLY — not the source of truth for live functions.
+#
+# Production functions are determined by the contents of api/ in the
+# GitHub-watched mise-deploy repo (github.com/mogorman-a11y/mise), which
+# Vercel auto-deploys on every push to main. This .vercelignore only takes
+# effect on direct `vercel deploy --prod` CLI runs from this `files/`
+# directory — and those get clobbered by the next git push.
+#
+# To remove a function from production: delete it from mise-deploy's api/
+# (or your own local clone) and push. To add one: copy it into mise-deploy's
+# api/ and push. See CLAUDE.md §Deploy chain.
+#
+# Entries below mark files in files/api/ that are intentionally NOT mirrored
+# into mise-deploy:
+
+# Superseded by api/magic-link.js (consolidated handler since auth.js v26)
+api/auth-link.js
+api/carte-magic-link.js
+api/yield-magic-link.js
+
+# Paused — Stripe Connect for Yield, waiting on platform ID verification
+api/stripe-connect.js
