@@ -2075,14 +2075,6 @@
       const emailEl = document.getElementById('account-email-display');
       if (emailEl) emailEl.textContent = _userEmail || '—';
 
-      // Profile fields (shared with Carte/Veriqo via profiles table)
-      document.getElementById('profile-chef-name').value = yProfile.chef_name || '';
-      document.getElementById('profile-business-name').value = yProfile.business_name || ySettings.businessName || '';
-      if (yProfile.logo) {
-        document.getElementById('logo-img').src = yProfile.logo;
-        document.getElementById('logo-preview').style.display = 'block';
-      }
-
       // Yield-specific business settings
       document.getElementById('business-email').value = ySettings.businessEmail || '';
       document.getElementById('business-phone').value = ySettings.businessPhone || '';
@@ -2156,20 +2148,7 @@
       localStorage.setItem('yield_settings', JSON.stringify(ySettings));
       if (window.Mise && window.Mise.yieldSync) window.Mise.yieldSync.saveYieldSettings(ySettings);
 
-      // Shared profile fields (Supabase profiles table → synced with Carte/Veriqo)
-      const profileUpdate = {
-        chef_name: document.getElementById('profile-chef-name').value,
-        business_name: document.getElementById('profile-business-name').value
-      };
-      if (yProfile.logo) profileUpdate.logo = yProfile.logo;
-      yProfile = Object.assign({}, yProfile, profileUpdate);
-      localStorage.setItem('yield_profile', JSON.stringify(yProfile));
-
-      if (window.Mise.yieldSync && window.Mise.yieldSync.isReady()) {
-        const res = await window.Mise.yieldSync.saveProfile(profileUpdate);
-        if (res && res.error) { showToast('Saved locally — sync failed', 'error'); return; }
-      }
-      showToast('Saved — shared with all apps');
+      showToast('Saved ✓');
     }
 
     function handleLogoUpload(input) {
