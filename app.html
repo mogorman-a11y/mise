@@ -1566,9 +1566,6 @@
         <button onclick="dismissMenusBanner()" style="background:none;border:none;color:#bbb;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>
       </div>
 
-      <div id="dash-greeting" class="greeting"></div>
-      <div id="dash-sub" class="greeting-sub"></div>
-
       <!-- Next booking -->
       <div id="dash-next" class="next-booking" style="display:none" onclick="calViewJob(this.dataset.jobId)">
         <div class="next-label">Next Booking <span style="float:right;font-size:13px;opacity:0.6">View →</span></div>
@@ -1841,7 +1838,7 @@
           <div><div class="more-name">Credentials</div><div class="more-sub">Certificates & expiry dates</div></div>
           <div class="more-arrow">›</div>
         </div>
-        <div class="more-item" onclick="showTab('settings')">
+        <div class="more-item" onclick="showTab('mise-settings')">
           <div class="more-icon">⚙️</div>
           <div><div class="more-name">Settings</div><div class="more-sub">Profile, staff, Veriqo sync</div></div>
           <div class="more-arrow">›</div>
@@ -2016,7 +2013,7 @@
     </div>
 
     <!-- ═══════════════════════════════════════ SETTINGS ════════════════════ -->
-    <div id="tab-settings" class="section">
+    <div id="tab-mise-settings" class="section">
       <!-- auth.js injects account card here as first child -->
 
       <div class="card">
@@ -3222,7 +3219,7 @@
           <span style="font-size:14px;color:var(--vq-ink)">HACCP settings</span>
           <span style="color:var(--vq-muted);font-size:16px">›</span>
         </button>
-        <button onclick="showModule('menus');setTimeout(function(){showTab('settings');},120)" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 16px;background:none;border:none;border-top:1px solid var(--vq-rule);font-family:inherit;cursor:pointer;text-align:left">
+        <button onclick="showModule('menus');setTimeout(function(){showTab('mise-settings');},120)" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 16px;background:none;border:none;border-top:1px solid var(--vq-rule);font-family:inherit;cursor:pointer;text-align:left">
           <span style="font-size:14px;color:var(--vq-ink)">Menus settings</span>
           <span style="color:var(--vq-muted);font-size:16px">›</span>
         </button>
@@ -3329,7 +3326,7 @@ function vqIcon(name, size) {
 
 <script src="js/modules/dashboard.js?v=2"></script>
 <script src="js/modules/haccp.js?v=5"></script>
-<script src="js/modules/menus.js?v=4"></script>
+<script src="js/modules/menus.js?v=5"></script>
 <script src="js/modules/costing.js?v=4"></script>
 
 <!-- Mise production modules — loaded after app script so they can wrap/extend it -->

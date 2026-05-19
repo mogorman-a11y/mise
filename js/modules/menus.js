@@ -211,11 +211,11 @@ function addressBookLookup(key){
 // ═══════════════════════════════════════════════════════ NAVIGATION ══════════
 var _homeScrollPos = 0;
 var _NAV_TABS = ['home','clients','calendar','menus','more'];
-var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','settings','install','help','legal'];
+var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','mise-settings','install','help','legal'];
 var _TITLES = {
   clients:'Clients', calendar:'Calendar', menus:'Menus & Dishes', jobs:'Jobs',
   more:'More', transport:'Transport Temps', assess:'Kitchen Assessment',
-  allergen:'Allergen Log', credentials:'Credentials', settings:'Settings',
+  allergen:'Allergen Log', credentials:'Credentials', 'mise-settings':'Settings',
   install:'Save as App', help:'Help & Getting Started', legal:'Privacy & Legal'
 };
 
@@ -241,7 +241,7 @@ function showTab(name){
 
   // Nav button active state (bottom nav + sidebar)
   _NAV_TABS.forEach(function(t){
-    var isActive = t===name || (t==='more' && ['more','assess','allergen','credentials','settings','install','help','legal'].indexOf(name)!==-1);
+    var isActive = t===name || (t==='more' && ['more','assess','allergen','credentials','mise-settings','install','help','legal'].indexOf(name)!==-1);
     var btn = document.getElementById('nav-'+t);
     if(btn) btn.classList.toggle('active', isActive);
     var sideBtn = document.getElementById('snav-'+t);
@@ -260,7 +260,7 @@ function showTab(name){
   if(name==='assess')      { populateStaffSelects(); populateClientSelects(); renderAssessList(); }
   if(name==='allergen')    { populateClientSelects(); renderAllergenList(); }
   if(name==='credentials') { populateStaffSelects(); renderCredentialsList(); }
-  if(name==='settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); renderCarteSubscriptionCard(); loadEmailPreferences(); }
+  if(name==='mise-settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); renderCarteSubscriptionCard(); loadEmailPreferences(); }
 
   // Set date fields to today if empty
   ['tr-date','as-date'].forEach(function(id){
@@ -274,13 +274,7 @@ function showTab(name){
 
 // ═══════════════════════════════════════════════════════ DASHBOARD ══════════
 function updateDashboard(){
-  // Greeting
-  var h = new Date().getHours();
-  var greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  var chefName = (mSettings.chefName||'').split(' ')[0];
-  document.getElementById('dash-greeting').textContent = greet + (chefName ? ', '+chefName : '') + '.';
-  var biz = mSettings.businessName || 'Your private chef business';
-  document.getElementById('dash-sub').textContent = biz;
+  // Greeting (vq-module-greeting block handles the header; no legacy dash-greeting divs)
 
   // Find next upcoming job
   var allJobs = getAllJobs();
