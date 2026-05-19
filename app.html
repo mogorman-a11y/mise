@@ -2015,6 +2015,10 @@
     <!-- ═══════════════════════════════════════ SETTINGS ════════════════════ -->
     <div id="tab-mise-settings" class="section">
       <!-- auth.js injects account card here as first child -->
+      <button onclick="showTab('home')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--vq-green);cursor:pointer;padding:0 0 16px;-webkit-tap-highlight-color:transparent">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Menus
+      </button>
 
       <div class="card">
         <div class="card-title">Dashboard Preferences</div>
@@ -2731,6 +2735,10 @@
 
     <!-- SETTINGS SCREEN -->
     <div id="screen-settings" class="screen">
+      <button onclick="showScreen('dashboard')" style="display:inline-flex;align-items:center;gap:6px;background:none;border:none;font-family:var(--font-ui,inherit);font-size:14px;font-weight:600;color:var(--gold,#C8A96E);cursor:pointer;padding:0 0 12px;-webkit-tap-highlight-color:transparent">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
       <h1 class="section-title">Settings</h1>
       <p class="section-sub">Configure your business and preferences</p>
 
@@ -3279,7 +3287,7 @@ function vqIcon(name, size) {
 <script src="js/modules/dashboard.js?v=2"></script>
 <script src="js/modules/haccp.js?v=5"></script>
 <script src="js/modules/menus.js?v=5"></script>
-<script src="js/modules/costing.js?v=5"></script>
+<script src="js/modules/costing.js?v=6"></script>
 
 <!-- Mise production modules — loaded after app script so they can wrap/extend it -->
 <script src="supabase.js?v=6"></script>

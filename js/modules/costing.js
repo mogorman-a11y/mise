@@ -27,6 +27,31 @@
     function getJobType(j) { return j.job_type || j.jobType || j.event_type || 'Event'; }
     function getJobCovers(j) { return j.covers || j.guests || 0; }
 
+    // Merge jobs created in the Menus module into yJobs so they appear in quote/invoice pickers.
+    // Menus stores jobs as records with type==='job' in mise_YYYY-MM-DD localStorage keys.
+    // The accessor helpers above already support Menus field names (eventDate, client, guests).
+    function _mergeMenusJobs() {
+      var seen = {};
+      yJobs.forEach(function(j) { seen[j.id] = true; });
+      // Remove stale _source==='menus' entries first so we don't accumulate duplicates on re-merge
+      yJobs = yJobs.filter(function(j) { return j._source !== 'menus'; });
+      seen = {};
+      yJobs.forEach(function(j) { seen[j.id] = true; });
+      try {
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (!k || k.indexOf('mise_') !== 0 || k === 'mise_settings') continue;
+          var records = JSON.parse(localStorage.getItem(k) || '[]');
+          records.forEach(function(r) {
+            if (r.type === 'job' && !seen[r.id]) {
+              seen[r.id] = true;
+              yJobs.push(Object.assign({}, r, { _source: 'menus' }));
+            }
+          });
+        }
+      } catch(e) {}
+    }
+
     // Grand total for a quote including any extras line items
     function getQuoteTotal(quote) {
       const base = parseFloat(quote.price_per_head || 0) * parseInt(quote.covers || 0);
@@ -168,6 +193,7 @@
         yPayments = JSON.parse(localStorage.getItem('yield_payments') || '[]');
         yClients = JSON.parse(localStorage.getItem('yield_clients') || '[]');
         yJobs = JSON.parse(localStorage.getItem('yield_jobs') || '[]');
+        _mergeMenusJobs();
         yCostings = JSON.parse(localStorage.getItem('yield_costings') || '[]');
         // Pull yield_settings from cloud (survives hard reset / new device)
         await window.Mise.yieldSync.pullSettings();
@@ -1979,10 +2005,11 @@
     }
 
     function renderJobs() {
+      _mergeMenusJobs(); // ensure latest Menus jobs are always included
       const container = document.getElementById('jobs-list');
 
       if (yJobs.length === 0) {
-        container.innerHTML = '<p style="color:var(--muted);font-size:14px;">No jobs yet — import from Carte to see your bookings here.</p>';
+        container.innerHTML = '<p style="color:var(--muted);font-size:14px;">No jobs yet. Add a booking in Menus to get started.</p>';
         return;
       }
 
