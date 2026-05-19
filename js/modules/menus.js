@@ -85,7 +85,7 @@ function _normaliseAllergens(value){
 }
 
 // ═══════════════════════════════════════════════════════ SETTINGS ═══════════
-function loadSettings(){
+function loadMiseSettings(){
   try { mSettings = JSON.parse(localStorage.getItem('mise_settings') || '{}'); } catch(e){ mSettings = {}; }
   mSettings.dashboardConfig = mSettings.dashboardConfig || { showNextBooking: true, showStats: true, showQuickActions: true };
 }
@@ -2484,7 +2484,7 @@ function renderAllSections(){
 }
 
 (function init(){
-  loadSettings();
+  loadMiseSettings();
   loadToday();
   populateAllSelects();
   initAllergenGrid();

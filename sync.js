@@ -298,11 +298,20 @@ window.Mise.sync = (function () {
     if (result.error && result.error.code !== 'PGRST116') { console.warn('[Veriqo sync] _pullHaccpSettings error:', result.error.message); return; }
     if (result.data && result.data.config) {
       var _cloud = result.data.config;
-      if (typeof settings !== 'undefined') {
+      // Guard: skip if the cloud row is contaminated Menus data (has Menus-only keys but no HACCP keys).
+      // This happened when loadSettings() was shadowed by menus.js causing the wrong data to be saved.
+      var isHaccpData = (_cloud.staff !== undefined || _cloud.fridgeUnits !== undefined ||
+                         _cloud.thresholds !== undefined || _cloud.enabledTiles !== undefined ||
+                         _cloud.checklist_opening !== undefined);
+      var isMesonlyData = (_cloud.chefName !== undefined || _cloud.businessName !== undefined ||
+                           _cloud.dashboardConfig !== undefined) && !isHaccpData;
+      if (!isMesonlyData && typeof settings !== 'undefined') {
         Object.keys(settings).forEach(function (k) { delete settings[k]; });
         Object.assign(settings, _cloud);
+        try { localStorage.setItem('haccp_settings', JSON.stringify(_cloud)); } catch (e) {}
+      } else if (isMesonlyData) {
+        console.warn('[Veriqo sync] HACCP settings row contains Menus data — skipping to preserve local defaults');
       }
-      try { localStorage.setItem('haccp_settings', JSON.stringify(_cloud)); } catch (e) {}
     }
     await _pullSharedLibrary(userId);
     _applyProfileToSettings();
@@ -317,7 +326,7 @@ window.Mise.sync = (function () {
       Object.keys(mSettings).forEach(function (k) { delete mSettings[k]; });
       Object.assign(mSettings, _cloud);
       try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch (e) {}
-      if (typeof loadSettings === 'function') loadSettings();
+      if (typeof loadMiseSettings === 'function') loadMiseSettings();
     }
   }
 
@@ -426,7 +435,8 @@ window.Mise.sync = (function () {
 
   // ── _refreshAppViews ───────────────────────────────────────────────────────
   function _refreshAppViews() {
-    if (typeof loadSettings === 'function') loadSettings();
+    if (typeof loadHaccpSettings === 'function') loadHaccpSettings();
+    if (typeof loadMiseSettings === 'function') loadMiseSettings();
     if (typeof loadToday === 'function') loadToday();
     if (typeof populateAllSelects === 'function') populateAllSelects();
     if (typeof renderMenuLibrary === 'function') renderMenuLibrary();

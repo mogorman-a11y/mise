@@ -218,7 +218,7 @@ var DEFAULT_CHECKLISTS = {
 
 var settings = {};
 
-function loadSettings() {
+function loadHaccpSettings() {
   try { var r=localStorage.getItem('haccp_settings'); settings=r?JSON.parse(r):{}; } catch(e){ settings={}; }
   Object.keys(DEFAULTS).forEach(function(k){ if(!settings[k]||!settings[k].length) settings[k]=DEFAULTS[k].slice(); });
   ['opening','closing','crosscontam'].forEach(function(k){
@@ -3490,7 +3490,7 @@ function dismissInstallBanner() {
 })();
 
 // --- INIT ---
-loadSettings();
+loadHaccpSettings();
 loadToday();
 populateAllSelects();
 renderChecklists();

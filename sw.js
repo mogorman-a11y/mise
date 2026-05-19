@@ -5,7 +5,7 @@
 //   Supabase API calls          → network-first (sync when online, skip offline)
 //   Everything else             → network with cache fallback
 
-const CACHE = 'veriqo-v23';
+const CACHE = 'veriqo-v24';
 
 const APP_SHELL = [
   './app.html',
