@@ -1029,6 +1029,13 @@ function logJob(){
 
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveJob) Mise.sync.saveJob(rec);
 
+  // Mirror into yield_jobs so Costing picks it up immediately without needing a sync round-trip
+  try {
+    var _yj = JSON.parse(localStorage.getItem('yield_jobs') || '[]');
+    if (!_yj.some(function(j){ return j.id === rec.id; })) { _yj.push(rec); }
+    localStorage.setItem('yield_jobs', JSON.stringify(_yj));
+  } catch(e) {}
+
   // Reset form
   ['job-client-manual','job-location','job-time','job-covers','job-notes'].forEach(function(id){
     document.getElementById(id).value='';

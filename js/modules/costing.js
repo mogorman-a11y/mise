@@ -176,6 +176,8 @@
         yCostings = JSON.parse(localStorage.getItem('yield_costings') || '[]');
         yQuotes = JSON.parse(localStorage.getItem('yield_quotes') || '[]');
         yBank = JSON.parse(localStorage.getItem('yield_bank') || '{}');
+        yJobs = JSON.parse(localStorage.getItem('yield_jobs') || '[]');
+        _mergeMenusJobs();
       } catch (e) {
         ySettings = {};
         yProfile = {};
@@ -925,6 +927,7 @@
 
     // ═══════════════════════════════════════════════════════ QUOTES ═══
     function showNewQuoteModal(prefill, existingQuote) {
+      _mergeMenusJobs(); // always pick up latest Menus bookings before building job picker
       if (!existingQuote) {
         _editingQuoteId = null;
         document.getElementById('quote-modal').querySelector('.modal-title').textContent = 'New Quote';
