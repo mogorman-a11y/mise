@@ -437,8 +437,10 @@ window.Mise.sync = (function () {
   function _refreshAppViews() {
     if (typeof loadHaccpSettings === 'function') loadHaccpSettings();
     if (typeof loadMiseSettings === 'function') loadMiseSettings();
-    if (typeof loadToday === 'function') loadToday();
-    if (typeof populateAllSelects === 'function') populateAllSelects();
+    if (typeof loadHaccpToday === 'function') loadHaccpToday();
+    if (typeof loadMiseToday === 'function') loadMiseToday();
+    if (typeof populateHaccpSelects === 'function') populateHaccpSelects();
+    if (typeof populateMiseSelects === 'function') populateMiseSelects();
     if (typeof renderMenuLibrary === 'function') renderMenuLibrary();
     if (typeof renderDishLibrary === 'function') renderDishLibrary();
     if (typeof renderSavedMenus === 'function') renderSavedMenus();
@@ -446,7 +448,8 @@ window.Mise.sync = (function () {
     if (typeof updateDashboard === 'function') updateDashboard();
     if (typeof updateHaccpDashboard === 'function') updateHaccpDashboard();
     if (typeof syncTileToggles === 'function') syncTileToggles();
-    if (typeof renderAllSections === 'function') renderAllSections();
+    if (typeof renderHaccpSections === 'function') renderHaccpSections();
+    if (typeof renderMiseSections === 'function') renderMiseSections();
     if (typeof updateNextJobBanner === 'function') updateNextJobBanner();
     document.dispatchEvent(new CustomEvent('vq:sync-complete'));
   }

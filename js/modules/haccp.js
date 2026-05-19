@@ -236,7 +236,7 @@ function loadHaccpSettings() {
     records:true, suppliers:true
   };
 }
-function saveSettings() {
+function saveHaccpSettings() {
   try { localStorage.setItem('haccp_settings',JSON.stringify(settings)); } catch(e){}
   // Cloud sync — mirror to Supabase
   if (window.Mise && window.Mise.sync) Mise.sync.saveSettings(settings);
@@ -248,7 +248,7 @@ function populateSelect(elId, listKey) {
   el.innerHTML=settings[listKey].map(function(v){return '<option>'+v+'</option>';}).join('');
   if(val) el.value=val;
 }
-function populateAllSelects() {
+function populateHaccpSelects() {
   ['fridge-unit','fridge-by','cook-chef','cool-by','reheat-chef','del-supplier','del-by','clean-by','probe-by','pest-by','illness-staff','illness-by','opening-by','closing-by','crosscontam-by'].forEach(function(id){
     var key = (id==='fridge-unit') ? 'fridgeUnits' : (id==='del-supplier') ? 'suppliers' : (id==='clean-task') ? 'cleaningTasks' : 'staff';
     populateSelect(id, key);
@@ -307,7 +307,7 @@ function addChecklistItem(type) {
   if(existing.indexOf(label)!==-1){toast('Already in the list','warn');return;}
   var newId=type[0]+Date.now();
   settings[key].push({id:newId,label:label,note:note});
-  saveSettings();
+  saveHaccpSettings();
   labelEl.value=''; if(noteEl) noteEl.value='';
   CHECKLISTS[type]=settings[key];
   renderSettingsChecklistList(type);
@@ -320,7 +320,7 @@ function removeChecklistItem(type,idx) {
   var item=settings[key][idx].label;
   settings[key].splice(idx,1);
   if(!settings[key].length) settings[key]=DEFAULT_CHECKLISTS[type].map(function(i,j){return {id:type[0]+j,label:i.label,note:i.note};});
-  saveSettings();
+  saveHaccpSettings();
   CHECKLISTS[type]=settings[key];
   renderSettingsChecklistList(type);
   renderChecklists();
@@ -340,7 +340,7 @@ function saveThresholds() {
     var el = document.getElementById('thresh-'+key);
     if(el && el.value !== '') settings.thresholds[key] = parseFloat(el.value);
   });
-  saveSettings();
+  saveHaccpSettings();
   toast('Temperature thresholds saved');
 }
 
@@ -358,13 +358,13 @@ function addItem(listKey,inputId,containerId) {
   var input=document.getElementById(inputId); var val=input.value.trim();
   if(!val){toast('Please enter a value',false);return;}
   if(settings[listKey].indexOf(val)!==-1){toast('Already in the list','warn');return;}
-  settings[listKey].push(val); saveSettings(); input.value='';
-  renderSettingsList(listKey,containerId); populateAllSelects(); toast('Added: '+val);
+  settings[listKey].push(val); saveHaccpSettings(); input.value='';
+  renderSettingsList(listKey,containerId); populateHaccpSelects(); toast('Added: '+val);
 }
 function removeItem(listKey,idx,containerId) {
   var item=settings[listKey][idx]; settings[listKey].splice(idx,1);
   if(!settings[listKey].length) settings[listKey]=DEFAULTS[listKey].slice();
-  saveSettings(); renderSettingsList(listKey,containerId); populateAllSelects(); toast('Removed: '+item);
+  saveHaccpSettings(); renderSettingsList(listKey,containerId); populateHaccpSelects(); toast('Removed: '+item);
 }
 
 function now() { var d=new Date(); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
@@ -375,7 +375,7 @@ document.getElementById('header-date').textContent = fmtDate();
 ['fridge-time','cook-time','cool-start-time','cool-end-time','reheat-time','del-time','clean-time'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=now(); });
 ['probe-date','pest-date','illness-date'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=todayStr(); });
 
-function saveToday() {
+function saveHaccpToday() {
   try { localStorage.setItem('haccp_'+TODAY,JSON.stringify(records)); } catch(e){}
   // Cloud sync — mirror to Supabase so data persists across devices
   if (window.Mise && window.Mise.sync) Mise.sync.saveDay(TODAY, records);
@@ -385,7 +385,7 @@ function saveToday() {
     posthog.capture('record_added', { type: last.type, status: last.status });
   }
 }
-function loadToday() { try { var r=localStorage.getItem('haccp_'+TODAY); records=r?JSON.parse(r):[]; } catch(e){ records=[]; } }
+function loadHaccpToday() { try { var r=localStorage.getItem('haccp_'+TODAY); records=r?JSON.parse(r):[]; } catch(e){ records=[]; } }
 function getAllDays() {
   var days=[];
   try { for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('haccp_')===0&&k!=='haccp_settings'&&k!=='haccp_suppliers'&&k!=='haccp_credentials'){ days.push(k.replace('haccp_','')); } } } catch(e){}
@@ -401,7 +401,7 @@ var _homeScrollPos = 0;
 
 function toggleTile(key, enabled) {
   settings.enabledTiles[key] = enabled;
-  saveSettings();
+  saveHaccpSettings();
   updateHaccpDashboard();
 }
 
@@ -535,7 +535,7 @@ function logChecklist(type) {
   var status=unchecked.length===0?'ok':(unchecked.length<=2?'warn':'fail');
   var msg=unchecked.length===0?'All '+items.length+' items confirmed':unchecked.length+' item'+(unchecked.length>1?'s':'')+' not confirmed';
   records.push({type:type,by:by,notes:notes,checked:checked,unchecked:unchecked,time:now(),status:status,msg:msg});
-  saveToday();
+  saveHaccpToday();
   items.forEach(function(item){ var el=_getChk(item.id); if(el) el.checked=false; });
   if (document.getElementById(notesId)) document.getElementById(notesId).value='';
   if (isPCType) renderSection_PC(type); else renderChecklistLog(type);
@@ -597,7 +597,7 @@ function logFridge() {
     else{status='ok';msg=temp+'°C';}
   }
   records.push({type:'fridge',unit:unit,by:by,temp:temp,time:time,notes:notes,status:status,msg:msg});
-  saveToday(); document.getElementById('fridge-temp').value=''; document.getElementById('fridge-notes').value=''; document.getElementById('fridge-time').value=now();
+  saveHaccpToday(); document.getElementById('fridge-temp').value=''; document.getElementById('fridge-notes').value=''; document.getElementById('fridge-time').value=now();
   if(isNA)toggleNA('fridge-temp',naBtn);
   renderSection('fridge'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+unit+' '+msg); else if(status==='warn')toast('Warning — '+msg,'warn'); else toast('Alert — '+msg,false);
@@ -616,7 +616,7 @@ function logCooking() {
   else if(temp<T('cooking-warn')){status='warn';msg=temp+'°C — borderline, target '+T('cooking-warn')+'°C';}
   else{status='ok';msg=temp+'°C — safe';}
   records.push({type:'cooking',food:food,temp:temp,time:time,chef:chef,status:status,msg:msg});
-  saveToday(); document.getElementById('cook-food').value=''; document.getElementById('cook-temp').value=''; document.getElementById('cook-time').value=now();
+  saveHaccpToday(); document.getElementById('cook-food').value=''; document.getElementById('cook-temp').value=''; document.getElementById('cook-time').value=now();
   renderSection('cooking'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
 }
@@ -637,7 +637,7 @@ function logCooling() {
   else if(endTemp>T('cooling-warn')){status='warn';msg='End temp '+endTemp+'°C — borderline, monitor closely';}
   else{status='ok';msg='Cooled to '+endTemp+'°C';}
   records.push({type:'cooling',food:food,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,method:method,by:by,time:startTime,status:status,msg:msg});
-  saveToday();
+  saveHaccpToday();
   document.getElementById('cool-food').value=''; document.getElementById('cool-start-temp').value=''; document.getElementById('cool-end-temp').value='';
   document.getElementById('cool-start-time').value=now(); document.getElementById('cool-end-time').value=now();
   renderSection('cooling'); updateHaccpDashboard();
@@ -658,7 +658,7 @@ function logReheating() {
   else if(temp<T('reheat-warn')){status='warn';msg=temp+'°C — borderline, target '+T('reheat-warn')+'°C';}
   else{status='ok';msg=temp+'°C — safe to serve';}
   records.push({type:'reheating',food:food,temp:temp,time:time,chef:chef,notes:notes,status:status,msg:msg});
-  saveToday(); document.getElementById('reheat-food').value=''; document.getElementById('reheat-temp').value=''; document.getElementById('reheat-notes').value=''; document.getElementById('reheat-time').value=now();
+  saveHaccpToday(); document.getElementById('reheat-food').value=''; document.getElementById('reheat-temp').value=''; document.getElementById('reheat-notes').value=''; document.getElementById('reheat-time').value=now();
   renderSection('reheating'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
 }
@@ -705,7 +705,7 @@ function logDelivery() {
   else if((temp!==null&&temp>T('delivery-warn'))||condition==='Minor issues noted'||cW||fW){status='warn';msg=temp!==null?(temp+'°C — issues noted'):'Issues noted';}
   else{status='ok';msg=temp!==null?(temp+'°C — '+condition):condition;}
   records.push({type:'delivery',supplier:supplier,temp:temp,time:time,invoice:invoice,by:by,condition:condition,chilledTemp:chilledTemp,chilledCond:chilledCond,frozenTemp:frozenTemp,frozenCond:frozenCond,notes:notes,photo:photo,status:status,msg:msg});
-  saveToday();
+  saveHaccpToday();
   showNudge('delivery_logged');
   document.getElementById('del-temp').value=''; document.getElementById('del-invoice').value=''; document.getElementById('del-notes').value='';
   document.getElementById('del-chilled-temp').value=''; document.getElementById('del-chilled-cond').selectedIndex=0;
@@ -724,7 +724,7 @@ function logCleaning() {
   var isNA=naBtn&&naBtn.getAttribute('data-na')==='1';
   var chem=isNA?'N/A':document.getElementById('clean-chem').value.trim();
   records.push({type:'cleaning',task:task,time:time,by:by,chem:chem,status:'ok',msg:'Completed by '+by});
-  saveToday(); document.getElementById('clean-chem').value=''; document.getElementById('clean-time').value=now();
+  saveHaccpToday(); document.getElementById('clean-chem').value=''; document.getElementById('clean-time').value=now();
   if(isNA)toggleNA('clean-chem',naBtn);
   renderSection('cleaning'); updateHaccpDashboard(); toast('Saved — '+task+' completed');
 }
@@ -740,7 +740,7 @@ function logProbe() {
   var status=result.indexOf('Pass')===0?'ok':'fail';
   var msg=result+' ('+reading+'°C)';
   records.push({type:'probe',probeId:id,reading:reading,date:date,result:result,by:by,time:now(),status:status,msg:msg});
-  saveToday(); document.getElementById('probe-reading').value=''; document.getElementById('probe-id').value='';
+  saveHaccpToday(); document.getElementById('probe-reading').value=''; document.getElementById('probe-id').value='';
   renderSection('probe'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+id+' passed'); else toast('Alert — '+id+' failed',false);
 }
@@ -755,7 +755,7 @@ function logPest() {
   var status=type.indexOf('Routine')===0?'ok':(type==='Pest contractor visit'||type==='Bait station checked'?'ok':'fail');
   var msg=type+(location?' at '+location:'');
   records.push({type:'pest',pestType:type,location:location,date:date,action:action,by:by,time:now(),status:status,msg:msg});
-  saveToday(); document.getElementById('pest-location').value=''; document.getElementById('pest-action').value=''; document.getElementById('pest-date').value=todayStr();
+  saveHaccpToday(); document.getElementById('pest-location').value=''; document.getElementById('pest-action').value=''; document.getElementById('pest-date').value=todayStr();
   renderSection('pest'); updateHaccpDashboard(); toast('Saved — pest record logged');
 }
 
@@ -769,7 +769,7 @@ function logIllness() {
   var status=type.indexOf('Reported')===0?'warn':'ok';
   var msg=type;
   records.push({type:'illness',staff:staff,illnessType:type,symptoms:symptoms,date:date,by:by,time:now(),status:status,msg:msg});
-  saveToday(); document.getElementById('illness-symptoms').value=''; document.getElementById('illness-date').value=todayStr();
+  saveHaccpToday(); document.getElementById('illness-symptoms').value=''; document.getElementById('illness-date').value=todayStr();
   renderSection('illness'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+staff+' return to work logged'); else toast('Saved — '+staff+' stood down','warn');
 }
@@ -796,7 +796,7 @@ function logIncident() {
   var locationObj = _incidentLocation ? Object.assign({}, _incidentLocation, { text: locationText || _incidentLocation.text }) : (locationText ? { text: locationText } : null);
   var msg = type + ' — ' + severity + ' severity. ' + description + (action ? ' Action: ' + action : '');
   records.push({ type:'incident', incidentType:type, severity:severity, incidentTime:incidentTime, location:locationObj, description:description, action:action, by:by, photos:_incidentPhotos.slice(), loggedAt:now(), time:now(), status:status, msg:msg });
-  saveToday(); renderSection_PC('incident'); updateHaccpDashboard();
+  saveHaccpToday(); renderSection_PC('incident'); updateHaccpDashboard();
   document.getElementById('inc-description').value = '';
   document.getElementById('inc-action').value = '';
   document.getElementById('inc-location').value = '';
@@ -923,7 +923,7 @@ function renderSection(type) {
   }).join('');
 }
 
-function renderAllSections() {
+function renderHaccpSections() {
   ['opening','closing','crosscontam','fridge','cooking','cooling','reheating','delivery','cleaning','probe','pest','illness'].forEach(renderSection);
   ['customers','kitchenassess','allergen','transport','mobileset','incident'].forEach(renderSection_PC); renderCredentials();
 }
@@ -1395,7 +1395,7 @@ var DEFAULT_CHECKLISTS_PC = {
 
 function togglePrivateChefMode(on) {
   settings.privateChefMode = on;
-  saveSettings();
+  saveHaccpSettings();
   var section = document.getElementById('pc-section');
   if (section) section.style.display = on ? 'block' : 'none';
   var slider = document.getElementById('pc-slider');
@@ -1438,7 +1438,7 @@ function renderPCChecklists() {
     if (!c) return;
     var key = 'checklist_pc_' + type;
     var items = settings[key] || DEFAULT_CHECKLISTS_PC[type].map(function(i,idx){ return {id:type[0]+idx, label:i.label, note:i.note}; });
-    if (!settings[key]) { settings[key] = items; saveSettings(); }
+    if (!settings[key]) { settings[key] = items; saveHaccpSettings(); }
     c.innerHTML = items.map(function(item){
       return '<div class="checklist-item">'+
         '<input type="checkbox" id="chk-'+item.id+'">'+
@@ -1777,7 +1777,7 @@ function menuSave() {
     settings.savedMenus.push(_savedMenu);
     toast('Menu "' + name + '" saved');
   }
-  saveSettings();
+  saveHaccpSettings();
   if (_savedMenu && window.Mise && window.Mise.sync && window.Mise.sync.saveMenu) Mise.sync.saveMenu(_savedMenu);
   document.getElementById('menu-name').value = '';
   _menuDishes = [];
@@ -1808,7 +1808,7 @@ function menuEdit(id) {
 function menuDelete(id) {
   if (!settings.savedMenus) return;
   settings.savedMenus = settings.savedMenus.filter(function(m) { return String(m.id) !== String(id); });
-  saveSettings();
+  saveHaccpSettings();
   renderMenuLibrary();
   custPopulateMenuSelect();
   toast('Menu deleted');
@@ -1896,7 +1896,7 @@ function saveDishToLibrary(name, allergens, category) {
   if (exists) { toast('"' + name + '" is already in your dish library'); return false; }
   var _newDish = { id: Date.now(), dish: name, allergens: allergens.slice(), category: category || '' };
   settings.savedDishes.push(_newDish);
-  saveSettings();
+  saveHaccpSettings();
   renderDishLibrary();
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(_newDish);
   showNudge('dish_added');
@@ -1906,7 +1906,7 @@ function saveDishToLibrary(name, allergens, category) {
 function dishDelete(id) {
   if (!settings.savedDishes) return;
   settings.savedDishes = settings.savedDishes.filter(function(d) { return d.id !== id; });
-  saveSettings();
+  saveHaccpSettings();
   renderDishLibrary();
   toast('Dish removed from library');
   if (window.Mise && window.Mise.sync && window.Mise.sync.deleteDish) {
@@ -1945,7 +1945,7 @@ function dishSaveEdit(id) {
     if (d.id === id) { _updDish = { id: d.id, dish: name, allergens: allergens, category: category }; return _updDish; }
     return d;
   });
-  saveSettings();
+  saveHaccpSettings();
   if (_updDish && window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(_updDish);
   _expandedDishId = null;
   renderDishLibrary();
@@ -2148,7 +2148,7 @@ function custEditJob(recIdx) {
 
   // Remove the old record so it gets re-saved cleanly
   records.splice(recIdx, 1);
-  saveToday();
+  saveHaccpToday();
   renderSection_PC('customers');
   updateHaccpDashboard();
 
@@ -2457,7 +2457,7 @@ function logCustomerJob() {
     menuName: menuNamesStr, menu: allDishes,
     conflicts: conflicts, status: status, msg: msg
   });
-  saveToday();
+  saveHaccpToday();
 
   ['cust-name','cust-address','cust-phone','cust-email','cust-covers','cust-notes',
    'cust-diet-notes','cust-event-date','cust-time'].forEach(function(id) {
@@ -2515,7 +2515,7 @@ function logKitchenAssess() {
   var status = condition.indexOf('Unsuitable')===0||fridgeFail?'fail': (condition.indexOf('Minor')===0||condition.indexOf('Significant')===0||fridgeWarn||unchecked.length>0)?'warn':'ok';
   var msg = condition.split(' —')[0] + (!isNaN(fridgeTemp)?' · Fridge: '+fridgeTemp+'°C':'');
   records.push({type:'kitchenassess', client:client, fridgeTemp:fridgeTemp, condition:condition, notes:notes, photo:photo, checked:checked, unchecked:unchecked, time:now(), status:status, msg:msg});
-  saveToday();
+  saveHaccpToday();
   document.getElementById('ka-client').value=''; document.getElementById('ka-fridge-temp').value=''; document.getElementById('ka-notes').value=''; clearKaPhoto();
   items.forEach(function(item){ var el=document.getElementById('chk-'+item.id); if(el) el.checked=false; });
   renderSection('kitchenassess'); updateHaccpDashboard();
@@ -2532,7 +2532,7 @@ function logAllergen() {
   var status = present.length > 0 ? 'warn' : 'ok';
   var msg = present.length > 0 ? present.length+' allergen'+(present.length>1?'s':'')+' — '+confirmed.split(' —')[0] : 'No allergens — '+confirmed.split(' —')[0];
   records.push({type:'allergen', client:client, dish:dish, allergens:present, confirmed:confirmed, notes:notes, time:now(), status:status, msg:msg});
-  saveToday();
+  saveHaccpToday();
   document.getElementById('al-client').value=''; document.getElementById('al-dish').value=''; document.getElementById('al-notes').value='';
   ALLERGENS_14.forEach(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
   renderSection('allergen'); updateHaccpDashboard();
@@ -2555,7 +2555,7 @@ function logTransport() {
   else if (endTemp > T('fridge-warn')) { status='warn'; msg='Arrived at '+endTemp+'°C — borderline, monitor'; }
   else { status='ok'; msg='Arrived safely at '+endTemp+'°C'; }
   records.push({type:'transport', food:food, destination:dest, startTemp:startTemp, startTime:startTime, endTemp:endTemp, endTime:endTime, method:method, by:by, time:startTime, status:status, msg:msg});
-  saveToday();
+  saveHaccpToday();
   document.getElementById('tr-food').value=''; document.getElementById('tr-destination').value='';
   document.getElementById('tr-start-temp').value=''; document.getElementById('tr-end-temp').value='';
   document.getElementById('tr-start-time').value=now(); document.getElementById('tr-end-time').value=now();
@@ -2595,7 +2595,7 @@ function clearCredPhoto() { document.getElementById('cred-photo').value=''; docu
 function saveCredentials(list) {
   try { localStorage.setItem('haccp_credentials', JSON.stringify(list)); } catch(e){}
   settings.credentials = list;
-  saveSettings();
+  saveHaccpSettings();
 }
 function loadCredentials() {
   var local = [];
@@ -3491,12 +3491,12 @@ function dismissInstallBanner() {
 
 // --- INIT ---
 loadHaccpSettings();
-loadToday();
-populateAllSelects();
+loadHaccpToday();
+populateHaccpSelects();
 renderChecklists();
 initPrivateChefMode();
 haccpTab('home');
-renderAllSections();
+renderHaccpSections();
 function openCarte(jobId) {
   if (typeof showModule === 'function') {
     showModule('menus');

@@ -117,17 +117,17 @@ async function setEmailPref(optedIn){
   }
 }
 
-function saveSettings(){
+function saveMiseSettings(){
   try { localStorage.setItem('mise_settings', JSON.stringify(mSettings)); } catch(e){}
   // Optional cloud sync via shared Mise.sync if available
   if (window.Mise && window.Mise.sync) Mise.sync.saveSettings(mSettings, 'menus');
 }
 
 // ═══════════════════════════════════════════════════════ RECORDS ════════════
-function loadToday(){
+function loadMiseToday(){
   try { mRecords = JSON.parse(localStorage.getItem('mise_'+TODAY) || '[]'); } catch(e){ mRecords = []; }
 }
-function saveToday(){
+function saveMiseToday(){
   try { localStorage.setItem('mise_'+TODAY, JSON.stringify(mRecords)); } catch(e){}
   if (window.Mise && window.Mise.sync) Mise.sync.saveDay(TODAY, mRecords, 'menus');
 }
@@ -402,7 +402,7 @@ function addClient(){
   };
   if(!mSettings.savedClients) mSettings.savedClients = [];
   mSettings.savedClients.push(client);
-  saveSettings();
+  saveMiseSettings();
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveClient) Mise.sync.saveClient(client);
   ['cl-name','cl-address','cl-phone','cl-email','cl-diet'].forEach(function(id){
     document.getElementById(id).value='';
@@ -482,7 +482,7 @@ function clientSaveEdit(id){
     return c.id===id ? Object.assign({},c,updates) : c;
   });
   _expandedClientId = null;
-  saveSettings();
+  saveMiseSettings();
   var _updClient = (mSettings.savedClients||[]).find(function(c){ return c.id===id; });
   if (_updClient && window.Mise && window.Mise.sync && window.Mise.sync.saveClient) Mise.sync.saveClient(_updClient);
   renderClientList();
@@ -494,7 +494,7 @@ function clientDelete(id){
   if(!confirm('Delete this client? This cannot be undone.')) return;
   mSettings.savedClients = (mSettings.savedClients||[]).filter(function(c){ return c.id!==id; });
   _expandedClientId = null;
-  saveSettings();
+  saveMiseSettings();
   if (window.Mise && window.Mise.sync && window.Mise.sync.deleteClient) Mise.sync.deleteClient(id);
   renderClientList();
   populateClientSelects();
@@ -630,7 +630,7 @@ function calToggleUnavailable(ds){
   var idx = mSettings.unavailableDates.indexOf(ds);
   if(idx !== -1){ mSettings.unavailableDates.splice(idx,1); toast('Removed from unavailable'); }
   else { mSettings.unavailableDates.push(ds); toast('Marked unavailable'); }
-  saveSettings();
+  saveMiseSettings();
   renderCalendar();
 }
 
@@ -703,7 +703,7 @@ function addDish(){
     allergens: getDishAllergens()
   };
   mSettings.savedDishes.push(dishData);
-  saveSettings();
+  saveMiseSettings();
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(dishData);
   document.getElementById('dish-name').value='';
   document.getElementById('dish-cat').value='';
@@ -787,7 +787,7 @@ function renderDishLibrary(){
 
 function deleteDish(id){
   mSettings.savedDishes = (mSettings.savedDishes||[]).filter(function(d){ return String(d.id)!==String(id); });
-  saveSettings();
+  saveMiseSettings();
   renderDishLibrary();
   renderMenuDishSelect();
   toast('Dish removed');
@@ -818,7 +818,7 @@ function saveDishEdit(id){
   mSettings.savedDishes = (mSettings.savedDishes||[]).map(function(d){
     return String(d.id)===String(id) ? {id:d.id, dish:name, allergens:allergens, category:category} : d;
   });
-  saveSettings();
+  saveMiseSettings();
   var _updDish = (mSettings.savedDishes||[]).find(function(d){ return String(d.id)===String(id); });
   if (_updDish && window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(_updDish);
   _editingDishId = null;
@@ -880,7 +880,7 @@ function saveMenu(){
   if(!mSettings.savedMenus) mSettings.savedMenus=[];
   var _newMenu = { id: uid(), name: name, dishIds: selected };
   mSettings.savedMenus.push(_newMenu);
-  saveSettings();
+  saveMiseSettings();
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveMenu) Mise.sync.saveMenu(_newMenu);
   document.getElementById('menu-name').value='';
   renderMenuDishSelect();
@@ -972,7 +972,7 @@ function saveMenuEdit(id){
   mSettings.savedMenus = (mSettings.savedMenus||[]).map(function(m){
     return m.id===id ? Object.assign({},m,{name:name,dishIds:selected}) : m;
   });
-  saveSettings();
+  saveMiseSettings();
   var _updMenu = (mSettings.savedMenus||[]).find(function(m){ return m.id===id; });
   if (_updMenu && window.Mise && window.Mise.sync && window.Mise.sync.saveMenu) Mise.sync.saveMenu(_updMenu);
   _editingMenuId = null;
@@ -986,7 +986,7 @@ function cancelMenuEdit(){
 
 function deleteMenu(id){
   mSettings.savedMenus = (mSettings.savedMenus||[]).filter(function(m){ return m.id!==id; });
-  saveSettings(); renderSavedMenus(); toast('Menu removed');
+  saveMiseSettings(); renderSavedMenus(); toast('Menu removed');
   if (window.Mise && window.Mise.sync && window.Mise.sync.deleteMenu) Mise.sync.deleteMenu(id);
 }
 
@@ -1028,7 +1028,7 @@ function logJob(){
 
   // Save record
   if(rec.date === TODAY){
-    mRecords.push(rec); saveToday();
+    mRecords.push(rec); saveMiseToday();
   } else {
     var day = getDayRecords(rec.date); day.push(rec); saveDayRecords(rec.date, day);
   }
@@ -1230,7 +1230,7 @@ function saveJobEdit(id){
   var found = false;
   var updatedRec = null;
   for(var i=0;i<mRecords.length;i++){
-    if(mRecords[i].id===id){ Object.assign(mRecords[i],updates); saveToday(); updatedRec=mRecords[i]; found=true; break; }
+    if(mRecords[i].id===id){ Object.assign(mRecords[i],updates); saveMiseToday(); updatedRec=mRecords[i]; found=true; break; }
   }
   if(!found){
     try {
@@ -1261,7 +1261,7 @@ function toggleJobPayment(id, field) {
   for(var i = 0; i < mRecords.length; i++) {
     if(mRecords[i].id === id) {
       mRecords[i][field] = !mRecords[i][field];
-      saveToday();
+      saveMiseToday();
       updatedRec = mRecords[i];
       found = true;
       break;
@@ -1299,7 +1299,7 @@ function deleteJob(id){
   if(!confirm('Delete this job?')) return;
   var found = false;
   for(var i=0;i<mRecords.length;i++){
-    if(mRecords[i].id===id){ mRecords.splice(i,1); saveToday(); found=true; break; }
+    if(mRecords[i].id===id){ mRecords.splice(i,1); saveMiseToday(); found=true; break; }
   }
   if(!found){
     try {
@@ -1465,7 +1465,7 @@ function addQuickDish(prefix){
   var dish = { id: uid(), dish: name, category: cat, allergens: [] };
   if(!mSettings.savedDishes) mSettings.savedDishes = [];
   mSettings.savedDishes.push(dish);
-  saveSettings();
+  saveMiseSettings();
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(dish);
   var listEl = document.getElementById('jcustom-'+prefix+'-dishes');
   if(listEl){
@@ -1780,7 +1780,7 @@ async function handleMagicImport(event) {
       }
       var _importedMenu = { id: uid(), name: finalName, dishIds: newDishIds };
       mSettings.savedMenus.push(_importedMenu);
-      saveSettings();
+      saveMiseSettings();
       if (window.Mise && window.Mise.sync) {
         var _newDishObjs = (mSettings.savedDishes||[]).filter(function(d){ return newDishIds.indexOf(d.id) !== -1; });
         _newDishObjs.forEach(function(d){ if (Mise.sync.saveDish) Mise.sync.saveDish(d); });
@@ -1792,7 +1792,7 @@ async function handleMagicImport(event) {
       resetBtn(false);
       toast('✨ ' + newDishIds.length + ' dish' + (newDishIds.length !== 1 ? 'es' : '') + ' imported into "' + finalName + '"');
     } else {
-      saveSettings();
+      saveMiseSettings();
       resetBtn(false);
       toast('No new dishes found in image', 'warn');
     }
@@ -2060,7 +2060,7 @@ function logTransport(){
     tempStart: tempStart, tempEnd: tempEnd, status: status,
     by: document.getElementById('tr-by').value||''
   };
-  mRecords.push(rec); saveToday();
+  mRecords.push(rec); saveMiseToday();
   ['tr-client-manual','tr-food','tr-dest','tr-temp-start','tr-temp-end'].forEach(function(id){
     document.getElementById(id).value='';
   });
@@ -2107,7 +2107,7 @@ function logAssess(){
     notes:        (document.getElementById('as-notes').value||'').trim(),
     by:           document.getElementById('as-by').value||''
   };
-  mRecords.push(rec); saveToday();
+  mRecords.push(rec); saveMiseToday();
   ['as-client','as-fridge-temp','as-freezer-temp','as-notes'].forEach(function(id){
     document.getElementById(id).value='';
   });
@@ -2150,7 +2150,7 @@ function logAllergen(){
     allergens: present.join(', '),
     notes: (document.getElementById('al-notes').value||'').trim()
   };
-  mRecords.push(rec); saveToday();
+  mRecords.push(rec); saveMiseToday();
   document.getElementById('al-client').value='';
   document.getElementById('al-dish').value='';
   document.getElementById('al-notes').value='';
@@ -2192,7 +2192,7 @@ function addCredential(){
     issued:  document.getElementById('cred-issued').value||'',
     expiry:  document.getElementById('cred-expiry').value||''
   });
-  saveSettings();
+  saveMiseSettings();
   ['cred-name','cred-issuer','cred-issued','cred-expiry'].forEach(function(id){ document.getElementById(id).value=''; });
   document.getElementById('cred-holder').value='';
   renderCredentialsList();
@@ -2224,7 +2224,7 @@ function renderCredentialsList(){
 
 function deleteCred(id){
   mSettings.credentials=(mSettings.credentials||[]).filter(function(c){ return c.id!==id; });
-  saveSettings(); renderCredentialsList(); toast('Removed');
+  saveMiseSettings(); renderCredentialsList(); toast('Removed');
 }
 
 // ═══════════════════════════════════════════════════════ SETTINGS ══════════
@@ -2355,7 +2355,7 @@ function saveProfile(){
   mSettings.phone         = (document.getElementById('set-phone').value||'').trim();
   mSettings.email         = (document.getElementById('set-email').value||'').trim();
   mSettings.logo          = logo;
-  saveSettings();
+  saveMiseSettings();
   updateDashboard();
   // Also update shared profiles table so Veriqo picks up the latest name/company/logo
   (async function(){
@@ -2391,7 +2391,7 @@ function addStaff(){
   if(!val) return;
   if(!mSettings.staff) mSettings.staff=[];
   if(mSettings.staff.indexOf(val)===-1) mSettings.staff.push(val);
-  saveSettings();
+  saveMiseSettings();
   input.value='';
   renderStaffList();
   populateStaffSelects();
@@ -2400,7 +2400,7 @@ function addStaff(){
 
 function removeStaff(name){
   mSettings.staff=(mSettings.staff||[]).filter(function(s){ return s!==name; });
-  saveSettings(); renderStaffList(); populateStaffSelects();
+  saveMiseSettings(); renderStaffList(); populateStaffSelects();
 }
 
 function populateStaffSelects(){
@@ -2425,7 +2425,7 @@ function loadSettingsToggles(){
 
 function toggleDashWidget(key, val){
   mSettings.dashboardConfig[key] = val;
-  saveSettings();
+  saveMiseSettings();
   updateDashboard();
 }
 
@@ -2473,20 +2473,20 @@ function dismissMenusBanner(){
 })();
 
 // ═══════════════════════════════════════════════════════ INIT ════════════════
-function populateAllSelects(){
+function populateMiseSelects(){
   populateClientSelects();
   populateStaffSelects();
 }
 
-function renderAllSections(){
+function renderMiseSections(){
   if(_activeTab !== 'home') return;
   updateDashboard();
 }
 
 (function init(){
   loadMiseSettings();
-  loadToday();
-  populateAllSelects();
+  loadMiseToday();
+  populateMiseSelects();
   initAllergenGrid();
   initDishAllergenGrid();
   showTab('home');
