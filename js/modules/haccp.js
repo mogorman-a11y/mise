@@ -573,6 +573,29 @@ function toggleNA(inputId, btn) {
   }
 }
 
+// --- MINUS TOGGLE ---
+function toggleMinus(inputId, btn) {
+  var input = document.getElementById(inputId);
+  var val = parseFloat(input.value);
+  if (!isNaN(val)) {
+    input.value = (-val).toString();
+  } else {
+    // No value yet — prime the field with '-' so user can type the number
+    input.value = input.value === '-' ? '' : '-';
+  }
+  var isNeg = input.value !== '' && parseFloat(input.value) < 0 || input.value === '-';
+  btn.classList.toggle('na-btn-active', isNeg);
+}
+
+function enforceNeg(inputId, btnId) {
+  var input = document.getElementById(inputId);
+  var btn = document.getElementById(btnId);
+  if (!btn) return;
+  var val = parseFloat(input.value);
+  var isNeg = !isNaN(val) && val < 0;
+  btn.classList.toggle('na-btn-active', isNeg);
+}
+
 // --- FRIDGE ---
 function logFridge() {
   var unit=document.getElementById('fridge-unit').value;
