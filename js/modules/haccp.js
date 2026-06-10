@@ -574,17 +574,25 @@ function toggleNA(inputId, btn) {
 }
 
 // --- MINUS TOGGLE ---
+// type="number" inputs silently reject non-numeric strings (including bare '-'),
+// so we track "armed" state via a data attribute when the field is empty.
 function toggleMinus(inputId, btn) {
   var input = document.getElementById(inputId);
   var val = parseFloat(input.value);
   if (!isNaN(val)) {
     input.value = (-val).toString();
+    btn.removeAttribute('data-neg-armed');
+    btn.classList.toggle('na-btn-active', parseFloat(input.value) < 0);
   } else {
-    // No value yet — prime the field with '-' so user can type the number
-    input.value = input.value === '-' ? '' : '-';
+    var armed = btn.getAttribute('data-neg-armed') === '1';
+    if (armed) {
+      btn.removeAttribute('data-neg-armed');
+      btn.classList.remove('na-btn-active');
+    } else {
+      btn.setAttribute('data-neg-armed', '1');
+      btn.classList.add('na-btn-active');
+    }
   }
-  var isNeg = input.value !== '' && parseFloat(input.value) < 0 || input.value === '-';
-  btn.classList.toggle('na-btn-active', isNeg);
 }
 
 function enforceNeg(inputId, btnId) {
@@ -592,8 +600,14 @@ function enforceNeg(inputId, btnId) {
   var btn = document.getElementById(btnId);
   if (!btn) return;
   var val = parseFloat(input.value);
-  var isNeg = !isNaN(val) && val < 0;
-  btn.classList.toggle('na-btn-active', isNeg);
+  if (!isNaN(val)) {
+    // If button was armed (tapped before typing), negate the entered value
+    if (btn.getAttribute('data-neg-armed') === '1' && val > 0) {
+      input.value = (-val).toString();
+      btn.removeAttribute('data-neg-armed');
+    }
+    btn.classList.toggle('na-btn-active', parseFloat(input.value) < 0);
+  }
 }
 
 // --- FRIDGE ---
