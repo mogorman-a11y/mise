@@ -666,6 +666,16 @@ function logCooking() {
 }
 
 // --- COOLING ---
+function _timeDiffMinutes(startHHMM, endHHMM) {
+  if (!startHHMM || !endHHMM) return null;
+  var sp = startHHMM.split(':'), ep = endHHMM.split(':');
+  var startMins = parseInt(sp[0],10)*60 + parseInt(sp[1],10);
+  var endMins   = parseInt(ep[0],10)*60 + parseInt(ep[1],10);
+  var diff = endMins - startMins;
+  if (diff < 0) diff += 1440; // crossed midnight
+  return diff;
+}
+
 function logCooling() {
   var food=document.getElementById('cool-food').value.trim();
   var startTemp=parseFloat(document.getElementById('cool-start-temp').value);
@@ -676,16 +686,41 @@ function logCooling() {
   var by=document.getElementById('cool-by').value;
   if(!food){toast('Please enter a food item',false);return;}
   if(isNaN(endTemp)){toast('Please enter an end temperature',false);return;}
-  var status,msg;
-  if(endTemp>T('cooling-fail')){status='fail';msg='End temp '+endTemp+'°C — must be below '+T('cooling-fail')+'°C';}
-  else if(endTemp>T('cooling-warn')){status='warn';msg='End temp '+endTemp+'°C — borderline, monitor closely';}
-  else{status='ok';msg='Cooled to '+endTemp+'°C';}
-  records.push({type:'cooling',food:food,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,method:method,by:by,time:startTime,status:status,msg:msg});
+  if(!startTime){toast('Please enter a start time',false);return;}
+  if(!endTime){toast('Please enter an end time',false);return;}
+
+  var durationMins = _timeDiffMinutes(startTime, endTime);
+  var durationStr = durationMins !== null ? (durationMins >= 60 ? Math.floor(durationMins/60)+'h '+( durationMins%60 ? (durationMins%60)+'m' : '') : durationMins+'m') : '';
+
+  var status, msg;
+  // Check end temperature first
+  if(endTemp > T('cooling-fail')) {
+    status='fail'; msg='End temp '+endTemp+'°C — must be below '+T('cooling-fail')+'°C';
+  } else if(endTemp > T('cooling-warn')) {
+    status='warn'; msg='End temp '+endTemp+'°C — borderline, monitor closely';
+  } else {
+    status='ok'; msg='Cooled to '+endTemp+'°C';
+  }
+
+  // Check cooling duration if start temp was in the hot-food danger zone
+  if(!isNaN(startTemp) && startTemp > 60 && durationMins !== null) {
+    if(durationMins > 120) {
+      status='fail';
+      msg='Took '+durationStr+' to cool — must cool below 8°C within 2 hours (UK FSA guidance)';
+    } else if(durationMins > 90 && status !== 'fail') {
+      status='warn';
+      msg='Took '+durationStr+' to cool — target is under 90 minutes. End temp: '+endTemp+'°C';
+    } else if(status==='ok') {
+      msg='Cooled to '+endTemp+'°C in '+durationStr;
+    }
+  }
+
+  records.push({type:'cooling',food:food,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,durationMins:durationMins,method:method,by:by,time:startTime,status:status,msg:msg});
   saveHaccpToday();
   document.getElementById('cool-food').value=''; document.getElementById('cool-start-temp').value=''; document.getElementById('cool-end-temp').value='';
   document.getElementById('cool-start-time').value=now(); document.getElementById('cool-end-time').value=now();
   renderSection('cooling'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+food+' '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
+  if(status==='ok')toast('Saved — '+food+': '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
 }
 
 // --- REHEATING ---

@@ -57,6 +57,7 @@ window.Mise.sync = (function () {
       _visibilityBound = true;
       document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible' && _userId) {
+          _drainRetryQueue().catch(function(){});
           Promise.all([_pullHaccpRecords(_userId), _pullMiseRecords(_userId)])
             .then(function() { return Promise.all([_pullHaccpSettings(_userId), _pullMiseSettings(_userId)]); })
             .then(function() { return _pullSharedJobs(_userId); })
@@ -64,6 +65,56 @@ window.Mise.sync = (function () {
             .catch(function () {});
         }
       });
+    }
+  }
+
+  // ── Retry queue ────────────────────────────────────────────────────────────
+  var _RETRY_KEY = 'veriqo_sync_retry_queue';
+  var _MAX_RETRIES = 5;
+  var _MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+  function _loadRetryQueue() {
+    try { return JSON.parse(localStorage.getItem(_RETRY_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function _saveRetryQueue(q) {
+    try { localStorage.setItem(_RETRY_KEY, JSON.stringify(q)); } catch(e) {}
+  }
+  function _enqueueRetry(item) {
+    var q = _loadRetryQueue();
+    // Replace any existing entry for same date+module to avoid stacking stale versions
+    q = q.filter(function(x){ return !(x.dateStr === item.dateStr && x.module === item.module); });
+    q.push(Object.assign({}, item, { retries: 0, ts: Date.now() }));
+    _saveRetryQueue(q);
+    console.log('[Veriqo sync] queued for retry:', item.dateStr, item.module || 'haccp');
+  }
+  async function _drainRetryQueue() {
+    if (!_userId) return;
+    var q = _loadRetryQueue();
+    if (!q.length) return;
+    // Drop stale items
+    var now = Date.now();
+    q = q.filter(function(x){ return (now - x.ts) < _MAX_AGE_MS && x.retries < _MAX_RETRIES; });
+    var remaining = [];
+    for (var i = 0; i < q.length; i++) {
+      var item = q[i];
+      var table = item.module === 'menus' ? 'mise_records' : 'haccp_records';
+      try {
+        var r = await supabaseClient.from(table).upsert({
+          user_id: _userId,
+          date: item.dateStr,
+          records: item.records
+        }, { onConflict: 'user_id,date' });
+        if (r.error) throw r.error;
+        console.log('[Veriqo sync] ✓ retry succeeded:', item.dateStr, item.module || 'haccp');
+      } catch(err) {
+        item.retries = (item.retries || 0) + 1;
+        console.warn('[Veriqo sync] retry failed (attempt ' + item.retries + '):', item.dateStr, err.message || err);
+        remaining.push(item);
+      }
+    }
+    _saveRetryQueue(remaining);
+    if (remaining.length === 0 && q.length > 0) {
+      if (typeof toast === 'function') toast('Sync recovered — all pending records saved');
     }
   }
 
@@ -85,7 +136,8 @@ window.Mise.sync = (function () {
       _refreshAppViews();
     } catch (err) {
       console.error('[Veriqo sync] saveDay failed (' + (module || 'haccp') + '):', err.message || err);
-      if (typeof toast === 'function') toast('Sync error — data saved locally only', 'err');
+      if (typeof toast === 'function') toast('Sync error — data saved locally, will retry when online', 'err');
+      _enqueueRetry({ dateStr: dateStr, records: recordsArray, module: module || 'haccp' });
     }
   }
 
