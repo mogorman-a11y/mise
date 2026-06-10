@@ -2578,29 +2578,87 @@ function logAllergen() {
   toast('Saved — allergen record for '+dish);
 }
 
+var _trType = 'cold';
+
+function trSetType(type) {
+  _trType = type;
+  ['cold','hot','frozen','both'].forEach(function(t){
+    var btn = document.getElementById('tr-type-'+t);
+    if(btn) btn.classList.toggle('na-btn-active', t===type);
+  });
+  var showCold = (type==='cold'||type==='both'||type==='frozen');
+  var showHot  = (type==='hot'||type==='both');
+  var coldDiv = document.getElementById('tr-cold-fields');
+  var hotDiv  = document.getElementById('tr-hot-fields');
+  var frozenDiv = document.getElementById('tr-frozen-fields');
+  if(coldDiv) coldDiv.style.display = showCold ? '' : 'none';
+  if(hotDiv)  hotDiv.style.display  = showHot  ? '' : 'none';
+  if(frozenDiv) frozenDiv.style.display = (type==='frozen') ? '' : 'none';
+  // update cold-field labels
+  if(coldDiv && type==='frozen') {
+    var lbls = coldDiv.querySelectorAll('label');
+    if(lbls[0]) lbls[0].textContent = 'Frozen temp at departure (°C)';
+    if(lbls[1]) lbls[1].textContent = 'Frozen temp on arrival (°C)';
+  } else if(coldDiv) {
+    var lbls = coldDiv.querySelectorAll('label');
+    if(lbls[0]) lbls[0].textContent = 'Cold temp at departure (°C)';
+    if(lbls[1]) lbls[1].textContent = 'Cold temp on arrival (°C)';
+  }
+}
+
 function logTransport() {
   var food = document.getElementById('tr-food').value.trim();
   var dest = document.getElementById('tr-destination').value.trim();
-  var startTemp = parseFloat(document.getElementById('tr-start-temp').value);
   var startTime = document.getElementById('tr-start-time').value;
-  var endTemp = parseFloat(document.getElementById('tr-end-temp').value);
   var endTime = document.getElementById('tr-end-time').value;
   var method = document.getElementById('tr-method').value;
   var by = document.getElementById('tr-by').value;
   if (!food) { toast('Please enter a food item', false); return; }
-  if (isNaN(endTemp)) { toast('Please enter an arrival temperature', false); return; }
-  var status, msg;
-  if (endTemp > T('fridge-fail')) { status='fail'; msg='Arrived at '+endTemp+'°C — above safe temp ('+T('fridge-fail')+'°C)'; }
-  else if (endTemp > T('fridge-warn')) { status='warn'; msg='Arrived at '+endTemp+'°C — borderline, monitor'; }
-  else { status='ok'; msg='Arrived safely at '+endTemp+'°C'; }
-  records.push({type:'transport', food:food, destination:dest, startTemp:startTemp, startTime:startTime, endTemp:endTemp, endTime:endTime, method:method, by:by, time:startTime, status:status, msg:msg});
+  var type = _trType || 'cold';
+  var status='ok', msgs=[], startTemp, endTemp, hotStart, hotEnd;
+
+  if(type==='cold'||type==='both') {
+    startTemp = parseFloat(document.getElementById('tr-start-temp').value);
+    endTemp   = parseFloat(document.getElementById('tr-end-temp').value);
+    if(isNaN(endTemp)){toast('Please enter the cold arrival temperature',false);return;}
+    if(endTemp > T('fridge-fail')){status='fail';msgs.push('Cold arrived at '+endTemp+'°C — must be below '+T('fridge-fail')+'°C (UK legal limit)');}
+    else if(endTemp > T('fridge-warn')){if(status!=='fail')status='warn';msgs.push('Cold arrived at '+endTemp+'°C — borderline, monitor closely');}
+    else{msgs.push('Cold arrived safely at '+endTemp+'°C');}
+  }
+
+  if(type==='frozen') {
+    startTemp = parseFloat(document.getElementById('tr-start-temp').value);
+    endTemp   = parseFloat(document.getElementById('tr-end-temp').value);
+    if(isNaN(endTemp)){toast('Please enter the frozen food arrival temperature',false);return;}
+    // EC 37/2005: -18°C storage, +3°C transit tolerance permitted (so -15°C is the fail threshold in transit)
+    if(endTemp > -15){status='fail';msgs.push('Frozen arrived at '+endTemp+'°C — must be -15°C or below in transit (EC 37/2005)');}
+    else if(endTemp > -18){if(status!=='fail')status='warn';msgs.push('Frozen arrived at '+endTemp+'°C — approaching -18°C legal storage limit');}
+    else{msgs.push('Frozen arrived safely at '+endTemp+'°C');}
+  }
+
+  if(type==='hot'||type==='both') {
+    hotStart = parseFloat(document.getElementById('tr-hot-start-temp').value);
+    hotEnd   = parseFloat(document.getElementById('tr-hot-end-temp').value);
+    if(isNaN(hotEnd)){toast('Please enter the hot food arrival temperature',false);return;}
+    // UK Food Safety (Temperature Control) Regulations: hot food must be held at 63°C or above
+    if(hotEnd < 63){status='fail';msgs.push('Hot arrived at '+hotEnd+'°C — must be 63°C or above (UK law)');}
+    else if(hotEnd < 70){if(status!=='fail')status='warn';msgs.push('Hot arrived at '+hotEnd+'°C — approaching minimum (63°C)');}
+    else{msgs.push('Hot arrived safely at '+hotEnd+'°C');}
+  }
+
+  var msg = msgs.join(' | ');
+  records.push({type:'transport', foodType:type, food:food, destination:dest, startTemp:startTemp, startTime:startTime, endTemp:(type==='hot'?hotEnd:endTemp), endTime:endTime, method:method, by:by, time:startTime, status:status, msg:msg});
   saveHaccpToday();
   document.getElementById('tr-food').value=''; document.getElementById('tr-destination').value='';
-  document.getElementById('tr-start-temp').value=''; document.getElementById('tr-end-temp').value='';
+  var st = document.getElementById('tr-start-temp'); if(st) st.value='';
+  var et = document.getElementById('tr-end-temp'); if(et) et.value='';
+  var hs = document.getElementById('tr-hot-start-temp'); if(hs) hs.value='';
+  var he = document.getElementById('tr-hot-end-temp'); if(he) he.value='';
   document.getElementById('tr-start-time').value=now(); document.getElementById('tr-end-time').value=now();
   renderSection('transport'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+food+' '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
+  if(status==='ok')toast('Saved — '+food+': '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
 }
+function haccpLogTransport(){logTransport();}
 
 function logCredential() {
   var type = document.getElementById('cred-type').value;
