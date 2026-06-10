@@ -9,8 +9,8 @@
 
 | File | Version | Where set |
 |------|---------|-----------|
-| `js/modules/haccp.js` | `?v=29` | `app.html` script tag |
-| Service worker cache | `veriqo-v33` | `sw.js` line 1 |
+| `js/modules/haccp.js` | `?v=30` | `app.html` script tag |
+| Service worker cache | `veriqo-v34` | `sw.js` line 1 |
 
 **Rule:** Every change to `haccp.js` must bump both the `?v=` query string in `app.html` AND the SW cache name in `sw.js`. If you forget either, users will get a stale cached file.
 

@@ -171,8 +171,8 @@ var DEFAULTS = {
 var DEFAULT_THRESHOLDS = {
   'fridge-warn':   5,   'fridge-fail':   8,
   'freezer-warn': -18,  'freezer-fail': -15,
-  'cooking-warn':  75,  'cooking-fail':  75,
-  'reheat-warn':   75,  'reheat-fail':   75,
+  'cooking-warn':  80,  'cooking-fail':  75,
+  'reheat-warn':   80,  'reheat-fail':   75,
   'cooling-warn':   5,  'cooling-fail':   8,
   'delivery-warn':  5,  'delivery-fail':  8,
   'chilled-warn':   5,  'chilled-fail':   8,
@@ -336,10 +336,14 @@ function renderThresholds() {
 
 function saveThresholds() {
   if(!settings.thresholds) settings.thresholds = {};
+  var proposed = {};
   Object.keys(DEFAULT_THRESHOLDS).forEach(function(key) {
     var el = document.getElementById('thresh-'+key);
-    if(el && el.value !== '') settings.thresholds[key] = parseFloat(el.value);
+    if(el && el.value !== '') proposed[key] = parseFloat(el.value);
   });
+  var errors = validateThresholds(proposed);
+  if(errors.length) { toast('Invalid threshold: ' + errors[0], false); return; }
+  Object.assign(settings.thresholds, proposed);
   saveHaccpSettings();
   toast('Temperature thresholds saved');
 }
@@ -376,16 +380,17 @@ document.getElementById('header-date').textContent = fmtDate();
 ['probe-date','pest-date','illness-date'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=todayStr(); });
 
 function saveHaccpToday() {
-  try { localStorage.setItem('haccp_'+TODAY,JSON.stringify(records)); } catch(e){}
+  var _today = todayStr();
+  try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){}
   // Cloud sync — mirror to Supabase so data persists across devices
-  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(TODAY, records);
+  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(_today, records);
   // Track the most recently added record type
   if(window.posthog && records.length) {
     var last = records[records.length - 1];
     posthog.capture('record_added', { type: last.type, status: last.status });
   }
 }
-function loadHaccpToday() { try { var r=localStorage.getItem('haccp_'+TODAY); records=r?JSON.parse(r):[]; } catch(e){ records=[]; } }
+function loadHaccpToday() { try { var r=localStorage.getItem('haccp_'+todayStr()); records=r?JSON.parse(r):[]; } catch(e){ records=[]; } }
 function getAllDays() {
   var days=[];
   try { for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('haccp_')===0&&k!=='haccp_settings'&&k!=='haccp_suppliers'&&k!=='haccp_credentials'){ days.push(k.replace('haccp_','')); } } } catch(e){}
@@ -434,20 +439,20 @@ function goHome(){ haccpHome(); } // alias kept for any remaining inline refs
 function _getTodayJob() {
   // Check in-memory records (today already loaded)
   for (var i = 0; i < records.length; i++) {
-    if (records[i].type === 'job' && records[i].eventDate === TODAY) return records[i];
+    if (records[i].type === 'job' && records[i].eventDate === todayStr()) return records[i];
   }
   // Check haccp_ localStorage (HACCP-entered jobs)
   var hRecs = getDayRecords(TODAY);
   for (var i = 0; i < hRecs.length; i++) {
-    if (hRecs[i].type === 'job' && hRecs[i].eventDate === TODAY) return hRecs[i];
+    if (hRecs[i].type === 'job' && hRecs[i].eventDate === todayStr()) return hRecs[i];
   }
   // Check mise_ localStorage (Menus/Carte-entered jobs)
   try {
-    var mRaw = localStorage.getItem('mise_' + TODAY);
+    var mRaw = localStorage.getItem('mise_' + todayStr());
     if (mRaw) {
       var mRecs = JSON.parse(mRaw);
       for (var j = 0; j < mRecs.length; j++) {
-        if (mRecs[j].type === 'job' && mRecs[j].eventDate === TODAY) return mRecs[j];
+        if (mRecs[j].type === 'job' && mRecs[j].eventDate === todayStr()) return mRecs[j];
       }
     }
   } catch (e) {}
@@ -1108,7 +1113,7 @@ function updateNextJobBanner() {
   // in-memory today records
   records.forEach(_addJob);
   // mise_ key for today — catches jobs booked in the Menus module
-  try { var _m=localStorage.getItem('mise_'+TODAY); if(_m) JSON.parse(_m).forEach(_addJob); } catch(e){};
+  try { var _m=localStorage.getItem('mise_'+todayStr()); if(_m) JSON.parse(_m).forEach(_addJob); } catch(e){};
   var upcoming = allJobs.filter(function(r){ return r.eventDate>=TODAY; });
   upcoming.sort(function(a,b){ return a.eventDate<b.eventDate?-1:a.eventDate>b.eventDate?1:0; });
   if(!upcoming.length){ banner.style.display='none'; return; }
@@ -1246,7 +1251,7 @@ function buildExport(dateLabel,recs,filename) {
 }
 
 function exportDayPDF(dateStr) {
-  var recs = dateStr === TODAY ? records : getDayRecords(dateStr);
+  var recs = dateStr === todayStr() ? records : getDayRecords(dateStr);
   if(window.posthog) posthog.capture('pdf_exported', { date: dateStr, record_count: recs.length });
   buildPDFExport(fmtDate(dateStr), recs);
 }
@@ -3291,7 +3296,7 @@ function setInspectorRange(days) {
   var from = document.getElementById('range-from');
   var to   = document.getElementById('range-to');
   if (!from || !to) return;
-  to.value   = TODAY;
+  to.value   = todayStr();
   from.value = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
 }
 
@@ -3362,7 +3367,7 @@ function buildMultiDayPDF(startDateStr, endDateStr) {
   if (days.length > 93) { toast('Maximum range is 3 months', false); return; }
 
   var dayData = days.map(function(d) {
-    var recs = d === TODAY ? records.slice() : getDayRecords(d);
+    var recs = d === todayStr() ? records.slice() : getDayRecords(d);
     return { dateStr: d, label: fmtDate(d), recs: recs };
   });
 
@@ -3586,6 +3591,70 @@ function dismissInstallBanner() {
   if (isIOS && !isStandalone) { setTimeout(function(){ _showInstallBanner('ios'); }, 300); }
 })();
 
+// --- SHIFT / KITCHEN OPEN STATE ---
+function _shiftKey() { return 'haccp_shift_open_' + todayStr(); }
+
+function startService() {
+  localStorage.setItem(_shiftKey(), '1');
+  var empty = document.getElementById('shift-empty-state');
+  var active = document.getElementById('shift-active-view');
+  if (empty)  empty.style.display  = 'none';
+  if (active) active.style.display = '';
+  updateHaccpDashboard();
+}
+
+function _restoreShiftState() {
+  var isOpen = localStorage.getItem(_shiftKey()) === '1' || records.length > 0;
+  var empty  = document.getElementById('shift-empty-state');
+  var active = document.getElementById('shift-active-view');
+  if (!empty || !active) return;
+  if (isOpen) {
+    empty.style.display  = 'none';
+    active.style.display = '';
+  } else {
+    empty.style.display  = '';
+    active.style.display = 'none';
+  }
+}
+
+function closeJobHaccpChecklist() {
+  var modal = document.getElementById('job-haccp-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// --- THRESHOLD VALIDATION ---
+var THRESHOLD_BOUNDS = {
+  'fridge-warn':   { min: 0,   max: 8   },
+  'fridge-fail':   { min: 1,   max: 8   },
+  'freezer-warn':  { min: -25, max: -10 },
+  'freezer-fail':  { min: -25, max: -10 },
+  'cooking-warn':  { min: 63,  max: 90  },
+  'cooking-fail':  { min: 63,  max: 90  },
+  'reheat-warn':   { min: 63,  max: 90  },
+  'reheat-fail':   { min: 63,  max: 90  },
+  'cooling-warn':  { min: 0,   max: 21  },
+  'cooling-fail':  { min: 0,   max: 21  },
+  'delivery-warn': { min: 0,   max: 8   },
+  'delivery-fail': { min: 0,   max: 8   },
+  'chilled-warn':  { min: 0,   max: 8   },
+  'chilled-fail':  { min: 0,   max: 8   },
+  'frozen-warn':   { min: -25, max: -10 },
+  'frozen-fail':   { min: -25, max: -10 }
+};
+
+function validateThresholds(thresholds) {
+  var errors = [];
+  Object.keys(thresholds).forEach(function(key) {
+    var bounds = THRESHOLD_BOUNDS[key];
+    if (!bounds) return;
+    var val = thresholds[key];
+    if (val < bounds.min || val > bounds.max) {
+      errors.push(key + ' must be between ' + bounds.min + '°C and ' + bounds.max + '°C (got ' + val + '°C)');
+    }
+  });
+  return errors;
+}
+
 // --- INIT ---
 loadHaccpSettings();
 loadHaccpToday();
@@ -3594,6 +3663,7 @@ renderChecklists();
 initPrivateChefMode();
 haccpTab('home');
 renderHaccpSections();
+_restoreShiftState();
 function openCarte(jobId) {
   if (typeof showModule === 'function') {
     showModule('menus');
