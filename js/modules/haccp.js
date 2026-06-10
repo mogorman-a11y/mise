@@ -371,7 +371,7 @@ function removeItem(listKey,idx,containerId) {
   saveHaccpSettings(); renderSettingsList(listKey,containerId); populateHaccpSelects(); toast('Removed: '+item);
 }
 
-function now() { var d=new Date(); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0'); }
+function now() { var d=new Date(); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0'); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
 function fmtDate(str) { var d=str?new Date(str+'T12:00:00'):new Date(); return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
 
@@ -1131,25 +1131,25 @@ function updateNextJobBanner() {
 
   // Build detail panel content
   function njRow(label, val){
-    return '<div style="margin-top:10px"><div style="font-size:11px;color:#b0c4b4;margin-bottom:2px">'+label+'</div><div style="font-size:13px;color:#fff;line-height:1.4">'+val+'</div></div>';
+    return '<div style="margin-top:10px"><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:2px">'+label+'</div><div style="font-size:13px;color:#fff;line-height:1.4">'+val+'</div></div>';
   }
   var html = '';
   var dateStr = job.eventDate===TODAY ? 'Today' : fmtDate(job.eventDate);
   html += njRow('Date', dateStr + (job.eventTime ? ' at '+job.eventTime : ''));
   if(job.jobType) html += njRow('Type', job.jobType);
   if(job.covers)  html += njRow('Covers', job.covers+' guests');
-  if(job.location) html += njRow('Location', '<a href="https://maps.google.com/?q='+encodeURIComponent(job.location)+'" onclick="event.stopPropagation()" style="color:#7ACC8A;text-decoration:none" target="_blank">'+job.location+' ↗</a>');
-  if(job.phone)   html += njRow('Phone', '<a href="tel:'+job.phone+'" onclick="event.stopPropagation()" style="color:#7ACC8A;text-decoration:none">'+job.phone+'</a>');
-  if(job.email)   html += njRow('Email', '<a href="mailto:'+job.email+'" onclick="event.stopPropagation()" style="color:#7ACC8A;text-decoration:none">'+job.email+'</a>');
+  if(job.location) html += njRow('Location', '<a href="https://maps.google.com/?q='+encodeURIComponent(job.location)+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9" target="_blank">'+job.location+' ↗</a>');
+  if(job.phone)   html += njRow('Phone', '<a href="tel:'+job.phone+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+job.phone+'</a>');
+  if(job.email)   html += njRow('Email', '<a href="mailto:'+job.email+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+job.email+'</a>');
   if(job.notes)   html += njRow('Notes', job.notes);
   if(job.menus&&job.menus.length){
     var mHtml = job.menus.map(function(m){
       var chips = (m.dishes||[]).map(function(d){ return '<span style="display:inline-block;background:rgba(255,255,255,0.08);border-radius:5px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:#e8e0d0">'+d.dish+'</span>'; }).join('');
-      return '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#7ACC8A;margin-bottom:3px">'+m.name+'</div>'+(chips||'<span style="font-size:12px;color:#b0c4b4">No dishes listed</span>')+'</div>';
+      return '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:3px">'+m.name+'</div>'+(chips||'<span style="font-size:12px;color:rgba(255,255,255,0.5)">No dishes listed</span>')+'</div>';
     }).join('');
     html += njRow('Menu', mHtml);
   } else {
-    html += njRow('Menu', '<span style="color:#b0c4b4">No menu attached</span>');
+    html += njRow('Menu', '<span style="color:rgba(255,255,255,0.5)">No menu attached</span>');
   }
   document.getElementById('next-job-panel-content').innerHTML = html;
 
