@@ -170,13 +170,13 @@ var DEFAULTS = {
 
 var DEFAULT_THRESHOLDS = {
   'fridge-warn':   5,   'fridge-fail':   8,
-  'freezer-warn': -18,  'freezer-fail': -12,
+  'freezer-warn': -21,  'freezer-fail': -18,
   'cooking-warn':  75,  'cooking-fail':  75,
   'reheat-warn':   75,  'reheat-fail':   75,
   'cooling-warn':   5,  'cooling-fail':   8,
   'delivery-warn':  5,  'delivery-fail':  8,
   'chilled-warn':   5,  'chilled-fail':   8,
-  'frozen-warn':  -18,  'frozen-fail':  -12
+  'frozen-warn':  -21,  'frozen-fail':  -18
 };
 
 function T(key) {
@@ -625,8 +625,8 @@ function logFridge() {
   if(isNA){
     status='ok';msg='N/A';
   } else if(isFreezer){
-    if(temp>T('freezer-fail')){status='fail';msg=temp+'°C — freezer must be below '+T('freezer-fail')+'°C';}
-    else if(temp>T('freezer-warn')){status='warn';msg=temp+'°C — approaching limit, target '+T('freezer-warn')+'°C';}
+    if(temp>T('freezer-fail')){status='fail';msg=temp+'°C — freezer must be '+T('freezer-fail')+'°C or below (legal requirement)';}
+    else if(temp>T('freezer-warn')){status='warn';msg=temp+'°C — approaching legal limit of '+T('freezer-fail')+'°C';}
     else{status='ok';msg=temp+'°C';}
   } else {
     if(temp>T('fridge-fail')){status='fail';msg=temp+'°C — fridge must be below '+T('fridge-fail')+'°C';}

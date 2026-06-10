@@ -1043,8 +1043,8 @@
           </div>
           <div class="card-title" style="margin-top:4px">Frozen items</div>
           <div class="form-row">
-            <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" inputmode="decimal" id="thresh-frozen-warn" step="0.5" placeholder="-18" onblur="saveThresholds()" oninput="enforceNeg('thresh-frozen-warn','thresh-frozen-warn-neg-btn')"><button type="button" class="na-btn" id="thresh-frozen-warn-neg-btn" onclick="toggleMinus('thresh-frozen-warn',this)" title="Toggle negative">−</button></div>
-            <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" inputmode="decimal" id="thresh-frozen-fail" step="0.5" placeholder="-12" onblur="saveThresholds()" oninput="enforceNeg('thresh-frozen-fail','thresh-frozen-fail-neg-btn')"><button type="button" class="na-btn" id="thresh-frozen-fail-neg-btn" onclick="toggleMinus('thresh-frozen-fail',this)" title="Toggle negative">−</button></div>
+            <div class="form-group"><label class="form-label">Warn above (°C)</label><input class="form-input" type="number" inputmode="decimal" id="thresh-frozen-warn" step="0.5" placeholder="-21" onblur="saveThresholds()" oninput="enforceNeg('thresh-frozen-warn','thresh-frozen-warn-neg-btn')"><button type="button" class="na-btn" id="thresh-frozen-warn-neg-btn" onclick="toggleMinus('thresh-frozen-warn',this)" title="Toggle negative">−</button></div>
+            <div class="form-group"><label class="form-label">Fail above (°C)</label><input class="form-input" type="number" inputmode="decimal" id="thresh-frozen-fail" step="0.5" placeholder="-18" onblur="saveThresholds()" oninput="enforceNeg('thresh-frozen-fail','thresh-frozen-fail-neg-btn')"><button type="button" class="na-btn" id="thresh-frozen-fail-neg-btn" onclick="toggleMinus('thresh-frozen-fail',this)" title="Toggle negative">−</button></div>
           </div>
         </div>
       </div>
@@ -3177,7 +3177,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=25"></script>
+<script src="js/modules/haccp.js?v=26"></script>
 <script src="js/modules/menus.js?v=15"></script>
 <script src="js/modules/costing.js?v=30"></script>
 
