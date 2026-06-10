@@ -170,13 +170,13 @@ var DEFAULTS = {
 
 var DEFAULT_THRESHOLDS = {
   'fridge-warn':   5,   'fridge-fail':   8,
-  'freezer-warn': -21,  'freezer-fail': -18,
+  'freezer-warn': -18,  'freezer-fail': -15,
   'cooking-warn':  75,  'cooking-fail':  75,
   'reheat-warn':   75,  'reheat-fail':   75,
   'cooling-warn':   5,  'cooling-fail':   8,
   'delivery-warn':  5,  'delivery-fail':  8,
   'chilled-warn':   5,  'chilled-fail':   8,
-  'frozen-warn':  -21,  'frozen-fail':  -18
+  'frozen-warn':  -18,  'frozen-fail':  -15
 };
 
 function T(key) {
@@ -625,9 +625,9 @@ function logFridge() {
   if(isNA){
     status='ok';msg='N/A';
   } else if(isFreezer){
-    if(temp>T('freezer-fail')){status='fail';msg=temp+'°C — freezer must be '+T('freezer-fail')+'°C or below (legal requirement)';}
-    else if(temp>T('freezer-warn')){status='warn';msg=temp+'°C — approaching legal limit of '+T('freezer-fail')+'°C';}
-    else{status='ok';msg=temp+'°C';}
+    if(temp>T('freezer-fail')){status='fail';msg=temp+'°C — freezer is too warm. Legal limit is -18°C or below';}
+    else if(temp>T('freezer-warn')){status='warn';msg=temp+'°C — above legal limit of -18°C. Check freezer immediately';}
+    else{status='ok';msg=temp+'°C — within legal range (-18°C or below)';}
   } else {
     if(temp>T('fridge-fail')){status='fail';msg=temp+'°C — fridge must be below '+T('fridge-fail')+'°C (UK legal limit)';}
     else if(temp>T('fridge-warn')){status='warn';msg=temp+'°C — above best practice (target 0–'+T('fridge-warn')+'°C)';}
