@@ -629,9 +629,11 @@ function logFridge() {
     else if(temp>T('freezer-warn')){status='warn';msg=temp+'°C — approaching legal limit of '+T('freezer-fail')+'°C';}
     else{status='ok';msg=temp+'°C';}
   } else {
-    if(temp>T('fridge-fail')){status='fail';msg=temp+'°C — fridge must be below '+T('fridge-fail')+'°C';}
-    else if(temp>T('fridge-warn')){status='warn';msg=temp+'°C — approaching limit, target below '+T('fridge-warn')+'°C';}
-    else{status='ok';msg=temp+'°C';}
+    if(temp>T('fridge-fail')){status='fail';msg=temp+'°C — fridge must be below '+T('fridge-fail')+'°C (UK legal limit)';}
+    else if(temp>T('fridge-warn')){status='warn';msg=temp+'°C — above best practice (target 0–'+T('fridge-warn')+'°C)';}
+    else if(temp<-5){status='fail';msg=temp+'°C — this is a freezer temperature. Is this unit a freezer? Rename it in Settings.';}
+    else if(temp<0){status='warn';msg=temp+'°C — below 0°C, food may be freezing. Check fridge thermostat.';}
+    else{status='ok';msg=temp+'°C — within safe range (0–'+T('fridge-warn')+'°C)';}
   }
   records.push({type:'fridge',unit:unit,by:by,temp:temp,time:time,notes:notes,status:status,msg:msg});
   saveHaccpToday(); document.getElementById('fridge-temp').value=''; document.getElementById('fridge-notes').value=''; document.getElementById('fridge-time').value=now();
