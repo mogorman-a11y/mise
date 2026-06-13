@@ -169,6 +169,28 @@ var DEFAULTS = {
   foodLibrary:   []
 };
 
+var TILE_DEFS = [
+  {id:'opening',     icon:'☀️',  label:'Opening checks',      subDefault:'Start of day'},
+  {id:'closing',     icon:'🌙',  label:'Closing checks',       subDefault:'End of day'},
+  {id:'fridge',      icon:'🌡️', label:'Fridge temps',         subDefault:'No checks yet'},
+  {id:'cooking',     icon:'🍳',  label:'Cooked food',          subDefault:'No checks yet'},
+  {id:'cooling',     icon:'❄️',  label:'Cooling',              subDefault:'No records yet'},
+  {id:'reheating',   icon:'♨️',  label:'Reheating',            subDefault:'No records yet'},
+  {id:'delivery',    icon:'📦',  label:'Deliveries',           subDefault:'No records yet'},
+  {id:'cleaning',    icon:'🧹',  label:'Cleaning',             subDefault:'No tasks yet'},
+  {id:'crosscontam', icon:'🔵',  label:'Cross-contamination',  subDefault:'Daily check'},
+  {id:'probe',       icon:'🔬',  label:'Probe calibration',    subDefault:'Weekly check'},
+  {id:'pest',        icon:'🐀',  label:'Pest control',         subDefault:'No records yet'},
+  {id:'illness',     icon:'🤒',  label:'Staff illness',        subDefault:'No records yet'},
+  {id:'foodlibrary', icon:'📋',  label:'Food library',         subDefault:'Dishes for logging'},
+  {id:'kitchenassess',icon:'🏠', label:'Kitchen assessment',   subDefault:'Pre-job check',      pc:true},
+  {id:'transport',   icon:'🚗',  label:'Transport temps',      subDefault:'Food in transit',    pc:true},
+  {id:'mobileset',   icon:'🔧',  label:'Mobile setup',         subDefault:'Temporary kitchen',  pc:true},
+  {id:'credentials', icon:'📜',  label:'My credentials',       subDefault:'Certs &amp; expiry dates', pc:true},
+  {id:'incident',    icon:'⚠️',  label:'Incident log',         subDefault:'No incidents today', pc:true}
+];
+var DEFAULT_TILE_ORDER = TILE_DEFS.map(function(d){return d.id;});
+
 var DEFAULT_THRESHOLDS = {
   'fridge-warn':   5,   'fridge-fail':   8,
   'freezer-warn': -18,  'freezer-fail': -15,
@@ -223,6 +245,7 @@ function loadHaccpSettings() {
   try { var r=localStorage.getItem('haccp_settings'); settings=r?JSON.parse(r):{}; } catch(e){ settings={}; }
   Object.keys(DEFAULTS).forEach(function(k){ if(!settings[k]||!settings[k].length) settings[k]=DEFAULTS[k].slice(); });
   if(!settings.foodLibrary) settings.foodLibrary=[];
+  if(!settings.tileOrder) settings.tileOrder=DEFAULT_TILE_ORDER.slice();
   ['opening','closing','crosscontam'].forEach(function(k){
     var ck='checklist_'+k;
     if(!settings[ck]||!settings[ck].length) settings[ck]=DEFAULT_CHECKLISTS[k].map(function(i,idx){ return {id:k[0]+idx,label:i.label,note:i.note}; });
@@ -463,6 +486,7 @@ var _homeScrollPos = 0;
 function toggleTile(key, enabled) {
   settings.enabledTiles[key] = enabled;
   saveHaccpSettings();
+  renderTileGrid();
   updateHaccpDashboard();
 }
 
@@ -1133,6 +1157,102 @@ function hideFilter() {
   });
 }
 
+function renderTileGrid() {
+  var grid = document.getElementById('haccp-tile-grid');
+  if(!grid) return;
+  var order = (settings.tileOrder || DEFAULT_TILE_ORDER.slice()).slice();
+  TILE_DEFS.forEach(function(d){ if(order.indexOf(d.id)===-1) order.push(d.id); });
+  var defMap = {};
+  TILE_DEFS.forEach(function(d){ defMap[d.id]=d; });
+  var hasBadgeIds = ['opening','closing','fridge','cooking','cooling','reheating','delivery','cleaning','crosscontam','probe','pest','illness','kitchenassess','transport','mobileset','credentials','incident'];
+  var regularHtml = [], pcHtml = [];
+  order.forEach(function(id) {
+    var def = defMap[id]; if(!def) return;
+    if(settings.enabledTiles[id]===false) return;
+    if(def.pc && !settings.privateChefMode) return;
+    var badge = hasBadgeIds.indexOf(id)!==-1 ? '<div class="tile-badge none" id="badge-'+id+'"></div>' : '';
+    var tileHtml = '<div id="tile-'+id+'" class="tile" onclick="haccpTab(\''+id+'\')">'+
+      badge+'<div class="tile-icon">'+def.icon+'</div>'+
+      '<div class="tile-label">'+def.label+'</div>'+
+      '<div class="tile-sub" id="sub-'+id+'">'+def.subDefault+'</div></div>';
+    if(def.pc) pcHtml.push(tileHtml); else regularHtml.push(tileHtml);
+  });
+  var html = regularHtml.join('');
+  if(pcHtml.length) {
+    html += '<div id="haccp-grp-privatechef" style="grid-column:1/-1;margin:4px 0 0;display:flex;align-items:center;gap:8px">'+
+      '<span style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em">Private chef</span>'+
+      '<div style="flex:1;height:1px;background:#e5e4de"></div></div>'+pcHtml.join('');
+  }
+  // Fixed wide tiles always at the end
+  html += '<div id="tile-addmore" class="tile tile-wide" onclick="haccpTab(\'settings\')" style="border-style:dashed;border-color:#c9c7bf;background:transparent">'+
+    '<div class="tile-wide-inner"><span class="tile-icon-sm" style="color:var(--vq-green)">＋</span>'+
+    '<div><div class="tile-label">Add more checks</div><div class="tile-sub">Probe, pest, transport, registers &amp; more</div></div></div></div>'+
+    '<div class="tile tile-wide" onclick="haccpTab(\'inspector\')" style="background:#2D7A3A;border-color:#2D7A3A">'+
+    '<div class="tile-wide-inner"><span class="tile-icon-sm">🔍</span>'+
+    '<div style="flex:1"><div class="tile-label" style="color:#fff">EHO Inspection View</div>'+
+    '<div class="tile-sub" style="color:rgba(255,255,255,0.75)">Tap before an inspection</div></div>'+
+    '<span id="inspector-badge" style="font-size:11px;font-weight:700;padding:4px 10px;background:rgba(255,255,255,0.2);border-radius:20px;color:#fff;white-space:nowrap;flex-shrink:0">READY</span></div></div>'+
+    '<div id="tile-records" class="tile tile-wide" onclick="haccpTab(\'records\')">'+
+    '<div class="tile-wide-inner"><span class="tile-icon-sm"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>'+
+    '<div><div class="tile-label">Records</div><div class="tile-sub" id="sub-records">Today &amp; previous days</div></div></div></div>'+
+    '<div id="tile-suppliers" class="tile tile-wide" onclick="haccpTab(\'suppliers\')">'+
+    '<div class="tile-wide-inner"><span class="tile-icon-sm">✅</span>'+
+    '<div><div class="tile-label">Approved suppliers</div><div class="tile-sub" id="sub-suppliers">Supplier register</div></div></div></div>';
+  grid.innerHTML = html;
+}
+
+function renderCustomisePanel() {
+  var existing = document.getElementById('tile-customise-panel');
+  if(existing) existing.remove();
+  var order = (settings.tileOrder || DEFAULT_TILE_ORDER.slice()).slice();
+  TILE_DEFS.forEach(function(d){ if(order.indexOf(d.id)===-1) order.push(d.id); });
+  var defMap = {}; TILE_DEFS.forEach(function(d){ defMap[d.id]=d; });
+  var rowsHtml = order.map(function(id) {
+    var def = defMap[id]; if(!def) return '';
+    var enabled = settings.enabledTiles[id]!==false;
+    var pcNote = def.pc ? ' <span style="font-size:10px;color:#888;font-weight:400">Private chef</span>' : '';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f0efe9">'+
+      '<span style="font-size:20px;width:28px;text-align:center;flex-shrink:0">'+def.icon+'</span>'+
+      '<span style="flex:1;font-size:14px;font-weight:500;color:#1a1a18">'+def.label+pcNote+'</span>'+
+      '<div style="display:flex;gap:4px;align-items:center">'+
+        '<button onclick="moveTile(\''+id+'\',-1)" style="background:#f5f4f0;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:13px;line-height:1">↑</button>'+
+        '<button onclick="moveTile(\''+id+'\',1)" style="background:#f5f4f0;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:13px;line-height:1">↓</button>'+
+        '<label style="position:relative;display:inline-block;width:40px;height:22px;margin-left:6px;flex-shrink:0">'+
+          '<input type="checkbox" onchange="toggleTile(\''+id+'\',this.checked)" '+(enabled?'checked':'')+' style="opacity:0;width:0;height:0;position:absolute">'+
+          '<span onclick="" style="position:absolute;inset:0;background:'+(enabled?'#2D7A3A':'#ccc')+';border-radius:11px;transition:background 0.2s;cursor:pointer"></span>'+
+          '<span style="position:absolute;top:3px;left:'+(enabled?'21px':'3px')+';width:16px;height:16px;background:#fff;border-radius:50%;transition:left 0.2s;pointer-events:none"></span>'+
+        '</label>'+
+      '</div></div>';
+  }).join('');
+  var panel = document.createElement('div');
+  panel.id = 'tile-customise-panel';
+  panel.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9999;overflow-y:auto;display:flex;flex-direction:column';
+  panel.innerHTML =
+    '<div style="display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid #e5e4de;position:sticky;top:0;background:#fff;z-index:1">'+
+      '<div style="font-size:17px;font-weight:700;color:#1a1a18;flex:1">Customise home screen</div>'+
+      '<button onclick="document.getElementById(\'tile-customise-panel\').remove()" style="background:#f0efe9;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;color:#1a1a18">Done</button>'+
+    '</div>'+
+    '<div style="padding:0 18px 40px">'+
+      '<p style="font-size:13px;color:#888;margin:12px 0 8px">Reorder tiles with the arrows. Toggle to show or hide.</p>'+
+      rowsHtml+'</div>';
+  document.body.appendChild(panel);
+}
+
+function moveTile(id, dir) {
+  var order = (settings.tileOrder || DEFAULT_TILE_ORDER.slice()).slice();
+  TILE_DEFS.forEach(function(d){ if(order.indexOf(d.id)===-1) order.push(d.id); });
+  var idx = order.indexOf(id);
+  if(idx===-1) return;
+  var newIdx = idx+dir;
+  if(newIdx<0||newIdx>=order.length) return;
+  order.splice(idx,1); order.splice(newIdx,0,id);
+  settings.tileOrder = order;
+  saveHaccpSettings();
+  renderTileGrid();
+  updateHaccpDashboard();
+  renderCustomisePanel();
+}
+
 function updateHaccpDashboard() {
   var ok=0,warn=0,fail=0;
   records.forEach(function(r){if(r.status==='ok')ok++;else if(r.status==='warn')warn++;else if(r.status==='fail')fail++;});
@@ -1141,12 +1261,7 @@ function updateHaccpDashboard() {
   document.getElementById('stat-fail').textContent=fail;
   document.getElementById('stat-total').textContent=records.length;
 
-  // Apply tile visibility from settings
-  var TILE_KEYS=['opening','closing','fridge','cooking','cooling','reheating','delivery','cleaning','crosscontam','probe','pest','illness','job','customers','kitchenassess','transport','mobileset','credentials','incident','records','suppliers'];
-  TILE_KEYS.forEach(function(k){
-    var el=document.getElementById('tile-'+k);
-    if(el) el.style.display=settings.enabledTiles[k]!==false?'':'none';
-  });
+  renderTileGrid();
 
   var subDefaults={fridge:'Log first temp',cooking:'Log a core temp',cooling:'Nothing cooling yet',reheating:'Nothing reheated yet',delivery:'Log a delivery',cleaning:'No tasks logged yet',probe:'Weekly check',pest:'Log an inspection',illness:'No incidents today',opening:'Start of day',closing:'End of day',crosscontam:'Daily check',job:'Build & save menus',kitchenassess:'Pre-job check',allergen:'Dishes & allergens',transport:'Food in transit',mobileset:'Temporary kitchen',incident:'No incidents today'};
   ALL_TYPES.forEach(function(t){

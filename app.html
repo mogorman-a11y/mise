@@ -206,150 +206,10 @@
       </div>
     </div>
     <div class="alerts-section" id="alerts-container"></div>
-    <div class="tile-grid">
-      <div id="tile-opening" class="tile" onclick="haccpTab('opening')">
-        <div class="tile-badge none" id="badge-opening"></div>
-        <div class="tile-icon">☀️</div>
-        <div class="tile-label">Opening checks</div>
-        <div class="tile-sub" id="sub-opening">Start of day</div>
-      </div>
-      <div id="tile-closing" class="tile" onclick="haccpTab('closing')">
-        <div class="tile-badge none" id="badge-closing"></div>
-        <div class="tile-icon">🌙</div>
-        <div class="tile-label">Closing checks</div>
-        <div class="tile-sub" id="sub-closing">End of day</div>
-      </div>
-      <div id="tile-fridge" class="tile" onclick="haccpTab('fridge')">
-        <div class="tile-badge none" id="badge-fridge">0</div>
-        <div class="tile-icon">🌡️</div>
-        <div class="tile-label">Fridge temps</div>
-        <div class="tile-sub" id="sub-fridge">No checks yet</div>
-      </div>
-      <div id="tile-cooking" class="tile" onclick="haccpTab('cooking')">
-        <div class="tile-badge none" id="badge-cooking">0</div>
-        <div class="tile-icon">🍳</div>
-        <div class="tile-label">Cooked food</div>
-        <div class="tile-sub" id="sub-cooking">No checks yet</div>
-      </div>
-      <div id="tile-cooling" class="tile" onclick="haccpTab('cooling')">
-        <div class="tile-badge none" id="badge-cooling">0</div>
-        <div class="tile-icon">❄️</div>
-        <div class="tile-label">Cooling</div>
-        <div class="tile-sub" id="sub-cooling">No records yet</div>
-      </div>
-      <div id="tile-reheating" class="tile" onclick="haccpTab('reheating')">
-        <div class="tile-badge none" id="badge-reheating">0</div>
-        <div class="tile-icon">♨️</div>
-        <div class="tile-label">Reheating</div>
-        <div class="tile-sub" id="sub-reheating">No records yet</div>
-      </div>
-      <div id="tile-delivery" class="tile" onclick="haccpTab('delivery')">
-        <div class="tile-badge none" id="badge-delivery">0</div>
-        <div class="tile-icon">📦</div>
-        <div class="tile-label">Deliveries</div>
-        <div class="tile-sub" id="sub-delivery">No records yet</div>
-      </div>
-      <div id="tile-cleaning" class="tile" onclick="haccpTab('cleaning')">
-        <div class="tile-badge none" id="badge-cleaning">0</div>
-        <div class="tile-icon">🧹</div>
-        <div class="tile-label">Cleaning</div>
-        <div class="tile-sub" id="sub-cleaning">No tasks yet</div>
-      </div>
-      <div id="tile-crosscontam" class="tile" onclick="haccpTab('crosscontam')">
-        <div class="tile-badge none" id="badge-crosscontam"></div>
-        <div class="tile-icon">🔵</div>
-        <div class="tile-label">Cross-contamination</div>
-        <div class="tile-sub" id="sub-crosscontam">Daily check</div>
-      </div>
-      <div id="tile-probe" class="tile" onclick="haccpTab('probe')">
-        <div class="tile-badge none" id="badge-probe">0</div>
-        <div class="tile-icon">🔬</div>
-        <div class="tile-label">Probe calibration</div>
-        <div class="tile-sub" id="sub-probe">Weekly check</div>
-      </div>
-      <div id="tile-pest" class="tile" onclick="haccpTab('pest')">
-        <div class="tile-badge none" id="badge-pest">0</div>
-        <div class="tile-icon">🐀</div>
-        <div class="tile-label">Pest control</div>
-        <div class="tile-sub" id="sub-pest">No records yet</div>
-      </div>
-      <div id="tile-illness" class="tile" onclick="haccpTab('illness')">
-        <div class="tile-badge none" id="badge-illness">0</div>
-        <div class="tile-icon">🤒</div>
-        <div class="tile-label">Staff illness</div>
-        <div class="tile-sub" id="sub-illness">No records yet</div>
-      </div>
-      <!-- PRIVATE CHEF TILES — divider hidden by JS when none of its tiles are enabled -->
-      <div id="haccp-grp-privatechef" style="grid-column:1/-1;margin:4px 0 0;display:flex;align-items:center;gap:8px">
-        <span style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em">Private chef</span>
-        <div style="flex:1;height:1px;background:#e5e4de"></div>
-      </div>
-      <div id="tile-kitchenassess" class="tile" onclick="haccpTab('kitchenassess')">
-        <div class="tile-badge none" id="badge-kitchenassess"></div>
-        <div class="tile-icon">🏠</div>
-        <div class="tile-label">Kitchen assessment</div>
-        <div class="tile-sub" id="sub-kitchenassess">Pre-job check</div>
-      </div>
-      <div id="tile-transport" class="tile" onclick="haccpTab('transport')">
-        <div class="tile-badge none" id="badge-transport">0</div>
-        <div class="tile-icon">🚗</div>
-        <div class="tile-label">Transport temps</div>
-        <div class="tile-sub" id="sub-transport">Food in transit</div>
-      </div>
-      <div id="tile-mobileset" class="tile" onclick="haccpTab('mobileset')">
-        <div class="tile-badge none" id="badge-mobileset"></div>
-        <div class="tile-icon">🔧</div>
-        <div class="tile-label">Mobile setup</div>
-        <div class="tile-sub" id="sub-mobileset">Temporary kitchen</div>
-      </div>
-      <div id="tile-credentials" class="tile" onclick="haccpTab('credentials')">
-        <div class="tile-badge none" id="badge-credentials"></div>
-        <div class="tile-icon">📜</div>
-        <div class="tile-label">My credentials</div>
-        <div class="tile-sub" id="sub-credentials">Certs &amp; expiry dates</div>
-      </div>
-      <div id="tile-incident" class="tile" onclick="haccpTab('incident')">
-        <div class="tile-badge none" id="badge-incident">0</div>
-        <div class="tile-icon">⚠️</div>
-        <div class="tile-label">Incident log</div>
-        <div class="tile-sub" id="sub-incident">No incidents today</div>
-      </div>
-      <div class="tile" onclick="haccpTab('foodlibrary')">
-        <div class="tile-icon">📋</div>
-        <div class="tile-label">Food library</div>
-        <div class="tile-sub" id="sub-foodlibrary">Dishes for logging</div>
-      </div>
-      <!-- ADD MORE CHECKS — always visible; opens the per-tile toggles in HACCP settings -->
-      <div id="tile-addmore" class="tile tile-wide" onclick="haccpTab('settings')" style="border-style:dashed;border-color:#c9c7bf;background:transparent">
-        <div class="tile-wide-inner">
-          <span class="tile-icon-sm" style="color:var(--vq-green)">＋</span>
-          <div><div class="tile-label">Add more checks</div><div class="tile-sub">Probe, pest, transport, registers &amp; more</div></div>
-        </div>
-      </div>
-      <!-- EHO INSPECTION MODE — full-width branded tile -->
-      <div class="tile tile-wide" onclick="haccpTab('inspector')" style="background:#2D7A3A;border-color:#2D7A3A">
-        <div class="tile-wide-inner">
-          <span class="tile-icon-sm">🔍</span>
-          <div style="flex:1">
-            <div class="tile-label" style="color:#fff">EHO Inspection View</div>
-            <div class="tile-sub" style="color:rgba(255,255,255,0.75)">Tap before an inspection</div>
-          </div>
-          <span id="inspector-badge" style="font-size:11px;font-weight:700;padding:4px 10px;background:rgba(255,255,255,0.2);border-radius:20px;color:#fff;white-space:nowrap;flex-shrink:0">READY</span>
-        </div>
-      </div>
-      <div id="tile-records" class="tile tile-wide" onclick="haccpTab('records')">
-        <div class="tile-wide-inner">
-          <span class="tile-icon-sm"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>
-          <div><div class="tile-label">Records</div><div class="tile-sub" id="sub-records">Today &amp; previous days</div></div>
-        </div>
-      </div>
-      <div id="tile-suppliers" class="tile tile-wide" onclick="haccpTab('suppliers')">
-        <div class="tile-wide-inner">
-          <span class="tile-icon-sm">✅</span>
-          <div><div class="tile-label">Approved suppliers</div><div class="tile-sub" id="sub-suppliers">Supplier register</div></div>
-        </div>
-      </div>
+    <div style="display:flex;justify-content:flex-end;padding:0 2px 6px">
+      <button onclick="renderCustomisePanel()" style="background:none;border:none;font-size:13px;color:var(--vq-green);font-weight:600;cursor:pointer;padding:4px 0">Customise ✎</button>
     </div>
+    <div id="haccp-tile-grid" class="tile-grid"></div>
     </div><!-- /#shift-active-view -->
 
   </div>
@@ -3201,7 +3061,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=38"></script>
+<script src="js/modules/haccp.js?v=39"></script>
 <script src="js/modules/menus.js?v=15"></script>
 <script src="js/modules/costing.js?v=30"></script>
 
