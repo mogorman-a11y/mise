@@ -304,6 +304,12 @@ window.Mise.sync = (function () {
     if (result.error) throw result.error;
     if (!result.data) return;
     console.log('[Veriqo sync] _pullHaccpRecords: got', result.data.length, 'rows');
+    var today = new Date().toISOString().slice(0, 10);
+    // Snapshot local today records before wiping — guard against race where
+    // saveDay hasn't finished writing to Supabase yet when a visibility-change
+    // pull fires and would otherwise overwrite the just-saved local data.
+    var localTodayRaw = localStorage.getItem('haccp_' + today);
+    var localTodayRecs = localTodayRaw ? JSON.parse(localTodayRaw) : [];
     Object.keys(localStorage)
       .filter(function (k) {
         return k.startsWith('haccp_') && k !== 'haccp_settings' && k !== 'haccp_credentials' && k !== 'haccp_suppliers';
@@ -312,11 +318,23 @@ window.Mise.sync = (function () {
     result.data.forEach(function (row) {
       try { localStorage.setItem('haccp_' + row.date, JSON.stringify(row.records)); } catch (e) {}
     });
-    var today = new Date().toISOString().slice(0, 10);
     var todayRow = result.data.find(function (r) { return r.date === today; });
-    if (typeof records !== 'undefined') {
-      records.length = 0;
-      if (todayRow) todayRow.records.forEach(function (r) { records.push(r); });
+    var remoteLen = todayRow ? todayRow.records.length : 0;
+    // If local has more records than remote, local data is ahead of Supabase —
+    // keep it and re-save so Supabase catches up.
+    if (localTodayRecs.length > remoteLen) {
+      try { localStorage.setItem('haccp_' + today, JSON.stringify(localTodayRecs)); } catch (e) {}
+      if (typeof records !== 'undefined') {
+        records.length = 0;
+        localTodayRecs.forEach(function (r) { records.push(r); });
+      }
+      // Re-push local-ahead data to Supabase so it catches up
+      supabaseClient.from('haccp_records').upsert({ user_id: userId, date: today, records: localTodayRecs }, { onConflict: 'user_id,date' }).then(function(r){ if(!r.error) console.log('[Veriqo sync] ✓ re-synced local-ahead today records'); });
+    } else {
+      if (typeof records !== 'undefined') {
+        records.length = 0;
+        if (todayRow) todayRow.records.forEach(function (r) { records.push(r); });
+      }
     }
   }
 

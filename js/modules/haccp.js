@@ -2700,7 +2700,7 @@ function logTransport() {
   var hs = document.getElementById('tr-hot-start-temp'); if(hs) hs.value='';
   var he = document.getElementById('tr-hot-end-temp'); if(he) he.value='';
   document.getElementById('tr-start-time').value=now(); document.getElementById('tr-end-time').value=now();
-  renderSection('transport'); updateHaccpDashboard();
+  renderSection_PC('transport'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+food+': '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
 }
 function haccpLogTransport(){logTransport();}
