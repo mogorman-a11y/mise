@@ -2651,7 +2651,7 @@ function trSetType(type) {
   }
 }
 
-function logTransport() {
+function _haccpLogTransport() {
   var food = document.getElementById('tr-food').value.trim();
   var dest = document.getElementById('tr-destination').value.trim();
   var startTime = document.getElementById('tr-start-time').value;
@@ -2705,7 +2705,7 @@ function logTransport() {
   var _trCount = records.filter(function(r){return r.type==='transport';}).length;
   if(status==='ok')toast('Saved — '+food+' ('+_trCount+' transport logged)'); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
 }
-function haccpLogTransport(){logTransport();}
+function haccpLogTransport(){_haccpLogTransport();}
 
 function logCredential() {
   var type = document.getElementById('cred-type').value;
