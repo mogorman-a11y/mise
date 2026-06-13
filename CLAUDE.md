@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=38` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=39` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=15` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
 | `sync.js` | — | no version param needed (SW network-first) |
@@ -113,6 +113,13 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v39 — configurable home screen tiles
+- `TILE_DEFS` array defines all regular tiles (id, icon, label, subDefault, pc flag)
+- `renderTileGrid()` builds `#haccp-tile-grid` dynamically from `settings.tileOrder` + `settings.enabledTiles`; wide fixed tiles (Records, Suppliers, EHO, Add more) are always appended at the end
+- `renderCustomisePanel()` opens a full-screen sheet with ↑↓ reorder arrows and toggles; scroll position preserved across re-renders
+- `moveTile(id, dir)`, `resetTileOrder()` — exposed to HTML onclick
+- **Do not add new tiles as static HTML** — add to `TILE_DEFS` instead
 
 ### v38 — food library + menus integration
 - Food library tile on HACCP home → `tab-foodlibrary` tab
