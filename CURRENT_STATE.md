@@ -9,7 +9,7 @@
 
 | File | Version | Where set |
 |------|---------|-----------|
-| `js/modules/haccp.js` | `?v=35` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=37` | `app.html` script tag |
 | `css/menus.css` | `?v=3` | `app.html` link tag |
 | `sync.js` | `?v=19` | `app.html` script tag (no version bump needed — sync.js changes go live via SW network-first) |
 | Service worker cache | `veriqo-v112` | `sw.js` line 8 |
