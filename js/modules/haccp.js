@@ -261,11 +261,54 @@ function populateHaccpSelects() {
     populateSelect(id, key);
   });
   populateSelect('clean-task','cleaningTasks');
-  // Populate food library datalist for cooking / reheating / transport food inputs
+  // Populate food library datalist — combines HACCP items + Menus saved dishes
   var dl = document.getElementById('food-library-list');
-  if(dl && settings.foodLibrary) {
-    dl.innerHTML = settings.foodLibrary.map(function(v){ return '<option value="'+v.replace(/"/g,'&quot;')+'">'; }).join('');
+  if(dl) {
+    var menusDishes = (window.mSettings && window.mSettings.savedDishes) ? window.mSettings.savedDishes.map(function(d){ return d.dish; }) : [];
+    var haccpItems = settings.foodLibrary || [];
+    // Merge: menus dishes first, then HACCP-only items not already in menus
+    var allItems = menusDishes.slice();
+    haccpItems.forEach(function(v){ if(allItems.indexOf(v)===-1) allItems.push(v); });
+    dl.innerHTML = allItems.map(function(v){ return '<option value="'+v.replace(/"/g,'&quot;')+'">'; }).join('');
   }
+}
+
+function renderFoodLibraryTab() {
+  // Menus dishes section
+  var menusList = document.getElementById('foodlibrary-menus-list');
+  if(menusList) {
+    var dishes = (window.mSettings && window.mSettings.savedDishes) ? window.mSettings.savedDishes : [];
+    if(!dishes.length) {
+      menusList.innerHTML = '<div class="empty">No dishes saved in Menus yet — add dishes in the Menus module.</div>';
+    } else {
+      menusList.innerHTML = dishes.map(function(d){
+        var cats = d.category ? '<span style="font-size:11px;color:#888;margin-left:6px">'+d.category+'</span>' : '';
+        var alg = d.allergens && d.allergens.length ? '<div style="font-size:11px;color:#888;margin-top:2px">Allergens: '+d.allergens.join(', ')+'</div>' : '';
+        return '<div class="setting-item"><div><span class="setting-item-name">'+d.dish+'</span>'+cats+alg+'</div></div>';
+      }).join('');
+    }
+  }
+  // HACCP-only items section
+  var haccpList = document.getElementById('foodlibrary-haccp-list');
+  if(haccpList) {
+    renderSettingsList('foodLibrary','settings-food-list');
+    // Mirror into the food library tab's own list element
+    var items = settings.foodLibrary || [];
+    if(!items.length) {
+      haccpList.innerHTML = '<div class="empty">No HACCP-only items added yet.</div>';
+    } else {
+      haccpList.innerHTML = items.map(function(item,i){
+        return '<div class="setting-item"><span class="setting-item-name">'+item+'</span>'+
+          '<button class="btn-remove" onclick="removeItem(\'foodLibrary\','+i+',\'settings-food-list\');renderFoodLibraryTab()">&times;</button></div>';
+      }).join('');
+    }
+  }
+  // Update home tile sub-text with total count
+  var menusDishes = (window.mSettings && window.mSettings.savedDishes) ? window.mSettings.savedDishes : [];
+  var total = menusDishes.length + (settings.foodLibrary||[]).length;
+  var sub = document.getElementById('sub-foodlibrary');
+  if(sub) sub.textContent = total ? total+' dish'+(total>1?'es':'')+' in library' : 'Dishes for logging';
+  populateHaccpSelects();
 }
 
 function renderChecklists() {
@@ -480,9 +523,10 @@ function haccpTab(name) {
   document.getElementById('back-btn').style.display=name==='home'?'none':'block';
   var sub=document.getElementById('haccp-header-sub');
   if(sub) sub.textContent=name==='home'?'HACCP':(titles[name]||name);
-  if(name==='records')   renderRecords();
-  if(name==='settings')  { renderAllSettingsLists(); renderSubscriptionCard(); renderRemindersCard(); renderSetupBanner(); syncTileToggles(); loadEmailPreferences(); }
-  if(name==='suppliers') renderSuppliersLog();
+  if(name==='records')     renderRecords();
+  if(name==='settings')    { renderAllSettingsLists(); renderSubscriptionCard(); renderRemindersCard(); renderSetupBanner(); syncTileToggles(); loadEmailPreferences(); }
+  if(name==='suppliers')   renderSuppliersLog();
+  if(name==='foodlibrary') renderFoodLibraryTab();
   // Re-populate selects when opening tabs that use staff names or food library,
   // so the chef's profile name is present even if it loaded after page init.
   if(name==='transport'||name==='mobileset'||name==='cooking'||name==='reheating'||name==='cooling'||name==='delivery'||name==='cleaning'||name==='probe'||name==='pest'||name==='illness'||name==='opening'||name==='closing'||name==='crosscontam'||name==='fridge') populateHaccpSelects();
@@ -1138,6 +1182,12 @@ function updateHaccpDashboard() {
 
   var prevDays=getAllDays().filter(function(d){return d!==TODAY;});
   document.getElementById('sub-records').textContent='Today + '+(prevDays.length?prevDays.length+' previous day'+(prevDays.length>1?'s':''):'no previous days');
+
+  var _flMenus = (window.mSettings && window.mSettings.savedDishes) ? window.mSettings.savedDishes.length : 0;
+  var _flHaccp = (settings.foodLibrary||[]).length;
+  var _flTotal = _flMenus + _flHaccp;
+  var _flSub = document.getElementById('sub-foodlibrary');
+  if(_flSub) _flSub.textContent = _flTotal ? _flTotal+' dish'+(_flTotal>1?'es':'')+' in library' : 'Dishes for logging';
 
   var alerts=records.filter(function(r){return r.type!=='job'&&r.status!=='ok';});
   var ac=document.getElementById('alerts-container');

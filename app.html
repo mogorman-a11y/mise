@@ -314,6 +314,11 @@
         <div class="tile-label">Incident log</div>
         <div class="tile-sub" id="sub-incident">No incidents today</div>
       </div>
+      <div class="tile" onclick="haccpTab('foodlibrary')">
+        <div class="tile-icon">📋</div>
+        <div class="tile-label">Food library</div>
+        <div class="tile-sub" id="sub-foodlibrary">Dishes for logging</div>
+      </div>
       <!-- ADD MORE CHECKS — always visible; opens the per-tile toggles in HACCP settings -->
       <div id="tile-addmore" class="tile tile-wide" onclick="haccpTab('settings')" style="border-style:dashed;border-color:#c9c7bf;background:transparent">
         <div class="tile-wide-inner">
@@ -430,7 +435,7 @@
     <div class="card">
       <div class="card-title">Log cooling record <button class="info-icon" onclick="showTooltip(this,'Hot food must cool from 60°C to below 8°C within 90 minutes. Use a blast chiller or ice bath. Log start and end temperatures as evidence.');event.stopPropagation()">i</button></div>
       <div class="info-box">Hot food (above 60°C) must cool to below 8°C as quickly as possible — target under 90 minutes, maximum 2 hours (UK FSA guidance). Log start and end times to track duration.</div>
-      <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="cool-food" placeholder="e.g. Chicken stock"></div>
+      <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="cool-food" list="food-library-list" placeholder="e.g. Chicken stock"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Start temp (°C)</label><input class="form-input" type="number" inputmode="decimal" id="cool-start-temp" placeholder="e.g. 65" step="0.1"></div>
         <div class="form-group"><label class="form-label">Start time</label><input class="form-input" type="time" id="cool-start-time"></div>
@@ -734,6 +739,20 @@
   </div>
 
   <!-- MOBILE SETUP -->
+  <div id="tab-foodlibrary" class="section">
+    <div class="card">
+      <div class="card-title">Food item library</div>
+      <div class="info-box">Dishes saved here appear as quick-select suggestions when logging Cooked food, Reheating, Cooling and Transport temps. Add your regular dishes once — select them every time.</div>
+      <div id="foodlibrary-menus-block">
+        <div class="card-title" style="margin-top:8px">From your Menus module <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:#aaa">— manage in Menus → Dish library</span></div>
+        <div id="foodlibrary-menus-list"><div class="empty">No dishes saved in Menus yet.</div></div>
+        <button class="btn-secondary" style="width:100%;margin-top:8px" onclick="switchModule('menus')">Go to Menus → Dish library</button>
+      </div>
+      <div class="card-title" style="margin-top:16px">HACCP-only items <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:#aaa">— items not in your Menus module</span></div>
+      <div id="foodlibrary-haccp-list"></div>
+      <div class="add-row" style="margin-top:8px"><input type="text" id="add-food-lib" placeholder="e.g. Soup of the day, Staff meal…"><button class="btn-add" onclick="addItem('foodLibrary','add-food-lib','settings-food-list');renderFoodLibraryTab()">Add</button></div>
+    </div>
+  </div>
   <div id="tab-mobileset" class="section">
     <div class="card">
       <div class="card-title">Mobile / temporary kitchen setup</div>
@@ -3182,7 +3201,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=37"></script>
+<script src="js/modules/haccp.js?v=38"></script>
 <script src="js/modules/menus.js?v=15"></script>
 <script src="js/modules/costing.js?v=30"></script>
 
