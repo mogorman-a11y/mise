@@ -1183,10 +1183,7 @@ function renderTileGrid() {
       '<div style="flex:1;height:1px;background:#e5e4de"></div></div>'+pcHtml.join('');
   }
   // Fixed wide tiles always at the end
-  html += '<div id="tile-addmore" class="tile tile-wide" onclick="haccpTab(\'settings\')" style="border-style:dashed;border-color:#c9c7bf;background:transparent">'+
-    '<div class="tile-wide-inner"><span class="tile-icon-sm" style="color:var(--vq-green)">＋</span>'+
-    '<div><div class="tile-label">Add more checks</div><div class="tile-sub">Probe, pest, transport, registers &amp; more</div></div></div></div>'+
-    '<div class="tile tile-wide" onclick="haccpTab(\'inspector\')" style="background:#2D7A3A;border-color:#2D7A3A">'+
+  html += '<div class="tile tile-wide" onclick="haccpTab(\'inspector\')" style="background:#2D7A3A;border-color:#2D7A3A">'+
     '<div class="tile-wide-inner"><span class="tile-icon-sm">🔍</span>'+
     '<div style="flex:1"><div class="tile-label" style="color:#fff">EHO Inspection View</div>'+
     '<div class="tile-sub" style="color:rgba(255,255,255,0.75)">Tap before an inspection</div></div>'+
