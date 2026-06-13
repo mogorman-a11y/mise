@@ -1169,7 +1169,6 @@ function renderTileGrid() {
   order.forEach(function(id) {
     var def = defMap[id]; if(!def) return;
     if(settings.enabledTiles[id]===false) return;
-    if(def.pc && !settings.privateChefMode) return;
     var badge = hasBadgeIds.indexOf(id)!==-1 ? '<div class="tile-badge none" id="badge-'+id+'"></div>' : '';
     var tileHtml = '<div id="tile-'+id+'" class="tile" onclick="haccpTab(\''+id+'\')">'+
       badge+'<div class="tile-icon">'+def.icon+'</div>'+
