@@ -245,11 +245,16 @@ function saveHaccpSettings() {
 function populateSelect(elId, listKey) {
   var el=document.getElementById(elId); if(!el)return;
   var val=el.value;
-  el.innerHTML=settings[listKey].map(function(v){return '<option>'+v+'</option>';}).join('');
+  var items = settings[listKey].slice();
+  if(listKey==='staff'){
+    var profileName = window.Mise && window.Mise.profile && window.Mise.profile.chef_name;
+    if(profileName && items.indexOf(profileName)===-1) items.unshift(profileName);
+  }
+  el.innerHTML=items.map(function(v){return '<option>'+v+'</option>';}).join('');
   if(val) el.value=val;
 }
 function populateHaccpSelects() {
-  ['fridge-unit','fridge-by','cook-chef','cool-by','reheat-chef','del-supplier','del-by','clean-by','probe-by','pest-by','illness-staff','illness-by','opening-by','closing-by','crosscontam-by'].forEach(function(id){
+  ['fridge-unit','fridge-by','cook-chef','cool-by','reheat-chef','del-supplier','del-by','clean-by','probe-by','pest-by','illness-staff','illness-by','opening-by','closing-by','crosscontam-by','tr-by','ms-by'].forEach(function(id){
     var key = (id==='fridge-unit') ? 'fridgeUnits' : (id==='del-supplier') ? 'suppliers' : (id==='clean-task') ? 'cleaningTasks' : 'staff';
     populateSelect(id, key);
   });

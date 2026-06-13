@@ -3178,7 +3178,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=32"></script>
+<script src="js/modules/haccp.js?v=33"></script>
 <script src="js/modules/menus.js?v=15"></script>
 <script src="js/modules/costing.js?v=30"></script>
 
@@ -3384,6 +3384,8 @@ function vqIcon(name, size) {
         var tab = document.getElementById('nav-tab-' + mod);
         if (tab) tab.classList.toggle('locked', !canAccess(mod));
       });
+
+      if (typeof populateHaccpSelects === 'function') populateHaccpSelects();
 
       var defaultModule = (profile && profile.default_module) || '';
       var resumeOn = false;
