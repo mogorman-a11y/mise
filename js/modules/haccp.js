@@ -165,7 +165,8 @@ var DEFAULTS = {
   fridgeUnits:   ['Main fridge','Prep fridge','Walk-in fridge','Freezer 1','Freezer 2'],
   suppliers:     ['FreshFoods Ltd','Brakes','Bidfood','Local farm','Other'],
   cleaningTasks: ['Worktops & surfaces','Fridge interiors','Oven & grill','Floor & drainage','Bins & waste area','Dishwasher / glasswasher','Extraction & filters'],
-  staff:         ['Chef','Sous chef','Kitchen assistant']
+  staff:         ['Chef','Sous chef','Kitchen assistant'],
+  foodLibrary:   []
 };
 
 var DEFAULT_THRESHOLDS = {
@@ -221,6 +222,7 @@ var settings = {};
 function loadHaccpSettings() {
   try { var r=localStorage.getItem('haccp_settings'); settings=r?JSON.parse(r):{}; } catch(e){ settings={}; }
   Object.keys(DEFAULTS).forEach(function(k){ if(!settings[k]||!settings[k].length) settings[k]=DEFAULTS[k].slice(); });
+  if(!settings.foodLibrary) settings.foodLibrary=[];
   ['opening','closing','crosscontam'].forEach(function(k){
     var ck='checklist_'+k;
     if(!settings[ck]||!settings[ck].length) settings[ck]=DEFAULT_CHECKLISTS[k].map(function(i,idx){ return {id:k[0]+idx,label:i.label,note:i.note}; });
@@ -259,6 +261,11 @@ function populateHaccpSelects() {
     populateSelect(id, key);
   });
   populateSelect('clean-task','cleaningTasks');
+  // Populate food library datalist for cooking / reheating / transport food inputs
+  var dl = document.getElementById('food-library-list');
+  if(dl && settings.foodLibrary) {
+    dl.innerHTML = settings.foodLibrary.map(function(v){ return '<option value="'+v.replace(/"/g,'&quot;')+'">'; }).join('');
+  }
 }
 
 function renderChecklists() {
@@ -358,6 +365,7 @@ function renderAllSettingsLists() {
   renderSettingsList('suppliers','settings-supplier-list');
   renderSettingsList('cleaningTasks','settings-cleaning-list');
   renderSettingsList('staff','settings-staff-list');
+  renderSettingsList('foodLibrary','settings-food-list');
   renderThresholds();
   renderSettingsChecklistList('opening');
   renderSettingsChecklistList('closing');
@@ -475,6 +483,9 @@ function haccpTab(name) {
   if(name==='records')   renderRecords();
   if(name==='settings')  { renderAllSettingsLists(); renderSubscriptionCard(); renderRemindersCard(); renderSetupBanner(); syncTileToggles(); loadEmailPreferences(); }
   if(name==='suppliers') renderSuppliersLog();
+  // Re-populate selects when opening tabs that use staff names or food library,
+  // so the chef's profile name is present even if it loaded after page init.
+  if(name==='transport'||name==='mobileset'||name==='cooking'||name==='reheating'||name==='cooling'||name==='delivery'||name==='cleaning'||name==='probe'||name==='pest'||name==='illness'||name==='opening'||name==='closing'||name==='crosscontam'||name==='fridge') populateHaccpSelects();
   if(name==='credentials') renderCredentials();
   if(name==='inspector') renderInspector();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);

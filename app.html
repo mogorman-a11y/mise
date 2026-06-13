@@ -412,7 +412,8 @@
   <div id="tab-cooking" class="section">
     <div class="card">
       <div class="card-title">Log cooked food temperature <button class="info-icon" onclick="showTooltip(this,'Poultry, pork and reheated food must reach 75°C at the core. Log every cook — this is one of the most important HACCP records an inspector will check.');event.stopPropagation()">i</button></div>
-      <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="cook-food" placeholder="e.g. Chicken breast"></div>
+      <datalist id="food-library-list"></datalist>
+      <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="cook-food" list="food-library-list" placeholder="e.g. Chicken breast"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Core temp (°C)</label><input class="form-input" type="number" inputmode="decimal" id="cook-temp" placeholder="e.g. 75" step="0.1"></div>
         <div class="form-group"><label class="form-label">Time</label><input class="form-input" type="time" id="cook-time"></div>
@@ -455,7 +456,7 @@
     <div class="card">
       <div class="card-title">Log reheating record <button class="info-icon" onclick="showTooltip(this,'Food reheated for service must reach 75°C at the core and be served immediately. Never reheat the same food more than once — log every reheat.');event.stopPropagation()">i</button></div>
       <div class="info-box">Food reheated for service must reach a core temperature of 75°C and be served immediately.</div>
-      <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="reheat-food" placeholder="e.g. Soup"></div>
+      <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="reheat-food" list="food-library-list" placeholder="e.g. Soup"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Core temp (°C)</label><input class="form-input" type="number" inputmode="decimal" id="reheat-temp" placeholder="e.g. 78" step="0.1"></div>
         <div class="form-group"><label class="form-label">Time</label><input class="form-input" type="time" id="reheat-time"></div>
@@ -689,7 +690,7 @@
     <div class="card">
       <div class="card-title">Transport temperature log</div>
       <div class="info-box">Food transported to a client must be kept at safe temperatures throughout. Cold: below 8°C. Frozen: below -18°C. Hot: above 63°C (UK law).</div>
-      <div class="form-group"><label class="form-label">Food item / batch</label><input class="form-input" type="text" id="tr-food" placeholder="e.g. Prepared starters"></div>
+      <div class="form-group"><label class="form-label">Food item / batch</label><input class="form-input" type="text" id="tr-food" list="food-library-list" placeholder="e.g. Prepared starters"></div>
       <div class="form-group"><label class="form-label">Destination / client</label><input class="form-input" type="text" id="tr-destination" placeholder="e.g. Henderson — Oak Lane"></div>
       <div class="form-group">
         <label class="form-label">Food type</label>
@@ -957,6 +958,9 @@
           <div class="card-title">Chef / Staff names <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:#aaa">(also used by Cleaning, Illness &amp; Transport)</span></div>
           <div id="settings-staff-list"></div>
           <div class="add-row" style="margin-top:8px"><input type="text" id="add-staff" placeholder="Add name…"><button class="btn-add" onclick="addItem('staff','add-staff','settings-staff-list')">Add</button></div>
+          <div class="card-title" style="margin-top:16px">Food item library <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:#aaa">(used in Cooked food, Reheating &amp; Transport)</span></div>
+          <div id="settings-food-list"></div>
+          <div class="add-row" style="margin-top:8px"><input type="text" id="add-food" placeholder="e.g. Chicken breast, Beef Wellington…"><button class="btn-add" onclick="addItem('foodLibrary','add-food','settings-food-list')">Add</button></div>
           <div class="card-title" style="margin-top:16px">Minimum core temp thresholds</div>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Warn below (°C)</label><input class="form-input" type="number" inputmode="decimal" id="thresh-cooking-warn" step="0.5" placeholder="75" onblur="saveThresholds()"></div>
@@ -3178,7 +3182,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=36"></script>
+<script src="js/modules/haccp.js?v=37"></script>
 <script src="js/modules/menus.js?v=15"></script>
 <script src="js/modules/costing.js?v=30"></script>
 
