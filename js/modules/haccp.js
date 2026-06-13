@@ -386,9 +386,9 @@ document.getElementById('header-date').textContent = fmtDate();
 
 function saveHaccpToday() {
   var _today = todayStr();
-  try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){}
-  // Cloud sync — mirror to Supabase so data persists across devices
-  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(_today, records);
+  try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){ console.error('[HACCP] localStorage write failed:', e); toast('Storage error — check phone storage space', false); }
+  // Cloud sync — pass snapshot so in-flight mutations don't corrupt the payload
+  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(_today, records.slice());
   // Track the most recently added record type
   if(window.posthog && records.length) {
     var last = records[records.length - 1];
@@ -2700,8 +2700,10 @@ function logTransport() {
   var hs = document.getElementById('tr-hot-start-temp'); if(hs) hs.value='';
   var he = document.getElementById('tr-hot-end-temp'); if(he) he.value='';
   document.getElementById('tr-start-time').value=now(); document.getElementById('tr-end-time').value=now();
-  renderSection_PC('transport'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+food+': '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
+  renderSection_PC('transport');
+  updateHaccpDashboard();
+  var _trCount = records.filter(function(r){return r.type==='transport';}).length;
+  if(status==='ok')toast('Saved — '+food+' ('+_trCount+' transport logged)'); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
 }
 function haccpLogTransport(){logTransport();}
 
