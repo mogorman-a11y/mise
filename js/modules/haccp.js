@@ -1201,8 +1201,18 @@ function renderTileGrid() {
   grid.innerHTML = html;
 }
 
+function resetTileOrder() {
+  settings.tileOrder = DEFAULT_TILE_ORDER.slice();
+  TILE_DEFS.forEach(function(d){ settings.enabledTiles[d.id] = true; });
+  saveHaccpSettings();
+  renderTileGrid();
+  updateHaccpDashboard();
+  renderCustomisePanel();
+}
+
 function renderCustomisePanel() {
   var existing = document.getElementById('tile-customise-panel');
+  var savedScroll = existing ? existing.scrollTop : 0;
   if(existing) existing.remove();
   var order = (settings.tileOrder || DEFAULT_TILE_ORDER.slice()).slice();
   TILE_DEFS.forEach(function(d){ if(order.indexOf(d.id)===-1) order.push(d.id); });
@@ -1230,12 +1240,14 @@ function renderCustomisePanel() {
   panel.innerHTML =
     '<div style="display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid #e5e4de;position:sticky;top:0;background:#fff;z-index:1">'+
       '<div style="font-size:17px;font-weight:700;color:#1a1a18;flex:1">Customise home screen</div>'+
+      '<button onclick="resetTileOrder()" style="background:none;border:none;font-size:13px;color:#888;cursor:pointer;padding:4px 10px">Reset</button>'+
       '<button onclick="document.getElementById(\'tile-customise-panel\').remove()" style="background:#f0efe9;border:none;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;color:#1a1a18">Done</button>'+
     '</div>'+
     '<div style="padding:0 18px 40px">'+
       '<p style="font-size:13px;color:#888;margin:12px 0 8px">Reorder tiles with the arrows. Toggle to show or hide.</p>'+
       rowsHtml+'</div>';
   document.body.appendChild(panel);
+  panel.scrollTop = savedScroll;
 }
 
 function moveTile(id, dir) {
