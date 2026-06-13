@@ -9,12 +9,14 @@
 
 | File | Version | Where set |
 |------|---------|-----------|
-| `js/modules/haccp.js` | `?v=32` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=35` | `app.html` script tag |
 | `css/menus.css` | `?v=3` | `app.html` link tag |
-| `sync.js` | `?v=19` | `app.html` script tag |
-| Service worker cache | `veriqo-v36` | `sw.js` line 1 |
+| `sync.js` | `?v=19` | `app.html` script tag (no version bump needed — sync.js changes go live via SW network-first) |
+| Service worker cache | `veriqo-v112` | `sw.js` line 8 |
 
-**Rule:** Every change to `haccp.js` must bump both the `?v=` query string in `app.html` AND the SW cache name in `sw.js`. If you forget either, users will get a stale cached file.
+**Rule:** Every change to `haccp.js` must bump the `?v=` query string in `app.html`. The SW cache name only needs bumping when `sw.js` itself changes (the SW uses network-first for all app shell assets so version bumps in JS query strings are sufficient).
+
+> ⚠️ **BEFORE MAKING ANY CHANGES:** run `git pull origin main` first. This repo has multiple Claude Code sessions running (cloud + MacBook Air). Pushing stale code overwrites live fixes.
 
 ---
 
@@ -28,6 +30,11 @@
 ---
 
 ## What was last changed (June 2026)
+
+### Transport temp record saving — v33/v34/v35 (DO NOT REVERT)
+- **v33:** `populateHaccpSelects()` now includes `tr-by` and `ms-by` (were missing → dropdown was empty)
+- **v34:** `logTransport()` was calling `renderSection('transport')` which exits early for PC_TYPES — changed to `renderSection_PC('transport')`. Also fixed race condition in `_pullHaccpRecords` (sync.js) where a visibility-change pull from Supabase could wipe localStorage before `saveDay()` finished.
+- **v35:** `saveHaccpToday()` localStorage errors now show a visible toast (was silently swallowed). `saveDay()` receives `records.slice()` snapshot to prevent in-flight mutations corrupting the Supabase payload. Transport toast now shows in-memory count for diagnostics.
 
 ### Fridge/freezer temperature logging
 - Added `toggleMinus()` and `enforceNeg()` functions (were called in HTML but never defined)
