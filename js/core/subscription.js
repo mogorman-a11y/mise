@@ -1,5 +1,5 @@
-// js/core/subscription.js v1 — Veriqo unified subscription layer
-// Plans: null (trial), starter, pro
+// js/core/subscription.js v3 — Veriqo unified subscription layer
+// Plans: null (trial), starter (HACCP), pro
 // Replaces: subscription.js v9, carte-subscription.js, yield-subscription.js
 
 window.Mise = window.Mise || {};
@@ -23,6 +23,17 @@ window.Mise.subscription = (function () {
 
     _state = { status, plan, starter_module: starterMod, trial_ends_at: trialEnd, in_trial: inTrial };
 
+    // If trial has expired but DB still says 'trial', flip it to 'expired'
+    if (status === 'trial' && trialEnd && trialEnd <= new Date()) {
+      try {
+        var { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          await supabaseClient.from('profiles').update({ subscription_status: 'expired' }).eq('id', user.id);
+          _state.status = 'expired';
+        }
+      } catch(e) { console.warn('[Subscription] failed to flip expired status', e); }
+    }
+
     // Inject trial banner if needed
     _injectTrialBanner(status, trialEnd, inTrial);
 
@@ -36,16 +47,51 @@ window.Mise.subscription = (function () {
 
   // ── canAccess ─────────────────────────────────────────────
   // Dashboard and Settings are always accessible.
-  // haccp / menus / costing require pro, matching starter_module, or active trial.
+  // haccp / menus / costing require pro or active trial. Starter is HACCP-only.
   function canAccess(moduleName) {
     if (moduleName === 'dashboard' || moduleName === 'settings') return true;
     if (!_state) return true; // pre-auth — allow (auth will gate if needed)
+    // Role-based access for venue team members
+    var _p = window.Mise && window.Mise.profile;
+    if (_p && _p.venue_id && _p.role) {
+      if (_p.role === 'admin') return true;           // admins get full access
+      if (_p.role === 'staff') return moduleName === 'haccp'; // staff: HACCP only
+    }
     if (_state.in_trial) return true;
     if (_state.plan === 'pro' && _state.status === 'active') return true;
     if (_state.plan === 'starter' && _state.status === 'active') {
-      return _state.starter_module === moduleName;
+      return moduleName === 'haccp';
     }
     return false; // expired, past_due, cancelled
+  }
+
+  // ── startCheckout ─────────────────────────────────────────
+  // plan: 'pro' | 'starter'
+  // period: 'monthly' | 'annual'
+  // starterModule kept for legacy compatibility. Starter is sold as HACCP-only.
+  async function startCheckout(plan, period, starterModule) {
+    var btn = document.activeElement;
+    try {
+      var res = await supabaseClient.auth.getSession();
+      var token = res.data.session && res.data.session.access_token;
+      if (!token) { if (typeof toast === 'function') toast('Please sign in first', false); return; }
+      if (btn && btn.tagName === 'BUTTON') { btn.disabled = true; btn.textContent = 'Loading…'; }
+      var payload = { plan: plan || 'pro', period: period || 'monthly' };
+      if (plan === 'starter') payload.starter_module = starterModule || 'haccp';
+      var r = await fetch('https://yixrwyfodipfcbhjcszp.supabase.co/functions/v1/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON },
+        body: JSON.stringify(payload)
+      });
+      var data = await r.json();
+      if (!r.ok || !data.url) throw new Error(data.error || 'Checkout unavailable');
+      vqTrack('checkout_started', { plan: plan || 'pro', period: period || 'monthly' });
+      window.location.href = data.url;
+    } catch(err) {
+      if (btn && btn.tagName === 'BUTTON') { btn.disabled = false; btn.textContent = btn._origText || 'Subscribe'; }
+      if (typeof toast === 'function') toast('Could not start checkout — please try again', false);
+      console.error('[Subscription] startCheckout:', err);
+    }
   }
 
   // ── trial banner ──────────────────────────────────────────
@@ -55,19 +101,20 @@ window.Mise.subscription = (function () {
 
     if (!inTrial) return;
 
-    var daysLeft = trialEnd ? Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+    if (!trialEnd) return; // unlimited trial — no expiry, no banner
+    var daysLeft = Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24));
     if (daysLeft > 7) return; // only show banner in last 7 days
 
     var banner = document.createElement('div');
     banner.id = 'vq-trial-banner';
     banner.className = 'trial-banner';
-    banner.innerHTML = '<span>⏳ ' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' left on your free trial</span>'
-      + '<a href="/upgrade">Upgrade to Pro →</a>';
+    banner.innerHTML = '<span>' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' left on your free trial</span>'
+      + '<button onclick="if(typeof showModule===\'function\'){showModule(\'settings\');if(typeof showSettingsTab===\'function\')showSettingsTab(\'subscription\')}" style="background:none;border:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;padding:0">Upgrade to Pro</button>';
 
     var app = document.querySelector('.vq-app') || document.querySelector('.app') || document.body;
     app.insertAdjacentElement('afterbegin', banner);
   }
 
-  return { check, current, canAccess };
+  return { check, current, canAccess, startCheckout };
 
 })();
