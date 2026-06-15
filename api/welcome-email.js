@@ -250,10 +250,18 @@ async function _handleStarterKit(res, email, stage, eventsPerMonth) {
     return res.status(500).json({ error: dbErr.message });
   }
 
-  // Don't re-send Day 1 if they've already received it
-  if (row.last_email_sent >= 1) {
-    console.log('[welcome-email] starter-kit duplicate signup (already sent Day 1):', email);
+  // Mid-sequence: leave them alone, they're already getting emails
+  if (row.last_email_sent >= 1 && row.last_email_sent < 7) {
+    console.log('[welcome-email] starter-kit mid-sequence duplicate signup:', email);
     return res.status(200).json({ ok: true });
+  }
+
+  // Completed sequence: reset and restart from Day 1
+  if (row.last_email_sent === 7) {
+    await supabase.from('starter_kit_leads')
+      .update({ last_email_sent: 0, stage, events_per_month: eventsPerMonth })
+      .eq('id', row.id);
+    console.log('[welcome-email] starter-kit restarting completed sequence for:', email);
   }
 
   try {
