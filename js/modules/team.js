@@ -345,12 +345,4 @@
   window.vqTeamSubmitInvite = submitInvite;
   window.vqTeamInit = init;
 
-  // Register with settings module so it runs on every settings visit
-  if (window.modules && window.modules.settings) {
-    var _origInit = window.modules.settings.init;
-    window.modules.settings.init = function() {
-      _origInit();
-      init();
-    };
-  }
 })();
