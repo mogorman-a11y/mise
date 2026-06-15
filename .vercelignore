@@ -20,3 +20,30 @@ api/yield-magic-link.js
 
 # Paused — Stripe Connect for Yield, waiting on platform ID verification
 api/stripe-connect.js
+
+# Stub only — live checkout is the Supabase edge function. No client code calls /api/create-checkout.
+api/create-checkout.js
+
+# Merged into api/parse-menu.js (action='bio'). app.html Bio Writer already calls parse-menu.
+# mise.html (retired Carte shell) still calls /api/generate-bio but mise.html is not part of the
+# active app (/mise redirects to /app). Safe to exclude; see cleanup note below.
+api/generate-bio.js
+
+# Stub only — live webhook is the Supabase edge function (stripe-webhook). Stripe does not call
+# the Vercel URL; no client code calls it either.
+api/stripe-webhook.js
+
+# Merged into api/veriqo-estimate.js (action='scan' branch). No client calls /api/veriqo-receipt-scan.
+api/veriqo-receipt-scan.js
+
+# Merged into api/veriqo-job.js (POST handler). No client calls /api/veriqo-reconcile.
+api/veriqo-reconcile.js
+
+# ── Hobby cap: exactly 12 live functions after the above exclusions ──────────────────────────────
+# Active: ai-scan · feature-blast · get-quote · magic-link · parse-menu · team ·
+#         trial-emails · unsubscribe · veriqo-estimate · veriqo-job · welcome-email · yield-reminders
+#
+# Cleanup note: mise.html and yield.html (retired sub-brand shells) still sit at repo root on main.
+# They should be archived in a future cleanup commit. Until then, their Bio Writer (mise.html) and
+# any other calls to excluded endpoints will 404, which is acceptable — /mise and /yield redirect
+# to /app and users should not be hitting those shells directly.
