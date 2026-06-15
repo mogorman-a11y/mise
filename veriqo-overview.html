@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-HJBTHP12Y8"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-HJBTHP12Y8');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veriqo — App Overview</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: #f5f4f0; color: #1a1a18; line-height: 1.6; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+a { color: inherit; text-decoration: none; }
+
+/* ── Layout ── */
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+/* ── Header ── */
+.page-header { background: #1a1a18; padding: 32px 24px 28px; }
+.page-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand img { width: 44px; height: 44px; border-radius: 10px; }
+.brand-name { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+.brand-tag { font-size: 13px; color: #aaa; margin-top: 1px; }
+.header-badge { background: #2D7A3A; color: #fff; font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 20px; white-space: nowrap; }
+
+/* ── Hero ── */
+.hero { background: #1a1a18; padding: 0 24px 48px; text-align: center; border-bottom: 3px solid #2D7A3A; }
+.hero h1 { font-size: clamp(26px, 5vw, 40px); font-weight: 800; color: #fff; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 14px; }
+.hero p { font-size: 16px; color: #aaa; max-width: 560px; margin: 0 auto; line-height: 1.65; }
+
+/* ── Section titles ── */
+.section { padding: 52px 24px; }
+.section-eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #2D7A3A; margin-bottom: 8px; text-align: center; }
+.section-title { font-size: clamp(20px, 3.5vw, 28px); font-weight: 800; text-align: center; letter-spacing: -0.01em; margin-bottom: 8px; }
+.section-sub { font-size: 15px; color: #666; text-align: center; max-width: 520px; margin: 0 auto 40px; line-height: 1.65; }
+
+/* ── Module grid ── */
+.module-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+.module-grid-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 580px; margin: 0 auto; }
+@media (max-width: 640px) { .module-grid { grid-template-columns: 1fr; } .module-grid-bottom { grid-template-columns: 1fr; } }
+
+.module-card { background: #fff; border: 1px solid #e5e4de; border-radius: 16px; padding: 24px; }
+.module-card.accent { border-top: 3px solid #2D7A3A; }
+.module-icon { font-size: 26px; margin-bottom: 10px; }
+.module-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.module-desc { font-size: 13px; color: #666; line-height: 1.55; margin-bottom: 14px; }
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.feature-list li { font-size: 13px; color: #444; padding-left: 18px; position: relative; line-height: 1.45; }
+.feature-list li::before { content: '✓'; position: absolute; left: 0; font-weight: 700; color: #2D7A3A; font-size: 12px; }
+
+/* ── Pricing ── */
+.pricing-section { background: #fff; border-top: 1px solid #e5e4de; border-bottom: 1px solid #e5e4de; padding: 52px 24px; }
+.pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 680px; margin: 0 auto; }
+@media (max-width: 560px) { .pricing-grid { grid-template-columns: 1fr; } }
+
+.price-card { border-radius: 18px; padding: 28px; border: 1px solid #e5e4de; background: #fafaf7; }
+.price-card.pro { background: #1a1a18; border-color: #1a1a18; color: #fff; }
+.price-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 6px; }
+.price-card.pro .price-tag { color: #C9A84C; }
+.price-name { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.price-desc { font-size: 13px; color: #666; margin-bottom: 18px; line-height: 1.5; }
+.price-card.pro .price-desc { color: #aaa; }
+.price-amount { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.price-period { font-size: 15px; font-weight: 500; color: #888; margin-left: 2px; }
+.price-card.pro .price-period { color: #aaa; }
+.price-annual { font-size: 13px; color: #888; margin-top: 5px; }
+.price-card.pro .price-annual { color: #C9A84C; }
+.price-divider { border: none; border-top: 1px solid #e5e4de; margin: 20px 0; }
+.price-card.pro .price-divider { border-top-color: rgba(255,255,255,0.1); }
+.price-features { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.price-features li { font-size: 14px; color: #444; padding-left: 22px; position: relative; line-height: 1.4; }
+.price-features li::before { content: '✓'; position: absolute; left: 0; font-weight: 700; color: #2D7A3A; }
+.price-card.pro .price-features li { color: #ddd; }
+.price-card.pro .price-features li::before { color: #C9A84C; }
+.price-cta { display: block; padding: 14px 20px; border-radius: 10px; font-size: 15px; font-weight: 700; text-align: center; }
+.price-cta.green { background: #2D7A3A; color: #fff; }
+.price-cta.gold { background: #C9A84C; color: #1a1a18; }
+.price-note { font-size: 11px; color: #999; text-align: center; margin-top: 10px; }
+.price-card.pro .price-note { color: #666; }
+.pricing-footer { text-align: center; font-size: 13px; color: #999; margin-top: 24px; }
+
+/* ── How it works ── */
+.how-section { padding: 52px 24px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 560px) { .steps { grid-template-columns: 1fr; } }
+.step { text-align: center; padding: 20px; }
+.step-num { width: 36px; height: 36px; border-radius: 50%; background: #2D7A3A; color: #fff; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+.step h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.step p { font-size: 13px; color: #666; line-height: 1.55; }
+
+/* ── FSA strip ── */
+.fsa-strip { background: #1a1a18; padding: 40px 24px; text-align: center; }
+.fsa-stars { font-size: 22px; letter-spacing: 3px; color: #2D7A3A; margin-bottom: 10px; }
+.fsa-strip h3 { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 10px; line-height: 1.35; }
+.fsa-strip p { font-size: 14px; color: #aaa; max-width: 580px; margin: 0 auto; line-height: 1.7; }
+
+/* ── Final CTA ── */
+.final-cta { padding: 56px 24px; text-align: center; }
+.final-cta h2 { font-size: clamp(22px, 4vw, 30px); font-weight: 800; margin-bottom: 12px; letter-spacing: -0.01em; }
+.final-cta p { font-size: 15px; color: #666; margin-bottom: 28px; max-width: 480px; margin-left: auto; margin-right: auto; line-height: 1.65; }
+.cta-btn { display: inline-block; padding: 16px 36px; background: #2D7A3A; color: #fff; border-radius: 10px; font-size: 16px; font-weight: 700; }
+.cta-sub { font-size: 12px; color: #999; margin-top: 10px; }
+
+/* ── Footer ── */
+.page-footer { padding: 28px 24px; border-top: 1px solid #e5e4de; text-align: center; font-size: 12px; color: #aaa; }
+.page-footer a { color: #888; }
+
+/* ── Print ── */
+@media print {
+  body { background: #fff; }
+  .hero, .page-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .price-card.pro { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .step-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .fsa-strip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cta-btn { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  a[href]::after { content: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="page-header">
+  <div class="wrap">
+    <div class="brand">
+      <img src="icons/icon-192.png" alt="Veriqo" width="44" height="44">
+      <div>
+        <div class="brand-name">Veriqo</div>
+        <div class="brand-tag">Kitchen management for private chefs</div>
+      </div>
+    </div>
+    <div class="header-badge">14-day free trial</div>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="wrap">
+    <h1>HACCP compliance, menus &amp; costing<br>— in one app</h1>
+    <p>Built specifically for UK private chefs and mobile caterers. Everything an environmental health officer expects to see, plus the business tools to quote, cost, and invoice every job.</p>
+  </div>
+</section>
+
+<!-- Modules -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-eyebrow">What's inside</div>
+    <h2 class="section-title">Three modules. One login.</h2>
+    <p class="section-sub">Every module shares the same data — dishes, clients, jobs — so you enter information once and it flows everywhere.</p>
+
+    <div class="module-grid">
+      <div class="module-card accent">
+        <div class="module-icon">🛡️</div>
+        <div class="module-name">HACCP</div>
+        <div class="module-desc">Every compliance record you're legally required to keep, in one place. Built to the FSA Safer Food Better Business standard.</div>
+        <ul class="feature-list">
+          <li>Fridge &amp; freezer temperature logs</li>
+          <li>Cooking, cooling &amp; reheating records</li>
+          <li>Allergen declarations per dish</li>
+          <li>Cleaning &amp; disinfection checklists</li>
+          <li>Opening &amp; closing checks</li>
+          <li>Delivery temperature checks</li>
+          <li>Staff illness &amp; injury logs</li>
+          <li>Pest control records</li>
+          <li>Certificate &amp; credentials tracker</li>
+          <li>Approved supplier register</li>
+        </ul>
+      </div>
+
+      <div class="module-card accent">
+        <div class="module-icon">🍽️</div>
+        <div class="module-name">Menus</div>
+        <div class="module-desc">Build your dish library, manage allergens, plan menus per booking, and keep a complete client and job record.</div>
+        <ul class="feature-list">
+          <li>Dish library with allergen matrix</li>
+          <li>Saved menus per client &amp; job</li>
+          <li>Client CRM &amp; booking calendar</li>
+          <li>Kitchen assessment records</li>
+          <li>AI menu importer</li>
+          <li>Frozen menu snapshots</li>
+          <li>Cross-contamination records</li>
+          <li>Printable allergen matrix per event</li>
+        </ul>
+      </div>
+
+      <div class="module-card accent">
+        <div class="module-icon">💰</div>
+        <div class="module-name">Costing</div>
+        <div class="module-desc">Know what every job earns before you cook it. Build quotes, send invoices, and track your revenue and profit.</div>
+        <ul class="feature-list">
+          <li>Menu costing with food + wastage %</li>
+          <li>Quote builder with extras &amp; VAT</li>
+          <li>Deposit &amp; balance invoices</li>
+          <li>Branded PDF quotes &amp; invoices</li>
+          <li>Client payment portal</li>
+          <li>Revenue, P&amp;L &amp; hourly rate tracker</li>
+          <li>Ingredient cost library</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="module-grid-bottom">
+      <div class="module-card">
+        <div class="module-icon">📊</div>
+        <div class="module-name">Dashboard</div>
+        <div class="module-desc">Your kitchen at a glance — every time you open the app.</div>
+        <ul class="feature-list">
+          <li>Outstanding compliance checks</li>
+          <li>Next job countdown</li>
+          <li>Open invoices &amp; revenue at a glance</li>
+          <li>Average gross profit %</li>
+        </ul>
+      </div>
+
+      <div class="module-card">
+        <div class="module-icon">⚙️</div>
+        <div class="module-name">Settings &amp; account</div>
+        <div class="module-desc">Control your profile, subscription, and app preferences.</div>
+        <ul class="feature-list">
+          <li>Business profile &amp; branding</li>
+          <li>Push notification reminders</li>
+          <li>Subscription management</li>
+          <li>Export compliance report</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing-section">
+  <div class="wrap">
+    <div class="section-eyebrow">Pricing</div>
+    <h2 class="section-title">Simple, honest pricing</h2>
+    <p class="section-sub">Start with a 14-day free trial of everything. No credit card required.</p>
+
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="price-tag">HACCP only</div>
+        <div class="price-name">Veriqo HACCP</div>
+        <div class="price-desc">For chefs who want to stay inspection-ready without the extra business tools. Upgrade to Pro any time.</div>
+        <div>
+          <span class="price-amount">£7</span><span class="price-period">/ month</span>
+        </div>
+        <div class="price-annual">or £70 / year — two months free</div>
+        <hr class="price-divider">
+        <ul class="price-features">
+          <li>HACCP daily records</li>
+          <li>Temperature, delivery, cleaning &amp; incident logs</li>
+          <li>Reminders, exports &amp; cloud sync</li>
+          <li>Settings always included</li>
+          <li>PWA — installs on iPhone &amp; Android</li>
+          <li>14-day free trial of all modules</li>
+        </ul>
+        <a href="https://getveriqo.co.uk/app" class="price-cta green">Start free trial &rarr;</a>
+        <p class="price-note">No credit card required</p>
+      </div>
+
+      <div class="price-card pro">
+        <div class="price-tag">Most popular</div>
+        <div class="price-name">Veriqo Pro</div>
+        <div class="price-desc">The full private chef workflow: compliance, bookings, menus, quotes, invoices, and profit.</div>
+        <div>
+          <span class="price-amount">£15</span><span class="price-period">/ month</span>
+        </div>
+        <div class="price-annual">or £150 / year — two months free</div>
+        <hr class="price-divider">
+        <ul class="price-features">
+          <li>Everything in HACCP</li>
+          <li>Bookings, clients, menus &amp; allergen matrices</li>
+          <li>Quotes, invoices, payments &amp; job costing</li>
+          <li>Unlimited records</li>
+          <li>Cloud sync across all your devices</li>
+          <li>PWA — installs on iPhone &amp; Android</li>
+          <li>14-day free trial</li>
+        </ul>
+        <a href="https://getveriqo.co.uk/app" class="price-cta gold">Start 14-day free trial &rarr;</a>
+        <p class="price-note">No credit card required. Ready in under 2 minutes.</p>
+      </div>
+    </div>
+    <p class="pricing-footer">All plans: cancel any time &nbsp;&middot;&nbsp; UK VAT inclusive &nbsp;&middot;&nbsp; works offline</p>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how-section">
+  <div class="wrap">
+    <div class="section-eyebrow">Getting started</div>
+    <h2 class="section-title">Up and running in minutes</h2>
+    <p class="section-sub">No training needed. No paper forms to replace first.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Create your account</h4>
+        <p>Sign up at getveriqo.co.uk/app — no credit card, no setup fee. Your 14-day trial starts immediately.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>Install on your phone</h4>
+        <p>Open the app in Safari or Chrome, tap "Add to Home Screen" and Veriqo installs like a native app.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Start logging</h4>
+        <p>Add your first dish, run your first temperature check, or build your first quote — your records are live immediately.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FSA strip -->
+<section class="fsa-strip">
+  <div class="wrap">
+    <div class="fsa-stars" aria-hidden="true">★★★★★</div>
+    <h3>Built to support your 5-star food hygiene rating</h3>
+    <p>The Food Standards Agency rates every UK food business on a 0–5 scale. A top rating isn't just about being clean on the day — an EHO will assess your confidence in food safety management. Veriqo gives you a complete, date-stamped paper trail ready to present at any inspection.</p>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta">
+  <div class="wrap">
+    <h2>Ready to get inspection-ready?</h2>
+    <p>Join private chefs and mobile caterers across the UK who use Veriqo to stay compliant, price confidently, and run their business properly.</p>
+    <a href="https://getveriqo.co.uk/app" class="cta-btn">Start your free trial &rarr;</a>
+    <p class="cta-sub">getveriqo.co.uk &nbsp;&middot;&nbsp; hello@getveriqo.co.uk</p>
+  </div>
+</section>
+
+<footer class="page-footer">
+  <p>Veriqo is a product of Mise Labs, operated by Side Order Catering &nbsp;&middot;&nbsp; <a href="https://getveriqo.co.uk">getveriqo.co.uk</a> &nbsp;&middot;&nbsp; <a href="mailto:hello@getveriqo.co.uk">hello@getveriqo.co.uk</a></p>
+</footer>
+
+</body>
+</html>

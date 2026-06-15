@@ -16,3 +16,6 @@
 
 # Private chef variant (managed separately)
 haccp-app PC.html
+
+# One-shot broadcast tooling — contains PII (contact emails) and hardcoded API keys
+emails/

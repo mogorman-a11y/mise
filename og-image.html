@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  width: 1200px;
+  height: 630px;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: #f5f4f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* Green left accent bar */
+.accent-bar {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 10px;
+  background: #2D7A3A;
+}
+
+/* Main content */
+.content {
+  display: flex;
+  align-items: center;
+  gap: 80px;
+  padding: 0 80px 0 90px;
+  width: 100%;
+}
+
+/* Left: brand */
+.brand {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.logo-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.logo-row svg {
+  width: 64px;
+  height: 64px;
+}
+
+.wordmark {
+  font-size: 60px;
+  font-weight: 800;
+  color: #1a1a18;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.tagline {
+  font-size: 20px;
+  color: #555;
+  font-weight: 500;
+  line-height: 1.4;
+  max-width: 380px;
+  white-space: nowrap;
+}
+
+.pills {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.pill {
+  background: #EAF3DE;
+  color: #1C4D24;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 100px;
+  letter-spacing: 0.02em;
+}
+
+/* Divider */
+.divider {
+  width: 1px;
+  height: 240px;
+  background: #e5e4de;
+  flex-shrink: 0;
+}
+
+/* Right: modules */
+.modules {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.module {
+  background: #fff;
+  border: 1px solid #e5e4de;
+  border-radius: 14px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.module-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #EAF3DE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.module-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: #2D7A3A;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.module-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a18;
+  margin-bottom: 3px;
+}
+
+.module-desc {
+  font-size: 13px;
+  color: #777;
+}
+
+/* Trial badge */
+.trial-badge {
+  position: absolute;
+  bottom: 36px;
+  right: 80px;
+  background: #2D7A3A;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 100px;
+}
+</style>
+</head>
+<body>
+
+<div class="accent-bar"></div>
+
+<div class="content">
+  <div class="brand">
+    <div class="logo-row">
+      <!-- Veriqo shield SVG -->
+      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="64" height="64" rx="14" fill="#2D7A3A"/>
+        <path d="M32 10L14 18V32C14 42.5 22 51.5 32 54C42 51.5 50 42.5 50 32V18L32 10Z" fill="#fff" fill-opacity="0.15" stroke="#fff" stroke-width="1.5"/>
+        <path d="M23 32L29 38L41 26" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="wordmark">Veriqo</span>
+    </div>
+    <p class="tagline">Kitchen management for UK private chefs</p>
+    <div class="pills">
+      <span class="pill">HACCP</span>
+      <span class="pill">Menus</span>
+      <span class="pill">Costing</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="modules">
+    <div class="module">
+      <div class="module-icon">
+        <!-- Shield + tick — matches HACCP nav icon -->
+        <svg viewBox="0 0 24 24"><path d="M12 3L4 7v5c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V7L12 3z"/><polyline points="9 12 11 14 15 10"/></svg>
+      </div>
+      <div>
+        <div class="module-name">HACCP Compliance</div>
+        <div class="module-desc">Food safety records, temperature logs, pest control</div>
+      </div>
+    </div>
+    <div class="module">
+      <div class="module-icon">
+        <!-- Open book — matches Menus nav icon -->
+        <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      </div>
+      <div>
+        <div class="module-name">Menus & Clients</div>
+        <div class="module-desc">Dish library, allergen tracking, client CRM, bookings</div>
+      </div>
+    </div>
+    <div class="module">
+      <div class="module-icon">
+        <!-- Coins — exact match to Costing nav icon -->
+        <svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>
+      </div>
+      <div>
+        <div class="module-name">Job Costing</div>
+        <div class="module-desc">Quotes, invoices, pricing tools, P&amp;L tracking</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="trial-badge">14-day free trial</div>
+
+</body>
+</html>
