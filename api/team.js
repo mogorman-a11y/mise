@@ -241,10 +241,84 @@ async function inviteTeamMember(body, callerId, claims, res) {
     // their first sign-in by auth.js createProfile().
   }
 
+  // ── Branded invite email via Resend ──────────────────────────────────────
+  // Supabase already sends its own invite email with the magic link.
+  // We send a second, branded email so the invitee knows it's from Veriqo
+  // and understands what they're being invited to.
+  try {
+    const { data: inviterProf } = await sb
+      .from('profiles')
+      .select('business_name, chef_name')
+      .eq('id', callerId)
+      .maybeSingle();
+    const businessName = (inviterProf && inviterProf.business_name) || 'your team';
+    const inviterName  = (inviterProf && inviterProf.chef_name)     || 'Your team owner';
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + process.env.RESEND_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from:    'Veriqo <hello@getveriqo.co.uk>',
+        to:      [email],
+        subject: inviterName + ' has invited you to join ' + businessName + ' on Veriqo',
+        html:    _buildInviteEmail(inviterName, businessName, role),
+      }),
+    });
+  } catch (emailErr) {
+    // Non-fatal — Supabase's own invite email was already sent
+    console.warn('[team/invite] branded email error:', emailErr.message);
+  }
+
   return res.status(200).json({
     success: true,
     data: { inviteeId, email, role, status: 'pending' },
   });
+}
+
+function _buildInviteEmail(inviterName, businessName, role) {
+  const roleLabel = role === 'admin' ? 'Admin' : 'Staff';
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Veriqo Invite</title></head>
+<body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
+<div style="max-width:480px;margin:0 auto;padding:40px 20px 24px">
+
+  <div style="background:#1C2B1E;border-radius:16px 16px 0 0;padding:28px 32px;text-align:center">
+    <div style="font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-0.4px">You're invited to Veriqo</div>
+    <div style="font-size:13px;color:#C8A96E;margin-top:6px;font-weight:500">${_esc(businessName)}</div>
+  </div>
+
+  <div style="background:#ffffff;padding:32px;border-radius:0 0 16px 16px;border:1px solid #E2DDD5;border-top:0">
+    <p style="margin:0 0 18px;font-size:15px;color:#5A544E;line-height:1.65">Hi there,</p>
+    <p style="margin:0 0 18px;font-size:15px;color:#5A544E;line-height:1.65">
+      <strong>${_esc(inviterName)}</strong> has invited you to join <strong>${_esc(businessName)}</strong> on Veriqo as a <strong>${roleLabel}</strong>.
+    </p>
+    <p style="margin:0 0 18px;font-size:15px;color:#5A544E;line-height:1.65">
+      Veriqo is food safety and kitchen management for private chefs — HACCP logs, menus, jobs, and more. You'll share the same workspace as your team.
+    </p>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:20px">
+      <div style="font-size:14px;font-weight:700;color:#15803d;margin-bottom:4px">Check your inbox for a sign-in link</div>
+      <div style="font-size:13px;color:#5A544E;line-height:1.55">We've sent you a separate email with a one-click sign-in link. Click it to accept the invite and set up your account.</div>
+    </div>
+    <p style="margin:0;font-size:13px;color:#A09890;line-height:1.6">
+      If you weren't expecting this invite or don't recognise ${_esc(businessName)}, you can safely ignore both emails.
+    </p>
+  </div>
+
+  <p style="text-align:center;font-size:12px;color:#A09890;margin-top:14px">Questions? Reply to this email — we read everything.</p>
+  <p style="text-align:center;font-size:12px;color:#A09890;margin-top:6px">
+    Veriqo &middot; <a href="https://getveriqo.co.uk" style="color:#A09890;text-decoration:none">getveriqo.co.uk</a>
+  </p>
+</div>
+</body>
+</html>`;
+}
+
+function _esc(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 /**
