@@ -3243,8 +3243,9 @@ function vqIcon(name, size) {
 
         var _patch = { status: 'active' };
         if (_kitchenId) _patch.kitchen_id = _kitchenId;
+        // Copy venue's business_name so the header shows the right venue name.
+        // Do NOT copy the owner's chef_name — staff should set their own name in Settings.
         if (!profile.business_name && _ownerProf.business_name) _patch.business_name = _ownerProf.business_name;
-        if (!profile.chef_name    && _ownerProf.chef_name)     _patch.chef_name     = _ownerProf.chef_name;
 
         await supabaseClient.from('profiles').update(_patch).eq('id', uid);
         Object.assign(profile, _patch);
