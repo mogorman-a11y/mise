@@ -511,7 +511,7 @@ async function _sendStarterKitEmails(supabase) {
     4: 'The first-inquiry script that doubles conversion',
     5: '3 event templates that run themselves',
     6: 'What £3k/month actually looks like',
-    7: 'Chef to CEO — founding rate (closes soon)',
+    7: 'Chef to CEO — everything you need to go independent',
   };
   const builders = { 2: _skDay2, 3: _skDay3, 4: _skDay4, 5: _skDay5, 6: _skDay6, 7: _skDay7 };
 
@@ -642,7 +642,7 @@ function _skDay3(stage, eventsPerMonth, leadId) {
     ${_skP("This is exactly why I built <strong>Veriqo</strong> — the digital HACCP app I use to run compliance for Side Order Catering. Temperature logs, allergen matrix, supplier deliveries via Scan Label AI, cleaning records — all timestamped, all retrievable. When my last EHO turned up I handed her my phone, she scrolled through 3 months of records in 4 minutes, and I got 5 stars.")}
     ${_skAction("Go through the checklist above. For each one, ask yourself: \"If they asked for the last 3 months' records right now, could I produce them in under 5 minutes?\" Every \"no\" is a gap. Write them down.")}
     ${_skP('Tomorrow: the inquiry script that doubles conversion rate.<br><br>Michael')}
-    ${_skPS("P.S. Veriqo is £12/month standalone with a 14-day free trial, no card required. Or bundled with Carte and Yield, the Suite-All is £28/month. Founding members of Chef to CEO get it included — more on that on Day 7. Start the trial at <a href=\"https://getveriqo.co.uk\" style=\"color:#1E3A2F\">getveriqo.co.uk</a>.")}
+    ${_skPS("P.S. Veriqo is the compliance app I mentioned — digital HACCP, allergen management, and EHO-ready records. Standalone it's £7/month (HACCP only) or £15/month for the full Pro plan. Chef to CEO members get Veriqo PRO included free for 12 months. More on that on Day 7. Start a free trial at <a href=\"https://getveriqo.co.uk\" style=\"color:#1E3A2F\">getveriqo.co.uk</a>.")}
   `;
   return _skWrap(3, body, leadId);
 }
@@ -703,7 +703,7 @@ function _skDay5(stage, eventsPerMonth, leadId) {
     ${_skP("I've built these into <strong>Carte</strong>, the private chef CRM I use for Side Order Catering. New event → pick template → done. The allergen matrix and event briefing generate themselves from the client record. You can build them in Notion or a Google Doc just as well. The templates matter more than the tool.")}
     ${_skAction("Pick one of the three. Open Notion / Docs / Carte (your choice). Build the checklist. Use it on your next event.")}
     ${_skP('Tomorrow: what £3k/month actually looks like.<br><br>Michael')}
-    ${_skPS("P.S. If you want the Carte versions pre-built, the founding rate gets you the full suite for less than most chefs are losing on a single mispriced event. More on that on Day 7.")}
+    ${_skPS("P.S. These templates are built into the Veriqo Client engine — new event, pick a template, done. The allergen matrix and event briefing pull through automatically from the client record. More on Day 7.")}
   `;
   return _skWrap(5, body, leadId);
 }
@@ -764,19 +764,18 @@ function _skDay7(stage, eventsPerMonth, leadId) {
     <div style="background:#1E3A2F;border-radius:10px;padding:22px 24px;margin:0 0 18px">
       <div style="font-size:16px;font-weight:bold;color:#F7F3EC;margin-bottom:14px;font-family:-apple-system,BlinkMacSystemFont,sans-serif">Chef to CEO — what you get</div>
       <ul style="margin:0;padding-left:20px;font-size:14px;color:#a8c4b8;line-height:1.85;font-family:Georgia,'Times New Roman',serif">
-        <li style="margin-bottom:4px">Full curriculum — 5 modules covering everything above plus scaling and team</li>
-        <li style="margin-bottom:4px">Veriqo — digital HACCP and compliance, 5-star EHO ready</li>
-        <li style="margin-bottom:4px">Carte — client CRM, booking pipeline, the three event templates pre-loaded</li>
-        <li style="margin-bottom:4px">Yield — food cost calculator, quote generator, deposit + balance invoicing</li>
-        <li style="margin-bottom:4px">Mastermind community on Heartbeat — direct access to me, twice-monthly group coaching</li>
-        <li>The 90-day £3k promise — track to it as a cohort</li>
+        <li style="margin-bottom:4px">Full 90-day curriculum — 5 modules covering everything above plus scaling and team</li>
+        <li style="margin-bottom:4px">The complete Business Toolkit — pricing matrices, client contracts, prep templates</li>
+        <li style="margin-bottom:4px">Veriqo PRO for 12 months — compliance engine (HACCP + allergens), client engine (CRM + bookings), profit engine (food cost, quotes, invoicing) all in one app</li>
+        <li style="margin-bottom:4px">Private Chef to CEO Skool community — direct access to me and the cohort</li>
+        <li>The 90-day £3k path — built into the curriculum from day one</li>
       </ul>
       <div style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1)">
-        <div style="font-size:12px;color:#C8922A;letter-spacing:0.08em;text-transform:uppercase;font-family:-apple-system,sans-serif;margin-bottom:8px">Founding member rate — locked for life</div>
-        <div style="font-size:13px;color:#a8c4b8;line-height:1.65">Starter (community + curriculum + Veriqo full + Carte/Yield extended trials): <strong style="color:#F7F3EC">£49/month</strong><br>Operator (everything + full Suite-All + priority coaching): <strong style="color:#F7F3EC">£97/month</strong><br>Both rates locked for as long as your subscription is active.</div>
+        <div style="font-size:12px;color:#C8922A;letter-spacing:0.08em;text-transform:uppercase;font-family:-apple-system,sans-serif;margin-bottom:8px">One package · One-time payment</div>
+        <div style="font-size:13px;color:#a8c4b8;line-height:1.65"><strong style="color:#F7F3EC;font-size:26px">£397</strong> &nbsp;one-time · lifetime course access<br><span style="font-size:12px">14-day money-back guarantee. After your included year, keep Veriqo PRO for £15/month.</span></div>
       </div>
     </div>
-    ${_skBtn('https://cheftoceo.co.uk/join', 'Join the founding cohort &rarr;')}
+    ${_skBtn('https://cheftoceo.co.uk/join', 'Get The Systems &rarr;')}
     ${_skBtnGold('https://cheftoceo.co.uk/call', 'Book a 15-minute call with me first &rarr;')}
     ${_skP("<br>If now's not the time, that's fine. Reply to any of this week's emails when it is. I keep the door open.<br><br>Thanks for letting me into your inbox this week.<br><br>Michael")}
     ${_skPS("P.S. I do read every reply. If anything from this week stuck — or didn't — tell me. It makes the next cohort's emails sharper.")}
