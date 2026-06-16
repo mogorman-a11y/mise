@@ -505,6 +505,9 @@ function _day13Yield(name, uid) {
 
 async function _sendStarterKitEmails(supabase) {
   let sent = 0;
+  // Prevent cascade: if a lead's last_email_sent is updated mid-loop, later iterations
+  // would immediately match them for the next day in the same cron run.
+  const processedThisRun = new Set();
   const subjects = {
     2: 'The one number that decides if you make money',
     3: "The EHO inspection most private chefs aren't ready for",
@@ -534,6 +537,7 @@ async function _sendStarterKitEmails(supabase) {
     }
 
     for (const lead of leads || []) {
+      if (processedThisRun.has(lead.id)) continue;
       try {
         const r = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -550,6 +554,7 @@ async function _sendStarterKitEmails(supabase) {
         });
         if (!r.ok) throw new Error('Resend ' + r.status + ': ' + await r.text());
         await supabase.from('starter_kit_leads').update({ last_email_sent: day }).eq('id', lead.id);
+        processedThisRun.add(lead.id);
         sent++;
         console.log(`[trial-emails] sk-day${day} sent to`, lead.email);
       } catch (err) {
@@ -700,8 +705,8 @@ function _skDay5(stage, eventsPerMonth, leadId) {
         <div style="font-size:13px;color:#4A4438;line-height:1.65">Timeline starts 21 days out. Brief confirmation, dietary collection, deposit invoice, final numbers at -7, on-site setup, invoice at +1.</div>
       </div>
     </div>
-    ${_skP("I've built these into <strong>Carte</strong>, the private chef CRM I use for Side Order Catering. New event → pick template → done. The allergen matrix and event briefing generate themselves from the client record. You can build them in Notion or a Google Doc just as well. The templates matter more than the tool.")}
-    ${_skAction("Pick one of the three. Open Notion / Docs / Carte (your choice). Build the checklist. Use it on your next event.")}
+    ${_skP("I've built these into <strong>Veriqo PRO</strong> — the Client Engine handles bookings, event templates and allergen matrices in one place. New event → pick template → done. The allergen matrix and event briefing generate themselves from the client record. You can build them in Notion or a Google Doc just as well. The templates matter more than the tool.")}
+    ${_skAction("Pick one of the three. Open Notion / Docs / Veriqo (your choice). Build the checklist. Use it on your next event.")}
     ${_skP('Tomorrow: what £3k/month actually looks like.<br><br>Michael')}
     ${_skPS("P.S. These templates are built into the Veriqo Client engine — new event, pick a template, done. The allergen matrix and event briefing pull through automatically from the client record. More on Day 7.")}
   `;
