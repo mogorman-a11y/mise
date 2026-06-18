@@ -817,7 +817,147 @@
 
       // Update line totals
       updateAllIngredientTotals();
+
+      // Pricing Reality Check score
+      updatePricingScore(foodCostPct, achievedMargin, effectiveHourly);
     }
+
+    // ── Pricing Reality Check ──────────────────────────────────────────────────
+    var _prcLastScore = 0;
+    var _prcMilestonesHit = new Set();
+    var _prcMilestoneTimer = null;
+    var _PRC_MILESTONES = [
+      { t: 35, k: 'm35', msg: '🎉 Above average — keep going!'         },
+      { t: 50, k: 'm50', msg: '🎉 Halfway there — solid pricing.'      },
+      { t: 60, k: 'm60', msg: '🎉 Strong pricing unlocked ✓'           },
+      { t: 75, k: 'm75', msg: '🎉 Excellent — top 20% of private chefs.' }
+    ];
+
+    function updatePricingScore(foodCostPct, achievedMargin, effectiveHourly) {
+      var hasData = foodCostPct > 0 || achievedMargin > 0 || effectiveHourly > 0;
+
+      // Score: food cost (40pts) + margin (30pts) + hourly rate (30pts)
+      var fcScore = foodCostPct <= 32 ? 40
+                  : foodCostPct <= 38 ? Math.round(40 * (1 - (foodCostPct - 32) / 18))
+                  : Math.max(0, Math.round(40 * (1 - (foodCostPct - 32) / 12)));
+      var mgScore = achievedMargin >= 45 ? 30
+                  : achievedMargin >= 25 ? Math.round(30 * (achievedMargin - 10) / 35)
+                  : Math.max(0, Math.round(30 * achievedMargin / 25));
+      var hrScore = effectiveHourly >= 25 ? 30
+                  : effectiveHourly >= 12 ? Math.round(30 * (effectiveHourly - 5) / 20)
+                  : Math.max(0, Math.round(30 * effectiveHourly / 12));
+      var score = hasData ? Math.max(1, Math.min(100, fcScore + mgScore + hrScore)) : 0;
+
+      var color    = score >= 60 ? 'var(--green)' : score >= 35 ? 'var(--amber)' : 'var(--red)';
+      var bgColor  = score >= 60 ? 'var(--green-bg)' : score >= 35 ? 'var(--amber-bg)' : 'var(--red-bg)';
+
+      // Ring
+      var ring = document.getElementById('prc-ring');
+      if (ring) {
+        ring.style.strokeDashoffset = score === 0 ? 251.3 : Math.round(251.3 * (1 - score / 100));
+        ring.style.stroke = color;
+      }
+
+      // Animate number
+      (function(from, to) {
+        var el = document.getElementById('prc-num');
+        if (!el) return;
+        var steps = 14, i = 0, diff = to - from;
+        clearInterval(el._anim);
+        el._anim = setInterval(function() {
+          i++;
+          el.textContent = Math.round(from + diff * (i / steps));
+          if (i >= steps) { el.textContent = to; clearInterval(el._anim); }
+        }, 28);
+      })(_prcLastScore, score);
+
+      // Title, desc, badge
+      var title, desc, badge;
+      if (!hasData) {
+        title = 'Enter ingredients to score'; desc = 'Your score updates live as you add ingredients and set your quote.'; badge = null;
+      } else if (score >= 60) {
+        title = 'Strong pricing'; desc = 'Food cost and margins are within the professional benchmark.'; badge = '● Strong';
+      } else if (score >= 35) {
+        title = 'Room to improve'; desc = 'Small pricing adjustments could add significant profit to this job.'; badge = '● Average';
+      } else {
+        title = 'Undercharging'; desc = 'Food cost is too high. You\'re leaving real money on the table.'; badge = '● Needs work';
+      }
+      var titleEl = document.getElementById('prc-title');
+      var descEl  = document.getElementById('prc-desc');
+      var badgeEl = document.getElementById('prc-badge');
+      if (titleEl) titleEl.textContent = title;
+      if (descEl)  descEl.textContent  = desc;
+      if (badgeEl) {
+        if (badge) {
+          badgeEl.textContent = badge;
+          badgeEl.style.cssText = 'display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;background:' + bgColor + ';color:' + color + ';';
+        } else {
+          badgeEl.style.display = 'none';
+        }
+      }
+
+      // Sub-bars
+      var fcW  = Math.round(Math.max(0, Math.min(100, 100 - (foodCostPct  - 18) * 2.4)));
+      var mgW  = Math.round(Math.max(0, Math.min(100, achievedMargin * 2)));
+      var hrW  = Math.round(Math.max(0, Math.min(100, effectiveHourly * 2.2)));
+      var fcCol = foodCostPct  <= 32 ? 'var(--green)' : foodCostPct  <= 38 ? 'var(--amber)' : 'var(--red)';
+      var mgCol = achievedMargin  >= 40 ? 'var(--green)' : achievedMargin  >= 25 ? 'var(--amber)' : 'var(--red)';
+      var hrCol = effectiveHourly >= 20 ? 'var(--green)' : effectiveHourly >= 12 ? 'var(--amber)' : 'var(--red)';
+      function _setPrcBar(key, w, col, val) {
+        var b = document.getElementById('prc-bar-' + key);
+        var v = document.getElementById('prc-val-' + key);
+        if (b) { b.style.width = hasData ? w + '%' : '0%'; b.style.background = col; }
+        if (v) { v.textContent = hasData ? val : '—'; v.style.color = hasData ? col : 'var(--muted)'; }
+      }
+      _setPrcBar('fc', fcW,  fcCol, foodCostPct.toFixed(1)    + '%');
+      _setPrcBar('mg', mgW,  mgCol, achievedMargin.toFixed(1) + '%');
+      _setPrcBar('hr', hrW,  hrCol, '£' + effectiveHourly.toFixed(0) + '/hr');
+
+      // Advice note
+      var note = '';
+      if (hasData) {
+        if      (foodCostPct > 38)     note = '🚨 Food cost at ' + foodCostPct.toFixed(1) + '% — target is 28–32%. Raise your per-head price or swap expensive ingredients.';
+        else if (foodCostPct > 32)     note = '⚠️ Food cost at ' + foodCostPct.toFixed(1) + '% — slightly above benchmark. Try raising your price by £' + Math.round((foodCostPct - 32) * 1.5) + '.';
+        else if (achievedMargin < 30)  note = '⚠️ Margin is low at ' + achievedMargin.toFixed(1) + '%. Consider raising your quote or reducing overhead.';
+        else                           note = '💡 Food cost within the 28–32% benchmark. Well priced.';
+      }
+      var noteEl = document.getElementById('prc-note');
+      if (noteEl) { noteEl.textContent = note; noteEl.style.display = note ? 'block' : 'none'; }
+
+      // Delta flash
+      var delta = score - _prcLastScore;
+      if (hasData && Math.abs(delta) >= 2) {
+        var dEl = document.getElementById('prc-delta');
+        if (dEl) {
+          dEl.style.animation = 'none';
+          dEl.offsetWidth;
+          dEl.textContent = (delta > 0 ? '+' : '') + delta;
+          dEl.style.color = delta > 0 ? 'var(--green)' : 'var(--red)';
+          dEl.style.animation = 'prcFloatUp 0.9s ease-out forwards';
+        }
+      }
+
+      // Milestones
+      if (hasData) {
+        for (var i = 0; i < _PRC_MILESTONES.length; i++) {
+          var m = _PRC_MILESTONES[i];
+          if (score >= m.t && _prcLastScore < m.t && !_prcMilestonesHit.has(m.k)) {
+            _prcMilestonesHit.add(m.k);
+            var mEl = document.getElementById('prc-milestone');
+            if (mEl) {
+              mEl.textContent = m.msg;
+              mEl.style.display = 'flex';
+              clearTimeout(_prcMilestoneTimer);
+              _prcMilestoneTimer = setTimeout(function() { mEl.style.display = 'none'; }, 3500);
+            }
+            break;
+          }
+        }
+      }
+
+      _prcLastScore = score;
+    }
+    // ── End Pricing Reality Check ──────────────────────────────────────────────
 
     function saveCosting() {
       const costing = {

@@ -1932,6 +1932,49 @@
         </div>
       </div>
 
+      <!-- PRICING REALITY CHECK SCORE -->
+      <div id="prc-milestone" style="display:none;align-items:center;gap:8px;background:var(--green-bg);border:1px solid var(--green);color:var(--green);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:600;animation:prcFadeIn 0.35s ease;"></div>
+      <div class="card" style="position:relative;overflow:hidden;">
+        <div class="card-title">Pricing Reality Check</div>
+        <div id="prc-delta" style="position:absolute;top:14px;right:16px;font-size:15px;font-weight:800;opacity:0;pointer-events:none;"></div>
+        <div style="display:flex;align-items:center;gap:18px;">
+          <div style="flex-shrink:0;">
+            <svg width="88" height="88" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="var(--surface-el)" stroke-width="10"/>
+              <circle id="prc-ring" cx="50" cy="50" r="40" fill="none" stroke="var(--green)" stroke-width="10"
+                stroke-dasharray="251.3" stroke-dashoffset="251.3"
+                stroke-linecap="round" transform="rotate(-90 50 50)"
+                style="transition:stroke-dashoffset 0.6s ease,stroke 0.4s ease"/>
+              <text x="50" y="46" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="700" fill="var(--text)" id="prc-num">0</text>
+              <text x="50" y="62" text-anchor="middle" font-family="inherit" font-size="10" fill="var(--muted)">/100</text>
+            </svg>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:3px;" id="prc-title">Enter ingredients to score</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.45;margin-bottom:10px;" id="prc-desc">Your score updates live as you add ingredients and set your quote.</div>
+            <span id="prc-badge" style="display:none;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;"></span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:12px;color:var(--muted);flex:1;">Food cost %</div>
+            <div style="flex:2;height:6px;background:var(--surface-el);border-radius:4px;overflow:hidden;"><div id="prc-bar-fc" style="height:100%;border-radius:4px;width:0%;background:var(--green);transition:width 0.5s ease,background 0.4s ease;"></div></div>
+            <div style="font-size:12px;font-weight:600;width:44px;text-align:right;color:var(--muted);" id="prc-val-fc">—</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:12px;color:var(--muted);flex:1;">Margin</div>
+            <div style="flex:2;height:6px;background:var(--surface-el);border-radius:4px;overflow:hidden;"><div id="prc-bar-mg" style="height:100%;border-radius:4px;width:0%;background:var(--green);transition:width 0.5s ease,background 0.4s ease;"></div></div>
+            <div style="font-size:12px;font-weight:600;width:44px;text-align:right;color:var(--muted);" id="prc-val-mg">—</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:12px;color:var(--muted);flex:1;">Hourly rate</div>
+            <div style="flex:2;height:6px;background:var(--surface-el);border-radius:4px;overflow:hidden;"><div id="prc-bar-hr" style="height:100%;border-radius:4px;width:0%;background:var(--green);transition:width 0.5s ease,background 0.4s ease;"></div></div>
+            <div style="font-size:12px;font-weight:600;width:44px;text-align:right;color:var(--muted);" id="prc-val-hr">—</div>
+          </div>
+        </div>
+        <div id="prc-note" style="display:none;margin-top:12px;font-size:12px;color:var(--muted);background:var(--surface-el);border-radius:8px;padding:9px 12px;line-height:1.5;"></div>
+      </div>
+
       <!-- DETAILED ANALYSIS — collapsed by default so the answer (recommended quote) stays front and centre -->
       <button type="button" id="costing-advanced-toggle" onclick="var a=document.getElementById('costing-advanced');var open=a.style.display==='none';a.style.display=open?'block':'none';this.querySelector('span').textContent=open?'Hide detailed analysis ▴':'Show detailed analysis ▾';" style="width:100%;background:none;border:1px solid var(--border);border-radius:10px;padding:12px;margin:0 0 14px;color:var(--gold);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit"><span>Show detailed analysis ▾</span></button>
       <div id="costing-advanced" style="display:none">
