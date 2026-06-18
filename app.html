@@ -50,7 +50,7 @@
 <style>
 /* Legacy .app container — matches shell max-width on mobile, expands on desktop */
 .app { max-width: 430px; margin: 0 auto; background: var(--vq-bg); min-height: 100vh; }
-@media (min-width: 768px) { .app { max-width: 960px; } }
+@media (min-width: 768px) { body > .app { max-width: 100%; padding-left: var(--shell-sidebar-width); } }
 </style>
 
 <!-- Google tag (gtag.js) -->
