@@ -352,7 +352,12 @@ async function confirmGeneratePrepList() {
   var listName = menu.name + ' — ' + _fmtPrepDate(date);
 
   try {
+    var _sess = await supabaseClient.auth.getSession();
+    var _uid = _sess && _sess.data && _sess.data.session && _sess.data.session.user ? _sess.data.session.user.id : null;
+    if (!_uid) { if (typeof toast === 'function') toast('Not signed in', 'err'); return; }
+
     var r = await supabaseClient.from('prep_lists').insert({
+      user_id: _uid,
       name: listName,
       menu_id: String(menuId),
       date: date,
@@ -449,8 +454,13 @@ async function aiGeneratePrepList() {
       return;
     }
 
+    var _sess2 = await supabaseClient.auth.getSession();
+    var _uid2 = _sess2 && _sess2.data && _sess2.data.session && _sess2.data.session.user ? _sess2.data.session.user.id : null;
+    if (!_uid2) { if (typeof toast === 'function') toast('Not signed in', 'err'); return; }
+
     var listName = menu.name + ' — ' + _fmtPrepDate(date);
     var r = await supabaseClient.from('prep_lists').insert({
+      user_id: _uid2,
       name: listName,
       menu_id: String(menuId),
       date: date,
