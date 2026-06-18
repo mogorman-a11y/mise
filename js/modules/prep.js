@@ -287,7 +287,10 @@ function onPrepMenuChange() {
   });
 
   if (taskCount === 0) {
-    preview.innerHTML = '<div style="font-size:13px;color:var(--vq-muted);margin-top:6px">No prep tasks found for this menu\'s dishes. Open the dish library and add tasks to each dish first.</div>';
+    preview.innerHTML = '<div style="font-size:13px;color:var(--vq-muted);margin-top:6px;line-height:1.5">'
+      + 'None of this menu\'s dishes have prep tasks yet. '
+      + '<button onclick="closeGeneratePrepListModal();showTab(\'menus\')" style="background:none;border:none;color:#F97316;font-size:13px;font-weight:700;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline">Go to Dish Library →</button>'
+      + ' tap a dish and add tasks under <strong>Prep Tasks</strong>.</div>';
   } else {
     preview.innerHTML = '<div style="font-size:13px;color:#2D7A3A;font-weight:600;margin-top:6px">'
       + taskCount + ' task' + (taskCount !== 1 ? 's' : '') + ' across ' + dishCount + ' dish' + (dishCount !== 1 ? 'es' : '') + ' — ready to generate</div>';

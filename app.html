@@ -3211,8 +3211,9 @@ function vqIcon(name, size) {
       // Re-merge Menus jobs every time the user navigates back to Costing
       window.modules.costing.refreshJobs();
     }
-    // Always reset HACCP to home when navigating to it from the nav bar
-    if (name === 'haccp' && typeof haccpTab === 'function') haccpTab('home');
+    // Always reset HACCP and Menus to home when navigating from the nav bar
+    if (name === 'haccp' && typeof haccpTab  === 'function') haccpTab('home');
+    if (name === 'menus' && typeof showTab   === 'function') showTab('home');
     if (name === 'settings' && window.modules && window.modules.settings) window.modules.settings.init();
     if (name === 'dashboard' && window.modules && window.modules.dashboard) window.modules.dashboard.render();
 
