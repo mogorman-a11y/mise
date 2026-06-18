@@ -6,6 +6,28 @@
 var _prepLists = [];          // in-memory cache of all prep lists
 var _prepListViewId = null;   // null = show index; string = show this list
 
+var _COURSE_ORDER = ['Canapé','Starter','Fish course','Main','Side','Sauce','Pre-dessert','Dessert','Cheese','Petit four','Bread','Other'];
+
+function _courseIndex(item) {
+  var cat = item.dish_category;
+  if (!cat && typeof mSettings !== 'undefined' && mSettings.savedDishes) {
+    var d = mSettings.savedDishes.find(function(d) { return String(d.id) === String(item.dish_id); });
+    if (d) cat = d.category;
+  }
+  var idx = _COURSE_ORDER.indexOf(cat || '');
+  return idx === -1 ? 999 : idx;
+}
+
+function _sortByCourse(items) {
+  return items.slice().sort(function(a, b) {
+    var ci = _courseIndex(a) - _courseIndex(b);
+    if (ci !== 0) return ci;
+    var da = a.dish_id || a.dish_name || '';
+    var db = b.dish_id || b.dish_name || '';
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+}
+
 // ── Date formatter ─────────────────────────────────────────────────────────
 
 function _fmtPrepDate(dateStr) {
@@ -147,7 +169,7 @@ function _renderPrepListView(id) {
   if (!el) return;
   if (!pl) { el.innerHTML = '<div style="padding:20px;color:var(--vq-muted)">List not found.</div>'; return; }
 
-  var items      = pl.items || [];
+  var items      = _sortByCourse(pl.items || []);
   var total      = items.length;
   var done       = items.filter(function(i) { return i.completed; }).length;
   var pct        = total > 0 ? Math.round(done / total * 100) : 0;
@@ -204,12 +226,17 @@ function _renderPrepSection(items, label, listId) {
     + '<div style="font-size:13px;color:var(--vq-muted);font-weight:600">' + done + '/' + items.length + '</div>'
     + '</div>';
 
-  html += items.map(function(item) {
+  var lastDishId = null;
+  items.forEach(function(item) {
+    if (item.dish_id !== lastDishId) {
+      lastDishId = item.dish_id;
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--vq-muted);padding:' + (html.indexOf('prep-item-') === -1 ? '0' : '12px') + ' 0 6px">' + _esc(item.dish_name) + '</div>';
+    }
     var isDone = !!item.completed;
-    return '<div id="prep-item-' + item.id + '" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border:1px solid '+(isDone?'#C8E6CC':'var(--vq-border)')+';border-radius:12px;margin-bottom:8px;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s">'
+    html += '<div id="prep-item-' + item.id + '" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border:1px solid '+(isDone?'#C8E6CC':'var(--vq-border)')+';border-radius:12px;margin-bottom:8px;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s">'
       + _prepItemInner(item, listId)
       + '</div>';
-  }).join('');
+  });
 
   html += '</div>';
   return html;
@@ -455,6 +482,7 @@ async function confirmGeneratePrepList() {
         id: 'pi_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
         dish_id: String(dish.id),
         dish_name: dish.dish,
+        dish_category: dish.category || '',
         description: task.description,
         section: task.section || 'prep_ahead',
         completed: false,
@@ -562,6 +590,7 @@ async function aiGeneratePrepList() {
           id: 'pi_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
           dish_id: String(result.dish.id),
           dish_name: result.dish.dish,
+          dish_category: result.dish.category || '',
           description: task.description,
           section: task.section || 'prep_ahead',
           completed: false,
