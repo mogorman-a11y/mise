@@ -25,6 +25,7 @@
 |---|---|---|
 | `js/modules/haccp.js` | `?v=40` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=18` | `app.html` |
+| `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
 | `sync.js` | — | no version param needed (SW network-first) |
 | Service worker cache | `veriqo-v112` | `sw.js` line 8 |
@@ -47,6 +48,7 @@ One unified PWA (`app.html`) with five modules: Dashboard, HACCP, Menus, Costing
 |--------|---------|---------------------|
 | HACCP  | `js/modules/haccp.js` | `haccp_` |
 | Menus  | `js/modules/menus.js` | `mise_` |
+| Prep Lists | `js/modules/prep.js` | — (Supabase only) |
 | Costing | `js/modules/costing.js` | `yield_` |
 | Dashboard | `js/modules/dashboard.js` | — |
 | Sync   | `sync.js` | — |
@@ -58,6 +60,84 @@ One unified PWA (`app.html`) with five modules: Dashboard, HACCP, Menus, Costing
 - `mSettings` — Menus settings (`window.mSettings`, set in menus.js)
 - `window.Mise.profile` — user profile (chef_name, business_name, etc.)
 - `window.Mise.sync` — sync functions (saveDay, loadAll, etc.)
+
+---
+
+## ⚠ Deploy file copy — critical gotcha
+
+When copying changed files to `/tmp/mise-deploy/` before committing, **always use `cp` with the explicit destination path**, not `rsync` with a directory target and multiple source files.
+
+**Wrong (rsync drops subdirectory structure — files land at repo root):**
+```bash
+rsync -av file1.html js/modules/prep.js /tmp/mise-deploy/
+# → copies prep.js to /tmp/mise-deploy/prep.js  ← WRONG
+```
+
+**Correct:**
+```bash
+cp path/to/file.html /tmp/mise-deploy/file.html
+cp path/to/js/modules/prep.js /tmp/mise-deploy/js/modules/prep.js
+```
+
+Also note the git remote is named `github`, not `origin`:
+```bash
+git pull github main && git push github main
+```
+
+---
+
+## Prep Lists module — key facts
+
+**File:** `js/modules/prep.js` (v9)
+**Tab:** `tab-prep` inside `#module-menus`
+**Storage:** Supabase `prep_lists` table only — no localStorage
+
+### Supabase table: `prep_lists`
+- `user_id UUID NOT NULL` — **no default, must be supplied explicitly** in every INSERT (get from `supabaseClient.auth.getSession()`)
+- `venue_id` — auto-populated via `auth_venue_id()` trigger
+- `name`, `date`, `menu_id` — string fields
+- `items JSONB` — array of item objects (see below)
+
+### Item object shape
+```javascript
+{
+  id: 'pi_...',           // unique, generated client-side
+  dish_id: String,
+  dish_name: String,
+  dish_category: String,  // e.g. 'Starter', 'Main' — used for course sorting
+  description: String,
+  section: 'prep_ahead' | 'finishing',
+  completed: Boolean,
+  completed_at: ISO string | null,
+  completed_by: UUID | null
+}
+```
+
+### Course sort order
+`_COURSE_ORDER = ['Canapé','Starter','Fish course','Main','Side','Sauce','Pre-dessert','Dessert','Cheese','Petit four','Bread','Other']`
+
+`_courseIndex(item)` resolves `dish_category` from the item itself, then falls back to `mSettings.savedDishes` for older items that predate the `dish_category` field.
+
+### Key functions
+- `renderPrepIndex()` — entry point; called by `showTab('prep')`
+- `openPrepListView(id)` / `closePrepListView()` — switches index ↔ list view; shows/hides `menus-back-btn` for mobile header
+- `_renderPrepListView(id)` — renders full list with ← back link (embedded in content, works on desktop sidebar layout too)
+- `_renderPrepSection(items, label, listId)` — renders one section with dish sub-headings grouped by course
+- `tickPrepItem(listId, itemId)` — optimistic tick/untick, syncs to Supabase
+- `editPrepItem / savePrepItemEdit / cancelPrepItemEdit` — inline edit a step
+- `deletePrepItem(listId, itemId)` — removes step, syncs
+- `deletePrepList(id)` — deletes whole list from Supabase + cache
+- `resetPrepListTicks(id)` — unchecks all items (for reuse on next service)
+- `confirmGeneratePrepList()` — creates list from saved `dish.prep_tasks`
+- `aiGeneratePrepList()` — generates tasks via `/api/parse-menu` (action: 'prep-tasks') for dishes without saved tasks
+- `_prepItemInner(item, listId)` — shared inner HTML for a task row (tick circle, text, Edit/Del pill buttons)
+
+### AI prep task generation
+Uses `api/parse-menu.js` with `action: 'prep-tasks'`. This is a branch added to the existing menu-importer endpoint (Vercel 12-function cap). Model: `gpt-4o-mini`. Returns `{ tasks: [{ description, section }] }`.
+
+### Back button
+On **mobile**: `menus-back-btn` in the Menus module header is shown/hidden programmatically.
+On **desktop** (sidebar layout): `menus-back-btn` is CSS-hidden, so `_renderPrepListView` embeds a `← All prep lists` button directly in the rendered HTML.
 
 ---
 
@@ -192,8 +272,9 @@ js/
     subscription.js
     idb-queue.js
   modules/
-    haccp.js   (v38)
-    menus.js   (v15)
+    haccp.js   (v40)
+    menus.js   (v18)
+    prep.js    (v9)
     costing.js
     dashboard.js (v5)
     team.js
