@@ -4,6 +4,10 @@
     {
       "path": "/api/trial-emails",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/yield-reminders",
+      "schedule": "0 9 * * *"
     }
   ],
   "builds": [
