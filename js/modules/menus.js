@@ -718,14 +718,18 @@ function _dishRowHTML(d) {
     return '<option value="'+_esc(c)+'"'+(d.category===c?' selected':'')+'>'+_esc(c||'No category')+'</option>';
   }).join('');
   var prepTasksHtml = '<div style="margin-bottom:10px;padding:10px;background:#FFF8F5;border:1px solid #FFD5B8;border-radius:8px">'
-    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#C05A18;margin-bottom:8px">Prep Tasks</div>'
+    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#C05A18;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">'
+    + '<span>Prep Tasks</span>'
+    + '<button id="prep-ai-btn-'+d.id+'" onclick="event.stopPropagation();generatePrepTasksAI()" style="background:#F97316;color:#fff;border:none;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-transform:none;letter-spacing:0">✨ AI</button>'
+    + '</div>'
     + '<div id="prep-task-list-'+d.id+'">'
     + _editingDishPrepTasks.map(function(task){
         var icon = task.section==='finishing' ? '🔥' : '🥄';
         return '<div data-prep-task-id="'+task.id+'" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:7px 10px;background:#fff;border-radius:7px;border:1px solid #F0EDE8">'
           + '<span style="font-size:13px;flex-shrink:0">'+icon+'</span>'
           + '<div style="flex:1;font-size:13px;color:#1C2B1E">'+_esc(task.description)+'</div>'
-          + '<button onclick="event.stopPropagation();removePrepTask(\''+task.id+'\')" style="background:none;border:none;color:#A09890;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+          + '<button onclick="event.stopPropagation();editPrepTask(\''+task.id+'\')" style="background:none;border:none;color:#C0BDB5;font-size:13px;cursor:pointer;padding:0 3px;line-height:1;flex-shrink:0">✏️</button>'
+          + '<button onclick="event.stopPropagation();removePrepTask(\''+task.id+'\')" style="background:none;border:none;color:#C0BDB5;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
           + '</div>';
       }).join('')
     + '</div>'
@@ -878,7 +882,8 @@ function addPrepTask() {
     div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:7px 10px;background:#fff;border-radius:7px;border:1px solid #F0EDE8';
     div.innerHTML = '<span style="font-size:13px;flex-shrink:0">' + icon + '</span>'
       + '<div style="flex:1;font-size:13px;color:#1C2B1E">' + _esc(desc) + '</div>'
-      + '<button onclick="event.stopPropagation();removePrepTask(\'' + taskId + '\')" style="background:none;border:none;color:#A09890;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>';
+      + '<button onclick="event.stopPropagation();editPrepTask(\'' + taskId + '\')" style="background:none;border:none;color:#C0BDB5;font-size:13px;cursor:pointer;padding:0 3px;line-height:1;flex-shrink:0">✏️</button>'
+      + '<button onclick="event.stopPropagation();removePrepTask(\'' + taskId + '\')" style="background:none;border:none;color:#C0BDB5;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>';
     listEl.appendChild(div);
   }
 }
@@ -887,6 +892,101 @@ function removePrepTask(taskId) {
   _editingDishPrepTasks = _editingDishPrepTasks.filter(function(t) { return t.id !== taskId; });
   var row = document.querySelector('[data-prep-task-id="' + taskId + '"]');
   if (row) row.remove();
+}
+
+function _prepTaskDisplayInner(task) {
+  var icon = task.section === 'finishing' ? '🔥' : '🥄';
+  return '<span style="font-size:13px;flex-shrink:0">' + icon + '</span>'
+    + '<div style="flex:1;font-size:13px;color:#1C2B1E">' + _esc(task.description) + '</div>'
+    + '<button onclick="event.stopPropagation();editPrepTask(\'' + task.id + '\')" style="background:none;border:none;color:#C0BDB5;font-size:13px;cursor:pointer;padding:0 3px;line-height:1;flex-shrink:0">✏️</button>'
+    + '<button onclick="event.stopPropagation();removePrepTask(\'' + task.id + '\')" style="background:none;border:none;color:#C0BDB5;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>';
+}
+
+function editPrepTask(taskId) {
+  var task = _editingDishPrepTasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+  var row = document.querySelector('[data-prep-task-id="' + taskId + '"]');
+  if (!row) return;
+  var secLabel = task.section === 'finishing' ? '🔥 Finish' : '🥄 Prep';
+  row.innerHTML = '<input id="pte-' + taskId + '" type="text" value="' + _esc(task.description) + '" data-section="' + task.section + '"'
+    + ' onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\')savePrepTaskEdit(\'' + taskId + '\')"'
+    + ' style="flex:1;padding:4px 6px;border:1px solid #D0C8BE;border-radius:5px;font-size:13px;font-family:inherit;background:#fff;color:#1C2B1E;min-width:0">'
+    + '<button id="pte-sec-' + taskId + '" onclick="event.stopPropagation();_cyclePrepTaskSection(\'' + taskId + '\')"'
+    + ' style="padding:4px 8px;background:#F0EDE8;border:1px solid #D0C8BE;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap">' + secLabel + '</button>'
+    + '<button onclick="event.stopPropagation();savePrepTaskEdit(\'' + taskId + '\')"'
+    + ' style="padding:4px 8px;background:#2D7A3A;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">✓</button>'
+    + '<button onclick="event.stopPropagation();cancelPrepTaskEdit(\'' + taskId + '\')"'
+    + ' style="background:none;border:none;color:#A09890;font-size:16px;cursor:pointer;padding:2px 4px;line-height:1;flex-shrink:0">&times;</button>';
+  var inputEl = document.getElementById('pte-' + taskId);
+  if (inputEl) { inputEl.focus(); inputEl.select(); }
+}
+
+function _cyclePrepTaskSection(taskId) {
+  var input = document.getElementById('pte-' + taskId);
+  if (!input) return;
+  var newSection = input.dataset.section === 'prep_ahead' ? 'finishing' : 'prep_ahead';
+  input.dataset.section = newSection;
+  var secBtn = document.getElementById('pte-sec-' + taskId);
+  if (secBtn) secBtn.textContent = newSection === 'finishing' ? '🔥 Finish' : '🥄 Prep';
+}
+
+function savePrepTaskEdit(taskId) {
+  var input = document.getElementById('pte-' + taskId);
+  if (!input) return;
+  var desc = (input.value || '').trim();
+  if (!desc) { toast('Task description required', 'warn'); return; }
+  var section = input.dataset.section || 'prep_ahead';
+  var task = _editingDishPrepTasks.find(function(t) { return t.id === taskId; });
+  if (task) { task.description = desc; task.section = section; }
+  var row = document.querySelector('[data-prep-task-id="' + taskId + '"]');
+  if (row) row.innerHTML = _prepTaskDisplayInner({ id: taskId, description: desc, section: section });
+}
+
+function cancelPrepTaskEdit(taskId) {
+  var task = _editingDishPrepTasks.find(function(t) { return t.id === taskId; });
+  if (!task) return;
+  var row = document.querySelector('[data-prep-task-id="' + taskId + '"]');
+  if (row) row.innerHTML = _prepTaskDisplayInner(task);
+}
+
+async function generatePrepTasksAI() {
+  if (!_editingDishId) return;
+  var dish = (mSettings.savedDishes || []).find(function(d) { return String(d.id) === String(_editingDishId); });
+  var dishName = dish ? dish.dish : '';
+  var dishCategory = dish ? (dish.category || '') : '';
+  if (!dishName) return;
+
+  var btn = document.getElementById('prep-ai-btn-' + _editingDishId);
+  if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+  try {
+    var res = await fetch('/api/parse-menu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'prep-tasks', dishName: dishName, dishCategory: dishCategory })
+    });
+    var data = await res.json();
+    if (!res.ok || !Array.isArray(data.tasks)) throw new Error(data.error || 'AI generation failed');
+
+    var listEl = document.getElementById('prep-task-list-' + _editingDishId);
+    data.tasks.forEach(function(t) {
+      var taskId = 'pt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      var task = { id: taskId, description: t.description || '', section: t.section === 'finishing' ? 'finishing' : 'prep_ahead' };
+      _editingDishPrepTasks.push(task);
+      if (listEl) {
+        var div = document.createElement('div');
+        div.setAttribute('data-prep-task-id', taskId);
+        div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:7px 10px;background:#fff;border-radius:7px;border:1px solid #F0EDE8';
+        div.innerHTML = _prepTaskDisplayInner(task);
+        listEl.appendChild(div);
+      }
+    });
+    toast(data.tasks.length + ' tasks generated — edit or save');
+  } catch(e) {
+    toast(e.message || 'AI generation failed', 'err');
+  } finally {
+    if (btn) { btn.textContent = '✨ AI'; btn.disabled = false; }
+  }
 }
 
 // ═══════════════════════════════════════════════════════ MENUS ═══════════════

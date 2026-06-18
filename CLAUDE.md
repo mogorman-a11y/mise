@@ -24,7 +24,7 @@
 | File | Version | Where set |
 |---|---|---|
 | `js/modules/haccp.js` | `?v=40` | `app.html` script tag |
-| `js/modules/menus.js` | `?v=16` | `app.html` |
+| `js/modules/menus.js` | `?v=17` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
 | `sync.js` | — | no version param needed (SW network-first) |
 | Service worker cache | `veriqo-v112` | `sw.js` line 8 |
