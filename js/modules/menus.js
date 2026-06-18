@@ -1030,13 +1030,14 @@ function saveMenu(){
   var name = (document.getElementById('menu-name').value||'').trim();
   if(!name){ toast('Menu name required','err'); return; }
   var dishes = mSettings.savedDishes||[];
-  var selected = dishes.filter(function(d){
+  var selectedDishes = dishes.filter(function(d){
     var cb = document.getElementById('menu-d-'+d.id);
     return cb && cb.checked;
-  }).map(function(d){ return d.id; });
+  });
+  var selected = selectedDishes.map(function(d){ return d.id; });
   if(selected.length===0){ toast('Select at least one dish','err'); return; }
   if(!mSettings.savedMenus) mSettings.savedMenus=[];
-  var _newMenu = { id: uid(), name: name, dishIds: selected };
+  var _newMenu = { id: uid(), name: name, dishIds: selected, dishes: selectedDishes };
   mSettings.savedMenus.push(_newMenu);
   saveMiseSettings();
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveMenu) Mise.sync.saveMenu(_newMenu);
@@ -1122,13 +1123,14 @@ function saveMenuEdit(id){
   var name = nameEl ? (nameEl.value||'').trim() : '';
   if(!name){ toast('Menu name required','err'); return; }
   var dishes = mSettings.savedDishes||[];
-  var selected = dishes.filter(function(d){
+  var selectedDishes = dishes.filter(function(d){
     var cb = document.getElementById('medit-d-'+d.id);
     return cb && cb.checked;
-  }).map(function(d){ return d.id; });
+  });
+  var selected = selectedDishes.map(function(d){ return d.id; });
   if(!selected.length){ toast('Select at least one dish','err'); return; }
   mSettings.savedMenus = (mSettings.savedMenus||[]).map(function(m){
-    return m.id===id ? Object.assign({},m,{name:name,dishIds:selected}) : m;
+    return m.id===id ? Object.assign({},m,{name:name,dishIds:selected,dishes:selectedDishes}) : m;
   });
   saveMiseSettings();
   var _updMenu = (mSettings.savedMenus||[]).find(function(m){ return m.id===id; });

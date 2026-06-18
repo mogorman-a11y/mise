@@ -199,24 +199,48 @@ window.Mise.sync = (function () {
     }, { onConflict: 'id' });
     if (mr.error) { console.error('[Veriqo sync] saveMenu failed:', mr.error.message); return; }
     await supabaseClient.from('menu_dishes').delete().eq('menu_id', menuId).eq('user_id', _userId);
-    var dishes = m.dishes || [];
-    if (!dishes.length) return;
-    var dishRes = await supabaseClient.from('dishes').select('id, name').eq('user_id', _userId);
-    var dishMap = {};
-    if (!dishRes.error && dishRes.data) {
-      dishRes.data.forEach(function (d) { dishMap[d.name.toLowerCase()] = d.id; });
+
+    var rows = [];
+    if (m.dishes && m.dishes.length) {
+      // dishes is an array of objects — look up Supabase IDs by name
+      var dishRes = await supabaseClient.from('dishes').select('id, name').eq('user_id', _userId);
+      var dishNameMap = {};
+      if (!dishRes.error && dishRes.data) {
+        dishRes.data.forEach(function (d) { dishNameMap[(d.name || '').toLowerCase()] = d.id; });
+      }
+      rows = m.dishes.map(function (d, i) {
+        return {
+          user_id: _userId,
+          menu_id: menuId,
+          dish_id: dishNameMap[(d.dish || d.name || '').toLowerCase()] || null,
+          dish_name: d.dish || d.name || '',
+          category: d.category || null,
+          allergens: d.allergens || [],
+          sort_order: i
+        };
+      });
+    } else if (m.dishIds && m.dishIds.length) {
+      // dishIds is an array of IDs — look up names/details from Supabase
+      var dishRes2 = await supabaseClient.from('dishes').select('id, name, category, allergens').eq('user_id', _userId);
+      var dishById = {};
+      if (!dishRes2.error && dishRes2.data) {
+        dishRes2.data.forEach(function (d) { dishById[String(d.id)] = d; });
+      }
+      rows = m.dishIds.map(function (id, i) {
+        var d = dishById[String(id)] || {};
+        return {
+          user_id: _userId,
+          menu_id: menuId,
+          dish_id: String(id),
+          dish_name: d.name || '',
+          category: d.category || null,
+          allergens: d.allergens || [],
+          sort_order: i
+        };
+      });
     }
-    var rows = dishes.map(function (d, i) {
-      return {
-        user_id: _userId,
-        menu_id: menuId,
-        dish_id: dishMap[(d.dish || d.name || '').toLowerCase()] || null,
-        dish_name: d.dish || d.name || '',
-        category: d.category || null,
-        allergens: d.allergens || [],
-        sort_order: i
-      };
-    });
+
+    if (!rows.length) return;
     var ir = await supabaseClient.from('menu_dishes').insert(rows);
     if (ir.error) console.error('[Veriqo sync] saveMenu dishes failed:', ir.error.message);
     else console.log('[Veriqo sync] ✓ menu saved:', m.name);
@@ -405,6 +429,16 @@ window.Mise.sync = (function () {
   // Updates BOTH HACCP (settings) and Menus (mSettings) with shared table data
   async function _pullSharedLibrary(userId) {
     try {
+      // Capture local dishIds before the pull overwrites mSettings — used as
+      // fallback for menus whose menu_dishes rows weren't written (legacy bug).
+      var localMenuDishIds = {};
+      try {
+        var _localMs = JSON.parse(localStorage.getItem('mise_settings') || '{}');
+        (_localMs.savedMenus || []).forEach(function (m) {
+          if (m.dishIds && m.dishIds.length) localMenuDishIds[String(m.id)] = m.dishIds;
+        });
+      } catch (e) {}
+
       var results = await Promise.all([
         supabaseClient.from('clients').select('*').eq('user_id', userId).order('name'),
         supabaseClient.from('dishes').select('*').eq('user_id', userId).order('name'),
@@ -427,6 +461,10 @@ window.Mise.sync = (function () {
           .filter(function (md) { return md.menu_id === m.id; })
           .sort(function (a, b) { return (a.sort_order || 0) - (b.sort_order || 0); });
         var dishIds = mDishRows.map(function (md) { return md.dish_id; }).filter(Boolean);
+        // Fallback: if Supabase has no menu_dishes rows, use locally-saved dishIds
+        if (!dishIds.length && localMenuDishIds[String(m.id)]) {
+          dishIds = localMenuDishIds[String(m.id)];
+        }
         var mDishes = mDishRows.map(function (md) { return { dish: md.dish_name, category: md.category || '', allergens: md.allergens || [] }; });
         return { id: m.id, name: m.name || '', dishes: mDishes, dishIds: dishIds };
       });
