@@ -255,7 +255,9 @@ function openGeneratePrepListModal() {
   if (preview) preview.innerHTML = '';
 
   var btn = document.getElementById('prep-gen-confirm');
-  if (btn) { btn.textContent = 'Generate Prep List'; btn.disabled = false; }
+  if (btn) { btn.textContent = 'Use saved tasks'; btn.disabled = false; }
+  var aiBtn = document.getElementById('prep-gen-ai');
+  if (aiBtn) { aiBtn.innerHTML = '<span>✨</span><span>AI Prep List</span>'; aiBtn.disabled = false; }
 
   modal.style.display = 'flex';
 }
@@ -286,14 +288,19 @@ function onPrepMenuChange() {
     }
   });
 
+  var totalDishes = (menu.dishes || []).length;
+  var aiDishes = totalDishes - dishCount;
+
   if (taskCount === 0) {
     preview.innerHTML = '<div style="font-size:13px;color:var(--vq-muted);margin-top:6px;line-height:1.5">'
-      + 'None of this menu\'s dishes have prep tasks yet. '
-      + '<button onclick="closeGeneratePrepListModal();showTab(\'menus\')" style="background:none;border:none;color:#F97316;font-size:13px;font-weight:700;cursor:pointer;padding:0;font-family:inherit;text-decoration:underline">Go to Dish Library →</button>'
-      + ' tap a dish and add tasks under <strong>Prep Tasks</strong>.</div>';
+      + 'No saved tasks for this menu\'s dishes — hit <strong>AI Prep List</strong> to generate them automatically.</div>';
+  } else if (aiDishes > 0) {
+    preview.innerHTML = '<div style="font-size:13px;color:#2D7A3A;font-weight:600;margin-top:6px">'
+      + taskCount + ' task' + (taskCount !== 1 ? 's' : '') + ' across ' + dishCount + ' dish' + (dishCount !== 1 ? 'es' : '')
+      + ' · <span style="color:#F97316">' + aiDishes + ' need' + (aiDishes === 1 ? 's' : '') + ' AI</span></div>';
   } else {
     preview.innerHTML = '<div style="font-size:13px;color:#2D7A3A;font-weight:600;margin-top:6px">'
-      + taskCount + ' task' + (taskCount !== 1 ? 's' : '') + ' across ' + dishCount + ' dish' + (dishCount !== 1 ? 'es' : '') + ' — ready to generate</div>';
+      + taskCount + ' task' + (taskCount !== 1 ? 's' : '') + ' across ' + dishCount + ' dish' + (dishCount !== 1 ? 'es' : '') + ' — ready</div>';
   }
 }
 
@@ -329,7 +336,7 @@ async function confirmGeneratePrepList() {
   });
 
   if (items.length === 0) {
-    if (typeof toast === 'function') toast('No prep tasks found — add tasks to dishes first', 'warn');
+    if (typeof toast === 'function') toast('No saved tasks — use AI Prep List instead', 'warn');
     return;
   }
 
@@ -354,6 +361,104 @@ async function confirmGeneratePrepList() {
   } catch(e) {
     console.error('[Prep] insert failed:', e);
     if (typeof toast === 'function') toast('Failed: ' + (e.message || 'Unknown error'), 'err');
-    if (btn) { btn.textContent = 'Generate Prep List'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Use saved tasks'; btn.disabled = false; }
+  }
+}
+
+async function aiGeneratePrepList() {
+  var menuId = (document.getElementById('prep-gen-menu') || {}).value;
+  var date   = (document.getElementById('prep-gen-date') || {}).value;
+
+  if (!menuId) { if (typeof toast === 'function') toast('Select a menu first', 'err'); return; }
+  if (!date)   { if (typeof toast === 'function') toast('Select a date', 'err'); return; }
+
+  var menus  = (typeof mSettings !== 'undefined' && mSettings.savedMenus)  ? mSettings.savedMenus  : [];
+  var dishes = (typeof mSettings !== 'undefined' && mSettings.savedDishes) ? mSettings.savedDishes : [];
+  var menu   = menus.find(function(m) { return String(m.id) === String(menuId); });
+  if (!menu) return;
+
+  var menuDishes = (menu.dishes || []).map(function(md) {
+    return dishes.find(function(d) { return d.dish === md.dish; });
+  }).filter(Boolean);
+
+  if (menuDishes.length === 0) {
+    if (typeof toast === 'function') toast('No dishes found in this menu', 'err');
+    return;
+  }
+
+  var aiBtn      = document.getElementById('prep-gen-ai');
+  var confirmBtn = document.getElementById('prep-gen-confirm');
+  var preview    = document.getElementById('prep-gen-preview');
+  if (aiBtn)      { aiBtn.innerHTML = '<span>⏳</span><span>Generating…</span>'; aiBtn.disabled = true; }
+  if (confirmBtn) confirmBtn.disabled = true;
+  if (preview)    preview.innerHTML = '<div style="font-size:13px;color:var(--vq-muted);margin-top:6px">Generating tasks for ' + menuDishes.length + ' dish' + (menuDishes.length !== 1 ? 'es' : '') + '…</div>';
+
+  try {
+    // Use existing tasks where available; call AI for dishes that have none
+    var results = await Promise.all(menuDishes.map(function(dish) {
+      if (Array.isArray(dish.prep_tasks) && dish.prep_tasks.length > 0) {
+        return Promise.resolve({ dish: dish, tasks: dish.prep_tasks });
+      }
+      return fetch('/api/parse-menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'prep-tasks', dishName: dish.dish, dishCategory: dish.category || '' })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var tasks = Array.isArray(data.tasks) ? data.tasks.map(function(t) {
+          return {
+            id: 'pt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+            description: t.description || '',
+            section: t.section === 'finishing' ? 'finishing' : 'prep_ahead'
+          };
+        }) : [];
+        return { dish: dish, tasks: tasks };
+      })
+      .catch(function() { return { dish: dish, tasks: [] }; });
+    }));
+
+    var items = [];
+    results.forEach(function(result) {
+      result.tasks.forEach(function(task) {
+        items.push({
+          id: 'pi_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+          dish_id: String(result.dish.id),
+          dish_name: result.dish.dish,
+          description: task.description,
+          section: task.section || 'prep_ahead',
+          completed: false,
+          completed_at: null,
+          completed_by: null
+        });
+      });
+    });
+
+    if (items.length === 0) {
+      if (typeof toast === 'function') toast('AI returned no tasks — try again', 'err');
+      return;
+    }
+
+    var listName = menu.name + ' — ' + _fmtPrepDate(date);
+    var r = await supabaseClient.from('prep_lists').insert({
+      name: listName,
+      menu_id: String(menuId),
+      date: date,
+      items: items
+    }).select().single();
+
+    if (r.error) throw r.error;
+
+    _prepLists.unshift(r.data);
+    closeGeneratePrepListModal();
+    if (typeof toast === 'function') toast('AI prep list created ✓');
+    openPrepListView(r.data.id);
+  } catch(e) {
+    console.error('[Prep] AI generate failed:', e);
+    if (typeof toast === 'function') toast('Failed: ' + (e.message || 'Unknown error'), 'err');
+  } finally {
+    if (aiBtn)      { aiBtn.innerHTML = '<span>✨</span><span>AI Prep List</span>'; aiBtn.disabled = false; }
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (preview)    onPrepMenuChange();
   }
 }

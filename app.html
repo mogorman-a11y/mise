@@ -1699,9 +1699,12 @@
             <input type="date" id="prep-gen-date" class="form-input" style="width:100%">
           </div>
 
-          <div id="prep-gen-preview" style="min-height:28px;margin-bottom:18px"></div>
+          <div id="prep-gen-preview" style="min-height:28px;margin-bottom:16px"></div>
 
-          <button id="prep-gen-confirm" onclick="confirmGeneratePrepList()" style="width:100%;padding:14px;background:#F97316;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">Generate Prep List</button>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button id="prep-gen-ai" onclick="aiGeneratePrepList()" style="width:100%;padding:14px;background:#F97316;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px"><span>✨</span><span>AI Prep List</span></button>
+            <button id="prep-gen-confirm" onclick="confirmGeneratePrepList()" style="width:100%;padding:13px;background:#fff;color:#F97316;border:2px solid #FFD5B8;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Use saved tasks</button>
+          </div>
         </div>
       </div>
     </div>
@@ -3160,7 +3163,7 @@ function vqIcon(name, size) {
 <script src="yield-sync.js?v=11"></script>
 <script src="js/core/subscription.js?v=10"></script>
 <script src="js/modules/team.js?v=2"></script>
-<script src="js/modules/prep.js?v=1"></script>
+<script src="js/modules/prep.js?v=2"></script>
 
 <!-- Shell routing + auth config -->
 <script>
