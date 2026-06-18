@@ -278,17 +278,21 @@ function onPrepMenuChange() {
   var menu   = menus.find(function(m) { return String(m.id) === String(menuId); });
   if (!menu) { preview.innerHTML = ''; return; }
 
+  var dishMap = {};
+  dishes.forEach(function(d) { dishMap[String(d.id)] = d; });
+
   var taskCount = 0;
   var dishCount = 0;
-  (menu.dishes || []).forEach(function(md) {
-    var dish = dishes.find(function(d) { return d.dish === md.dish; });
+  var totalDishes = (menu.dishIds || []).length;
+
+  (menu.dishIds || []).forEach(function(dishId) {
+    var dish = dishMap[String(dishId)];
     if (dish && Array.isArray(dish.prep_tasks) && dish.prep_tasks.length > 0) {
       taskCount += dish.prep_tasks.length;
       dishCount++;
     }
   });
 
-  var totalDishes = (menu.dishes || []).length;
   var aiDishes = totalDishes - dishCount;
 
   if (taskCount === 0) {
@@ -317,9 +321,12 @@ async function confirmGeneratePrepList() {
   var menu   = menus.find(function(m) { return String(m.id) === String(menuId); });
   if (!menu) return;
 
+  var dishMap = {};
+  dishes.forEach(function(d) { dishMap[String(d.id)] = d; });
+
   var items = [];
-  (menu.dishes || []).forEach(function(md) {
-    var dish = dishes.find(function(d) { return d.dish === md.dish; });
+  (menu.dishIds || []).forEach(function(dishId) {
+    var dish = dishMap[String(dishId)];
     if (!dish || !Array.isArray(dish.prep_tasks) || dish.prep_tasks.length === 0) return;
     dish.prep_tasks.forEach(function(task) {
       items.push({
@@ -377,8 +384,11 @@ async function aiGeneratePrepList() {
   var menu   = menus.find(function(m) { return String(m.id) === String(menuId); });
   if (!menu) return;
 
-  var menuDishes = (menu.dishes || []).map(function(md) {
-    return dishes.find(function(d) { return d.dish === md.dish; });
+  var dishMap = {};
+  dishes.forEach(function(d) { dishMap[String(d.id)] = d; });
+
+  var menuDishes = (menu.dishIds || []).map(function(id) {
+    return dishMap[String(id)];
   }).filter(Boolean);
 
   if (menuDishes.length === 0) {
