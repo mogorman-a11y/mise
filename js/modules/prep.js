@@ -35,7 +35,7 @@ function renderPrepIndex() {
     if (indexEl) indexEl.style.display = 'none';
     if (viewEl)  viewEl.style.display  = 'block';
     var backBtn = document.getElementById('menus-back-btn');
-    if (backBtn) backBtn.onclick = closePrepListView;
+    if (backBtn) { backBtn.style.display = 'block'; backBtn.onclick = closePrepListView; }
     return;
   }
 
@@ -84,24 +84,27 @@ function _renderPrepIndex() {
       + '</div>';
   } else {
     html += _prepLists.map(function(pl) {
-      var items  = pl.items || [];
-      var total  = items.length;
-      var done   = items.filter(function(i) { return i.completed; }).length;
-      var pct    = total > 0 ? Math.round(done / total * 100) : 0;
+      var items   = pl.items || [];
+      var total   = items.length;
+      var done    = items.filter(function(i) { return i.completed; }).length;
+      var pct     = total > 0 ? Math.round(done / total * 100) : 0;
       var allDone = done === total && total > 0;
       var accentCol = allDone ? '#2D7A3A' : '#F97316';
-      return '<div onclick="openPrepListView(\'' + pl.id + '\')" style="background:#fff;border:1px solid var(--vq-border);border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      return '<div style="position:relative;background:#fff;border:1px solid var(--vq-border);border-radius:12px;padding:14px 16px;margin-bottom:10px">'
+        + '<div onclick="openPrepListView(\'' + pl.id + '\')" style="cursor:pointer;-webkit-tap-highlight-color:transparent">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-right:24px">'
         + '<div style="flex:1;min-width:0">'
         + '<div style="font-size:15px;font-weight:700;color:var(--vq-ink);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + _esc(pl.name) + '</div>'
         + '<div style="font-size:12px;color:var(--vq-muted)">' + _esc(_fmtPrepDate(pl.date)) + '</div>'
         + '</div>'
-        + '<div style="font-size:13px;font-weight:700;color:' + accentCol + ';flex-shrink:0;margin-left:12px;margin-top:2px">'
+        + '<div style="font-size:13px;font-weight:700;color:' + accentCol + ';flex-shrink:0;margin-top:2px">'
         + (allDone ? 'All done ✓' : done + '/' + total + ' done') + '</div>'
         + '</div>'
         + '<div style="height:6px;background:#F0EDE8;border-radius:3px;overflow:hidden">'
         + '<div style="height:100%;width:' + pct + '%;background:' + accentCol + ';border-radius:3px"></div>'
         + '</div>'
+        + '</div>'
+        + '<button onclick="event.stopPropagation();deletePrepList(\'' + pl.id + '\')" title="Delete list" style="position:absolute;top:8px;right:8px;background:none;border:none;color:#C8C4BC;font-size:20px;cursor:pointer;padding:4px 7px;line-height:1">&times;</button>'
         + '</div>';
     }).join('');
   }
@@ -119,7 +122,7 @@ function openPrepListView(id) {
   if (viewEl)  viewEl.style.display  = 'block';
 
   var backBtn = document.getElementById('menus-back-btn');
-  if (backBtn) backBtn.onclick = closePrepListView;
+  if (backBtn) { backBtn.style.display = 'block'; backBtn.onclick = closePrepListView; }
 
   _renderPrepListView(id);
   window.scrollTo(0, 0);
@@ -133,7 +136,7 @@ function closePrepListView() {
   if (indexEl) { indexEl.style.display = 'block'; _renderPrepIndex(); }
 
   var backBtn = document.getElementById('menus-back-btn');
-  if (backBtn) backBtn.onclick = function() { showTab('home'); };
+  if (backBtn) { backBtn.style.display = 'none'; backBtn.onclick = function() { showTab('home'); }; }
 
   window.scrollTo(0, 0);
 }
@@ -153,22 +156,44 @@ function _renderPrepListView(id) {
   var aheadItems = items.filter(function(i) { return i.section !== 'finishing'; });
   var finItems   = items.filter(function(i) { return i.section === 'finishing'; });
 
-  var html = '<div style="margin-bottom:20px">'
+  var html = '<button onclick="closePrepListView()" style="display:inline-flex;align-items:center;gap:5px;background:none;border:none;color:var(--vq-muted);font-size:14px;font-weight:600;cursor:pointer;padding:0 0 16px 0;font-family:inherit;-webkit-tap-highlight-color:transparent">'
+    + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>'
+    + 'All prep lists</button>'
+    + '<div style="margin-bottom:20px">'
     + '<div style="font-size:20px;font-weight:800;color:var(--vq-ink);margin-bottom:3px;letter-spacing:-0.3px">' + _esc(pl.name) + '</div>'
     + '<div style="font-size:13px;color:var(--vq-muted);margin-bottom:14px">' + _esc(_fmtPrepDateLong(pl.date)) + '</div>'
-    + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:' + (allDone ? '10px' : '0') + '">'
+    + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:' + (allDone ? '10px' : '14px') + '">'
     + '<div style="flex:1;height:10px;background:#F0EDE8;border-radius:5px;overflow:hidden">'
     + '<div style="height:100%;width:' + pct + '%;background:' + accentCol + ';border-radius:5px;transition:width 0.4s"></div>'
     + '</div>'
     + '<div style="font-size:15px;font-weight:800;color:' + (allDone ? '#2D7A3A' : 'var(--vq-ink)') + ';white-space:nowrap">' + done + ' / ' + total + '</div>'
     + '</div>'
-    + (allDone ? '<div style="text-align:center;padding:10px 0 4px;font-size:16px;font-weight:800;color:#2D7A3A">All done ✓</div>' : '')
+    + (allDone ? '<div style="text-align:center;padding:6px 0 14px;font-size:16px;font-weight:800;color:#2D7A3A">All done ✓</div>' : '')
+    + '<div style="display:flex;gap:8px;margin-bottom:24px">'
+    + '<button onclick="resetPrepListTicks(\'' + id + '\')" style="flex:1;padding:9px 12px;background:#F7F4F0;border:1px solid var(--vq-border);border-radius:8px;font-size:13px;font-weight:600;color:var(--vq-ink);cursor:pointer;font-family:inherit">↺ Reset ticks</button>'
+    + '<button onclick="deletePrepList(\'' + id + '\')" style="padding:9px 14px;background:#FFF0F0;border:1px solid #FFD0CC;border-radius:8px;font-size:13px;font-weight:600;color:#C0392B;cursor:pointer;font-family:inherit">Delete list</button>'
+    + '</div>'
     + '</div>';
 
   if (aheadItems.length > 0) html += _renderPrepSection(aheadItems, '🥄 Prep Ahead', id);
   if (finItems.length > 0)   html += _renderPrepSection(finItems,   '🔥 Finishing',  id);
 
   el.innerHTML = html;
+}
+
+function _prepItemInner(item, listId) {
+  var isDone = !!item.completed;
+  return '<div onclick="tickPrepItem(\'' + listId + '\',\'' + item.id + '\')" style="width:28px;height:28px;border-radius:50%;border:2px solid '+(isDone?'#2D7A3A':'#C8C4BC')+';background:'+(isDone?'#2D7A3A':'transparent')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all 0.15s">'
+    + (isDone ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '')
+    + '</div>'
+    + '<div onclick="tickPrepItem(\'' + listId + '\',\'' + item.id + '\')" style="flex:1;min-width:0;cursor:pointer">'
+    + '<div style="font-size:15px;font-weight:'+(isDone?'400':'500')+';color:'+(isDone?'#A0A098':'var(--vq-ink)')+';'+(isDone?'text-decoration:line-through;':'')+'">' + _esc(item.description) + '</div>'
+    + '<div style="font-size:12px;color:'+(isDone?'#C0BDB5':'var(--vq-muted)')+';margin-top:2px">' + _esc(item.dish_name) + '</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;margin-left:4px">'
+    + '<button onclick="editPrepItem(\'' + listId + '\',\'' + item.id + '\')" style="background:#F0EDE8;border:none;border-radius:5px;font-size:11px;font-weight:700;color:var(--vq-ink);cursor:pointer;padding:5px 9px;font-family:inherit;line-height:1">Edit</button>'
+    + '<button onclick="deletePrepItem(\'' + listId + '\',\'' + item.id + '\')" style="background:#FFF0F0;border:none;border-radius:5px;font-size:11px;font-weight:700;color:#C0392B;cursor:pointer;padding:5px 9px;font-family:inherit;line-height:1">Del</button>'
+    + '</div>';
 }
 
 function _renderPrepSection(items, label, listId) {
@@ -181,20 +206,80 @@ function _renderPrepSection(items, label, listId) {
 
   html += items.map(function(item) {
     var isDone = !!item.completed;
-    return '<div onclick="tickPrepItem(\'' + listId + '\',\'' + item.id + '\')" '
-      + 'style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border:1px solid ' + (isDone ? '#C8E6CC' : 'var(--vq-border)') + ';border-radius:12px;margin-bottom:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s">'
-      + '<div style="width:28px;height:28px;border-radius:50%;border:2px solid ' + (isDone ? '#2D7A3A' : '#C8C4BC') + ';background:' + (isDone ? '#2D7A3A' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s">'
-      + (isDone ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '')
-      + '</div>'
-      + '<div style="flex:1;min-width:0">'
-      + '<div style="font-size:15px;font-weight:' + (isDone ? '400' : '500') + ';color:' + (isDone ? '#A0A098' : 'var(--vq-ink)') + ';' + (isDone ? 'text-decoration:line-through;' : '') + '">' + _esc(item.description) + '</div>'
-      + '<div style="font-size:12px;color:' + (isDone ? '#C0BDB5' : 'var(--vq-muted)') + ';margin-top:2px">' + _esc(item.dish_name) + '</div>'
-      + '</div>'
+    return '<div id="prep-item-' + item.id + '" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border:1px solid '+(isDone?'#C8E6CC':'var(--vq-border)')+';border-radius:12px;margin-bottom:8px;-webkit-tap-highlight-color:transparent;transition:border-color 0.15s">'
+      + _prepItemInner(item, listId)
       + '</div>';
   }).join('');
 
   html += '</div>';
   return html;
+}
+
+function editPrepItem(listId, itemId) {
+  var pl = _prepLists.find(function(p) { return p.id === listId; });
+  if (!pl) return;
+  var item = (pl.items || []).find(function(i) { return i.id === itemId; });
+  if (!item) return;
+  var el = document.getElementById('prep-item-' + itemId);
+  if (!el) return;
+  el.style.background = '#FFFBF8';
+  el.innerHTML = '<input id="ppi-' + itemId + '" type="text" value="' + _esc(item.description) + '"'
+    + ' onclick="event.stopPropagation()" onkeydown="if(event.key===\'Enter\')savePrepItemEdit(\'' + listId + '\',\'' + itemId + '\')"'
+    + ' style="flex:1;padding:7px 9px;border:1px solid #D0C8BE;border-radius:7px;font-size:14px;font-family:inherit;background:#fff;color:#1C2B1E;min-width:0">'
+    + '<button onclick="savePrepItemEdit(\'' + listId + '\',\'' + itemId + '\')" style="padding:7px 12px;background:#2D7A3A;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">✓</button>'
+    + '<button onclick="cancelPrepItemEdit(\'' + listId + '\',\'' + itemId + '\')" style="background:none;border:none;color:#A09890;font-size:19px;cursor:pointer;padding:4px 6px;line-height:1;flex-shrink:0">&times;</button>';
+  var input = document.getElementById('ppi-' + itemId);
+  if (input) { input.focus(); input.select(); }
+}
+
+function cancelPrepItemEdit(listId, itemId) {
+  var pl = _prepLists.find(function(p) { return p.id === listId; });
+  if (!pl) return;
+  var item = (pl.items || []).find(function(i) { return i.id === itemId; });
+  if (!item) return;
+  var el = document.getElementById('prep-item-' + itemId);
+  if (!el) return;
+  el.style.background = '#fff';
+  el.style.borderColor = item.completed ? '#C8E6CC' : 'var(--vq-border)';
+  el.innerHTML = _prepItemInner(item, listId);
+}
+
+async function savePrepItemEdit(listId, itemId) {
+  var input = document.getElementById('ppi-' + itemId);
+  if (!input) return;
+  var desc = (input.value || '').trim();
+  if (!desc) { if (typeof toast === 'function') toast('Task description required', 'warn'); return; }
+  var pl = _prepLists.find(function(p) { return p.id === listId; });
+  if (!pl) return;
+  var item = (pl.items || []).find(function(i) { return i.id === itemId; });
+  if (!item) return;
+  var oldDesc = item.description;
+  item.description = desc;
+  cancelPrepItemEdit(listId, itemId);
+  try {
+    var r = await supabaseClient.from('prep_lists').update({ items: pl.items }).eq('id', listId);
+    if (r.error) throw r.error;
+  } catch(e) {
+    item.description = oldDesc;
+    cancelPrepItemEdit(listId, itemId);
+    if (typeof toast === 'function') toast('Sync failed — try again', 'err');
+  }
+}
+
+async function deletePrepItem(listId, itemId) {
+  var pl = _prepLists.find(function(p) { return p.id === listId; });
+  if (!pl) return;
+  var oldItems = pl.items.slice();
+  pl.items = (pl.items || []).filter(function(i) { return i.id !== itemId; });
+  _renderPrepListView(listId);
+  try {
+    var r = await supabaseClient.from('prep_lists').update({ items: pl.items }).eq('id', listId);
+    if (r.error) throw r.error;
+  } catch(e) {
+    pl.items = oldItems;
+    _renderPrepListView(listId);
+    if (typeof toast === 'function') toast('Sync failed — try again', 'err');
+  }
 }
 
 async function tickPrepItem(listId, itemId) {
@@ -228,6 +313,43 @@ async function tickPrepItem(listId, itemId) {
     item.completed_at = null;
     item.completed_by = null;
     _renderPrepListView(listId);
+    if (typeof toast === 'function') toast('Sync failed — try again', 'err');
+  }
+}
+
+// ── List-level actions ─────────────────────────────────────────────────────
+
+async function deletePrepList(id) {
+  if (!confirm('Delete this prep list? This cannot be undone.')) return;
+  try {
+    var r = await supabaseClient.from('prep_lists').delete().eq('id', id);
+    if (r.error) throw r.error;
+    _prepLists = _prepLists.filter(function(p) { return p.id !== id; });
+    if (_prepListViewId === id) closePrepListView();
+    else _renderPrepIndex();
+    if (typeof toast === 'function') toast('Prep list deleted');
+  } catch(e) {
+    console.error('[Prep] delete failed:', e);
+    if (typeof toast === 'function') toast('Delete failed — try again', 'err');
+  }
+}
+
+async function resetPrepListTicks(id) {
+  if (!confirm('Reset all ticks? Task edits and deletions are kept — only completion marks are cleared.')) return;
+  var pl = _prepLists.find(function(p) { return p.id === id; });
+  if (!pl) return;
+  var oldItems = pl.items.map(function(i) { return Object.assign({}, i); });
+  pl.items = (pl.items || []).map(function(item) {
+    return Object.assign({}, item, { completed: false, completed_at: null, completed_by: null });
+  });
+  _renderPrepListView(id);
+  try {
+    var r = await supabaseClient.from('prep_lists').update({ items: pl.items }).eq('id', id);
+    if (r.error) throw r.error;
+    if (typeof toast === 'function') toast('Ticks reset — ready for next service ✓');
+  } catch(e) {
+    pl.items = oldItems;
+    _renderPrepListView(id);
     if (typeof toast === 'function') toast('Sync failed — try again', 'err');
   }
 }
