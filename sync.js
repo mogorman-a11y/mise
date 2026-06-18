@@ -171,6 +171,7 @@ window.Mise.sync = (function () {
       name: d.dish || d.name || '',
       category: d.category || null,
       allergens: d.allergens || [],
+      prep_tasks: Array.isArray(d.prep_tasks) ? d.prep_tasks : [],
       updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
     if (r.error) console.error('[Veriqo sync] saveDish failed:', r.error.message);
@@ -419,7 +420,7 @@ window.Mise.sync = (function () {
         return { id: c.id, name: c.name || '', address: c.address || '', phone: c.phone || '', email: c.email || '', diet: c.notes || '' };
       });
       var mappedDishes = dishesData.map(function (d) {
-        return { id: d.id, dish: d.name || '', category: d.category || '', allergens: Array.isArray(d.allergens) ? d.allergens : [] };
+        return { id: d.id, dish: d.name || '', category: d.category || '', allergens: Array.isArray(d.allergens) ? d.allergens : [], prep_tasks: Array.isArray(d.prep_tasks) ? d.prep_tasks : [] };
       });
       var mappedMenus = menusData.map(function (m) {
         var mDishRows = menuDishes

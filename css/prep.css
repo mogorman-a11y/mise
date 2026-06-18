@@ -1,0 +1,14 @@
+/* prep.css v1 — Prep List module styles */
+
+/* Generate modal overlay */
+#generate-prep-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 9990;
+  align-items: flex-end;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prep tab uses standard .section padding — no extra overrides needed */

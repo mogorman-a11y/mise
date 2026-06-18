@@ -211,12 +211,13 @@ function addressBookLookup(key){
 // ═══════════════════════════════════════════════════════ NAVIGATION ══════════
 var _homeScrollPos = 0;
 var _NAV_TABS = ['home','clients','calendar','menus','more'];
-var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','mise-settings','install','help','legal'];
+var _SECTION_TABS = ['clients','calendar','menus','jobs','more','transport','assess','allergen','credentials','mise-settings','install','help','legal','prep'];
 var _TITLES = {
   clients:'Clients', calendar:'Calendar', menus:'Menus & Dishes', jobs:'Jobs',
   more:'More', transport:'Transport Temps', assess:'Kitchen Assessment',
   allergen:'Allergen Log', credentials:'Credentials', 'mise-settings':'Settings',
-  install:'Save as App', help:'Help & Getting Started', legal:'Privacy & Legal'
+  install:'Save as App', help:'Help & Getting Started', legal:'Privacy & Legal',
+  prep:'Prep Lists'
 };
 
 
@@ -261,6 +262,7 @@ function showTab(name){
   if(name==='allergen')    { populateClientSelects(); renderAllergenList(); }
   if(name==='credentials') { populateStaffSelects(); renderCredentialsList(); }
   if(name==='mise-settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); renderCarteSubscriptionCard(); loadEmailPreferences(); }
+  if(name==='prep')             { if (typeof renderPrepIndex === 'function') renderPrepIndex(); }
 
   // Set date fields to today if empty
   ['tr-date','as-date'].forEach(function(id){
@@ -715,6 +717,27 @@ function _dishRowHTML(d) {
   var catOptions = DISH_CATEGORIES.map(function(c){
     return '<option value="'+_esc(c)+'"'+(d.category===c?' selected':'')+'>'+_esc(c||'No category')+'</option>';
   }).join('');
+  var prepTasksHtml = '<div style="margin-bottom:10px;padding:10px;background:#FFF8F5;border:1px solid #FFD5B8;border-radius:8px">'
+    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#C05A18;margin-bottom:8px">Prep Tasks</div>'
+    + '<div id="prep-task-list-'+d.id+'">'
+    + _editingDishPrepTasks.map(function(task){
+        var icon = task.section==='finishing' ? '🔥' : '🥄';
+        return '<div data-prep-task-id="'+task.id+'" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:7px 10px;background:#fff;border-radius:7px;border:1px solid #F0EDE8">'
+          + '<span style="font-size:13px;flex-shrink:0">'+icon+'</span>'
+          + '<div style="flex:1;font-size:13px;color:#1C2B1E">'+_esc(task.description)+'</div>'
+          + '<button onclick="event.stopPropagation();removePrepTask(\''+task.id+'\')" style="background:none;border:none;color:#A09890;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>'
+          + '</div>';
+      }).join('')
+    + '</div>'
+    + '<div style="display:flex;gap:5px;align-items:stretch">'
+    + '<input id="prep-task-input" type="text" placeholder="Add prep task…" style="flex:1;padding:7px 9px;border:1px solid #D0C8BE;border-radius:7px;font-size:13px;font-family:inherit;background:#fff;color:#1C2B1E;min-width:0" onclick="event.stopPropagation()">'
+    + '<select id="prep-task-section" style="padding:7px 5px;border:1px solid #D0C8BE;border-radius:7px;font-size:12px;font-family:inherit;background:#fff;color:#1C2B1E;flex-shrink:0" onclick="event.stopPropagation()">'
+    + '<option value="prep_ahead">🥄 Prep</option>'
+    + '<option value="finishing">🔥 Finish</option>'
+    + '</select>'
+    + '<button onclick="event.stopPropagation();addPrepTask()" style="padding:7px 10px;background:#F97316;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">Add</button>'
+    + '</div>'
+    + '</div>';
   var editForm = isEditing
     ? '<div id="dish-edit-'+d.id+'" style="margin-top:10px;padding-top:10px;border-top:1px solid #D4C9B5">'
       + '<input id="dish-edit-name-'+d.id+'" class="form-input" type="text" value="'+_esc(d.dish)+'" style="margin-bottom:8px" placeholder="Dish name">'
@@ -727,6 +750,7 @@ function _dishRowHTML(d) {
             + '<input type="checkbox" id="'+eid+'"'+chk+' style="width:14px;height:14px;accent-color:#1C2B1E"> '+_esc(a)+'</label>';
         }).join('')
       + '</div>'
+      + prepTasksHtml
       + '<div style="display:flex;gap:8px">'
       + '<button onclick="saveDishEdit(\''+d.id+'\')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
       + '<button onclick="event.stopPropagation();cancelDishEdit()" style="background:none;border:none;color:#A09890;font-size:13px;cursor:pointer;padding:4px 8px;font-family:inherit">Cancel</button>'
@@ -789,8 +813,16 @@ function deleteDish(id){
 }
 
 var _editingDishId = null;
+var _editingDishPrepTasks = [];
 function editDish(id){
-  _editingDishId = (_editingDishId === id) ? null : id;
+  if (_editingDishId === id) {
+    _editingDishId = null;
+    _editingDishPrepTasks = [];
+  } else {
+    _editingDishId = id;
+    var _d = (mSettings.savedDishes||[]).find(function(x){ return String(x.id)===String(id); });
+    _editingDishPrepTasks = (_d && Array.isArray(_d.prep_tasks)) ? _d.prep_tasks.map(function(t){ return Object.assign({},t); }) : [];
+  }
   renderDishLibrary();
   if(_editingDishId){
     setTimeout(function(){
@@ -810,19 +842,51 @@ function saveDishEdit(id){
   var catEl = document.getElementById('dish-edit-cat-'+id);
   var category = catEl ? catEl.value : '';
   mSettings.savedDishes = (mSettings.savedDishes||[]).map(function(d){
-    return String(d.id)===String(id) ? {id:d.id, dish:name, allergens:allergens, category:category} : d;
+    return String(d.id)===String(id) ? {id:d.id, dish:name, allergens:allergens, category:category, prep_tasks:_editingDishPrepTasks.slice()} : d;
   });
   saveMiseSettings();
   var _updDish = (mSettings.savedDishes||[]).find(function(d){ return String(d.id)===String(id); });
   if (_updDish && window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(_updDish);
   _editingDishId = null;
+  _editingDishPrepTasks = [];
   renderDishLibrary();
   renderMenuDishSelect();
   toast('Dish updated ✓');
 }
 function cancelDishEdit(){
   _editingDishId = null;
+  _editingDishPrepTasks = [];
   renderDishLibrary();
+}
+
+function addPrepTask() {
+  var inputEl = document.getElementById('prep-task-input');
+  var sectionEl = document.getElementById('prep-task-section');
+  if (!inputEl || !_editingDishId) return;
+  var desc = (inputEl.value || '').trim();
+  if (!desc) { toast('Enter a task description', 'warn'); return; }
+  var section = sectionEl ? sectionEl.value : 'prep_ahead';
+  var taskId = 'pt_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  var task = { id: taskId, description: desc, section: section };
+  _editingDishPrepTasks.push(task);
+  inputEl.value = '';
+  var listEl = document.getElementById('prep-task-list-' + _editingDishId);
+  if (listEl) {
+    var icon = task.section === 'finishing' ? '🔥' : '🥄';
+    var div = document.createElement('div');
+    div.setAttribute('data-prep-task-id', taskId);
+    div.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:7px 10px;background:#fff;border-radius:7px;border:1px solid #F0EDE8';
+    div.innerHTML = '<span style="font-size:13px;flex-shrink:0">' + icon + '</span>'
+      + '<div style="flex:1;font-size:13px;color:#1C2B1E">' + _esc(desc) + '</div>'
+      + '<button onclick="event.stopPropagation();removePrepTask(\'' + taskId + '\')" style="background:none;border:none;color:#A09890;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">&times;</button>';
+    listEl.appendChild(div);
+  }
+}
+
+function removePrepTask(taskId) {
+  _editingDishPrepTasks = _editingDishPrepTasks.filter(function(t) { return t.id !== taskId; });
+  var row = document.querySelector('[data-prep-task-id="' + taskId + '"]');
+  if (row) row.remove();
 }
 
 // ═══════════════════════════════════════════════════════ MENUS ═══════════════
