@@ -2211,7 +2211,7 @@ function buildJobsPDF(jobs){
 
 // ═══════════════════════════════════════════════════════ TRANSPORT ══════════
 function logTransport(){
-  var food = (document.getElementById('tr-food').value||'').trim();
+  var food = (document.getElementById('mise-tr-food').value||'').trim();
   if(!food){ toast('Food item required','err'); return; }
   var client = (document.getElementById('tr-client-manual').value||'').trim()
     || (function(){ var e=addressBookLookup(document.getElementById('tr-client-select').value); return e?e.name:''; })();
@@ -2225,10 +2225,10 @@ function logTransport(){
     client: client, food: food,
     destination: (document.getElementById('tr-dest').value||'').trim(),
     tempStart: tempStart, tempEnd: tempEnd, status: status,
-    by: document.getElementById('tr-by').value||''
+    by: document.getElementById('mise-tr-by').value||''
   };
   mRecords.push(rec); saveMiseToday();
-  ['tr-client-manual','tr-food','tr-dest','tr-temp-start','tr-temp-end'].forEach(function(id){
+  ['tr-client-manual','mise-tr-food','tr-dest','tr-temp-start','tr-temp-end'].forEach(function(id){
     document.getElementById(id).value='';
   });
   document.getElementById('tr-client-select').value='';
