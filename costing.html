@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Costing, Quotes &amp; Invoices for Private Chefs | Veriqo</title>
+  <meta name="description" content="Cost jobs, send professional quotes and issue invoices — all in one private chef app. Know your margins before you accept a booking. Try Veriqo free." />
+  <link rel="canonical" href="https://getveriqo.co.uk/costing" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://getveriqo.co.uk/costing" />
+  <meta property="og:title" content="Costing, Quotes &amp; Invoices for Private Chefs | Veriqo" />
+  <meta property="og:description" content="Cost jobs, send professional quotes and issue invoices from one private chef app. Know your margins before you accept a booking." />
+  <meta property="og:locale" content="en_GB" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#2D7A3A" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Veriqo Costing",
+    "url": "https://getveriqo.co.uk/costing",
+    "description": "Job costing, quote and invoice app for private chefs. Calculate food costs, apply margins, generate professional quotes and issue invoices — connected to your menus and bookings.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web, iOS, Android",
+    "publisher": { "@type": "Organization", "name": "Mise Labs", "url": "https://getveriqo.co.uk" }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Do private chefs need to invoice clients?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes — any private chef operating as a sole trader or limited company should issue invoices for their services. A proper invoice documents what was agreed, when payment is due, and provides a paper trail for your accounts. Veriqo generates professional invoices from your job records in one tap." }
+      },
+      {
+        "@type": "Question",
+        "name": "How should a private chef calculate their prices?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Most private chefs price by calculating total ingredient cost, then applying a margin to cover labour, travel, overheads and profit. A common approach is to cost ingredients per cover, add a multiplier (typically 3–5×), then layer on any additional charges. Veriqo's Costing module lets you log ingredient costs per dish, set a margin target, and see your job total and profit before accepting a booking." }
+      },
+      {
+        "@type": "Question",
+        "name": "What should a private chef quote include?",
+        "acceptedAnswer": { "@type": "Answer", "text": "A private chef quote should include: total price per cover and overall, what is and isn't included (e.g. ingredients, travel, service), any dietary or allergen disclaimers, payment terms and deposit amount, and validity period. Veriqo generates quotes from your job costing data automatically." }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --green: #2D7A3A; --green-mid: #3a9449; --green-dim: #dff0e3; --green-pale: #f2faf4;
+      --ink: #0e1210; --ink-2: #353a32; --ink-3: #737870; --rule: #d4d9d1;
+      --white: #fdfdf8; --cream: #f6f6f0;
+      --serif: 'Playfair Display', Georgia, serif;
+      --mono: 'DM Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+      --max: 1100px; --gutter: clamp(1.25rem, 5vw, 3rem);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--sans); background: var(--white); color: var(--ink); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    .container { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+    nav { position: sticky; top: 0; z-index: 200; background: rgba(253,253,248,0.92); border-bottom: 1px solid var(--rule); backdrop-filter: blur(12px); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 58px; }
+    .nav-logo { display: flex; align-items: center; gap: .55rem; font-family: var(--serif); font-weight: 700; font-size: 1.1rem; color: var(--ink); }
+    .nav-logo-mark { width: 30px; height: 30px; background: var(--green); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+    .nav-logo-mark svg { width: 16px; height: 16px; fill: white; }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a { font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); transition: color .2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--green); }
+    .nav-cta { background: var(--green) !important; color: white !important; padding: .5rem 1.15rem; border-radius: 5px; }
+    .nav-mobile-cta { display: none; background: var(--green); color: white; font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; padding: .5rem 1rem; border-radius: 5px; }
+    @media (max-width: 680px) { .nav-links { display: none; } .nav-mobile-cta { display: inline-flex; } }
+    .hero { padding: clamp(3rem,7vw,5.5rem) 0 clamp(2.5rem,5vw,4rem); border-bottom: 1px solid var(--rule); }
+    .breadcrumb { font-family: var(--mono); font-size: .62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 2.5rem; }
+    .breadcrumb a { color: var(--ink-3); } .breadcrumb a:hover { color: var(--green); } .breadcrumb span { margin: 0 .5rem; }
+    .hero-eyebrow { display: inline-flex; align-items: center; gap: .7rem; margin-bottom: 1.5rem; }
+    .hero-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .hero-eyebrow-text { font-family: var(--mono); font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); }
+    .hero-h1 { font-family: var(--serif); font-size: clamp(2.5rem,5.5vw,4.5rem); font-weight: 900; line-height: 1; letter-spacing: -.03em; margin-bottom: 1.25rem; }
+    .hero-h1 em { font-style: italic; color: var(--green); }
+    .hero-sub { font-size: clamp(.95rem,1.4vw,1.05rem); color: var(--ink-2); line-height: 1.8; font-weight: 300; margin-bottom: 2rem; max-width: 520px; }
+    .hero-actions { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .btn-primary { display: inline-flex; align-items: center; gap: .5rem; background: var(--green); color: white; font-family: var(--mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1.75rem; border-radius: 5px; box-shadow: 0 2px 12px rgba(45,122,58,.25); transition: background .2s, transform .15s; }
+    .btn-primary:hover { background: var(--green-mid); transform: translateY(-2px); }
+    .btn-ghost { font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: color .2s, border-color .2s; }
+    .btn-ghost:hover { color: var(--green); border-color: var(--green); }
+    .hero-note { font-family: var(--mono); font-size: .65rem; letter-spacing: .1em; color: var(--ink-3); }
+    .hero-note span { color: var(--green); }
+    .trust { background: var(--cream); border-bottom: 1px solid var(--rule); padding: .85rem 0; }
+    .trust-inner { display: flex; align-items: center; justify-content: center; gap: clamp(1.5rem,4vw,3rem); flex-wrap: wrap; }
+    .trust-item { display: flex; align-items: center; gap: .45rem; font-family: var(--mono); font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+    .trust-item svg { width: 12px; height: 12px; stroke: var(--green); fill: none; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+    .features { padding: clamp(3.5rem,7vw,6rem) 0; }
+    .sec-label { display: flex; align-items: center; gap: 1rem; margin-bottom: clamp(2rem,4vw,3rem); }
+    .sec-num { font-family: var(--mono); font-size: .62rem; letter-spacing: .18em; color: var(--green); }
+    .sec-title { font-family: var(--serif); font-size: clamp(1.75rem,3.5vw,2.5rem); font-weight: 700; line-height: 1.15; }
+    .sec-title em { font-style: italic; color: var(--green); }
+    .sec-rule { flex: 1; height: 1px; background: var(--rule); }
+    .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
+    .feat-cell { background: var(--white); padding: clamp(1.5rem,3vw,2.25rem); }
+    .feat-icon { width: 44px; height: 44px; border-radius: 11px; background: var(--green-dim); display: flex; align-items: center; justify-content: center; margin-bottom: 1.1rem; }
+    .feat-icon svg { width: 22px; height: 22px; stroke: var(--green); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+    .feat-name { font-family: var(--serif); font-size: 1.05rem; font-weight: 700; color: var(--ink); margin-bottom: .4rem; }
+    .feat-body { font-size: .82rem; color: var(--ink-3); line-height: 1.6; }
+    @media (max-width: 720px) { .feat-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .feat-grid { grid-template-columns: 1fr; } }
+    .how { background: var(--cream); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: clamp(3.5rem,7vw,6rem) 0; }
+    .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: clamp(2rem,4vw,3.5rem); margin-top: clamp(1.5rem,3vw,2.5rem); }
+    .step-num { font-family: var(--mono); font-size: .62rem; letter-spacing: .18em; color: var(--green); margin-bottom: .75rem; }
+    .step-title { font-family: var(--serif); font-size: 1.2rem; font-weight: 700; margin-bottom: .6rem; }
+    .step-body { font-size: .85rem; color: var(--ink-3); line-height: 1.65; }
+    @media (max-width: 640px) { .steps { grid-template-columns: 1fr; } }
+    .faq-sec { padding: clamp(3.5rem,7vw,6rem) 0; }
+    .faq-list { display: flex; flex-direction: column; gap: 1.75rem; margin-top: clamp(1.5rem,3vw,2.5rem); max-width: 720px; }
+    .faq-q { font-family: var(--serif); font-size: 1.1rem; font-weight: 700; margin-bottom: .5rem; }
+    .faq-a { font-size: .9rem; color: var(--ink-3); line-height: 1.75; }
+    .cta-sec { background: #0a0e09; padding: clamp(3.5rem,7vw,6rem) 0; text-align: center; }
+    .cta-over { font-family: var(--mono); font-size: .65rem; letter-spacing: .2em; text-transform: uppercase; color: #4ade80; margin-bottom: 1rem; }
+    .cta-hl { font-family: var(--serif); font-size: clamp(2rem,5vw,3.5rem); font-weight: 900; color: white; line-height: 1.05; margin-bottom: 1rem; }
+    .cta-hl em { font-style: italic; color: #4ade80; }
+    .cta-sub { font-size: .95rem; color: #b8c0b5; line-height: 1.75; margin-bottom: 2rem; max-width: 460px; margin-left: auto; margin-right: auto; font-weight: 300; }
+    .cta-btns { display: flex; justify-content: center; gap: 1.25rem; flex-wrap: wrap; }
+    .btn-cta { display: inline-flex; align-items: center; gap: .5rem; background: #2D7A3A; color: white; font-family: var(--mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; padding: .9rem 2rem; border-radius: 5px; transition: background .2s; }
+    .btn-cta:hover { background: #3a9449; }
+    .btn-cta svg { width: 13px; height: 13px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    footer { border-top: 1px solid var(--rule); padding: 2rem 0; }
+    .foot-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: .75rem; }
+    .foot-brand { font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; color: var(--ink-3); }
+    .foot-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .foot-links a { font-family: var(--mono); font-size: .65rem; letter-spacing: .08em; color: var(--ink-3); transition: color .2s; }
+    .foot-links a:hover { color: var(--green); }
+    .foot-legal { font-family: var(--mono); font-size: .6rem; letter-spacing: .06em; color: var(--rule); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="nav-logo-mark">
+          <svg viewBox="0 0 16 16"><path d="M8 1L2 3.5V7.5c0 3.3 2.5 6.1 6 7 3.5-.9 6-3.7 6-7V3.5L8 1z"/><polyline points="5,8.5 7,11 11,5.5" stroke="white" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        </div>
+        Veriqo
+      </a>
+      <div class="nav-links">
+        <a href="/haccp">HACCP</a>
+        <a href="/menus">Menus</a>
+        <a href="/costing" class="active">Costing</a>
+        <a href="/prep-lists">Prep Lists</a>
+        <a href="/resources">Resources</a>
+        <a href="https://getveriqo.co.uk/app" class="nav-cta">Try free →</a>
+      </div>
+      <a href="https://getveriqo.co.uk/app" class="nav-mobile-cta">Try free →</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="/">Home</a><span>/</span>Costing</div>
+    <div class="hero-eyebrow">
+      <div class="hero-pip"></div>
+      <span class="hero-eyebrow-text">Costing, quotes &amp; invoices for private chefs</span>
+    </div>
+    <h1 class="hero-h1">Know your numbers.<br><em>Before you say yes.</em></h1>
+    <p class="hero-sub">Guessing your margins is the fastest way to lose money on a job. Veriqo Costing lets private chefs log ingredient costs per dish, set a margin, generate a professional quote and send an invoice — all connected to the menus and bookings you've already saved.</p>
+    <div class="hero-actions">
+      <a href="https://getveriqo.co.uk/app" class="btn-primary">
+        Start free trial
+        <svg viewBox="0 0 14 14"><path d="M3 7h8M7 3l4 4-4 4"/></svg>
+      </a>
+      <a href="/menus" class="btn-ghost">See Menus →</a>
+    </div>
+    <p class="hero-note"><span>14-day free trial</span> · No credit card required</p>
+  </div>
+</section>
+
+<div class="trust">
+  <div class="container">
+    <div class="trust-inner">
+      <span class="trust-item"><svg viewBox="0 0 14 14"><polyline points="2,7 5.5,10.5 12,3"/></svg>Food cost per cover, at a glance</span>
+      <span class="trust-item"><svg viewBox="0 0 14 14"><polyline points="2,7 5.5,10.5 12,3"/></svg>Professional quotes in one tap</span>
+      <span class="trust-item"><svg viewBox="0 0 14 14"><polyline points="2,7 5.5,10.5 12,3"/></svg>Invoices from your job records</span>
+      <span class="trust-item"><svg viewBox="0 0 14 14"><polyline points="2,7 5.5,10.5 12,3"/></svg>Connected to your menus &amp; bookings</span>
+    </div>
+  </div>
+</div>
+
+<section class="features">
+  <div class="container">
+    <div class="sec-label">
+      <span class="sec-num">01</span>
+      <h2 class="sec-title">Price with <em>confidence, not guesswork.</em></h2>
+      <div class="sec-rule"></div>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-cell">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="feat-name">Ingredient costing</div>
+        <p class="feat-body">Log the cost of each ingredient per dish — unit size, quantity used and price paid. Veriqo calculates cost per cover automatically as you add dishes to a job, so you can see whether a booking is worth taking before you commit.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="feat-name">Margin calculator</div>
+        <p class="feat-body">Set your target margin and Veriqo works out the selling price. Or enter your price and see the margin. Factor in extras — travel, accommodation, equipment hire — and your total quote builds in real time as you adjust.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="feat-name">Professional quotes</div>
+        <p class="feat-body">Generate a professional quote from your job costing in one tap. Includes per-cover and total pricing, what's included, deposit terms and a validity date. Clients get something polished; you get a paper trail for what was agreed.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <div class="feat-name">Invoicing</div>
+        <p class="feat-body">Issue invoices directly from a completed job. Everything from the booking and costing is already there — client name, event date, line items, total. Add payment terms, mark deposits paid, and send a PDF-ready invoice without re-entering anything.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="feat-name">Job profitability</div>
+        <p class="feat-body">See revenue, food cost and margin for every job in your history. Know which clients, event types or menus are most profitable over time — without running spreadsheets. Your most valuable signal for pricing future bookings.</p>
+      </div>
+      <div class="feat-cell">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="7"/><path d="M23 23L16.7 16.7"/></svg>
+        </div>
+        <div class="feat-name">Yield tracking</div>
+        <p class="feat-body">Prep loss affects your food cost but most chefs don't account for it when pricing. Veriqo lets you log a yield percentage per ingredient — so your cost calculations reflect actual usable yield, not what's on the delivery note.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how">
+  <div class="container">
+    <div class="sec-label">
+      <span class="sec-num">02</span>
+      <h2 class="sec-title">From enquiry to <em>invoice, handled.</em></h2>
+      <div class="sec-rule"></div>
+    </div>
+    <div class="steps">
+      <div>
+        <div class="step-num">Step 01</div>
+        <div class="step-title">Cost the menu</div>
+        <p class="step-body">Add your ingredient costs to each dish in your library. When a client enquires, select the dishes for their event and Veriqo calculates food cost per cover — before you've agreed anything.</p>
+      </div>
+      <div>
+        <div class="step-num">Step 02</div>
+        <div class="step-title">Send the quote</div>
+        <p class="step-body">Set your margin, add any extras, and generate a professional quote. Clients see a clean, itemised document. You see the margin behind it. Adjust in real time if they want to change the menu or covers.</p>
+      </div>
+      <div>
+        <div class="step-num">Step 03</div>
+        <div class="step-title">Invoice after service</div>
+        <p class="step-body">Once the job is done, open it in Veriqo and tap to generate the invoice. All the details are already there. Mark the deposit paid, issue the final invoice and record payment when it clears.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="faq-sec">
+  <div class="container">
+    <div class="sec-label">
+      <span class="sec-num">03</span>
+      <h2 class="sec-title">Common <em>questions.</em></h2>
+      <div class="sec-rule"></div>
+    </div>
+    <div class="faq-list">
+      <div>
+        <div class="faq-q">Do private chefs need to invoice clients?</div>
+        <p class="faq-a">Yes — any private chef operating as a sole trader or limited company should issue invoices for their services. A proper invoice documents what was agreed, when payment is due, and provides a paper trail for your accounts. Veriqo generates professional invoices from your job records in one tap.</p>
+      </div>
+      <div>
+        <div class="faq-q">How should a private chef calculate their prices?</div>
+        <p class="faq-a">Most private chefs price by calculating total ingredient cost, then applying a margin to cover labour, travel, overheads and profit. A common starting point is to cost ingredients per cover and apply a 3–5× multiplier, then layer on any additional charges. The exact multiplier depends on your market and service level. Veriqo lets you log ingredient costs per dish, set a margin target, and see your job total before agreeing to anything.</p>
+      </div>
+      <div>
+        <div class="faq-q">What should a private chef quote include?</div>
+        <p class="faq-a">A complete private chef quote should include the total price per cover and overall, a clear statement of what is and isn't included (ingredients, travel, service), any dietary and allergen disclaimers, payment terms and deposit amount, and a quote validity date. Veriqo generates quotes from your job costing data automatically, so you don't have to write each one from scratch.</p>
+      </div>
+      <div>
+        <div class="faq-q">Is Veriqo only for costing, or is it a full private chef app?</div>
+        <p class="faq-a">Veriqo Pro includes Costing alongside HACCP food safety records, Menus &amp; booking management, and Prep Lists — all connected. The Costing module is available on its own as the Starter plan if you only need that. See <a href="/" style="color:var(--green);">pricing on the homepage</a>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-sec">
+  <div class="container">
+    <p class="cta-over">Get started today</p>
+    <h2 class="cta-hl">Price every job.<br><em>Get paid properly.</em></h2>
+    <p class="cta-sub">Try Veriqo free for 14 days. No credit card. Costing, HACCP, Menus and Prep Lists — all included.</p>
+    <div class="cta-btns">
+      <a href="https://getveriqo.co.uk/app" class="btn-cta">
+        Start free trial
+        <svg viewBox="0 0 14 14"><path d="M3 7h8M7 3l4 4-4 4"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-inner">
+      <div class="foot-brand">Veriqo — a Mise Labs product by Side Order Catering</div>
+      <div class="foot-links">
+        <a href="/">Home</a>
+        <a href="/haccp">HACCP</a>
+        <a href="/menus">Menus</a>
+        <a href="/costing">Costing</a>
+        <a href="/prep-lists">Prep Lists</a>
+        <a href="/resources">Resources</a>
+        <a href="https://getveriqo.co.uk/app">App</a>
+        <a href="mailto:hello@getveriqo.co.uk">Contact</a>
+      </div>
+    </div>
+    <div class="foot-legal">© 2026 Side Order Catering Ltd · hello@getveriqo.co.uk</div>
+  </div>
+</footer>
+
+</body>
+</html>
