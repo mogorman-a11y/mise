@@ -2795,7 +2795,7 @@ function logKitchenAssess() {
   if(status==='ok')toast('Saved — kitchen assessment complete'); else if(status==='warn')toast('Warning — issues noted','warn'); else toast('Alert — kitchen unsuitable',false);
 }
 
-function logAllergen() {
+function logHaccpAllergen() {
   var client = document.getElementById('al-client').value.trim();
   var dish = document.getElementById('al-dish').value.trim();
   var confirmed = document.getElementById('al-confirmed').value;
@@ -2808,7 +2808,7 @@ function logAllergen() {
   saveHaccpToday();
   document.getElementById('al-client').value=''; document.getElementById('al-dish').value=''; document.getElementById('al-notes').value='';
   ALLERGENS_14.forEach(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
-  renderSection('allergen'); updateHaccpDashboard();
+  renderSection_PC('allergen'); updateHaccpDashboard();
   toast('Saved — allergen record for '+dish);
 }
 
