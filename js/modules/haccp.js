@@ -558,6 +558,7 @@ function haccpTab(name) {
   if(name==='credentials') renderCredentials();
   if(name==='inspector') renderInspector();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
+  if(name==='allergen') { renderGuestAllergenChecks(); renderAllergenGuests(); }
   if(name==='incident') { var _itf=document.getElementById('inc-time'); if(_itf&&!_itf.value) _itf.value=_incidentNowLocal(); }
   // Auto-fill client/location from today's booking — only when field is empty
   if (name === 'kitchenassess' || name === 'transport' || name === 'allergen') {
@@ -2804,13 +2805,118 @@ function logHaccpAllergen() {
   var present = ALLERGENS_14.filter(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); return el&&el.checked; });
   var status = present.length > 0 ? 'warn' : 'ok';
   var msg = present.length > 0 ? present.length+' allergen'+(present.length>1?'s':'')+' — '+confirmed.split(' —')[0] : 'No allergens — '+confirmed.split(' —')[0];
-  records.push({type:'allergen', client:client, dish:dish, allergens:present, confirmed:confirmed, notes:notes, time:now(), status:status, msg:msg});
+  var rec = {type:'allergen', client:client, dish:dish, allergens:present, confirmed:confirmed, notes:notes, time:now(), status:status, msg:msg};
+  if (_editingAllergenIdx !== null) {
+    rec.time = records[_editingAllergenIdx].time;
+    records[_editingAllergenIdx] = rec;
+    _editingAllergenIdx = null;
+    var btn = document.getElementById('al-save-btn');
+    if (btn) btn.textContent = 'Save allergen record';
+  } else {
+    records.push(rec);
+  }
   saveHaccpToday();
   document.getElementById('al-client').value=''; document.getElementById('al-dish').value=''; document.getElementById('al-notes').value='';
   ALLERGENS_14.forEach(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
-  renderSection_PC('allergen'); updateHaccpDashboard();
-  toast('Saved — allergen record for '+dish);
+  renderSection_PC('allergen'); renderAllergenGuests(); updateHaccpDashboard();
+  var guests = settings.allergenGuests || [];
+  var conflicts = [];
+  guests.forEach(function(g){
+    var hits = (g.allergens||[]).filter(function(a){ return present.indexOf(a) !== -1; });
+    if (hits.length) conflicts.push(g.name+': '+hits.join(', '));
+  });
+  if (conflicts.length) {
+    toast('⚠ ALLERGEN CONFLICT — '+conflicts.join(' | '), false);
+  } else {
+    toast('Saved — allergen record for '+dish);
+  }
 }
+
+function editHaccpAllergen(recIdx) {
+  var r = records[recIdx];
+  if (!r || r.type !== 'allergen') return;
+  _editingAllergenIdx = recIdx;
+  document.getElementById('al-client').value = r.client || '';
+  document.getElementById('al-dish').value = r.dish || '';
+  document.getElementById('al-notes').value = r.notes || '';
+  document.getElementById('al-confirmed').value = r.confirmed || 'Yes — verbally confirmed';
+  ALLERGENS_14.forEach(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); if(el) el.checked=(r.allergens||[]).indexOf(a)!==-1; });
+  var btn = document.getElementById('al-save-btn');
+  if (btn) btn.textContent = 'Update allergen record';
+  window.scrollTo(0, 0);
+}
+
+function deleteHaccpAllergen(recIdx) {
+  if (!confirm('Delete this allergen record?')) return;
+  records.splice(recIdx, 1);
+  if (_editingAllergenIdx === recIdx) { _editingAllergenIdx = null; var btn=document.getElementById('al-save-btn'); if(btn) btn.textContent='Save allergen record'; }
+  saveHaccpToday();
+  renderSection_PC('allergen'); renderAllergenGuests(); updateHaccpDashboard();
+}
+
+function renderGuestAllergenChecks() {
+  var c = document.getElementById('ga-allergen-checks');
+  if (!c) return;
+  c.innerHTML = ALLERGENS_14.map(function(a){
+    var id = 'ga-' + a.replace(/\s/g,'_');
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555;padding:4px 0;cursor:pointer">'+
+      '<input type="checkbox" id="'+id+'" style="width:16px;height:16px;accent-color:#c0392b"> '+a+'</label>';
+  }).join('');
+}
+
+function addAllergenGuest() {
+  var nameEl = document.getElementById('ga-name');
+  if (!nameEl) return;
+  var name = nameEl.value.trim();
+  if (!name) { toast('Please enter a guest name', false); return; }
+  var allergens = ALLERGENS_14.filter(function(a){ var el=document.getElementById('ga-'+a.replace(/\s/g,'_')); return el&&el.checked; });
+  if (!settings.allergenGuests) settings.allergenGuests = [];
+  settings.allergenGuests.push({id:'g'+Date.now(), name:name, allergens:allergens});
+  saveHaccpSettings();
+  nameEl.value = '';
+  ALLERGENS_14.forEach(function(a){ var el=document.getElementById('ga-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
+  renderAllergenGuests();
+  toast('Guest added — '+name);
+}
+
+function deleteAllergenGuest(id) {
+  if (!settings.allergenGuests) return;
+  settings.allergenGuests = settings.allergenGuests.filter(function(g){ return g.id !== id; });
+  saveHaccpSettings();
+  renderAllergenGuests();
+}
+
+function renderAllergenGuests() {
+  var c = document.getElementById('guest-allergen-list');
+  if (!c) return;
+  var guests = settings.allergenGuests || [];
+  if (!guests.length) { c.innerHTML = '<div class="empty" style="padding:10px 0">No guests added yet.</div>'; return; }
+  var dishAllergens = {};
+  records.filter(function(r){ return r.type==='allergen'; }).forEach(function(r){
+    (r.allergens||[]).forEach(function(a){ if(!dishAllergens[a]) dishAllergens[a]=[]; dishAllergens[a].push(r.dish); });
+  });
+  c.innerHTML = guests.map(function(g){
+    var conflicts = (g.allergens||[]).filter(function(a){ return dishAllergens[a]; });
+    var conflictHtml = '';
+    if (conflicts.length) {
+      var detail = conflicts.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; ');
+      conflictHtml = '<div style="background:#fde8e8;border:1px solid #f5c6c6;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:13px;color:#A32D2D;font-weight:600">⚠ CONFLICT — '+detail+'</div>';
+    }
+    var allergenTags = (g.allergens||[]).length
+      ? (g.allergens||[]).map(function(a){ return '<span style="background:#f5f4f0;border:1px solid #ccc;border-radius:4px;padding:1px 6px;font-size:12px;color:#555">'+a+'</span>'; }).join(' ')
+      : '<span style="font-size:12px;color:#888">No specific allergens recorded</span>';
+    return '<div style="background:#fff;border:1px solid #e0ddd6;border-radius:8px;padding:10px 12px;margin-bottom:8px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<div style="font-weight:600;font-size:14px">'+g.name+'</div>'
+      +'<button onclick="deleteAllergenGuest(\''+g.id+'\')" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0 4px;line-height:1" title="Remove guest">×</button>'
+      +'</div>'
+      +'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+allergenTags+'</div>'
+      +conflictHtml
+      +'</div>';
+  }).join('');
+}
+
+var _editingAllergenIdx = null;
 
 var _trType = 'cold';
 
@@ -2996,6 +3102,7 @@ function renderSection_PC(type) {
     var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.type==='incident'?r.incidentType : r.by||'';
     var extra = '';
     if (r.type==='allergen' && r.allergens && r.allergens.length) extra += '<div class="log-time">'+r.allergens.join(', ')+'</div>';
+    if (r.type==='allergen') extra += '<div style="display:flex;gap:6px;margin-top:6px"><button onclick="event.stopPropagation();editHaccpAllergen('+recIdx+')" style="padding:3px 10px;font-size:12px;background:#f5f4f0;border:1px solid #ccc;border-radius:5px;cursor:pointer;font-family:inherit">Edit</button><button onclick="event.stopPropagation();deleteHaccpAllergen('+recIdx+')" style="padding:3px 10px;font-size:12px;background:#fde8e8;border:1px solid #f5c6c6;border-radius:5px;color:#A32D2D;cursor:pointer;font-family:inherit">Delete</button></div>';
     if (r.type==='transport') extra += '<div class="log-time">'+r.startTemp+'°C at '+r.startTime+' → '+r.endTemp+'°C at '+r.endTime+'</div>';
     if (r.type==='incident') {
       extra += '<div class="log-time">Severity: '+r.severity+'</div>';

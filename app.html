@@ -549,7 +549,17 @@
           <option>Not applicable — no allergens present</option>
         </select>
       </div>
-      <button class="btn-primary" onclick="logHaccpAllergen()">Save allergen record</button>
+      <button class="btn-primary" id="al-save-btn" onclick="logHaccpAllergen()">Save allergen record</button>
+    </div>
+    <div class="divider">Client dietary requirements</div>
+    <div class="card">
+      <div class="info-box">Add each guest and tick their allergens. A warning will appear if a logged dish contains one of their allergens.</div>
+      <div class="form-group"><label class="form-label">Guest name</label><input class="form-input" type="text" id="ga-name" placeholder="e.g. Table 3 — Mrs Henderson"></div>
+      <div class="form-group"><label class="form-label">Allergens to avoid</label>
+        <div id="ga-allergen-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"></div>
+      </div>
+      <button class="btn-primary" onclick="addAllergenGuest()" style="margin-top:4px">Add guest</button>
+      <div id="guest-allergen-list" style="margin-top:12px"></div>
     </div>
     <div class="divider">Allergen records</div>
     <div id="allergen-log"><div class="empty">No allergen records yet — log the allergens in each dish and confirm you've informed your client.</div></div>
@@ -3155,7 +3165,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=44"></script>
+<script src="js/modules/haccp.js?v=45"></script>
 <script src="js/modules/menus.js?v=21"></script>
 <script src="js/modules/costing.js?v=30"></script>
 
