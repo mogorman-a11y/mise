@@ -101,7 +101,7 @@
 .tooltip-bubble { position:fixed;z-index:9800;background:var(--vq-ink);color:#fff;font-size:12px;line-height:1.55;padding:10px 14px;border-radius:var(--vq-radius-md);max-width:260px;box-shadow:var(--vq-shadow-md); }
 
 /* Old .toast — kept for HACCP inline JS compat; shell.css !important rules reposition it */
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 13px; padding: 10px 20px; border-radius: 20px; display: none; z-index: 99; white-space: nowrap; font-family: var(--vq-font); }
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 13px; padding: 10px 20px; border-radius: 20px; display: none; z-index: 99; white-space: normal; max-width: min(90vw, 380px); text-align: center; word-break: break-word; font-family: var(--vq-font); }
 .toast.show { display: block; }
 
 /* ── Day/log blocks ───────────────────────────────────────── */
