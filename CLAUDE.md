@@ -194,6 +194,15 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
 
+### v45 — allergen log edit/delete + guest dietary requirements
+- Edit/Delete buttons on each allergen log row. `editHaccpAllergen(recIdx)` pre-fills form; save button text changes to "Update allergen record". `deleteHaccpAllergen(recIdx)` splices record with confirmation.
+- `_editingAllergenIdx` module-level var tracks edit state; reset to null on save or delete.
+- New "Client dietary requirements" card in `#tab-allergen`: guest name + allergen tickboxes (`ga-*` IDs — avoids collision with dish form `al-*` and Menus form `al-a-*`).
+- `addAllergenGuest()` / `deleteAllergenGuest(id)` persist to `settings.allergenGuests = [{id, name, allergens:[]}]`.
+- `renderAllergenGuests()` shows a red conflict banner under each guest whose allergens appear in any today's allergen log record.
+- `renderGuestAllergenChecks()` populates `#ga-allergen-checks`. Both called from `haccpTab('allergen')`.
+- On save, conflict toast fires immediately if any guest is affected.
+
 ### v41 — restore allergen AI scanner in HACCP allergen log
 `handleVeriqoScanLabel` retargeted from the deleted `tab-job` form (`menu-dish-name` / `mda-*` checkboxes) to the live `tab-allergen` form (`al-dish` / `al-*` checkboxes). "✨ Scan Label (Photo)" button and hidden file input restored to `#tab-allergen` in app.html. The backing JS and `/api/ai-scan` endpoint were always intact — only the HTML button was missing (accidentally deleted in commit `64e1578` as part of "remove module-picker dead code").
 
@@ -275,8 +284,8 @@ js/
     subscription.js
     idb-queue.js
   modules/
-    haccp.js   (v40)
-    menus.js   (v18)
+    haccp.js   (v45)
+    menus.js   (v21)
     prep.js    (v9)
     costing.js
     dashboard.js (v5)
