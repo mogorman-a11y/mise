@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=41` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=42` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=21` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |

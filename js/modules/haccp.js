@@ -184,6 +184,7 @@ var TILE_DEFS = [
   {id:'illness',     icon:'🤒',  label:'Staff illness',        subDefault:'No records yet'},
   {id:'foodlibrary', icon:'📋',  label:'Food library',         subDefault:'Dishes for logging'},
   {id:'kitchenassess',icon:'🏠', label:'Kitchen assessment',   subDefault:'Pre-job check',      pc:true},
+  {id:'allergen',    icon:'⚠️',  label:'Allergen log',         subDefault:'Dishes &amp; allergens', pc:true},
   {id:'transport',   icon:'🚗',  label:'Transport temps',      subDefault:'Food in transit',    pc:true},
   {id:'mobileset',   icon:'🔧',  label:'Mobile setup',         subDefault:'Temporary kitchen',  pc:true},
   {id:'credentials', icon:'📜',  label:'My credentials',       subDefault:'Certs &amp; expiry dates', pc:true},
