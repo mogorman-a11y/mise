@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v46**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v47**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=46` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=47` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=21` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
@@ -284,7 +284,7 @@ js/
     subscription.js
     idb-queue.js
   modules/
-    haccp.js   (v46)
+    haccp.js   (v47)
     menus.js   (v21)
     prep.js    (v9)
     costing.js

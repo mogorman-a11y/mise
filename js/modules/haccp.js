@@ -2815,7 +2815,16 @@ function addAllergenGuest() {
   nameEl.value = '';
   ALLERGENS_14.forEach(function(a){ var el=document.getElementById('ga-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
   renderAllergenGuests();
-  toast('Guest added — '+name);
+  var dishAllergens = {};
+  records.filter(function(r){ return r.type==='allergen'; }).forEach(function(r){
+    (r.allergens||[]).forEach(function(a){ if(!dishAllergens[a]) dishAllergens[a]=[]; dishAllergens[a].push(r.dish); });
+  });
+  var hits = allergens.filter(function(a){ return dishAllergens[a]; });
+  if (hits.length) {
+    toast('⚠ ALLERGEN CONFLICT — '+name+': '+hits.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; '), false);
+  } else {
+    toast('Guest added — '+name);
+  }
 }
 
 function deleteAllergenGuest(id) {
@@ -2826,33 +2835,51 @@ function deleteAllergenGuest(id) {
 }
 
 function renderAllergenGuests() {
-  var c = document.getElementById('guest-allergen-list');
-  if (!c) return;
-  var guests = settings.allergenGuests || [];
-  if (!guests.length) { c.innerHTML = '<div class="empty" style="padding:10px 0">No guests added yet.</div>'; return; }
-  var dishAllergens = {};
-  records.filter(function(r){ return r.type==='allergen'; }).forEach(function(r){
-    (r.allergens||[]).forEach(function(a){ if(!dishAllergens[a]) dishAllergens[a]=[]; dishAllergens[a].push(r.dish); });
-  });
-  c.innerHTML = guests.map(function(g){
-    var conflicts = (g.allergens||[]).filter(function(a){ return dishAllergens[a]; });
-    var conflictHtml = '';
-    if (conflicts.length) {
-      var detail = conflicts.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; ');
-      conflictHtml = '<div style="background:#fde8e8;border:1px solid #f5c6c6;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:13px;color:#A32D2D;font-weight:600">⚠ CONFLICT — '+detail+'</div>';
+  try {
+    var c = document.getElementById('guest-allergen-list');
+    var banner = document.getElementById('allergen-conflict-banner');
+    if (!c) return;
+    var guests = settings.allergenGuests || [];
+    if (!guests.length) {
+      c.innerHTML = '<div class="empty" style="padding:10px 0">No guests added yet.</div>';
+      if (banner) { banner.style.display = 'none'; banner.innerHTML = ''; }
+      return;
     }
-    var allergenTags = (g.allergens||[]).length
-      ? (g.allergens||[]).map(function(a){ return '<span style="background:#f5f4f0;border:1px solid #ccc;border-radius:4px;padding:1px 6px;font-size:12px;color:#555">'+a+'</span>'; }).join(' ')
-      : '<span style="font-size:12px;color:#888">No specific allergens recorded</span>';
-    return '<div style="background:#fff;border:1px solid #e0ddd6;border-radius:8px;padding:10px 12px;margin-bottom:8px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center">'
-      +'<div style="font-weight:600;font-size:14px">'+g.name+'</div>'
-      +'<button onclick="deleteAllergenGuest(\''+g.id+'\')" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0 4px;line-height:1" title="Remove guest">×</button>'
-      +'</div>'
-      +'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+allergenTags+'</div>'
-      +conflictHtml
-      +'</div>';
-  }).join('');
+    var dishAllergens = {};
+    records.filter(function(r){ return r.type==='allergen'; }).forEach(function(r){
+      (r.allergens||[]).forEach(function(a){ if(!dishAllergens[a]) dishAllergens[a]=[]; dishAllergens[a].push(r.dish); });
+    });
+    var allConflictLines = [];
+    c.innerHTML = guests.map(function(g){
+      var conflicts = (g.allergens||[]).filter(function(a){ return dishAllergens[a]; });
+      var conflictHtml = '';
+      if (conflicts.length) {
+        var detail = conflicts.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; ');
+        allConflictLines.push(g.name+' — '+detail);
+        conflictHtml = '<div style="background:#fde8e8;border:1px solid #f5c6c6;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:13px;color:#A32D2D;font-weight:600">⚠ CONFLICT — '+detail+'</div>';
+      }
+      var allergenTags = (g.allergens||[]).length
+        ? (g.allergens||[]).map(function(a){ return '<span style="background:'+(conflicts.indexOf(a)!==-1?'#fde8e8':'#f5f4f0')+';border:1px solid '+(conflicts.indexOf(a)!==-1?'#f5c6c6':'#ccc')+';border-radius:4px;padding:1px 6px;font-size:12px;color:'+(conflicts.indexOf(a)!==-1?'#A32D2D':'#555')+'">'+a+'</span>'; }).join(' ')
+        : '<span style="font-size:12px;color:#888">No specific allergens recorded</span>';
+      return '<div style="background:#fff;border:1px solid '+(conflicts.length?'#f5c6c6':'#e0ddd6')+';border-radius:8px;padding:10px 12px;margin-bottom:8px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<div style="font-weight:600;font-size:14px">'+g.name+'</div>'
+        +'<button onclick="deleteAllergenGuest(\''+g.id+'\')" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0 4px;line-height:1" title="Remove guest">×</button>'
+        +'</div>'
+        +'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+allergenTags+'</div>'
+        +conflictHtml
+        +'</div>';
+    }).join('');
+    if (banner) {
+      if (allConflictLines.length) {
+        banner.style.display = 'block';
+        banner.innerHTML = '⚠ ALLERGEN CONFLICT<br>' + allConflictLines.join('<br>');
+      } else {
+        banner.style.display = 'none';
+        banner.innerHTML = '';
+      }
+    }
+  } catch(e) { console.error('[Veriqo] renderAllergenGuests error:', e); }
 }
 
 var _editingAllergenIdx = null;
