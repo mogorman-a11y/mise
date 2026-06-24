@@ -1783,67 +1783,6 @@ function _setMenuDishAllergenCheckboxes(allergens) {
   });
 }
 
-async function handleVeriqoScanLabel(event) {
-  var file = event.target.files && event.target.files[0];
-  if (!file) return;
-  event.target.value = '';
-
-  if (file.size > 4 * 1024 * 1024) {
-    toast('File too large — please use an image under 4MB', false);
-    return;
-  }
-
-  var btn = document.getElementById('vscan-label-btn');
-  var origHTML = btn ? btn.innerHTML : '';
-  if (btn) { btn.innerHTML = '⏳ Scanning…'; btn.disabled = true; }
-
-  function resetBtn(failed) {
-    if (!btn) return;
-    if (failed) {
-      btn.innerHTML = '❌ Scan failed';
-      btn.disabled = true;
-      setTimeout(function() { btn.innerHTML = origHTML; btn.disabled = false; }, 3000);
-    } else {
-      btn.innerHTML = origHTML;
-      btn.disabled = false;
-    }
-  }
-
-  try {
-    var dataUrl = await _veriqoReadFileAsDataUrl(file);
-    var base64 = dataUrl.indexOf(',') !== -1 ? dataUrl.split(',')[1] : dataUrl;
-
-    var res = await fetch('/api/ai-scan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'label', image: base64, mimeType: file.type || 'image/jpeg' })
-    });
-    var data = await res.json();
-
-    if (!res.ok || data.error) {
-      resetBtn(true);
-      toast('Scan failed: ' + (data.error || 'server error'), false);
-      console.error('[Veriqo] Scan label API:', data.error);
-      return;
-    }
-
-    var nameEl = document.getElementById('al-dish');
-    if (nameEl && data.ingredientName) nameEl.value = data.ingredientName;
-    var normalised = (data.allergens || []).map(_normaliseAllergenForVeriqo).filter(Boolean);
-    ALLERGENS_14.forEach(function(a) {
-      var el = document.getElementById('al-' + a.replace(/\s/g, '_'));
-      if (el) el.checked = normalised.indexOf(a) !== -1;
-    });
-    var count = normalised.length;
-    resetBtn(false);
-    toast('✨ Label scanned — ' + (count ? count + ' allergen' + (count !== 1 ? 's' : '') + ' found' : 'no allergens declared'), true);
-  } catch (err) {
-    resetBtn(true);
-    toast('Scan failed — check your connection', false);
-    console.error('[Veriqo] Scan label fetch:', err);
-  }
-}
-
 async function handleVeriqoMagicImport(event) {
   var file = event.target.files && event.target.files[0];
   if (!file) return;
