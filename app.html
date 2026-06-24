@@ -535,6 +535,8 @@
       <div class="info-box">Record allergens present in each dish and obtain client confirmation. The 14 major allergens are listed below.</div>
       <div class="form-group"><label class="form-label">Client / event</label><input class="form-input" type="text" id="al-client" placeholder="e.g. Henderson dinner"></div>
       <div class="form-group"><label class="form-label">Dish / menu item</label><input class="form-input" type="text" id="al-dish" placeholder="e.g. Roast chicken with cream sauce"></div>
+      <button type="button" id="vscan-label-btn" onclick="document.getElementById('vscan-label-input').click()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px 12px;background:#f5f4f0;border:1px solid #2D7A3A;border-radius:8px;color:#2D7A3A;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;-webkit-tap-highlight-color:transparent">✨ Scan Label (Photo) — auto-fill dish &amp; allergens</button>
+      <input type="file" id="vscan-label-input" accept="image/*" style="display:none" onchange="handleVeriqoScanLabel(event)">
       <div class="form-group"><label class="form-label">Allergens present</label>
         <div id="allergen-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"></div>
       </div>
@@ -3153,7 +3155,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=40"></script>
+<script src="js/modules/haccp.js?v=41"></script>
 <script src="js/modules/menus.js?v=19"></script>
 <script src="js/modules/costing.js?v=30"></script>
 

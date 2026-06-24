@@ -1825,10 +1825,14 @@ async function handleVeriqoScanLabel(event) {
       return;
     }
 
-    var nameEl = document.getElementById('menu-dish-name');
+    var nameEl = document.getElementById('al-dish');
     if (nameEl && data.ingredientName) nameEl.value = data.ingredientName;
-    _setMenuDishAllergenCheckboxes(data.allergens || []);
-    var count = (data.allergens || []).length;
+    var normalised = (data.allergens || []).map(_normaliseAllergenForVeriqo).filter(Boolean);
+    ALLERGENS_14.forEach(function(a) {
+      var el = document.getElementById('al-' + a.replace(/\s/g, '_'));
+      if (el) el.checked = normalised.indexOf(a) !== -1;
+    });
+    var count = normalised.length;
     resetBtn(false);
     toast('✨ Label scanned — ' + (count ? count + ' allergen' + (count !== 1 ? 's' : '') + ' found' : 'no allergens declared'), true);
   } catch (err) {

@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=40` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=41` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=19` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
@@ -194,6 +194,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
 
+### v41 — restore allergen AI scanner in HACCP allergen log
+`handleVeriqoScanLabel` retargeted from the deleted `tab-job` form (`menu-dish-name` / `mda-*` checkboxes) to the live `tab-allergen` form (`al-dish` / `al-*` checkboxes). "✨ Scan Label (Photo)" button and hidden file input restored to `#tab-allergen` in app.html. The backing JS and `/api/ai-scan` endpoint were always intact — only the HTML button was missing (accidentally deleted in commit `64e1578` as part of "remove module-picker dead code").
+
 ### v39 — configurable home screen tiles
 - `TILE_DEFS` array defines all regular tiles (id, icon, label, subDefault, pc flag)
 - `renderTileGrid()` builds `#haccp-tile-grid` dynamically from `settings.tileOrder` + `settings.enabledTiles`; wide fixed tiles (Records, Suppliers, EHO, Add more) are always appended at the end
@@ -287,7 +290,11 @@ css/
   dashboard.css
 api/                        ← Vercel serverless functions
 veriqo-landing.html
-index.html                  ← getveriqo.co.uk/ homepage (do not overwrite)
+index.html                  ← getveriqo.co.uk/ homepage — nav has module page links only (no scroll anchors)
+haccp.html                  ← /haccp module landing page (SEO)
+menus.html                  ← /menus module landing page (SEO)
+costing.html                ← /costing module landing page (SEO)
+prep-lists.html             ← /prep-lists module landing page (SEO)
 ```
 
 **Retired files** still on disk (do not load or edit): `mise.html`, `yield.html`, `mise-sync.js`, `yield-sync.js`, various old manifests. They are not served.
