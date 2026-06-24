@@ -24,7 +24,7 @@
 | File | Version | Where set |
 |---|---|---|
 | `js/modules/haccp.js` | `?v=41` | `app.html` script tag |
-| `js/modules/menus.js` | `?v=19` | `app.html` |
+| `js/modules/menus.js` | `?v=20` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
 | `sync.js` | — | no version param needed (SW network-first) |
