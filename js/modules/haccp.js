@@ -558,7 +558,7 @@ function haccpTab(name) {
   if(name==='credentials') renderCredentials();
   if(name==='inspector') renderInspector();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
-  if(name==='allergen') { renderGuestAllergenChecks(); renderAllergenGuests(); }
+  if(name==='allergen') { renderAllergenChecks(); renderGuestAllergenChecks(); renderAllergenGuests(); }
   if(name==='incident') { var _itf=document.getElementById('inc-time'); if(_itf&&!_itf.value) _itf.value=_incidentNowLocal(); }
   // Auto-fill client/location from today's booking — only when field is empty
   if (name === 'kitchenassess' || name === 'transport' || name === 'allergen') {
