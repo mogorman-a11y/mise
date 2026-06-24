@@ -1327,6 +1327,22 @@ function updateHaccpDashboard() {
   }
   if(currentFilter) refreshFilterPanel(currentFilter);
   updateNextJobBanner();
+  // Update home-screen allergen conflict banner
+  var _acGuests = settings.allergenGuests || [];
+  if (_acGuests.length) {
+    var _acDishAllergens = {};
+    records.filter(function(r){ return r.type==='allergen'; }).forEach(function(r){
+      (r.allergens||[]).forEach(function(a){ if(!_acDishAllergens[a]) _acDishAllergens[a]=[]; _acDishAllergens[a].push(r.dish); });
+    });
+    var _acLines = [];
+    _acGuests.forEach(function(g){
+      var hits = (g.allergens||[]).filter(function(a){ return _acDishAllergens[a]; });
+      if (hits.length) _acLines.push(g.name+' — '+hits.map(function(a){ return a+' (in: '+_acDishAllergens[a].join(', ')+')'; }).join('; '));
+    });
+    _renderAllergenConflictBanners(_acLines);
+  } else {
+    _renderAllergenConflictBanners([]);
+  }
 }
 
 function updateNextJobBanner() {
@@ -2870,35 +2886,41 @@ function renderAllergenGuests() {
         +conflictHtml
         +'</div>';
     }).join('');
-    if (banner) {
-      if (allConflictLines.length) {
-        var guestCount = allConflictLines.length;
-        var summary = guestCount === 1 ? '1 guest has an allergen conflict' : guestCount + ' guests have allergen conflicts';
-        var detailHtml = allConflictLines.map(function(line){
-          return '<div style="margin-top:4px;font-weight:400;font-size:13px">'+line+'</div>';
-        }).join('');
-        banner.style.display = 'block';
-        banner.style.cursor = 'pointer';
-        banner.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center">'
-          +'<span>⚠ ALLERGEN CONFLICT — '+summary+'</span>'
-          +'<span id="allergen-banner-toggle" style="font-size:11px;font-weight:400;text-decoration:underline;margin-left:8px;flex-shrink:0">Show details</span>'
-          +'</div>'
-          +'<div id="allergen-banner-detail" style="display:none">'+detailHtml+'</div>';
-        banner.onclick = function() {
-          var detail = document.getElementById('allergen-banner-detail');
-          var toggle = document.getElementById('allergen-banner-toggle');
-          if (!detail) return;
-          var open = detail.style.display !== 'none';
-          detail.style.display = open ? 'none' : 'block';
-          if (toggle) toggle.textContent = open ? 'Show details' : 'Hide details';
-        };
-      } else {
-        banner.style.display = 'none';
-        banner.innerHTML = '';
-        banner.onclick = null;
-      }
-    }
+    _renderAllergenConflictBanners(allConflictLines);
   } catch(e) { console.error('[Veriqo] renderAllergenGuests error:', e); }
+}
+
+function _renderAllergenConflictBanners(conflictLines) {
+  ['allergen-conflict-banner', 'allergen-conflict-banner-home'].forEach(function(id) {
+    var banner = document.getElementById(id);
+    if (!banner) return;
+    if (conflictLines && conflictLines.length) {
+      var n = conflictLines.length;
+      var summary = n === 1 ? '1 guest has an allergen conflict' : n + ' guests have allergen conflicts';
+      var detailHtml = conflictLines.map(function(line){
+        return '<div style="margin-top:4px;font-weight:400;font-size:13px">'+line+'</div>';
+      }).join('');
+      banner.style.display = 'block';
+      banner.style.cursor = 'pointer';
+      banner.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<span>⚠ ALLERGEN CONFLICT — '+summary+'</span>'
+        +'<span class="acb-toggle" style="font-size:11px;font-weight:400;text-decoration:underline;margin-left:8px;flex-shrink:0">Show details</span>'
+        +'</div>'
+        +'<div class="acb-detail" style="display:none">'+detailHtml+'</div>';
+      banner.onclick = function() {
+        var detail = this.querySelector('.acb-detail');
+        var toggle = this.querySelector('.acb-toggle');
+        if (!detail) return;
+        var open = detail.style.display !== 'none';
+        detail.style.display = open ? 'none' : 'block';
+        if (toggle) toggle.textContent = open ? 'Show details' : 'Hide details';
+      };
+    } else {
+      banner.style.display = 'none';
+      banner.innerHTML = '';
+      banner.onclick = null;
+    }
+  });
 }
 
 var _editingAllergenIdx = null;
