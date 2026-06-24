@@ -194,6 +194,24 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
 
+### v50 — allergen conflict banner on HACCP home screen
+- `#allergen-conflict-banner-home` div added above install banner on `#tab-home`.
+- `_renderAllergenConflictBanners(conflictLines)` shared helper drives both the allergen-tab banner and the home-screen banner from one array. Replaces the inline banner update that was inside `renderAllergenGuests()`.
+- `updateHaccpDashboard()` rebuilds the home banner on every dashboard refresh — so it stays current whenever records or guests change.
+- Banner is collapsed by default ("⚠ ALLERGEN CONFLICT — N guest(s)"); tap "Show details" to expand with guest name, allergen, and dish. Uses `.acb-toggle` / `.acb-detail` class selectors inside the banner element (no duplicate IDs).
+
+### v49 — toast overflow fix; conflict banner expandable
+- Toast CSS: `white-space: nowrap` → `normal`; `max-width: min(90vw, 380px)` added so long conflict messages wrap instead of running off screen. Changed in `css/haccp.css` (bumped to `?v=3`).
+- Conflict banner collapsed by default; tap to expand/collapse details.
+
+### v48 — allergen checkboxes refresh on tab open; clearer form label
+- `renderAllergenChecks()` now called from `haccpTab('allergen')` (in addition to `initPrivateChefMode`) so the dish allergen grid is always fresh.
+- Form label explicitly states allergens must be ticked for conflict detection. **Critical UX note:** without the AI scan, users must manually tick allergen boxes before saving a dish record — if they don't, the record has no allergens and no conflict is detected.
+
+### v46 — removed allergen label AI scanner
+- `handleVeriqoScanLabel` removed from haccp.js; scan button and file input removed from `#tab-allergen`.
+- Shared helpers `_normaliseAllergenForVeriqo`, `_veriqoReadFileAsDataUrl`, `_setMenuDishAllergenCheckboxes` retained — still used by `handleVeriqoMagicImport`.
+
 ### v45 — allergen log edit/delete + guest dietary requirements
 - Edit/Delete buttons on each allergen log row. `editHaccpAllergen(recIdx)` pre-fills form; save button text changes to "Update allergen record". `deleteHaccpAllergen(recIdx)` splices record with confirmation.
 - `_editingAllergenIdx` module-level var tracks edit state; reset to null on save or delete.
