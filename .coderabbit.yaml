@@ -1,0 +1,55 @@
+language: "en-US"
+
+reviews:
+  profile: "assertive"  # chill | assertive — assertive surfaces more findings, good for a solo dev who wants a thorough second pair of eyes
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  sequence_diagrams: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+
+  path_instructions:
+    - path: "app/api/**/*.ts"
+      instructions: |
+        - Confirm every route checks authentication (Supabase session/JWT) before reading or writing data.
+        - Confirm queries touching venue- or kitchen-scoped tables rely on RLS rather than manual filtering in application code. Flag any query that bypasses RLS via the service role key without an obvious server-only reason.
+        - Flag raw SQL string concatenation; prefer parameterized queries via the Supabase client or query builder.
+        - Check that error responses don't leak internal details (stack traces, table names, raw query text) to the client.
+        - Verify request bodies are validated before reaching the database.
+
+    - path: "supabase/migrations/**/*.sql"
+      instructions: |
+        - Confirm any new table has RLS enabled with a corresponding policy. Flag tables created without RLS as high severity.
+        - Check that policies scope correctly by venue_id/kitchen_id in line with the venue-above-kitchen hierarchy.
+        - Flag destructive migrations (DROP, TRUNCATE, column removal) for extra scrutiny and ask whether a backfill or rollback plan exists.
+
+    - path: "app/**/*.tsx"
+      instructions: |
+        - Components should be functional, typed with TypeScript, no implicit any.
+        - Check that loading and error states exist for async/Supabase data fetches.
+        - Flag client components ("use client") that don't actually need client-side interactivity and could be server components.
+        - Flag hardcoded hex colors outside the Veriqo brand palette (Navy #1B3A5C, Teal #1B5C72, Green #2D7A3A, Mint #52D05C, Off-white #F5F4F0, Near black #1A1A18).
+
+    - path: "lib/**/*.ts"
+      instructions: |
+        - Flag any Supabase client instantiated with the service role key outside trusted server-only contexts (API routes never exposed to the client bundle, Edge Functions).
+        - Check JWT claims (venue_id, user_role) are read defensively rather than assumed present, given they're injected via custom_access_token_hook.
+
+    - path: "supabase/functions/**/*.ts"
+      instructions: |
+        - Confirm SUPABASE_URL and other reserved env vars rely on auto-injection rather than a manual override in the function config (this previously caused an exit-code-22 failure on send-trial-reminders).
+        - Check error handling wraps external calls (email, webhooks, etc.) and logs failures without crashing the function silently.
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: "auto"
