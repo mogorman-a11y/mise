@@ -38,6 +38,7 @@
 - **Live site:** `getveriqo.co.uk/app` → served by Vercel, auto-deploy on push to `main`
 - **Vercel project: `files`** (project ID `prj_lMBGlA1dkPtLSm3bUn9KZtAKpuWG`) — this is the only live Vercel project for Veriqo. The old `mise` and `mise-deploy` projects have been deleted. Do not recreate them.
 - **No staging** — changes go live immediately on push.
+- **Domain:** apex `getveriqo.co.uk` is canonical. `www.getveriqo.co.uk` redirects to the apex (set in Vercel Project → Settings → Domains, 2026-07-03). Every canonical tag, `og:url`, and JSON-LD `url`/`@id` across the site must use the apex, no `www` — do not reintroduce hardcoded `www.getveriqo.co.uk` links.
 - **Supabase:** `https://yixrwyfodipfcbhjcszp.supabase.co`
 
 ### App structure
