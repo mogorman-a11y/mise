@@ -3655,7 +3655,7 @@ async function generateFreelancerLink() {
     }).select('token').single();
 
     if (res.error) throw res.error;
-    _freelancerLink = 'https://www.getveriqo.co.uk/event?t=' + res.data.token;
+    _freelancerLink = 'https://getveriqo.co.uk/event?t=' + res.data.token;
     document.getElementById('share-link-display').textContent = _freelancerLink;
     document.getElementById('share-link-row').style.display = 'block';
     btn.textContent = 'Generate New Link';

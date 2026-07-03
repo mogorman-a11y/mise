@@ -3,7 +3,7 @@
 // Handles Stripe webhook events and provisions subscriptions in Supabase.
 //
 // Register this URL in Stripe Dashboard → Webhooks:
-//   https://www.getveriqo.co.uk/api/stripe-webhook
+//   https://getveriqo.co.uk/api/stripe-webhook
 //
 // Events handled:
 //   checkout.session.completed     → activate subscription, set plan
