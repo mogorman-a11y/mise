@@ -254,6 +254,36 @@ Old plan names (`veriqo`, `suite`, `suite-all`, `carte`, `yield`) all normalised
 
 ---
 
+## Resources / Blog system
+
+Static content pages at `/resources/{slug}` → `/resources/{slug}.html` (already configured in vercel.json).
+
+### Hub page
+`resources.html` — lists all published articles as cards + coming-soon placeholders. Update this whenever a new article goes live (add a live card, remove or replace the coming-soon slot).
+
+### Published articles
+| Slug | Title | Date |
+|---|---|---|
+| `how-to-price-a-bespoke-dinner-party` | How to Price a Bespoke Private Dinner Party | 15 May 2026 |
+| `do-private-chefs-need-haccp-uk` | Do Private Chefs Need HACCP in the UK? | 22 Jun 2026 |
+| `what-eho-inspector-checks-private-chef` | What Does an EHO Inspector Actually Check? | 28 Jun 2026 |
+| `private-chef-allergen-management-guide` | The Private Chef's Guide to Allergen Management | 4 Jul 2026 |
+
+### Printable lead-magnet templates
+| Slug | Description |
+|---|---|
+| `haccp-temperature-log` | A4 landscape HACCP temp log — 24 rows, 8 columns; `@media print` hides screen chrome |
+| `allergen-matrix-template` | A4 landscape allergen matrix — 14 allergens × 20 dishes, printable checkboxes |
+
+### Adding a new article
+1. Copy `resources/do-private-chefs-need-haccp-uk.html` as the template
+2. Update title, description, canonical URL, JSON-LD dates, breadcrumb, and body content
+3. Add a live card to `resources.html` (copy an existing live card block; remove `coming-soon` class if replacing a placeholder)
+4. Add the URL to `sitemap.xml`
+5. No `vercel.json` changes needed — the existing wildcard rule covers all new files
+
+---
+
 ## Vercel routing (`vercel.json`)
 
 ```
