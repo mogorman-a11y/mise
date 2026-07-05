@@ -460,6 +460,8 @@ document.getElementById('header-date').textContent = fmtDate();
 ['probe-date','pest-date','illness-date'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=todayStr(); });
 
 function saveHaccpToday() {
+  // Sample-day demo mode: never persist demo records to localStorage or Supabase
+  if (_demoMode) return;
   var _today = todayStr();
   try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){ console.error('[HACCP] localStorage write failed:', e); toast('Storage error — check phone storage space', false); }
   // Cloud sync — pass snapshot so in-flight mutations don't corrupt the payload
@@ -1343,6 +1345,7 @@ function updateHaccpDashboard() {
   } else {
     _renderAllergenConflictBanners([]);
   }
+  renderStarterChecklist();
 }
 
 function updateNextJobBanner() {
@@ -3935,6 +3938,136 @@ function dismissInstallBanner() {
   var isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches;
   if (isIOS && !isStandalone) { setTimeout(function(){ _showInstallBanner('ios'); }, 300); }
 })();
+
+// --- SAMPLE DAY (DEMO MODE) ---
+// Injects canned records into the real `records` var and lets the normal
+// renderers draw them — pixel-identical to live data. saveHaccpToday() and
+// the sync pull (sync.js checks window._haccpDemoMode) are short-circuited
+// so demo data can never reach localStorage or Supabase.
+var _demoMode = false;
+
+function _demoTime(minsAgo) {
+  var d = new Date(Date.now() - minsAgo * 60000);
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function _buildDemoRecords() {
+  var chef = 'Sam (sample)';
+  var openItems = (CHECKLISTS.opening || []).map(function(i){ return i.label; });
+  return [
+    {type:'opening', by:chef, notes:'', checked:openItems, unchecked:[], time:_demoTime(260), status:'ok', msg:'All '+openItems.length+' items confirmed'},
+    {type:'fridge', unit:'Main fridge',    by:chef, temp:3.2,   time:_demoTime(255), notes:'', status:'ok', msg:'3.2°C — within safe range (0–5°C)'},
+    {type:'fridge', unit:'Prep fridge',    by:chef, temp:4.1,   time:_demoTime(253), notes:'', status:'ok', msg:'4.1°C — within safe range (0–5°C)'},
+    {type:'fridge', unit:'Walk-in fridge', by:chef, temp:2.8,   time:_demoTime(251), notes:'', status:'ok', msg:'2.8°C — within safe range (0–5°C)'},
+    {type:'fridge', unit:'Freezer 1',      by:chef, temp:-18.5, time:_demoTime(249), notes:'', status:'ok', msg:'-18.5°C — within legal range (-18°C or below)'},
+    {type:'delivery', supplier:'FreshFoods Ltd', temp:null, time:_demoTime(215), invoice:'INV-4471', by:chef, condition:'Minor issues noted', chilledTemp:'6.1', chilledCond:'Issues noted', frozenTemp:'', frozenCond:'', notes:'Cream arrived at 6.1°C — moved straight to fridge, using first', photo:'', status:'warn', msg:'Issues noted'},
+    {type:'cooling', food:'Chicken velouté base', startTemp:78, startTime:_demoTime(170), endTemp:4, endTime:_demoTime(85), durationMins:85, method:'Ice bath', by:chef, time:_demoTime(170), status:'ok', msg:'Cooled to 4°C in 1h 25m'},
+    {type:'cooking', food:'Beef wellington',       temp:82, time:_demoTime(95), chef:chef, status:'ok', msg:'82°C — safe'},
+    {type:'cooking', food:'Dauphinoise potatoes',  temp:88, time:_demoTime(80), chef:chef, status:'ok', msg:'88°C — safe'},
+    {type:'cleaning', task:'Worktops & surfaces', time:_demoTime(55), by:chef, chem:'Sanitiser D10', status:'ok', msg:'Completed by '+chef}
+  ];
+}
+
+function startSampleDay() {
+  if (_demoMode) return;
+  _demoMode = true;
+  window._haccpDemoMode = true;
+  records = _buildDemoRecords();
+  var banner = document.getElementById('demo-banner');
+  if (banner) banner.style.display = 'flex';
+  var empty  = document.getElementById('shift-empty-state');
+  var active = document.getElementById('shift-active-view');
+  if (empty)  empty.style.display  = 'none';
+  if (active) active.style.display = '';
+  renderHaccpSections();
+  haccpTab('home');
+  window.scrollTo(0, 0);
+  if (window.posthog) posthog.capture('sample_day_started');
+}
+
+function exitSampleDay() {
+  if (!_demoMode) return;
+  _demoMode = false;
+  window._haccpDemoMode = false;
+  loadHaccpToday(); // restore real records from localStorage (sync keeps it fresh)
+  var banner = document.getElementById('demo-banner');
+  if (banner) banner.style.display = 'none';
+  renderHaccpSections();
+  haccpTab('home');
+  _restoreShiftState();
+  if (window.posthog) posthog.capture('sample_day_exited');
+}
+
+// --- STARTER CHECKLIST (guided setup for new users) ---
+// Completion is derived from data, never stored: a step is done when a record
+// of that type exists on any day. Card hides itself once all steps are done,
+// so established accounts never see it.
+var _starterWasShown = false;
+
+function _starterStepsDone() {
+  var have = { opening:false, fridge:false, cooking:false };
+  function scan(recs) { recs.forEach(function(r){ if (have.hasOwnProperty(r.type)) have[r.type] = true; }); }
+  scan(records);
+  getAllDays().forEach(function(d){ if (d !== todayStr()) scan(getDayRecords(d)); });
+  return have;
+}
+
+function renderStarterChecklist() {
+  var el = document.getElementById('starter-checklist');
+  if (!el) return;
+  if (_demoMode || settings.starterDismissed) { el.style.display = 'none'; return; }
+  var have = _starterStepsDone();
+  var doneCount = (have.opening?1:0) + (have.fridge?1:0) + (have.cooking?1:0);
+  if (doneCount === 3) {
+    el.style.display = 'none';
+    if (_starterWasShown && !settings.starterCompleted) {
+      settings.starterCompleted = true;
+      saveHaccpSettings();
+      toast('Setup complete — your kitchen is EHO-ready');
+      if (window.posthog) posthog.capture('setup_checklist_completed');
+    }
+    return;
+  }
+  _starterWasShown = true;
+  var steps = [
+    {tab:'opening', label:'Complete your opening checks', sub:'Your first EHO-ready record', done:have.opening},
+    {tab:'fridge',  label:'Log a fridge temp',            sub:'Takes 10 seconds',            done:have.fridge},
+    {tab:'cooking', label:'Log a cooked-food temp',       sub:'Core temp of any dish',       done:have.cooking}
+  ];
+  var rows = steps.map(function(s, i) {
+    var circle = s.done
+      ? '<span style="width:24px;height:24px;border-radius:50%;background:#2D7A3A;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">&#10003;</span>'
+      : '<span style="width:24px;height:24px;border-radius:50%;background:#f0efe9;color:#888;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+(i+1)+'</span>';
+    var labelStyle = s.done ? 'color:#999;text-decoration:line-through' : 'color:#1a1a18';
+    return '<div onclick="haccpTab(\''+s.tab+'\')" style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f0efe9;cursor:pointer">'+
+      circle+
+      '<div style="flex:1"><div style="font-size:14px;font-weight:600;'+labelStyle+'">'+s.label+'</div>'+
+      '<div style="font-size:12px;color:#999;margin-top:1px">'+s.sub+'</div></div>'+
+      (s.done ? '' : '<span style="color:#ccc;font-size:16px">&#8250;</span>')+
+      '</div>';
+  }).join('');
+  el.style.display = 'block';
+  el.innerHTML =
+    '<div class="card" style="margin-bottom:16px">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2px">'+
+        '<div><div style="font-size:15px;font-weight:700;color:#1a1a18">Set up your kitchen</div>'+
+        '<div style="font-size:12.5px;color:#888;margin-top:2px">Three quick steps to your first day of records</div></div>'+
+        '<button onclick="dismissStarterChecklist()" aria-label="Dismiss" style="background:none;border:none;color:#ccc;font-size:20px;cursor:pointer;padding:0 0 0 10px;line-height:1">&times;</button>'+
+      '</div>'+
+      rows+
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px">'+
+        '<span style="font-size:12px;color:#999">'+doneCount+' of 3 done</span>'+
+        '<button onclick="startSampleDay()" style="background:none;border:none;color:var(--vq-green);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">&#128064; See a sample day</button>'+
+      '</div>'+
+    '</div>';
+}
+
+function dismissStarterChecklist() {
+  settings.starterDismissed = true;
+  saveHaccpSettings();
+  renderStarterChecklist();
+  if (window.posthog) posthog.capture('setup_checklist_dismissed');
+}
 
 // --- SHIFT / KITCHEN OPEN STATE ---
 function _shiftKey() { return 'haccp_shift_open_' + todayStr(); }

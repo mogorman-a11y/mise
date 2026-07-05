@@ -349,14 +349,14 @@ window.Mise.sync = (function () {
     // keep it and re-save so Supabase catches up.
     if (localTodayRecs.length > remoteLen) {
       try { localStorage.setItem('haccp_' + today, JSON.stringify(localTodayRecs)); } catch (e) {}
-      if (typeof records !== 'undefined') {
+      if (typeof records !== 'undefined' && !window._haccpDemoMode) {
         records.length = 0;
         localTodayRecs.forEach(function (r) { records.push(r); });
       }
       // Re-push local-ahead data to Supabase so it catches up
       supabaseClient.from('haccp_records').upsert({ user_id: userId, date: today, records: localTodayRecs }, { onConflict: 'user_id,date' }).then(function(r){ if(!r.error) console.log('[Veriqo sync] ✓ re-synced local-ahead today records'); });
     } else {
-      if (typeof records !== 'undefined') {
+      if (typeof records !== 'undefined' && !window._haccpDemoMode) {
         records.length = 0;
         if (todayRow) todayRow.records.forEach(function (r) { records.push(r); });
       }

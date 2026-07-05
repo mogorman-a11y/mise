@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v50**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v51**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=50` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=51` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=21` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
@@ -172,6 +172,12 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v51 — sample day (demo mode) + starter checklist
+- **Sample day:** `startSampleDay()` / `exitSampleDay()` in haccp.js. Swaps the global `records` var for `_buildDemoRecords()` (canned chef-shaped day: opening checks, 4 fridge temps, warn delivery, cooling, 2 cooks, cleaning — timestamps generated relative to now) and lets the normal renderers draw it, so the demo is pixel-identical to live data. `#demo-banner` (app.html, inside `#module-haccp` above `#tab-home`, so visible on every HACCP tab) shows while active.
+- **Data-safety guards (do not remove):** `saveHaccpToday()` returns early when `_demoMode`; both `records` mutations in `_pullHaccpRecords()` (sync.js) are skipped when `window._haccpDemoMode` is true. Demo data must never reach localStorage or Supabase. Exit restores via `loadHaccpToday()`.
+- **Starter checklist:** `renderStarterChecklist()` renders `#starter-checklist` (above `#shift-empty-state`, visible in both shift states), called at the end of `updateHaccpDashboard()`. Steps (opening / fridge / cooking record exists on any day) are **derived from data, never stored** — established accounts auto-hide it. `settings.starterDismissed` / `settings.starterCompleted` persist dismiss/completion. Entry points to demo: link in shift empty state + checklist footer.
+- **PostHog events added:** `sample_day_started`, `sample_day_exited`, `setup_checklist_completed`, `setup_checklist_dismissed`.
 
 ### v50 — allergen conflict banner on HACCP home screen
 - `#allergen-conflict-banner-home` div added above install banner on `#tab-home`.
