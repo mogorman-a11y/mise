@@ -1,14 +1,12 @@
 // api/welcome-email.js — called immediately after a new user signs up
 // Sends a branded welcome email via Resend.
-// POST { email, name, app } — app is 'veriqo' | 'carte' | 'yield' (defaults to 'veriqo')
+// POST { email, name } — Veriqo trial welcome
 // POST { email, source:'starter-kit', stage, eventsPerMonth } — starter kit Day 1 + Supabase insert
 // No auth — welcome email is low-stakes; rate-limit at infra level if needed.
 
 const { createClient } = require('@supabase/supabase-js');
 
 const APP_VERIQO = 'https://getveriqo.co.uk/app';
-const APP_CARTE  = 'https://getveriqo.co.uk/mise';
-const APP_YIELD  = 'https://getveriqo.co.uk/yield';
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -17,14 +15,12 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { email, name, app, source, stage, eventsPerMonth } = req.body || {};
+  const { email, name, source, stage, eventsPerMonth } = req.body || {};
   if (!email) return res.status(400).json({ error: 'email required' });
 
   if (source === 'starter-kit') {
     return await _handleStarterKit(res, email, stage, eventsPerMonth);
   }
-
-  const isYield = app === 'yield';
 
   try {
     const r = await fetch('https://api.resend.com/emails', {
@@ -34,15 +30,15 @@ module.exports = async function handler(req, res) {
         'Content-Type':  'application/json',
       },
       body: JSON.stringify({
-        from:    isYield ? 'Yield <hello@getveriqo.co.uk>' : 'Veriqo + Carte <hello@getveriqo.co.uk>',
+        from:    'Veriqo <hello@getveriqo.co.uk>',
         to:      [email],
-        subject: isYield ? 'Your Yield trial starts now' : 'Your Veriqo + Carte trial starts now',
-        html:    isYield ? _buildYieldWelcome(name || null) : _buildSuiteWelcome(name || null),
+        subject: 'Your Veriqo trial starts now',
+        html:    _buildVeriqoWelcome(name || null),
       }),
     });
 
     if (!r.ok) throw new Error('Resend ' + r.status + ': ' + await r.text());
-    console.log('[welcome-email] sent to', email, '(app:', app || 'veriqo', ')');
+    console.log('[welcome-email] sent to', email);
     return res.status(200).json({ ok: true });
   } catch (err) {
     console.error('[welcome-email] error:', err.message);
@@ -60,10 +56,6 @@ function _p(text) {
   return `<p style="margin:0 0 18px;font-size:15px;color:#5A544E;line-height:1.65">${text}</p>`;
 }
 
-function _pDark(text) {
-  return `<p style="margin:0 0 18px;font-size:15px;color:#B0AAA0;line-height:1.65">${text}</p>`;
-}
-
 function _btn(url, label, primary) {
   if (primary !== false) {
     return `<a href="${url}" style="display:block;background:#C8A96E;color:#1C2B1E;text-decoration:none;text-align:center;padding:16px 24px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:-0.2px;margin-top:22px">${label}</a>`;
@@ -71,138 +63,64 @@ function _btn(url, label, primary) {
   return `<a href="${url}" style="display:block;background:#1C2B1E;color:#F5F0E8;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:-0.2px;margin-top:10px">${label}</a>`;
 }
 
-function _btnYield(url, label, primary) {
-  if (primary !== false) {
-    return `<a href="${url}" style="display:block;background:#C9A84C;color:#0E0E0D;text-decoration:none;text-align:center;padding:16px 24px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:-0.2px;margin-top:22px">${label}</a>`;
-  }
-  return `<a href="${url}" style="display:block;background:#1E1A11;border:1px solid #3A3A37;color:#F0EDE6;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:-0.2px;margin-top:10px">${label}</a>`;
-}
+// ─── Veriqo welcome ───────────────────────────────────────────────────────────
 
-// ─── Yield welcome ────────────────────────────────────────────────────────────
-
-function _buildYieldWelcome(name) {
-  const header = `
-    <div style="margin:0 auto 20px;width:52px;height:52px;background:#1E1A11;border:1px solid #C9A84C40;border-radius:14px;display:flex;align-items:center;justify-content:center">
-      <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
-        <path d="M6 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-        <path d="M26 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-        <path d="M16 17L16 28" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <div style="font-family:Georgia,serif;font-size:26px;font-weight:400;color:#F0EDE6;letter-spacing:-0.3px">Welcome to Yield</div>
-    <div style="font-size:13px;color:#C9A84C;margin-top:6px;font-weight:500">Your 14-day trial has started</div>`;
-
-  const body = `
-    ${_pDark(_hi(name))}
-    ${_pDark('Yield is built around one question: <strong style="color:#F0EDE6">Am I paid and profitable?</strong> Everything in the app — quoting, invoicing, job costing, P&amp;L — is designed to answer that.')}
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:separate;border-spacing:0 8px">
-      <tr>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:10px;padding:14px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F4CB;</td>
-            <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#F0EDE6">Quotes</div>
-              <div style="font-size:13px;color:#7A7870;margin-top:2px;line-height:1.5">Send professional quotes, track status, auto-create invoices on acceptance.</div>
-            </td>
-          </tr></table>
-        </td>
-      </tr>
-      <tr>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:10px;padding:14px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F4B7;</td>
-            <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#F0EDE6">Invoices &amp; payments</div>
-              <div style="font-size:13px;color:#7A7870;margin-top:2px;line-height:1.5">Deposit + balance invoices, mark as paid, tab timeline shows every job's financial status.</div>
-            </td>
-          </tr></table>
-        </td>
-      </tr>
-      <tr>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:10px;padding:14px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F9EE;</td>
-            <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#F0EDE6">Costing &amp; P&amp;L</div>
-              <div style="font-size:13px;color:#7A7870;margin-top:2px;line-height:1.5">Food cost %, travel, labour, margin — built into every quote so you know your profit before you send it.</div>
-            </td>
-          </tr></table>
-        </td>
-      </tr>
-    </table>
-
-    <div style="background:#1E1A11;border:1px solid #C9A84C40;border-radius:10px;padding:14px 16px;margin-bottom:8px">
-      <div style="font-size:14px;font-weight:700;color:#C9A84C;margin-bottom:5px">Best place to start: build a quote</div>
-      <div style="font-size:13px;color:#7A7870;line-height:1.55">Open the Quotes tab, tap New Quote, fill in the event details and add your dishes. Yield handles the maths — food cost, deposit amount, balance due.</div>
-    </div>
-
-    ${_btnYield(APP_YIELD, 'Open Yield &rarr;')}`;
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Yield</title></head>
-<body style="margin:0;padding:0;background:#0E0E0D;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
-<div style="max-width:480px;margin:0 auto;padding:40px 20px 24px">
-
-  <div style="background:#141410;border:1px solid #C9A84C30;border-radius:16px 16px 0 0;padding:28px 32px;text-align:center">
-    ${header}
-  </div>
-
-  <div style="background:#181817;padding:32px;border-radius:0 0 16px 16px;border:1px solid #2A2A27;border-top:0">
-    ${body}
-  </div>
-
-  <p style="text-align:center;font-size:12px;color:#5A5650;margin-top:14px">Questions? Just reply to this email — we read everything.</p>
-  <p style="text-align:center;font-size:12px;color:#5A5650;margin-top:6px">
-    Yield &middot; <a href="https://getveriqo.co.uk" style="color:#5A5650;text-decoration:none">getveriqo.co.uk</a>
-  </p>
-
-</div>
-</body>
-</html>`;
-}
-
-// ─── Suite welcome (Veriqo + Carte) ──────────────────────────────────────────
-
-function _buildSuiteWelcome(name) {
+function _buildVeriqoWelcome(name) {
   const header = `
     <div style="font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-0.4px">Welcome to your 14-day trial</div>
-    <div style="font-size:13px;color:#C8A96E;margin-top:6px;font-weight:500">Veriqo + Carte Suite</div>`;
+    <div style="font-size:13px;color:#C8A96E;margin-top:6px;font-weight:500">Full access to every module, free</div>`;
 
   const body = `
     ${_p(_hi(name))}
-    ${_p('You now have full access to both apps for the next 14 days. Here\'s the simplest way to think about them:')}
+    ${_p('For the next 14 days you have full access to Veriqo — compliance, bookings and financials, all in one app:')}
 
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-spacing:0">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:separate;border-spacing:0 8px">
       <tr>
-        <td width="49%" style="background:#F5F4F0;border-radius:12px;padding:16px;vertical-align:top">
-          <div style="font-size:12px;font-weight:700;color:#2D7A3A;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">&#x1F6E1;&#xFE0F; Veriqo</div>
-          <div style="font-size:20px;font-weight:700;color:#1a1a18;line-height:1.2;margin-bottom:8px">Am I<br>compliant?</div>
-          <div style="font-size:13px;color:#666;line-height:1.5">HACCP temperature logs, checklists, allergen tracking &amp; PDF reports ready for inspection.</div>
+        <td style="background:#F5F4F0;border-radius:10px;padding:14px 16px">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F6E1;&#xFE0F;</td>
+            <td style="vertical-align:middle">
+              <div style="font-size:14px;font-weight:700;color:#1a1a18">HACCP</div>
+              <div style="font-size:13px;color:#666;margin-top:2px;line-height:1.5">Temperature logs, checklists, allergen tracking &amp; PDF reports ready for inspection.</div>
+            </td>
+          </tr></table>
         </td>
-        <td width="2%"></td>
-        <td width="49%" style="background:#1C2B1E;border-radius:12px;padding:16px;vertical-align:top">
-          <div style="font-size:12px;font-weight:700;color:#C8A96E;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">&#x2726; Carte</div>
-          <div style="font-size:20px;font-weight:700;color:#F5F0E8;line-height:1.2;margin-bottom:8px">Am I<br>organised?</div>
-          <div style="font-size:13px;color:rgba(245,240,232,0.7);line-height:1.5">Clients, bookings, menus, jobs &amp; transport logs — all in one place.</div>
+      </tr>
+      <tr>
+        <td style="background:#F5F4F0;border-radius:10px;padding:14px 16px">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F4C5;</td>
+            <td style="vertical-align:middle">
+              <div style="font-size:14px;font-weight:700;color:#1a1a18">Menus</div>
+              <div style="font-size:13px;color:#666;margin-top:2px;line-height:1.5">Clients, bookings, menus &amp; transport logs — all in one place.</div>
+            </td>
+          </tr></table>
+        </td>
+      </tr>
+      <tr>
+        <td style="background:#F5F4F0;border-radius:10px;padding:14px 16px">
+          <table width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F4B7;</td>
+            <td style="vertical-align:middle">
+              <div style="font-size:14px;font-weight:700;color:#1a1a18">Costing</div>
+              <div style="font-size:13px;color:#666;margin-top:2px;line-height:1.5">Food cost %, quotes and margin, calculated live as you build a dish.</div>
+            </td>
+          </tr></table>
         </td>
       </tr>
     </table>
 
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:8px">
       <div style="font-size:14px;font-weight:700;color:#15803d;margin-bottom:5px">The best place to start: your dish library</div>
-      <div style="font-size:13px;color:#5A544E;line-height:1.55">Add your dishes once in Carte and they're automatically available in Veriqo too. Your menus follow you across both apps — set it up once, use it everywhere.</div>
+      <div style="font-size:13px;color:#5A544E;line-height:1.55">Add your dishes once in Menus and they're automatically available for costing and HACCP food logging too — set it up once, use it everywhere.</div>
     </div>
 
-    ${_btn(APP_CARTE, 'Set up your dish library in Carte &rarr;')}
-    ${_btn(APP_VERIQO, 'Or open Veriqo to start logging &rarr;', false)}`;
+    ${_btn(APP_VERIQO, 'Open Veriqo &rarr;')}`;
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Veriqo + Carte</title></head>
+<title>Veriqo</title></head>
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
 <div style="max-width:480px;margin:0 auto;padding:40px 20px 24px">
 
@@ -216,7 +134,7 @@ function _buildSuiteWelcome(name) {
 
   <p style="text-align:center;font-size:12px;color:#A09890;margin-top:14px">Questions? Just reply to this email — we read everything.</p>
   <p style="text-align:center;font-size:12px;color:#A09890;margin-top:6px">
-    Veriqo + Carte &middot; <a href="https://getveriqo.co.uk" style="color:#A09890;text-decoration:none">getveriqo.co.uk</a>
+    Veriqo &middot; <a href="https://getveriqo.co.uk" style="color:#A09890;text-decoration:none">getveriqo.co.uk</a>
   </p>
 
 </div>

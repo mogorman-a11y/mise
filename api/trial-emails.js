@@ -1,6 +1,5 @@
 // api/trial-emails.js — Vercel cron, 09:00 UTC daily
 // Sends trial lifecycle emails at days 1, 5, 10, and 13 of a 14-day trial.
-// Yield signups (signup_source = 'yield') receive Yield-branded email content.
 //
 // Bucketing: "day N" = user whose trial_ends_at falls on (today + remaining_days).
 //   Day 1  → trial_ends_at on today + 13  (13 days left)
@@ -14,8 +13,6 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const APP_VERIQO = 'https://getveriqo.co.uk/app';
-const APP_CARTE  = 'https://getveriqo.co.uk/mise';
-const APP_YIELD  = 'https://getveriqo.co.uk/yield';
 
 // days remaining on trial_ends_at for each email
 // day1 welcome is sent immediately on signup via api/welcome-email.js
@@ -54,7 +51,7 @@ module.exports = async function handler(req, res) {
 
     const { data: profiles, error: profilesErr } = await supabase
       .from('profiles')
-      .select('id, chef_name, business_name, email_opt_out, signup_source')
+      .select('id, chef_name, business_name, email_opt_out')
       .eq('subscription_status', 'trial')
       .eq('email_opt_out', false)
       .gte('trial_ends_at', lo)
@@ -71,11 +68,10 @@ module.exports = async function handler(req, res) {
       if (!email) continue;
 
       const name = profile.chef_name || profile.business_name || null;
-      const isYield = profile.signup_source === 'yield';
       try {
-        await _send(email, name, type, profile.id, isYield);
+        await _send(email, name, type, profile.id);
         results.sent++;
-        results.detail.push({ type, email, isYield });
+        results.detail.push({ type, email });
       } catch (err) {
         console.error(`[trial-emails] send error (${type}, ${profile.id}):`, err.message);
         results.errors++;
@@ -96,23 +92,14 @@ function _dayStart(n) {
   return d.toISOString();
 }
 
-async function _send(to, name, type, uid, isYield) {
-  const suiteSubjects = {
-    day5:  'Something cool happens when you book a job in Carte',
-    day10: 'The third app is coming — here\'s what to expect',
+async function _send(to, name, type, uid) {
+  const subjects = {
+    day5:  'Something cool happens when you book a job',
+    day10: 'Here\'s everything included in your trial',
     day13: 'Your trial ends tomorrow',
   };
-  const yieldSubjects = {
-    day5:  'Your first costing takes 2 minutes — here\'s how',
-    day10: 'Know your numbers before your next quote',
-    day13: 'Your Yield trial ends tomorrow',
-  };
 
-  const suiteBuilders = { day5: _day5Suite, day10: _day10Suite, day13: _day13Suite };
-  const yieldBuilders = { day5: _day5Yield, day10: _day10Yield, day13: _day13Yield };
-
-  const subjects = isYield ? yieldSubjects : suiteSubjects;
-  const builders = isYield ? yieldBuilders : suiteBuilders;
+  const builders = { day5: _day5, day10: _day10, day13: _day13 };
 
   const r = await fetch('https://api.resend.com/emails', {
     method:  'POST',
@@ -121,7 +108,7 @@ async function _send(to, name, type, uid, isYield) {
       'Content-Type':  'application/json',
     },
     body: JSON.stringify({
-      from:    isYield ? 'Yield <hello@getveriqo.co.uk>' : 'Veriqo + Carte <hello@getveriqo.co.uk>',
+      from:    'Veriqo <hello@getveriqo.co.uk>',
       to:      [to],
       subject: subjects[type],
       html:    builders[type](name, uid),
@@ -142,7 +129,7 @@ function _wrap(header, body, footer, uid) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Veriqo + Carte</title></head>
+<title>Veriqo</title></head>
 <body style="margin:0;padding:0;background:#F5F0E8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
 <div style="max-width:480px;margin:0 auto;padding:40px 20px 24px">
 
@@ -156,37 +143,9 @@ function _wrap(header, body, footer, uid) {
 
   ${footer ? `<p style="text-align:center;font-size:12px;color:#A09890;margin-top:14px">${footer}</p>` : ''}
   <p style="text-align:center;font-size:12px;color:#A09890;margin-top:6px">
-    Veriqo + Carte &middot; <a href="https://getveriqo.co.uk" style="color:#A09890;text-decoration:none">getveriqo.co.uk</a>
+    Veriqo &middot; <a href="https://getveriqo.co.uk" style="color:#A09890;text-decoration:none">getveriqo.co.uk</a>
   </p>
   ${unsubUrl ? `<p style="text-align:center;font-size:11px;color:#C0B8B0;margin-top:6px">Don't want these emails? <a href="${unsubUrl}" style="color:#C0B8B0;">Unsubscribe</a></p>` : ''}
-
-</div>
-</body>
-</html>`;
-}
-
-function _wrapYield(header, body, footer, uid) {
-  const unsubUrl = uid ? 'https://getveriqo.co.uk/api/unsubscribe?uid=' + uid : null;
-  return `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Yield</title></head>
-<body style="margin:0;padding:0;background:#0E0E0D;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">
-<div style="max-width:480px;margin:0 auto;padding:40px 20px 24px">
-
-  <div style="background:#141410;border:1px solid #C9A84C30;border-radius:16px 16px 0 0;padding:28px 32px;text-align:center">
-    ${header}
-  </div>
-
-  <div style="background:#181817;padding:32px;border-radius:0 0 16px 16px;border:1px solid #2A2A27;border-top:0">
-    ${body}
-  </div>
-
-  ${footer ? `<p style="text-align:center;font-size:12px;color:#5A5650;margin-top:14px">${footer}</p>` : ''}
-  <p style="text-align:center;font-size:12px;color:#5A5650;margin-top:6px">
-    Yield &middot; <a href="https://getveriqo.co.uk" style="color:#5A5650;text-decoration:none">getveriqo.co.uk</a>
-  </p>
-  ${unsubUrl ? `<p style="text-align:center;font-size:11px;color:#3A3A35;margin-top:6px">Don't want these emails? <a href="${unsubUrl}" style="color:#3A3A35;">Unsubscribe</a></p>` : ''}
 
 </div>
 </body>
@@ -200,35 +159,24 @@ function _btn(url, label, primary) {
   return `<a href="${url}" style="display:block;background:#1C2B1E;color:#F5F0E8;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:-0.2px;margin-top:10px">${label}</a>`;
 }
 
-function _btnYield(url, label, primary) {
-  if (primary !== false) {
-    return `<a href="${url}" style="display:block;background:#C9A84C;color:#0E0E0D;text-decoration:none;text-align:center;padding:16px 24px;border-radius:10px;font-size:16px;font-weight:700;letter-spacing:-0.2px;margin-top:22px">${label}</a>`;
-  }
-  return `<a href="${url}" style="display:block;background:#1E1A11;border:1px solid #3A3A37;color:#F0EDE6;text-decoration:none;text-align:center;padding:14px 24px;border-radius:10px;font-size:15px;font-weight:600;letter-spacing:-0.2px;margin-top:10px">${label}</a>`;
-}
-
 function _p(text) {
   return `<p style="margin:0 0 18px;font-size:15px;color:#5A544E;line-height:1.65">${text}</p>`;
 }
 
-function _pDark(text) {
-  return `<p style="margin:0 0 18px;font-size:15px;color:#B0AAA0;line-height:1.65">${text}</p>`;
-}
+// ─── Trial lifecycle emails ───────────────────────────────────────────────────
 
-// ─── Suite emails ─────────────────────────────────────────────────────────────
-
-function _day5Suite(name, uid) {
+function _day5(name, uid) {
   const header = `
-    <div style="font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-0.4px">Your apps talk to each other</div>
+    <div style="font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-0.4px">Your booking shows up automatically</div>
     <div style="font-size:13px;color:#C8A96E;margin-top:6px;font-weight:500">Day 5 of your trial</div>`;
 
   const body = `
     ${_p(_hi(name))}
-    ${_p('Veriqo and Carte share the same data layer. Changes in one app show up in the other — automatically, in real time. Here\'s the best example of that in action.')}
+    ${_p('Every module in Veriqo shares the same data. Here\'s the best example of that in action.')}
 
     <div style="border-left:3px solid #C8A96E;padding:2px 0 2px 16px;margin-bottom:20px">
       <div style="font-size:15px;font-weight:700;color:#1C2B1E;margin-bottom:6px">The Next Booking banner</div>
-      <div style="font-size:14px;color:#5A544E;line-height:1.6">When you book a job in Carte, a banner appears automatically at the top of your Veriqo dashboard — showing the date, client name, covers, location, and the menus you've attached. Tap it to see the full detail.</div>
+      <div style="font-size:14px;color:#5A544E;line-height:1.6">When you book a job in Menus, a banner appears automatically at the top of your HACCP home screen — showing the date, client name, covers, location, and the menus you've attached. Tap it to see the full detail.</div>
     </div>
 
     <div style="background:#F5F4F0;border-radius:12px;padding:18px 20px;margin-bottom:8px">
@@ -239,7 +187,7 @@ function _day5Suite(name, uid) {
             <div style="background:#C8A96E;color:#1C2B1E;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block">1</div>
           </td>
           <td style="font-size:13px;color:#5A544E;line-height:1.5;padding-bottom:10px">
-            Open Carte and book a test job — any future date, any details.
+            Open Menus and book a test job — any future date, any details.
           </td>
         </tr>
         <tr>
@@ -247,26 +195,25 @@ function _day5Suite(name, uid) {
             <div style="background:#2D7A3A;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;display:inline-block">2</div>
           </td>
           <td style="font-size:13px;color:#5A544E;line-height:1.5">
-            Switch to Veriqo. Your booking banner will be waiting at the top of the dashboard.
+            Switch to HACCP. Your booking banner will be waiting at the top of the home screen.
           </td>
         </tr>
       </table>
     </div>
 
-    ${_btn(APP_CARTE, 'Book a test job in Carte &rarr;')}
-    ${_btn(APP_VERIQO, 'Then open Veriqo to see it appear &rarr;', false)}`;
+    ${_btn(APP_VERIQO, 'Open Veriqo &rarr;')}`;
 
   return _wrap(header, body, null, uid);
 }
 
-function _day10Suite(name, uid) {
+function _day10(name, uid) {
   const header = `
-    <div style="font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-0.4px">The third app is coming</div>
+    <div style="font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-0.4px">Here's everything included</div>
     <div style="font-size:13px;color:#C8A96E;margin-top:6px;font-weight:500">Day 10 of your trial</div>`;
 
   const body = `
     ${_p(_hi(name))}
-    ${_p('Your suite is built around three questions. Right now you have access to the first two.')}
+    ${_p('Your trial gives you every module. Here\'s what each one answers.')}
 
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:separate;border-spacing:0 8px">
       <tr>
@@ -274,8 +221,8 @@ function _day10Suite(name, uid) {
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
             <td width="36" style="font-size:22px;vertical-align:middle">&#x1F6E1;&#xFE0F;</td>
             <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#1C2B1E">Veriqo &mdash; Am I compliant?</div>
-              <div style="font-size:13px;color:#5A544E;margin-top:2px">HACCP records, temperature logs, inspection-ready reports.</div>
+              <div style="font-size:14px;font-weight:700;color:#1C2B1E">HACCP &mdash; Am I compliant?</div>
+              <div style="font-size:13px;color:#5A544E;margin-top:2px">Temperature logs, checklists, allergen tracking, inspection-ready reports.</div>
             </td>
           </tr></table>
         </td>
@@ -283,9 +230,9 @@ function _day10Suite(name, uid) {
       <tr>
         <td style="background:#F5F4F0;border-radius:10px;padding:14px 16px">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="36" style="font-size:22px;vertical-align:middle">&#x2726;</td>
+            <td width="36" style="font-size:22px;vertical-align:middle">&#x1F4C5;</td>
             <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#1C2B1E">Carte &mdash; Am I organised?</div>
+              <div style="font-size:14px;font-weight:700;color:#1C2B1E">Menus &mdash; Am I organised?</div>
               <div style="font-size:13px;color:#5A544E;margin-top:2px">Clients, bookings, menus, jobs, transport logs.</div>
             </td>
           </tr></table>
@@ -296,209 +243,53 @@ function _day10Suite(name, uid) {
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
             <td width="36" style="font-size:22px;vertical-align:middle">&#x1F4B7;</td>
             <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#C8A96E">Finance &mdash; Am I paid and profitable?</div>
-              <div style="font-size:13px;color:rgba(245,240,232,0.7);margin-top:2px">Invoices, expenses, mileage &amp; P&amp;L — built on the same client and job data. <span style="color:#C8A96E;font-weight:600">Coming soon.</span></div>
+              <div style="font-size:14px;font-weight:700;color:#C8A96E">Costing &mdash; Am I paid and profitable?</div>
+              <div style="font-size:13px;color:rgba(245,240,232,0.7);margin-top:2px">Food cost %, quotes and margin, built on the same client and job data.</div>
             </td>
           </tr></table>
         </td>
       </tr>
     </table>
 
-    ${_p('When Finance launches, Suite subscribers get it included — same price, no changes. If you\'re on the Suite at £20/month when it goes live, Finance is yours.')}
-    ${_p('That\'s two months of trial left to decide. But locking in your Suite plan now means you\'re covered the moment Finance ships.')}
+    ${_p('4 days left in your trial. Everything above is included in Veriqo Pro — one plan, no add-ons.')}
 
-    ${_btn(APP_VERIQO, 'Continue with the Suite &rarr;')}`;
+    ${_btn(APP_VERIQO, 'Continue exploring &rarr;')}`;
 
   return _wrap(header, body, '4 days left in your trial.', uid);
 }
 
-function _day13Suite(name, uid) {
+function _day13(name, uid) {
   const header = `
     <div style="font-size:24px;font-weight:700;color:#F5F0E8;letter-spacing:-0.4px">Your trial ends tomorrow</div>
     <div style="font-size:13px;color:#C8A96E;margin-top:6px;font-weight:500">Day 13 of your trial</div>`;
 
   const body = `
     ${_p(_hi(name))}
-    ${_p('Your 14-day trial expires in 24 hours. Here\'s exactly what each option costs:')}
+    ${_p('Your 14-day trial expires in 24 hours. Here\'s exactly what each plan costs:')}
 
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:separate;border-spacing:6px 0">
       <tr>
-        <td style="background:#F5F4F0;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="32%">
-          <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Veriqo only</div>
-          <div style="font-size:26px;font-weight:700;color:#1a1a18;line-height:1">£12</div>
+        <td style="background:#F5F4F0;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="48%">
+          <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">HACCP</div>
+          <div style="font-size:26px;font-weight:700;color:#1a1a18;line-height:1">£7</div>
           <div style="font-size:12px;color:#888;margin-top:3px">per month</div>
-          <div style="font-size:11px;color:#aaa;margin-top:8px;line-height:1.4">HACCP compliance only</div>
+          <div style="font-size:11px;color:#aaa;margin-top:8px;line-height:1.4">Compliance module only</div>
         </td>
-        <td style="background:#F5F4F0;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="32%">
-          <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Carte only</div>
-          <div style="font-size:26px;font-weight:700;color:#1a1a18;line-height:1">£12</div>
-          <div style="font-size:12px;color:#888;margin-top:3px">per month</div>
-          <div style="font-size:11px;color:#aaa;margin-top:8px;line-height:1.4">Business management only</div>
-        </td>
-        <td style="background:#1C2B1E;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="36%">
-          <div style="font-size:11px;font-weight:700;color:#C8A96E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">&#x2605; Suite</div>
-          <div style="font-size:26px;font-weight:700;color:#F5F0E8;line-height:1">£20</div>
+        <td style="background:#1C2B1E;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="52%">
+          <div style="font-size:11px;font-weight:700;color:#C8A96E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">&#x2605; Pro</div>
+          <div style="font-size:26px;font-weight:700;color:#F5F0E8;line-height:1">£15</div>
           <div style="font-size:12px;color:rgba(245,240,232,0.6);margin-top:3px">per month</div>
-          <div style="font-size:11px;color:#C8A96E;margin-top:8px;line-height:1.4">Both apps + Finance (coming soon)</div>
+          <div style="font-size:11px;color:#C8A96E;margin-top:8px;line-height:1.4">Every module, shared data</div>
         </td>
       </tr>
     </table>
 
-    ${_p('The Suite costs £8 more than a single app and gives you both — plus Finance when it launches, included at no extra cost.')}
+    ${_p('Pro costs £8 more than HACCP alone and includes bookings, menus and costing on top — no add-ons, no separate apps.')}
     ${_p('To subscribe, open the app and tap <strong style="color:#1C2B1E">Subscribe</strong> on the paywall. Annual plans are available at checkout (2 months free).')}
 
-    ${_btn(APP_VERIQO, 'Open Veriqo to subscribe &rarr;')}
-    ${_btn(APP_CARTE, 'Or open Carte to subscribe &rarr;', false)}`;
+    ${_btn(APP_VERIQO, 'Open Veriqo to subscribe &rarr;')}`;
 
   return _wrap(header, body, 'Annual plans give you 2 months free — available at checkout.', uid);
-}
-
-// ─── Yield emails ─────────────────────────────────────────────────────────────
-
-function _day5Yield(name, uid) {
-  const header = `
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px">
-      <path d="M6 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-      <path d="M26 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-      <path d="M16 17L16 28" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-    </svg>
-    <div style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#F0EDE6;letter-spacing:-0.3px">Your first costing takes 2 minutes</div>
-    <div style="font-size:13px;color:#C9A84C;margin-top:6px;font-weight:500">Day 5 of your Yield trial</div>`;
-
-  const body = `
-    ${_pDark(_hi(name))}
-    ${_pDark('The Costing tool is the engine behind everything in Yield. Build a costing once and it flows into your quote automatically — food cost %, margins, travel, labour all calculated live.')}
-
-    <div style="background:#1E1A11;border:1px solid #C9A84C40;border-radius:10px;padding:16px;margin-bottom:16px">
-      <div style="font-size:13px;font-weight:700;color:#C9A84C;margin-bottom:10px">Try it now</div>
-      <table width="100%" cellpadding="0" cellspacing="0">
-        <tr>
-          <td width="28" style="vertical-align:top;padding-top:1px">
-            <div style="background:#C9A84C;color:#0E0E0D;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;display:inline-block">1</div>
-          </td>
-          <td style="font-size:13px;color:#B0AAA0;line-height:1.5;padding-bottom:8px">Open the <strong style="color:#F0EDE6">Costing</strong> tab and add a few ingredients with quantities and costs.</td>
-        </tr>
-        <tr>
-          <td width="28" style="vertical-align:top;padding-top:1px">
-            <div style="background:#C9A84C;color:#0E0E0D;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;display:inline-block">2</div>
-          </td>
-          <td style="font-size:13px;color:#B0AAA0;line-height:1.5;padding-bottom:8px">Set your target margin and covers. Watch the numbers update in real time.</td>
-        </tr>
-        <tr>
-          <td width="28" style="vertical-align:top;padding-top:1px">
-            <div style="background:#C9A84C;color:#0E0E0D;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;display:inline-block">3</div>
-          </td>
-          <td style="font-size:13px;color:#B0AAA0;line-height:1.5">Tap <strong style="color:#F0EDE6">Send to Quotes →</strong> — the figures carry over automatically.</td>
-        </tr>
-      </table>
-    </div>
-
-    ${_pDark('Every saved costing also feeds your Dashboard food cost % — so your P&L stays accurate without any extra work.')}
-
-    ${_btnYield(APP_YIELD, 'Open Yield &rarr;')}`;
-
-  return _wrapYield(header, body, null, uid);
-}
-
-function _day10Yield(name, uid) {
-  const header = `
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px">
-      <path d="M6 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-      <path d="M26 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-      <path d="M16 17L16 28" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-    </svg>
-    <div style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#F0EDE6;letter-spacing:-0.3px">Know your numbers before your next quote</div>
-    <div style="font-size:13px;color:#C9A84C;margin-top:6px;font-weight:500">Day 10 of your Yield trial</div>`;
-
-  const body = `
-    ${_pDark(_hi(name))}
-    ${_pDark('Here\'s a question: do you know your effective hourly rate from your last job? Yield can tell you — from the exact ingredients, mileage, and hours you logged.')}
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:separate;border-spacing:0 8px">
-      <tr>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:10px;padding:14px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F4CA;</td>
-            <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#F0EDE6">Dashboard P&amp;L</div>
-              <div style="font-size:13px;color:#7A7870;margin-top:2px;line-height:1.5">Revenue this month, open tabs, food cost % — updated the moment you record a payment.</div>
-            </td>
-          </tr></table>
-        </td>
-      </tr>
-      <tr>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:10px;padding:14px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="36" style="vertical-align:middle;font-size:20px">&#x23F1;&#xFE0F;</td>
-            <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#F0EDE6">Hours vs Profit ring</div>
-              <div style="font-size:13px;color:#7A7870;margin-top:2px;line-height:1.5">The Costing screen shows a live gauge of your effective hourly rate vs your target — so you can see before you quote whether the job is worth it.</div>
-            </td>
-          </tr></table>
-        </td>
-      </tr>
-      <tr>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:10px;padding:14px 16px">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td width="36" style="vertical-align:middle;font-size:20px">&#x1F517;</td>
-            <td style="vertical-align:middle">
-              <div style="font-size:14px;font-weight:700;color:#F0EDE6">Client payment portal</div>
-              <div style="font-size:13px;color:#7A7870;margin-top:2px;line-height:1.5">Every quote gets a shareable link. Clients see the event details, deposit &amp; balance breakdown — without needing an account.</div>
-            </td>
-          </tr></table>
-        </td>
-      </tr>
-    </table>
-
-    ${_pDark('4 days left in your trial. If Yield is saving you time, it\'s £12/month to keep it — or £28/month to add Veriqo and Carte for the full suite.')}
-
-    ${_btnYield(APP_YIELD, 'Open Yield &rarr;')}`;
-
-  return _wrapYield(header, body, '4 days left in your trial.', uid);
-}
-
-function _day13Yield(name, uid) {
-  const header = `
-    <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto 16px">
-      <path d="M6 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-      <path d="M26 5L16 17" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-      <path d="M16 17L16 28" stroke="#C9A84C" stroke-width="3" stroke-linecap="round"/>
-    </svg>
-    <div style="font-family:Georgia,serif;font-size:24px;font-weight:400;color:#F0EDE6;letter-spacing:-0.3px">Your Yield trial ends tomorrow</div>
-    <div style="font-size:13px;color:#C9A84C;margin-top:6px;font-weight:500">Day 13 of your trial</div>`;
-
-  const body = `
-    ${_pDark(_hi(name))}
-    ${_pDark('Your 14-day trial expires in 24 hours. Here\'s exactly what each option costs:')}
-
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:separate;border-spacing:6px 0">
-      <tr>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="33%">
-          <div style="font-size:11px;font-weight:700;color:#7A7870;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Yield only</div>
-          <div style="font-size:26px;font-weight:700;color:#F0EDE6;line-height:1">£12</div>
-          <div style="font-size:12px;color:#7A7870;margin-top:3px">per month</div>
-          <div style="font-size:11px;color:#5A5650;margin-top:8px;line-height:1.4">Quotes, invoices &amp; P&amp;L</div>
-        </td>
-        <td style="background:#1A1A18;border:1px solid #2A2A27;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="33%">
-          <div style="font-size:11px;font-weight:700;color:#7A7870;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Yield + Carte</div>
-          <div style="font-size:26px;font-weight:700;color:#F0EDE6;line-height:1">£24</div>
-          <div style="font-size:12px;color:#7A7870;margin-top:3px">per month</div>
-          <div style="font-size:11px;color:#5A5650;margin-top:8px;line-height:1.4">Finance + business management</div>
-        </td>
-        <td style="background:#1E1A11;border:1px solid #C9A84C40;border-radius:12px;padding:16px 10px;text-align:center;vertical-align:top" width="34%">
-          <div style="font-size:11px;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">&#x2605; Full suite</div>
-          <div style="font-size:26px;font-weight:700;color:#F0EDE6;line-height:1">£28</div>
-          <div style="font-size:12px;color:rgba(240,237,230,0.5);margin-top:3px">per month</div>
-          <div style="font-size:11px;color:#C9A84C;margin-top:8px;line-height:1.4">All 3 apps — Yield + Carte + Veriqo</div>
-        </td>
-      </tr>
-    </table>
-
-    ${_pDark('To subscribe, open the app and tap <strong style="color:#F0EDE6">Subscribe</strong> on the paywall. Annual plans are available at checkout — 2 months free.')}
-
-    ${_btnYield(APP_YIELD, 'Open Yield to subscribe &rarr;')}`;
-
-  return _wrapYield(header, body, 'Annual plans give you 2 months free — available at checkout.', uid);
 }
 
 // ─── Starter Kit — Days 2–7 ───────────────────────────────────────────────────
