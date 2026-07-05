@@ -136,6 +136,17 @@
     <button onclick="exitSampleDay()" style="background:#185FA5;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">Exit</button>
   </div>
 
+  <!-- SAMPLE DAY ANNOUNCE MODAL — one-time nudge shown to established accounts on next login -->
+  <div id="sample-day-announce-modal" onclick="if(event.target===this)dismissSampleDayAnnounce()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9995;align-items:center;justify-content:center;padding:20px">
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:360px;padding:26px 22px 22px;text-align:center">
+      <div style="font-size:40px;line-height:1;margin-bottom:14px">&#128064;</div>
+      <div style="font-size:17px;font-weight:700;color:#1a1a18;margin-bottom:8px">New: see a sample day</div>
+      <div style="font-size:14px;color:#5a5752;line-height:1.55;margin-bottom:20px">We've added a fully worked example day — opening checks, temps, deliveries and cleaning — so you can explore the app risk-free. Nothing you touch is saved.</div>
+      <button onclick="startSampleDayFromAnnounce()" style="width:100%;padding:13px;background:var(--vq-green);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">Show me &#8594;</button>
+      <button onclick="dismissSampleDayAnnounce()" style="background:none;border:none;color:#999;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;padding:4px">Maybe later</button>
+    </div>
+  </div>
+
   <!-- HOME -->
   <div id="tab-home" class="home">
     <div class="vq-module-greeting" style="padding-left:0;padding-right:0;margin-bottom:16px">
@@ -198,7 +209,7 @@
       <div style="font-size:14px;color:var(--vq-muted);margin-bottom:6px;line-height:1.6">If you have a job today, tap <strong style="color:var(--vq-ink)">Open Kitchen</strong> to start logging.<br>Your compliance records will be timestamped from now.</div>
       <div style="font-size:13px;color:var(--vq-muted);margin-bottom:28px;line-height:1.5">On days you're not working, just leave this screen as-is.<br>No false "missed" checks — only log when you're actually on a job.</div>
       <button onclick="startService()" style="display:inline-block;padding:15px 36px;background:var(--vq-green);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:-0.2px">Open Kitchen</button>
-      <div style="margin-top:16px"><button onclick="startSampleDay()" style="background:none;border:none;color:var(--vq-green);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px">New here? See a sample day first</button></div>
+      <div style="margin-top:16px"><button onclick="startSampleDay()" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;background:#fff;color:var(--vq-green);border:1.5px solid var(--vq-green);border-radius:10px;font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit">&#128064; New here? See a sample day first</button></div>
     </div>
 
     <!-- SHIFT ACTIVE VIEW — hidden until kitchen is opened -->
@@ -3176,7 +3187,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=5"></script>
-<script src="js/modules/haccp.js?v=51"></script>
+<script src="js/modules/haccp.js?v=52"></script>
 <script src="js/modules/menus.js?v=21"></script>
 <script src="js/modules/costing.js?v=30"></script>
 

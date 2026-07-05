@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v51**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v52**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=51` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=52` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=21` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=5` | `app.html` |
@@ -172,6 +172,12 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v52 — sample day: more prominent links + one-time announce for existing users
+- Both "See a sample day" entry points (shift-empty-state, starter checklist footer) upgraded from plain text links to outlined green buttons — more visible without competing with the primary CTA.
+- `#sample-day-announce-modal` (app.html, inside `#module-haccp`) — a one-time centered modal nudging **established** accounts (starter checklist steps all done, so they'd otherwise never see a sample-day entry point) to try the feature. Triggered by `_maybeShowSampleDayAnnounce()`, called at the end of `updateHaccpDashboard()`. Shows once per account (`settings.sampleDayAnnounceShown`, synced setting — persists across devices/logins), never re-shown after being seen whether dismissed or clicked.
+- `startSampleDayFromAnnounce()` closes the modal then calls `startSampleDay()`; `dismissSampleDayAnnounce()` just closes it.
+- PostHog events added: `sample_day_announce_shown`, `sample_day_announce_clicked`, `sample_day_announce_dismissed`.
 
 ### v51 — sample day (demo mode) + starter checklist
 - **Sample day:** `startSampleDay()` / `exitSampleDay()` in haccp.js. Swaps the global `records` var for `_buildDemoRecords()` (canned chef-shaped day: opening checks, 4 fridge temps, warn delivery, cooling, 2 cooks, cleaning — timestamps generated relative to now) and lets the normal renderers draw it, so the demo is pixel-identical to live data. `#demo-banner` (app.html, inside `#module-haccp` above `#tab-home`, so visible on every HACCP tab) shows while active.

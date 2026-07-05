@@ -1346,6 +1346,7 @@ function updateHaccpDashboard() {
     _renderAllergenConflictBanners([]);
   }
   renderStarterChecklist();
+  _maybeShowSampleDayAnnounce();
 }
 
 function updateNextJobBanner() {
@@ -4057,7 +4058,7 @@ function renderStarterChecklist() {
       rows+
       '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:10px">'+
         '<span style="font-size:12px;color:#999">'+doneCount+' of 3 done</span>'+
-        '<button onclick="startSampleDay()" style="background:none;border:none;color:var(--vq-green);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit">&#128064; See a sample day</button>'+
+        '<button onclick="startSampleDay()" style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--vq-green);color:var(--vq-green);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit">&#128064; See a sample day</button>'+
       '</div>'+
     '</div>';
 }
@@ -4067,6 +4068,35 @@ function dismissStarterChecklist() {
   saveHaccpSettings();
   renderStarterChecklist();
   if (window.posthog) posthog.capture('setup_checklist_dismissed');
+}
+
+// --- SAMPLE DAY ANNOUNCE (one-time nudge for existing accounts) ---
+// Established accounts never see the starter checklist's "See a sample day"
+// link once its 3 steps are done, so they'd otherwise have no way to
+// discover the feature. Show a one-time modal on their next login instead.
+function _maybeShowSampleDayAnnounce() {
+  if (_demoMode || settings.sampleDayAnnounceShown) return;
+  var have = _starterStepsDone();
+  var doneCount = (have.opening?1:0) + (have.fridge?1:0) + (have.cooking?1:0);
+  if (doneCount < 3) return; // still onboarding — they'll see the checklist link instead
+  var el = document.getElementById('sample-day-announce-modal');
+  if (!el) return;
+  el.style.display = 'flex';
+  settings.sampleDayAnnounceShown = true;
+  saveHaccpSettings();
+  if (window.posthog) posthog.capture('sample_day_announce_shown');
+}
+
+function dismissSampleDayAnnounce() {
+  var el = document.getElementById('sample-day-announce-modal');
+  if (el) el.style.display = 'none';
+  if (window.posthog) posthog.capture('sample_day_announce_dismissed');
+}
+
+function startSampleDayFromAnnounce() {
+  dismissSampleDayAnnounce();
+  if (window.posthog) posthog.capture('sample_day_announce_clicked');
+  startSampleDay();
 }
 
 // --- SHIFT / KITCHEN OPEN STATE ---
