@@ -140,10 +140,10 @@
   <div id="active-job-banner" style="display:none;background:#EAF3DE;border-bottom:1px solid #b8dfbf;padding:10px 16px;font-size:13px;color:#1C2B1E;font-weight:600"></div>
 
   <!-- ALLERGEN BRIEF MODAL — glanceable job allergen overview -->
-  <div id="allergen-brief-modal" onclick="if(event.target===this)closeAllergenBrief()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9992;align-items:flex-end;justify-content:center">
+  <div id="allergen-brief-modal" role="dialog" aria-modal="true" aria-labelledby="allergen-brief-title" onclick="if(event.target===this)closeAllergenBrief()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9992;align-items:flex-end;justify-content:center">
     <div style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden">
       <div style="padding:16px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid #f0ede8">
-        <div style="font-size:17px;font-weight:700;color:#1a1a18">⚠ Allergen Brief</div>
+        <div id="allergen-brief-title" style="font-size:17px;font-weight:700;color:#1a1a18">⚠ Allergen Brief</div>
         <button onclick="closeAllergenBrief()" aria-label="Close" style="background:none;border:none;color:#999;font-size:28px;line-height:1;cursor:pointer;font-family:inherit;padding:0;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">×</button>
       </div>
       <div id="allergen-brief-content" style="overflow-y:auto;padding:16px 18px 24px;flex:1"></div>
@@ -3204,7 +3204,7 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=6"></script>
-<script src="js/modules/haccp.js?v=63"></script>
+<script src="js/modules/haccp.js?v=64"></script>
 <script src="js/modules/menus.js?v=23"></script>
 <script src="js/modules/costing.js?v=30"></script>
 

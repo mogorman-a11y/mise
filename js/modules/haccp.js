@@ -279,7 +279,8 @@ function populateSelect(elId, listKey) {
     var profileName = window.Mise && window.Mise.profile && window.Mise.profile.chef_name;
     if(profileName && items.indexOf(profileName)===-1) items.unshift(profileName);
   }
-  el.innerHTML=items.map(function(v){return '<option>'+v+'</option>';}).join('');
+  el.innerHTML='';
+  items.forEach(function(v){ var o=document.createElement('option'); o.textContent=v; el.appendChild(o); });
   if(val) el.value=val;
 }
 function populateHaccpSelects() {
@@ -296,7 +297,8 @@ function populateHaccpSelects() {
     // Merge: menus dishes first, then HACCP-only items not already in menus
     var allItems = menusDishes.slice();
     haccpItems.forEach(function(v){ if(allItems.indexOf(v)===-1) allItems.push(v); });
-    dl.innerHTML = allItems.map(function(v){ return '<option value="'+v.replace(/"/g,'&quot;')+'">'; }).join('');
+    dl.innerHTML='';
+    allItems.forEach(function(v){ var o=document.createElement('option'); o.value=v; dl.appendChild(o); });
   }
 }
 
@@ -644,8 +646,8 @@ function renderChecklistLog(type) {
   var c=document.getElementById(type+'-log');
   if(!recs.length){c.innerHTML='<div class="empty">Not signed off yet today — complete the checklist above and save.</div>';return;}
   c.innerHTML=recs.slice().reverse().map(function(r){
-    var detail=r.unchecked&&r.unchecked.length?'<div class="log-time" style="color:#A32D2D">Not confirmed: '+r.unchecked.join(', ')+'</div>':'';
-    return '<div class="log-row"><div style="flex:1"><div class="log-name">'+r.by+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+detail+'</div>'+statusBadge(r.status)+'</div>';
+    var detail=r.unchecked&&r.unchecked.length?'<div class="log-time" style="color:#A32D2D">Not confirmed: '+r.unchecked.map(esc).join(', ')+'</div>':'';
+    return '<div class="log-row"><div style="flex:1"><div class="log-name">'+esc(r.by||'')+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+detail+'</div>'+statusBadge(r.status)+'</div>';
   }).join('');
 }
 
@@ -1078,13 +1080,13 @@ function renderSection(type) {
   var recs=records.filter(function(r){return r.type===type;});
   if(!recs.length){c.innerHTML='<div class="empty">No records logged yet today.</div>';return;}
   c.innerHTML=recs.slice().reverse().map(function(r){
-    var label=r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='probe'?r.probeId:r.type==='pest'?r.pestType:r.staff;
+    var label=recordLabel(r).name;
     var extra='';
-    if(r.type==='fridge'&&r.by) extra+='<div class="log-time">Checked by: '+r.by+'</div>';
+    if(r.type==='fridge'&&r.by) extra+='<div class="log-time">Checked by: '+esc(r.by)+'</div>';
     if(r.type==='cooling') extra+='<div class="log-time">'+r.startTemp+'°C at '+r.startTime+' → '+r.endTemp+'°C at '+r.endTime+' ('+r.method+')</div>';
     if(r.type==='delivery'){
-      if(r.invoice) extra+='<div class="log-time">Invoice: '+r.invoice+'</div>';
-      if(r.by) extra+='<div class="log-time">Received by: '+r.by+'</div>';
+      if(r.invoice) extra+='<div class="log-time">Invoice: '+esc(r.invoice)+'</div>';
+      if(r.by) extra+='<div class="log-time">Received by: '+esc(r.by)+'</div>';
       var details=[];
       if(r.chilledTemp!=='') details.push('Chilled: '+r.chilledTemp+'°C');
       if(r.frozenTemp!=='') details.push('Frozen: '+r.frozenTemp+'°C');
@@ -1112,9 +1114,9 @@ function tileBadgeClass(recs) {
 
 var currentFilter = null;
 function recordLabel(r) {
-  var typeLabels={fridge:'Fridge',cooking:'Cooking',cooling:'Cooling',reheating:'Reheating',delivery:'Delivery',cleaning:'Cleaning',probe:'Probe',pest:'Pest',illness:'Illness',opening:'Opening',closing:'Closing',crosscontam:'Cross-contam'};
-  var name=r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='opening'||r.type==='closing'||r.type==='crosscontam'?r.by:r.type==='probe'?r.probeId:r.type==='pest'?r.pestType:r.staff;
-  return {type:typeLabels[r.type]||r.type, name:name||'—'};
+  var typeLabels={fridge:'Fridge',cooking:'Cooking',cooling:'Cooling',reheating:'Reheating',delivery:'Delivery',cleaning:'Cleaning',probe:'Probe',pest:'Pest',illness:'Illness',opening:'Opening',closing:'Closing',crosscontam:'Cross-contam',job:'Job',kitchenassess:'Kitchen assess',allergen:'Allergen',transport:'Transport',mobileset:'Mobile setup',incident:'Incident'};
+  var raw=r.type==='fridge'?r.unit:r.type==='cooking'||r.type==='cooling'||r.type==='reheating'||r.type==='transport'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='probe'?r.probeId:r.type==='pest'?r.pestType:r.type==='illness'?r.staff:r.type==='job'||r.type==='customers'||r.type==='kitchenassess'?r.client:r.type==='allergen'?r.dish:r.type==='incident'?r.incidentType:r.by||'';
+  return {type:typeLabels[r.type]||r.type, name:esc(raw||'—')};
 }
 
 function refreshFilterPanel(status) {
@@ -1328,8 +1330,8 @@ function updateHaccpDashboard() {
   } else {
     ac.innerHTML=alerts.slice().reverse().map(function(r){
       var cls=r.status==='fail'?'fail':'warn';
-      var label=r.type==='allergen'?r.dish:r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='opening'||r.type==='closing'||r.type==='crosscontam'?titles[r.type]:r.type;
-      var sub = (r.type==='allergen' && r.allergens && r.allergens.length) ? r.time+' — '+r.allergens.join(', ') : r.time+' — '+r.msg;
+      var label=recordLabel(r).name;
+      var sub = (r.type==='allergen' && r.allergens && r.allergens.length) ? r.time+' — '+r.allergens.map(esc).join(', ') : r.time+' — '+r.msg;
       var action = r.type==='allergen' ? '_openAllergenBrief()' : "showFilter('"+r.status+"')";
       return '<div class="alert-strip '+cls+'" onclick="'+action+'" style="cursor:pointer"><div class="alert-text"><strong>'+label+'</strong><div class="alert-sub">'+sub+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
@@ -1451,7 +1453,7 @@ function buildDayBlock(dateStr,recs,isToday) {
     var tr=recs.filter(function(r){return r.type===t;});
     if(!tr.length)return '';
     return '<div class="divider" style="margin-top:10px">'+typeLabels[t]+'</div>'+tr.map(function(r){
-      var label=r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='opening'||r.type==='closing'||r.type==='crosscontam'?r.by:r.type==='probe'?r.probeId:r.type==='pest'?r.pestType:r.staff;
+      var label=recordLabel(r).name;
       return '<div class="log-row"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
   }).join('');
@@ -3152,32 +3154,32 @@ function renderSection_PC(type) {
   if (!recs.length) { c.innerHTML='<div class="empty">'+(type==='customers'?'No customer jobs logged yet today.':'No records logged yet today.')+'</div>'; return; }
   c.innerHTML = recs.slice().reverse().map(function(r) {
     var recIdx = records.indexOf(r);
-    var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.type==='incident'?r.incidentType : r.by||'';
+    var label = recordLabel(r).name;
     var extra = '';
-    if (r.type==='allergen' && r.allergens && r.allergens.length) extra += '<div class="log-time">'+r.allergens.join(', ')+'</div>';
+    if (r.type==='allergen' && r.allergens && r.allergens.length) extra += '<div class="log-time">'+r.allergens.map(esc).join(', ')+'</div>';
     if (r.type==='allergen') extra += '<div style="display:flex;gap:6px;margin-top:6px"><button onclick="event.stopPropagation();editHaccpAllergen('+recIdx+')" aria-label="Edit allergen record" style="padding:8px 14px;font-size:12px;background:#f5f4f0;border:1px solid #ccc;border-radius:5px;cursor:pointer;font-family:inherit">Edit</button><button onclick="event.stopPropagation();deleteHaccpAllergen('+recIdx+')" aria-label="Delete allergen record" style="padding:8px 14px;font-size:12px;background:#fde8e8;border:1px solid #f5c6c6;border-radius:5px;color:#A32D2D;cursor:pointer;font-family:inherit">Delete</button></div>';
     if (r.type==='transport') extra += '<div class="log-time">'+r.startTemp+'°C at '+r.startTime+' → '+r.endTemp+'°C at '+r.endTime+'</div>';
     if (r.type==='incident') {
-      extra += '<div class="log-time">Severity: '+r.severity+'</div>';
-      if (r.incidentTime) extra += '<div class="log-time">🕐 Occurred: '+r.incidentTime.replace('T',' ')+'</div>';
-      if (r.location) extra += '<div class="log-time">📍 '+(r.location.text||'')+(r.location.accuracy?' (±'+r.location.accuracy+'m accuracy)':'')+'</div>';
-      if (r.description) extra += '<div class="log-time">'+r.description+'</div>';
-      if (r.action) extra += '<div class="log-time" style="color:#2D7A3A">✓ Action: '+r.action+'</div>';
+      extra += '<div class="log-time">Severity: '+esc(r.severity||'')+'</div>';
+      if (r.incidentTime) extra += '<div class="log-time">🕐 Occurred: '+esc(r.incidentTime.replace('T',' '))+'</div>';
+      if (r.location) extra += '<div class="log-time">📍 '+esc(r.location.text||'')+(r.location.accuracy?' (±'+r.location.accuracy+'m accuracy)':'')+'</div>';
+      if (r.description) extra += '<div class="log-time">'+esc(r.description)+'</div>';
+      if (r.action) extra += '<div class="log-time" style="color:#2D7A3A">✓ Action: '+esc(r.action)+'</div>';
       var photos = r.photos && r.photos.length ? r.photos : (r.photo ? [r.photo] : []);
       if (photos.length) extra += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'+photos.map(function(src){ return '<img src="'+src+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="event.stopPropagation();viewPhoto(this.src)"/>'; }).join('')+'</div>';
     }
     if (r.type==='job') {
-      if (r.location)   extra += '<div class="log-time">📍 '+r.location+'</div>';
+      if (r.location)   extra += '<div class="log-time">📍 '+esc(r.location)+'</div>';
       if (r.eventDate)  extra += '<div class="log-time">📅 '+new Date(r.eventDate).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>';
       if (r.menus && r.menus.length) {
         r.menus.forEach(function(m) {
-          extra += '<div class="log-time">🍽 ' + m.name + ' (' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + ')</div>';
+          extra += '<div class="log-time">🍽 ' + esc(m.name) + ' (' + m.dishes.length + ' dish' + (m.dishes.length !== 1 ? 'es' : '') + ')</div>';
         });
       } else if (r.menuName) {
-        extra += '<div class="log-time">🍽 ' + r.menuName + (r.menu&&r.menu.length?' ('+r.menu.length+' dish'+(r.menu.length>1?'es':'')+')'  :'') + '</div>';
+        extra += '<div class="log-time">🍽 ' + esc(r.menuName) + (r.menu&&r.menu.length?' ('+r.menu.length+' dish'+(r.menu.length>1?'es':'')+')'  :'') + '</div>';
       }
-      if (r.dietaryPrefs&&r.dietaryPrefs.length) extra += '<div class="log-time">'+r.dietaryPrefs.join(', ')+'</div>';
-      if (r.conflicts && r.conflicts.length) extra += '<div style="margin-top:4px;font-size:12px;color:#A32D2D;font-weight:600">⚠️ Allergen conflicts: '+r.conflicts.join(', ')+'</div>';
+      if (r.dietaryPrefs&&r.dietaryPrefs.length) extra += '<div class="log-time">'+r.dietaryPrefs.map(esc).join(', ')+'</div>';
+      if (r.conflicts && r.conflicts.length) extra += '<div style="margin-top:4px;font-size:12px;color:#A32D2D;font-weight:600">⚠️ Allergen conflicts: '+r.conflicts.map(esc).join(', ')+'</div>';
     }
     if (r.photo) extra += '<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="event.stopPropagation();viewPhoto(this.src)"/></div>';
     var rowClick = (r.type === 'job') ? ' onclick="custEditJob('+recIdx+')" style="align-items:flex-start;cursor:pointer"' : ' style="align-items:flex-start"';
@@ -4224,9 +4226,12 @@ function openJobHaccpChecklist(job) {
   modal.style.display = 'flex';
 }
 
+var _allergenBriefOpener = null;
+
 function closeAllergenBrief() {
   var modal = document.getElementById('allergen-brief-modal');
   if (modal) modal.style.display = 'none';
+  if (_allergenBriefOpener) { try { _allergenBriefOpener.focus(); } catch(e){} _allergenBriefOpener = null; }
 }
 
 function _openAllergenBrief() {
@@ -4272,8 +4277,8 @@ function _openAllergenBrief() {
     var j = _haccpActiveJob;
     var meta = [];
     if (j.eventDate === TODAY) meta.push('Today'); else { var _d = new Date(j.eventDate+'T12:00:00'); meta.push(_d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})); }
-    if (j.jobType) meta.push(j.jobType);
-    if (j.covers) meta.push(j.covers+' covers');
+    if (j.jobType) meta.push(esc(j.jobType));
+    if (j.covers) meta.push(esc(j.covers)+' covers');
     html += '<div style="background:#EAF3DE;border-radius:8px;padding:10px 14px;margin-bottom:16px">'
       +'<div style="font-size:15px;font-weight:700;color:#1C2B1E">'+esc(j.client)+'</div>'
       +'<div style="font-size:12px;color:#4a6655;margin-top:2px">'+meta.join(' · ')+'</div>'
@@ -4344,7 +4349,10 @@ function _openAllergenBrief() {
   }
 
   contentEl.innerHTML = html;
+  _allergenBriefOpener = document.activeElement;
   modal.style.display = 'flex';
+  var closeBtn = modal.querySelector('button[aria-label="Close"]');
+  if (closeBtn) setTimeout(function(){ closeBtn.focus(); }, 50);
 }
 
 function _checkJobConflictsOnLoad() {
@@ -4491,6 +4499,14 @@ function _pushRecord(rec) {
 }
 
 // --- INIT ---
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var ab = document.getElementById('allergen-brief-modal');
+    if (ab && ab.style.display !== 'none') { closeAllergenBrief(); return; }
+    var jc = document.getElementById('job-haccp-modal');
+    if (jc && jc.style.display !== 'none') { closeJobHaccpChecklist(); }
+  }
+});
 loadHaccpSettings();
 loadHaccpToday();
 _findJobForToday();
