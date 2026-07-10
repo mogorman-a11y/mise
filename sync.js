@@ -271,6 +271,7 @@ window.Mise.sync = (function () {
       metadata: {
         client_name: rec.client || '',
         menus: rec.menus || [],
+        guests: rec.guests || [],
         tabDepositPaid: rec.tabDepositPaid || false,
         tabBalancePaid: rec.tabBalancePaid || false,
         tabClosed: rec.tabClosed || false
@@ -513,6 +514,7 @@ window.Mise.sync = (function () {
           jobType: j.title || '',
           notes: j.notes || '',
           menus: meta.menus || [],
+          guests: meta.guests || [],
           source: j.source || 'carte',
           _fromCarte: j.source === 'carte',
           _fromYield: j.source === 'yield'
@@ -547,6 +549,7 @@ window.Mise.sync = (function () {
     if (typeof loadHaccpSettings === 'function') loadHaccpSettings();
     if (typeof loadMiseSettings === 'function') loadMiseSettings();
     if (typeof loadHaccpToday === 'function') loadHaccpToday();
+    if (typeof _findJobForToday === 'function') _findJobForToday();
     if (typeof loadMiseToday === 'function') loadMiseToday();
     if (typeof populateHaccpSelects === 'function') populateHaccpSelects();
     if (typeof populateMiseSelects === 'function') populateMiseSelects();

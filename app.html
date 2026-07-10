@@ -136,6 +136,9 @@
     <button onclick="exitSampleDay()" style="background:#185FA5;color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">Exit</button>
   </div>
 
+  <!-- ACTIVE JOB BANNER — shown on all HACCP tabs when a job is scheduled for today -->
+  <div id="active-job-banner" style="display:none;background:#EAF3DE;border-bottom:1px solid #b8dfbf;padding:10px 16px;font-size:13px;color:#1C2B1E;font-weight:600"></div>
+
   <!-- SAMPLE DAY ANNOUNCE MODAL — one-time nudge shown to established accounts on next login -->
   <div id="sample-day-announce-modal" onclick="if(event.target===this)dismissSampleDayAnnounce()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9995;align-items:center;justify-content:center;padding:20px">
     <div style="background:#fff;border-radius:16px;width:100%;max-width:360px;padding:26px 22px 22px;text-align:center">
@@ -3187,8 +3190,8 @@ function vqIcon(name, size) {
 <script src="supabase.js?v=8"></script>
 
 <script src="js/modules/dashboard.js?v=6"></script>
-<script src="js/modules/haccp.js?v=56"></script>
-<script src="js/modules/menus.js?v=22"></script>
+<script src="js/modules/haccp.js?v=57"></script>
+<script src="js/modules/menus.js?v=23"></script>
 <script src="js/modules/costing.js?v=30"></script>
 
 <script src="auth.js?v=34"></script>

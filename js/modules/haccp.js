@@ -157,6 +157,7 @@ function showTooltip(btn, text) {
 
 var TODAY = new Date().toISOString().slice(0,10);
 var records = [];
+var _haccpActiveJob = null;
 window._pushUserId = null; // set after sign-in, used by push functions
 
 var CHECKLISTS = { opening:[], closing:[], crosscontam:[] };
@@ -629,7 +630,7 @@ function logChecklist(type) {
   var notes = document.getElementById(notesId) ? document.getElementById(notesId).value : '';
   var status=unchecked.length===0?'ok':(unchecked.length<=2?'warn':'fail');
   var msg=unchecked.length===0?'All '+items.length+' items confirmed':unchecked.length+' item'+(unchecked.length>1?'s':'')+' not confirmed';
-  records.push({type:type,by:by,notes:notes,checked:checked,unchecked:unchecked,time:now(),status:status,msg:msg});
+  _pushRecord({type:type,by:by,notes:notes,checked:checked,unchecked:unchecked,time:now(),status:status,msg:msg});
   saveHaccpToday();
   items.forEach(function(item){ var el=_getChk(item.id); if(el) el.checked=false; });
   if (document.getElementById(notesId)) document.getElementById(notesId).value='';
@@ -730,7 +731,7 @@ function logFridge() {
     else if(temp<0){status='warn';msg=temp+'°C — below 0°C, food may be freezing. Check fridge thermostat.';}
     else{status='ok';msg=temp+'°C — within safe range (0–'+T('fridge-warn')+'°C)';}
   }
-  records.push({type:'fridge',unit:unit,by:by,temp:temp,time:time,notes:notes,status:status,msg:msg});
+  _pushRecord({type:'fridge',unit:unit,by:by,temp:temp,time:time,notes:notes,status:status,msg:msg});
   saveHaccpToday(); document.getElementById('fridge-temp').value=''; document.getElementById('fridge-notes').value=''; document.getElementById('fridge-time').value=now();
   if(isNA)toggleNA('fridge-temp',naBtn);
   renderSection('fridge'); updateHaccpDashboard();
@@ -749,9 +750,10 @@ function logCooking() {
   if(temp<T('cooking-fail')){status='fail';msg=temp+'°C — must reach '+T('cooking-fail')+'°C minimum';}
   else if(temp<T('cooking-warn')){status='warn';msg=temp+'°C — borderline, target '+T('cooking-warn')+'°C';}
   else{status='ok';msg=temp+'°C — safe';}
-  records.push({type:'cooking',food:food,temp:temp,time:time,chef:chef,status:status,msg:msg});
+  _pushRecord({type:'cooking',food:food,temp:temp,time:time,chef:chef,status:status,msg:msg});
   saveHaccpToday(); document.getElementById('cook-food').value=''; document.getElementById('cook-temp').value=''; document.getElementById('cook-time').value=now();
   renderSection('cooking'); updateHaccpDashboard();
+  _checkCookingConflict(food);
   if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
 }
 
@@ -805,7 +807,7 @@ function logCooling() {
     }
   }
 
-  records.push({type:'cooling',food:food,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,durationMins:durationMins,method:method,by:by,time:startTime,status:status,msg:msg});
+  _pushRecord({type:'cooling',food:food,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,durationMins:durationMins,method:method,by:by,time:startTime,status:status,msg:msg});
   saveHaccpToday();
   document.getElementById('cool-food').value=''; document.getElementById('cool-start-temp').value=''; document.getElementById('cool-end-temp').value='';
   document.getElementById('cool-start-time').value=now(); document.getElementById('cool-end-time').value=now();
@@ -826,9 +828,10 @@ function logReheating() {
   if(temp<T('reheat-fail')){status='fail';msg=temp+'°C — must reach '+T('reheat-fail')+'°C for reheating';}
   else if(temp<T('reheat-warn')){status='warn';msg=temp+'°C — borderline, target '+T('reheat-warn')+'°C';}
   else{status='ok';msg=temp+'°C — safe to serve';}
-  records.push({type:'reheating',food:food,temp:temp,time:time,chef:chef,notes:notes,status:status,msg:msg});
+  _pushRecord({type:'reheating',food:food,temp:temp,time:time,chef:chef,notes:notes,status:status,msg:msg});
   saveHaccpToday(); document.getElementById('reheat-food').value=''; document.getElementById('reheat-temp').value=''; document.getElementById('reheat-notes').value=''; document.getElementById('reheat-time').value=now();
   renderSection('reheating'); updateHaccpDashboard();
+  _checkCookingConflict(food);
   if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
 }
 
@@ -873,7 +876,7 @@ function logDelivery() {
   else if(temp!==null&&temp>T('delivery-fail')){status='fail';msg=temp+'°C — above safe temp ('+T('delivery-fail')+'°C)';}
   else if((temp!==null&&temp>T('delivery-warn'))||condition==='Minor issues noted'||cW||fW){status='warn';msg=temp!==null?(temp+'°C — issues noted'):'Issues noted';}
   else{status='ok';msg=temp!==null?(temp+'°C — '+condition):condition;}
-  records.push({type:'delivery',supplier:supplier,temp:temp,time:time,invoice:invoice,by:by,condition:condition,chilledTemp:chilledTemp,chilledCond:chilledCond,frozenTemp:frozenTemp,frozenCond:frozenCond,notes:notes,photo:photo,status:status,msg:msg});
+  _pushRecord({type:'delivery',supplier:supplier,temp:temp,time:time,invoice:invoice,by:by,condition:condition,chilledTemp:chilledTemp,chilledCond:chilledCond,frozenTemp:frozenTemp,frozenCond:frozenCond,notes:notes,photo:photo,status:status,msg:msg});
   saveHaccpToday();
   showNudge('delivery_logged');
   document.getElementById('del-temp').value=''; document.getElementById('del-invoice').value=''; document.getElementById('del-notes').value='';
@@ -892,7 +895,7 @@ function logCleaning() {
   var naBtn=document.getElementById('clean-chem-na-btn');
   var isNA=naBtn&&naBtn.getAttribute('data-na')==='1';
   var chem=isNA?'N/A':document.getElementById('clean-chem').value.trim();
-  records.push({type:'cleaning',task:task,time:time,by:by,chem:chem,status:'ok',msg:'Completed by '+by});
+  _pushRecord({type:'cleaning',task:task,time:time,by:by,chem:chem,status:'ok',msg:'Completed by '+by});
   saveHaccpToday(); document.getElementById('clean-chem').value=''; document.getElementById('clean-time').value=now();
   if(isNA)toggleNA('clean-chem',naBtn);
   renderSection('cleaning'); updateHaccpDashboard(); toast('Saved — '+task+' completed');
@@ -908,7 +911,7 @@ function logProbe() {
   if(isNaN(reading)){toast('Please enter a reading',false);return;}
   var status=result.indexOf('Pass')===0?'ok':'fail';
   var msg=result+' ('+reading+'°C)';
-  records.push({type:'probe',probeId:id,reading:reading,date:date,result:result,by:by,time:now(),status:status,msg:msg});
+  _pushRecord({type:'probe',probeId:id,reading:reading,date:date,result:result,by:by,time:now(),status:status,msg:msg});
   saveHaccpToday(); document.getElementById('probe-reading').value=''; document.getElementById('probe-id').value='';
   renderSection('probe'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+id+' passed'); else toast('Alert — '+id+' failed',false);
@@ -923,7 +926,7 @@ function logPest() {
   var by=document.getElementById('pest-by').value;
   var status=type.indexOf('Routine')===0?'ok':(type==='Pest contractor visit'||type==='Bait station checked'?'ok':'fail');
   var msg=type+(location?' at '+location:'');
-  records.push({type:'pest',pestType:type,location:location,date:date,action:action,by:by,time:now(),status:status,msg:msg});
+  _pushRecord({type:'pest',pestType:type,location:location,date:date,action:action,by:by,time:now(),status:status,msg:msg});
   saveHaccpToday(); document.getElementById('pest-location').value=''; document.getElementById('pest-action').value=''; document.getElementById('pest-date').value=todayStr();
   renderSection('pest'); updateHaccpDashboard(); toast('Saved — pest record logged');
 }
@@ -937,7 +940,7 @@ function logIllness() {
   var by=document.getElementById('illness-by').value;
   var status=type.indexOf('Reported')===0?'warn':'ok';
   var msg=type;
-  records.push({type:'illness',staff:staff,illnessType:type,symptoms:symptoms,date:date,by:by,time:now(),status:status,msg:msg});
+  _pushRecord({type:'illness',staff:staff,illnessType:type,symptoms:symptoms,date:date,by:by,time:now(),status:status,msg:msg});
   saveHaccpToday(); document.getElementById('illness-symptoms').value=''; document.getElementById('illness-date').value=todayStr();
   renderSection('illness'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — '+staff+' return to work logged'); else toast('Saved — '+staff+' stood down','warn');
@@ -964,7 +967,7 @@ function logIncident() {
   var status = severity === 'Critical' ? 'fail' : severity === 'High' ? 'warn' : 'ok';
   var locationObj = _incidentLocation ? Object.assign({}, _incidentLocation, { text: locationText || _incidentLocation.text }) : (locationText ? { text: locationText } : null);
   var msg = type + ' — ' + severity + ' severity. ' + description + (action ? ' Action: ' + action : '');
-  records.push({ type:'incident', incidentType:type, severity:severity, incidentTime:incidentTime, location:locationObj, description:description, action:action, by:by, photos:_incidentPhotos.slice(), loggedAt:now(), time:now(), status:status, msg:msg });
+  _pushRecord({ type:'incident', incidentType:type, severity:severity, incidentTime:incidentTime, location:locationObj, description:description, action:action, by:by, photos:_incidentPhotos.slice(), loggedAt:now(), time:now(), status:status, msg:msg });
   saveHaccpToday(); renderSection_PC('incident'); updateHaccpDashboard();
   document.getElementById('inc-description').value = '';
   document.getElementById('inc-action').value = '';
@@ -2682,7 +2685,7 @@ function logCustomerJob() {
   var msg = type + (covers ? ' · ' + covers + ' covers' : '') + (menuNamesStr ? ' · ' + menuNamesStr : '');
   if (conflicts.length) msg += ' · ⚠️ ' + conflicts.length + ' allergen conflict' + (conflicts.length > 1 ? 's' : '');
 
-  records.push({
+  _pushRecord({
     type: 'job', client: client, location: address, phone: phone, email: email,
     jobType: type, covers: covers, time: time, eventDate: eventDate,
     notes: notes, dietNotes: dietNotes,
@@ -2749,7 +2752,7 @@ function logKitchenAssess() {
   var fridgeWarn = !isNaN(fridgeTemp) && fridgeTemp > T('fridge-warn');
   var status = condition.indexOf('Unsuitable')===0||fridgeFail?'fail': (condition.indexOf('Minor')===0||condition.indexOf('Significant')===0||fridgeWarn||unchecked.length>0)?'warn':'ok';
   var msg = condition.split(' —')[0] + (!isNaN(fridgeTemp)?' · Fridge: '+fridgeTemp+'°C':'');
-  records.push({type:'kitchenassess', client:client, fridgeTemp:fridgeTemp, condition:condition, notes:notes, photo:photo, checked:checked, unchecked:unchecked, time:now(), status:status, msg:msg});
+  _pushRecord({type:'kitchenassess', client:client, fridgeTemp:fridgeTemp, condition:condition, notes:notes, photo:photo, checked:checked, unchecked:unchecked, time:now(), status:status, msg:msg});
   saveHaccpToday();
   document.getElementById('ka-client').value=''; document.getElementById('ka-fridge-temp').value=''; document.getElementById('ka-notes').value=''; clearKaPhoto();
   items.forEach(function(item){ var el=document.getElementById('chk-'+item.id); if(el) el.checked=false; });
@@ -2774,23 +2777,13 @@ function logHaccpAllergen() {
     var btn = document.getElementById('al-save-btn');
     if (btn) btn.textContent = 'Save allergen record';
   } else {
-    records.push(rec);
+    _pushRecord(rec);
   }
   saveHaccpToday();
   document.getElementById('al-client').value=''; document.getElementById('al-dish').value=''; document.getElementById('al-notes').value='';
   ALLERGENS_14.forEach(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
   renderSection_PC('allergen'); renderAllergenGuests(); updateHaccpDashboard();
-  var guests = settings.allergenGuests || [];
-  var conflicts = [];
-  guests.forEach(function(g){
-    var hits = (g.allergens||[]).filter(function(a){ return present.indexOf(a) !== -1; });
-    if (hits.length) conflicts.push(g.name+': '+hits.join(', '));
-  });
-  if (conflicts.length) {
-    toast('⚠ ALLERGEN CONFLICT — '+conflicts.join(' | '), false);
-  } else {
-    toast('Saved — allergen record for '+dish);
-  }
+  if (!_checkImmediateConflict(dish, present)) toast('Saved — allergen record for '+dish);
 }
 
 function editHaccpAllergen(recIdx) {
@@ -2861,23 +2854,30 @@ function renderAllergenGuests() {
     var c = document.getElementById('guest-allergen-list');
     var banner = document.getElementById('allergen-conflict-banner');
     if (!c) return;
-    var guests = settings.allergenGuests || [];
-    if (!guests.length) {
+    var globalGuests = settings.allergenGuests || [];
+    var jobGuests = _haccpActiveJob ? (_haccpActiveJob.guests || []) : [];
+    if (!globalGuests.length && !jobGuests.length) {
       c.innerHTML = '<div class="empty" style="padding:10px 0">No guests added yet.</div>';
       if (banner) { banner.style.display = 'none'; banner.innerHTML = ''; }
       return;
     }
+    // Build dish allergen map: allergen log records + active job menu dishes
     var dishAllergens = {};
     records.filter(function(r){ return r.type==='allergen'; }).forEach(function(r){
       (r.allergens||[]).forEach(function(a){ if(!dishAllergens[a]) dishAllergens[a]=[]; dishAllergens[a].push(r.dish); });
     });
+    var jobDishMap = _getJobDishAllergenMap();
+    Object.keys(jobDishMap).forEach(function(a){
+      if(!dishAllergens[a]) dishAllergens[a]=[];
+      jobDishMap[a].forEach(function(d){ if(dishAllergens[a].indexOf(d)===-1) dishAllergens[a].push(d); });
+    });
     var allConflictLines = [];
-    c.innerHTML = guests.map(function(g){
+    function _guestCard(g, deletable) {
       var conflicts = (g.allergens||[]).filter(function(a){ return dishAllergens[a]; });
       var conflictHtml = '';
       if (conflicts.length) {
         var detail = conflicts.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; ');
-        allConflictLines.push(g.name+' — '+detail);
+        allConflictLines.push(esc(g.name)+' — '+detail);
         var conflictRows = conflicts.map(function(a){
           return '<div><strong>'+esc(a)+'</strong> — in: '+dishAllergens[a].map(function(d){return esc(d);}).join(', ')+'</div>';
         }).join('');
@@ -2891,15 +2891,26 @@ function renderAllergenGuests() {
       var allergenTags = (g.allergens||[]).length
         ? (g.allergens||[]).map(function(a){ return '<span style="background:'+(conflicts.indexOf(a)!==-1?'#fde8e8':'#f5f4f0')+';border:1px solid '+(conflicts.indexOf(a)!==-1?'#f5c6c6':'#ccc')+';border-radius:4px;padding:1px 6px;font-size:12px;color:'+(conflicts.indexOf(a)!==-1?'#A32D2D':'#555')+'">'+a+'</span>'; }).join(' ')
         : '<span style="font-size:12px;color:#888">No specific allergens recorded</span>';
+      var removeBtn = deletable
+        ? '<button onclick="deleteAllergenGuest(\''+g.id+'\')" aria-label="Remove guest" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0;line-height:1;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center">×</button>'
+        : '';
       return '<div style="background:#fff;border:1px solid '+(conflicts.length?'#f5c6c6':'#e0ddd6')+';border-radius:8px;padding:10px 12px;margin-bottom:8px">'
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
-        +'<div style="font-weight:600;font-size:14px">'+g.name+'</div>'
-        +'<button onclick="deleteAllergenGuest(\''+g.id+'\')" aria-label="Remove guest" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0;line-height:1;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center">×</button>'
+        +'<div style="font-weight:600;font-size:14px">'+esc(g.name)+'</div>'
+        +removeBtn
         +'</div>'
         +'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+allergenTags+'</div>'
         +conflictHtml
         +'</div>';
-    }).join('');
+    }
+    var html = '';
+    if (jobGuests.length) {
+      html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#2D7A3A;letter-spacing:0.05em;margin-bottom:6px">Today\'s job — '+esc(_haccpActiveJob.client)+'</div>';
+      html += jobGuests.map(function(g){ return _guestCard(g, false); }).join('');
+      if (globalGuests.length) html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin:10px 0 6px">Saved guests</div>';
+    }
+    html += globalGuests.map(function(g){ return _guestCard(g, true); }).join('');
+    c.innerHTML = html;
     _renderAllergenConflictBanners(allConflictLines);
   } catch(e) { console.error('[Veriqo] renderAllergenGuests error:', e); }
 }
@@ -3020,7 +3031,7 @@ function _haccpLogTransport() {
   }
 
   var msg = msgs.join(' | ');
-  records.push({type:'transport', foodType:type, food:food, destination:dest, startTemp:startTemp, startTime:startTime, endTemp:(type==='hot'?hotEnd:endTemp), endTime:endTime, method:method, by:by, time:startTime, status:status, msg:msg});
+  _pushRecord({type:'transport', foodType:type, food:food, destination:dest, startTemp:startTemp, startTime:startTime, endTemp:(type==='hot'?hotEnd:endTemp), endTime:endTime, method:method, by:by, time:startTime, status:status, msg:msg});
   saveHaccpToday();
   document.getElementById('tr-food').value=''; document.getElementById('tr-destination').value='';
   var st = document.getElementById('tr-start-temp'); if(st) st.value='';
@@ -4185,9 +4196,106 @@ function validateThresholds(thresholds) {
   return errors;
 }
 
+// --- JOB PACKET ---
+function _findJobForToday() {
+  var today = todayStr();
+  var found = null;
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (!k || k.indexOf('mise_') !== 0 || k === 'mise_settings') continue;
+      var recs = JSON.parse(localStorage.getItem(k) || '[]');
+      for (var j = 0; j < recs.length; j++) {
+        if (recs[j].type === 'job' && recs[j].eventDate === today) { found = recs[j]; break; }
+      }
+      if (found) break;
+    }
+  } catch(e) {}
+  _haccpActiveJob = found;
+  _renderActiveJobBanner();
+}
+
+function _renderActiveJobBanner() {
+  var b = document.getElementById('active-job-banner');
+  if (!b) return;
+  if (!_haccpActiveJob) { b.style.display = 'none'; b.innerHTML = ''; return; }
+  var j = _haccpActiveJob;
+  var gCount = (j.guests || []).length;
+  var gWithAllergens = (j.guests || []).filter(function(g){ return g.allergens && g.allergens.length; }).length;
+  b.style.display = 'block';
+  b.innerHTML = '🗓 Today: ' + esc(j.client)
+    + (j.covers ? ' · ' + esc(j.covers) + ' covers' : '')
+    + (gCount ? ' · ' + gCount + ' guest' + (gCount !== 1 ? 's' : '')
+        + (gWithAllergens ? ' (' + gWithAllergens + ' with allergen requirements)' : '') : '');
+}
+
+function _getJobGuestsForConflict() {
+  var global = settings.allergenGuests || [];
+  var jobGuests = _haccpActiveJob ? (_haccpActiveJob.guests || []) : [];
+  var merged = global.slice();
+  jobGuests.forEach(function(g) {
+    if (!merged.some(function(m){ return m.id === g.id; })) merged.push(g);
+  });
+  return merged;
+}
+
+function _getJobDishAllergenMap() {
+  var map = {};
+  if (!_haccpActiveJob) return map;
+  (_haccpActiveJob.menus || []).forEach(function(m) {
+    (m.dishes || []).forEach(function(d) {
+      (d.allergens || []).forEach(function(a) {
+        if (!map[a]) map[a] = [];
+        if (map[a].indexOf(d.dish) === -1) map[a].push(d.dish);
+      });
+    });
+  });
+  return map;
+}
+
+function _checkImmediateConflict(dishName, allergensPresentArray) {
+  if (!allergensPresentArray || !allergensPresentArray.length) return;
+  var guests = _getJobGuestsForConflict();
+  var conflicts = [];
+  guests.forEach(function(g) {
+    var hits = (g.allergens || []).filter(function(a){ return allergensPresentArray.indexOf(a) !== -1; });
+    if (hits.length) conflicts.push(esc(g.name) + ': ' + hits.map(esc).join(', '));
+  });
+  if (conflicts.length) {
+    toast('⚠ ALLERGEN CONFLICT — ' + conflicts.join(' | '), false);
+    renderAllergenGuests();
+    _renderAllergenConflictBanners(conflicts);
+  }
+  return conflicts.length > 0;
+}
+
+function _checkCookingConflict(foodName) {
+  if (!_haccpActiveJob || !foodName) return;
+  var dishMap = _getJobDishAllergenMap();
+  var foodLower = foodName.toLowerCase();
+  var conflicts = [];
+  var guests = _getJobGuestsForConflict();
+  Object.keys(dishMap).forEach(function(allergen) {
+    var matchesDish = dishMap[allergen].some(function(d){ return d.toLowerCase().indexOf(foodLower) !== -1 || foodLower.indexOf(d.toLowerCase()) !== -1; });
+    if (!matchesDish) return;
+    guests.forEach(function(g) {
+      if ((g.allergens || []).indexOf(allergen) !== -1) {
+        conflicts.push(esc(g.name) + ': ' + esc(allergen) + ' in ' + esc(foodName));
+      }
+    });
+  });
+  if (conflicts.length) toast('⚠ ALLERGEN CONFLICT — ' + conflicts.join(' | '), false);
+}
+
+function _pushRecord(rec) {
+  if (_haccpActiveJob) rec.jobId = _haccpActiveJob.id;
+  records.push(rec);
+}
+
 // --- INIT ---
 loadHaccpSettings();
 loadHaccpToday();
+_findJobForToday();
 populateHaccpSelects();
 renderChecklists();
 initPrivateChefMode();

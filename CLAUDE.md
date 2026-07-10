@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v56**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v57**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,8 +23,8 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=56` | `app.html` script tag |
-| `js/modules/menus.js` | `?v=22` | `app.html` |
+| `js/modules/haccp.js` | `?v=57` | `app.html` script tag |
+| `js/modules/menus.js` | `?v=23` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=6` | `app.html` |
 | `sync.js` | — | no version param needed (SW network-first) |
@@ -172,6 +172,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v57 — Job Packet: link Menus jobs to HACCP (haccp.js v57 + menus.js v23)
+Job becomes a "packet": client + menu + named guests with allergens. On the service day, HACCP auto-loads the job. Active job banner (`#active-job-banner`) shows client, covers, and guest counts. `_findJobForToday()` scans all `mise_*` localStorage keys for a job whose `eventDate === todayStr()`. Guests added via a new Guests section in the job edit form (name + allergen checkboxes). `renderAllergenGuests()` now merges job guests (shown in a separate "Today's job" section, read-only) with global guests. Conflict detection uses `_getJobGuestsForConflict()` and `_getJobDishAllergenMap()` so conflicts fire from both allergen log records and job menu dishes. All HACCP log functions use `_pushRecord()` helper which stamps `jobId` on every record. `sync.js` persists guests through Supabase `jobs.metadata`.
 
 ### v56 — actionable allergen conflict banners
 Per-guest conflict box: structured per-allergen rows with dish names + "Confirm safe alternative" guidance + "View allergen log ↑" scroll button. Top-level banners now have per-context CTAs: allergen tab banner gets "Review guests ↓" (scrolls to guest list); home screen banner gets "View allergen log →" (navigates to allergen tab). Banner onclick guards against button click bubbling.

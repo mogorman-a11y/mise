@@ -14,6 +14,7 @@ var _calSelectedDate = null;
 var _expandedClientId = null;
 var _expandedJobId    = null;
 var _editingJobId     = null;
+var _editingJobGuests = {};
 var _newJobFormOpen   = false;
 var _pastJobsOpen     = false;
 
@@ -1180,7 +1181,8 @@ function logJob(){
     covers: (document.getElementById('job-covers').value||'').trim(),
     jobType: document.getElementById('job-type').value||'',
     notes: (document.getElementById('job-notes').value||'').trim(),
-    menus: _getSelectedMenusSnapshot('log')
+    menus: _getSelectedMenusSnapshot('log'),
+    guests: []
   };
 
   // If client isn't already in CRM, offer to add
@@ -1252,6 +1254,9 @@ function _jobCardHTML(j){
       + '<div id="jmcurrent-'+j.id+'"></div>'
       + '<button type="button" onclick="openJobMenuBuilder(\''+j.id+'\')" style="background:rgba(45,122,58,0.08);border:1px dashed #2D7A3A;color:#2D7A3A;width:100%;padding:12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;margin-top:6px;-webkit-tap-highlight-color:transparent">+ Attach or Build a Menu</button>'
       + '</div>'
+      + '<div class="form-group"><label class="form-label">Guests &amp; allergens</label>'
+      + '<div id="jguests-'+j.id+'"><div style="font-size:12px;color:#aaa;padding:4px 0">Loading…</div></div>'
+      + '</div>'
       + '<div style="display:flex;gap:8px;margin-top:4px">'
       + '<button class="btn-primary btn-green" style="flex:1;margin-top:0" onclick="saveJobEdit(\''+j.id+'\')">Save</button>'
       + '<button style="flex:0 0 auto;padding:12px 16px;background:#f5f4f0;color:#1C2B1E;border:1px solid #2D7A3A;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit" onclick="_editingJobId=null;renderJobsHistory()">Cancel</button>'
@@ -1281,6 +1286,19 @@ function _jobCardHTML(j){
                 +'</div>';
             }).join('')
           +'</div>' : '')
+      + (j.guests && j.guests.length ? (function() {
+          var withAllergens = j.guests.filter(function(g){ return g.allergens && g.allergens.length; });
+          var rows = j.guests.map(function(g) {
+            var tags = (g.allergens||[]).map(function(a){
+              return '<span style="background:#fde8e8;border:1px solid #f5c6c6;border-radius:4px;padding:1px 6px;font-size:11px;color:#A32D2D">'+_esc(a)+'</span>';
+            }).join(' ');
+            return '<div style="padding:4px 0;font-size:13px"><span style="font-weight:600">'+_esc(g.name)+'</span>'
+              +(tags?' — <span style="display:inline-flex;flex-wrap:wrap;gap:3px">'+tags+'</span>':'<span style="color:#aaa;font-size:12px"> — no allergens</span>')+'</div>';
+          }).join('');
+          return '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #F0EBE2">'
+            +'<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin-bottom:6px">Guests'+(withAllergens.length?' · '+withAllergens.length+' with allergen requirements':'')+'</div>'
+            +rows+'</div>';
+        })() : '')
       + allergenBtn + followUpBtn
       + '<div style="margin-top:10px;padding-top:10px;border-top:1px solid #F0EBE2">'
       + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin-bottom:6px">Payments</div>'
@@ -1368,6 +1386,57 @@ function toggleJobCard(id){
   renderJobsHistory();
 }
 
+function _renderJobGuestEditor(jobId) {
+  var c = document.getElementById('jguests-' + jobId);
+  if (!c) return;
+  var guests = _editingJobGuests[jobId] || [];
+  var guestRows = guests.map(function(g) {
+    var tags = (g.allergens || []).map(function(a) {
+      return '<span style="background:#fde8e8;border:1px solid #f5c6c6;border-radius:4px;padding:1px 6px;font-size:11px;color:#A32D2D">' + _esc(a) + '</span>';
+    }).join(' ');
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0efeb">'
+      + '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + _esc(g.name) + '</div>'
+      + (tags ? '<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">' + tags + '</div>'
+              : '<div style="font-size:11px;color:#aaa;margin-top:2px">No allergens recorded</div>')
+      + '</div>'
+      + '<button type="button" aria-label="Remove guest" onclick="_removeJobGuest(\'' + jobId + '\',\'' + g.id + '\')" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center">×</button>'
+      + '</div>';
+  }).join('');
+
+  var checks = ALLERGENS_14.map(function(a) {
+    var key = a.replace(/\s/g, '_');
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 0;cursor:pointer">'
+      + '<input type="checkbox" id="jga-' + jobId + '-' + key + '"> ' + _esc(a) + '</label>';
+  }).join('');
+
+  c.innerHTML = (guestRows || '<div style="font-size:12px;color:#aaa;padding:4px 0">No guests added yet.</div>')
+    + '<div style="margin-top:10px;border:1px solid #e0ddd6;border-radius:8px;padding:10px 12px;background:#fafaf8">'
+    + '<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px">Add a guest</div>'
+    + '<input id="jg-name-' + jobId + '" class="form-input" placeholder="Guest name" style="margin-bottom:8px">'
+    + '<div style="columns:2;column-gap:8px;margin-bottom:8px">' + checks + '</div>'
+    + '<button type="button" onclick="_addJobGuest(\'' + jobId + '\')" style="background:#2D7A3A;color:#fff;border:none;border-radius:6px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%">+ Add guest</button>'
+    + '</div>';
+}
+
+function _addJobGuest(jobId) {
+  var nameEl = document.getElementById('jg-name-' + jobId);
+  var name = nameEl ? nameEl.value.trim() : '';
+  if (!name) { if (nameEl) nameEl.focus(); return; }
+  var allergens = ALLERGENS_14.filter(function(a) {
+    var el = document.getElementById('jga-' + jobId + '-' + a.replace(/\s/g, '_'));
+    return el && el.checked;
+  });
+  if (!_editingJobGuests[jobId]) _editingJobGuests[jobId] = [];
+  _editingJobGuests[jobId].push({ id: 'g' + Date.now(), name: name, allergens: allergens });
+  _renderJobGuestEditor(jobId);
+}
+
+function _removeJobGuest(jobId, guestId) {
+  if (!_editingJobGuests[jobId]) return;
+  _editingJobGuests[jobId] = _editingJobGuests[jobId].filter(function(g) { return g.id !== guestId; });
+  _renderJobGuestEditor(jobId);
+}
+
 function startJobEdit(id){
   _editingJobId = id;
   _expandedJobId = id;
@@ -1375,8 +1444,13 @@ function startJobEdit(id){
   _jobMenuState[id] = job
     ? (job.menus||[]).map(function(m){ return {name:m.name,dishes:(m.dishes||[]).slice()}; })
     : [];
+  _editingJobGuests[id] = job
+    ? (job.guests||[]).map(function(g){ return Object.assign({},g); })
+    : [];
   renderJobsHistory();
-  setTimeout(function(){ if(_editingJobId===id) _renderMenuState(id); }, 0);
+  setTimeout(function(){
+    if(_editingJobId===id) { _renderMenuState(id); _renderJobGuestEditor(id); }
+  }, 0);
 }
 
 function saveJobEdit(id){
@@ -1392,7 +1466,8 @@ function saveJobEdit(id){
     covers:    (document.getElementById('jedit-covers-'+id).value||'').trim(),
     jobType:   document.getElementById('jedit-jobtype-'+id).value||'',
     notes:     (document.getElementById('jedit-notes-'+id).value||'').trim(),
-    menus:     _getSelectedMenusSnapshot(id)
+    menus:     _getSelectedMenusSnapshot(id),
+    guests:    _editingJobGuests[id] || []
   };
   var found = false;
   var updatedRec = null;
