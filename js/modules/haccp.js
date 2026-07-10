@@ -1329,7 +1329,8 @@ function updateHaccpDashboard() {
     ac.innerHTML=alerts.slice().reverse().map(function(r){
       var cls=r.status==='fail'?'fail':'warn';
       var label=r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='opening'||r.type==='closing'||r.type==='crosscontam'?titles[r.type]:r.type;
-      return '<div class="alert-strip '+cls+'"><div class="alert-text"><strong>'+label+'</strong><div class="alert-sub">'+r.time+' — '+r.msg+'</div></div>'+statusBadge(r.status)+'</div>';
+      var action = r.type==='allergen' ? "haccpTab('allergen')" : "showFilter('"+r.status+"')";
+      return '<div class="alert-strip '+cls+'" onclick="'+action+'" style="cursor:pointer"><div class="alert-text"><strong>'+label+'</strong><div class="alert-sub">'+r.time+' — '+r.msg+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
   }
   if(currentFilter) refreshFilterPanel(currentFilter);
@@ -4298,10 +4299,13 @@ function _renderActiveJobBanner() {
   var gCount = (j.guests || []).length;
   var gWithAllergens = (j.guests || []).filter(function(g){ return g.allergens && g.allergens.length; }).length;
   b.style.display = 'block';
-  b.innerHTML = '🗓 Today: ' + esc(j.client)
+  b.style.cursor = 'pointer';
+  b.innerHTML = '<span>🗓 Today: ' + esc(j.client)
     + (j.covers ? ' · ' + esc(j.covers) + ' covers' : '')
     + (gCount ? ' · ' + gCount + ' guest' + (gCount !== 1 ? 's' : '')
-        + (gWithAllergens ? ' (' + gWithAllergens + ' with allergen requirements)' : '') : '');
+        + (gWithAllergens ? ' <strong>(' + gWithAllergens + ' with allergen requirements)</strong>' : '') : '')
+    + '</span><span style="margin-left:6px;opacity:0.6">→</span>';
+  b.onclick = function() { haccpTab('allergen'); };
 }
 
 function _getJobGuestsForConflict() {
