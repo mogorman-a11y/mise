@@ -1060,10 +1060,10 @@ function renderSuppliersLog() {
   if(!list.length){c.innerHTML='<div class="empty">No approved suppliers yet — add your regulars so they appear in the delivery dropdown.</div>';return;}
   document.getElementById('sub-suppliers').textContent=list.length+' supplier'+(list.length>1?'s':'');
   c.innerHTML=list.map(function(s,i){
-    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+s.name+'</div>'+
-      (s.products?'<div class="log-time">'+s.products+'</div>':'')+
-      (s.contact||s.phone?'<div class="log-time">'+(s.contact||'')+(s.phone?' · '+s.phone:'')+'</div>':'')+
-      '<div class="log-time">'+s.approval+'</div></div>'+
+    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+esc(s.name)+'</div>'+
+      (s.products?'<div class="log-time">'+esc(s.products)+'</div>':'')+
+      (s.contact||s.phone?'<div class="log-time">'+(s.contact?esc(s.contact):'')+(s.phone?' · '+esc(s.phone):'')+'</div>':'')+
+      '<div class="log-time">'+esc(s.approval||'')+'</div></div>'+
       '<button onclick="removeSupplier('+i+')" style="background:none;border:none;color:#A32D2D;font-size:16px;cursor:pointer;padding:4px">&times;</button></div>';
   }).join('');
 }
@@ -1083,7 +1083,7 @@ function renderSection(type) {
     var label=recordLabel(r).name;
     var extra='';
     if(r.type==='fridge'&&r.by) extra+='<div class="log-time">Checked by: '+esc(r.by)+'</div>';
-    if(r.type==='cooling') extra+='<div class="log-time">'+r.startTemp+'°C at '+r.startTime+' → '+r.endTemp+'°C at '+r.endTime+' ('+r.method+')</div>';
+    if(r.type==='cooling') extra+='<div class="log-time">'+r.startTemp+'°C at '+esc(r.startTime)+' → '+r.endTemp+'°C at '+esc(r.endTime)+' ('+esc(r.method)+')</div>';
     if(r.type==='delivery'){
       if(r.invoice) extra+='<div class="log-time">Invoice: '+esc(r.invoice)+'</div>';
       if(r.by) extra+='<div class="log-time">Received by: '+esc(r.by)+'</div>';
@@ -1093,7 +1093,7 @@ function renderSection(type) {
       if(details.length) extra+='<div class="log-time">'+details.join(' · ')+'</div>';
       if(r.photo) extra+='<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>';
     }
-    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
+    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+esc(r.msg||'')+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
   }).join('');
 }
 
@@ -1135,7 +1135,7 @@ function refreshFilterPanel(status) {
         '<div style="flex:1">'+
           '<div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">'+lbl.type+'</div>'+
           '<div class="log-name">'+lbl.name+'</div>'+
-          '<div class="log-time">'+r.time+' — '+r.msg+'</div>'+
+          '<div class="log-time">'+r.time+' — '+esc(r.msg||'')+'</div>'+
         '</div>'+
         statusBadge(r.status)+
       '</div>';
@@ -1454,7 +1454,7 @@ function buildDayBlock(dateStr,recs,isToday) {
     if(!tr.length)return '';
     return '<div class="divider" style="margin-top:10px">'+typeLabels[t]+'</div>'+tr.map(function(r){
       var label=recordLabel(r).name;
-      return '<div class="log-row"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div></div>'+statusBadge(r.status)+'</div>';
+      return '<div class="log-row"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+esc(r.msg||'')+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
   }).join('');
   var todayTag=isToday?'<span class="today-label">Today</span>':'';

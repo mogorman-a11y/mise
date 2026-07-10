@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v65**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v66**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=65` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=66` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=23` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=6` | `app.html` |
@@ -172,6 +172,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v66 — Security sweep round 3: daily record views (haccp.js)
+`renderSuppliersLog()`: escape `s.name`, `s.products`, `s.contact`, `s.phone`, `s.approval`. `renderSection()`: escape `r.msg` in main log row; escape `r.startTime`, `r.endTime`, `r.method` in cooling extra row. `refreshFilterPanel()`: escape `r.msg`. `buildDayBlock()`: escape `r.msg` in archive record rows. Temperatures and `r.time` (system-generated via `todayTime()`) left unescaped as safe.
 
 ### v65 — Security sweep round 2 (haccp.js + sw.js)
 `renderFoodLibraryTab()`: escape `d.dish`, `d.category`, `d.allergens`, and HACCP-only `item` names. Alert strip `sub` line: escape `r.msg`. Conflict banner in `updateHaccpDashboard()`: escape `g.name`, allergen names, and dish names before passing to `_renderAllergenConflictBanners()`. Same fix at `renderAllergenGuests()` line 4368 (allergen `a` and `dishMap[a]` values). `updateNextJobBanner()` njRow panel: escape `eventTime`, `jobType`, `covers`, `location` display text, `phone`/`email` display text + `encodeURIComponent` on their hrefs, `notes`, menu names, and dish chips. SW: added `./yield-sync.js` to `APP_SHELL` (was loaded in app.html but not pre-cached); bumped SW cache to `veriqo-v113`.
