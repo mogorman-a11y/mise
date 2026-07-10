@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v55**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v56**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=55` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=56` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=22` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=6` | `app.html` |
@@ -172,6 +172,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v56 — actionable allergen conflict banners
+Per-guest conflict box: structured per-allergen rows with dish names + "Confirm safe alternative" guidance + "View allergen log ↑" scroll button. Top-level banners now have per-context CTAs: allergen tab banner gets "Review guests ↓" (scrolls to guest list); home screen banner gets "View allergen log →" (navigates to allergen tab). Banner onclick guards against button click bubbling.
 
 ### v55 — 44px tap targets and aria-labels on icon-only buttons (haccp.js + menus.js v22)
 `.btn-remove` in haccp.css and menus.css bumped to min 44×44px via `display:inline-flex`. Added `aria-label` to all generated `.btn-remove` buttons (Remove, Remove item, Delete menu, Delete credential). Fixed three inline-styled buttons: incident photo remove (20→28px), allergen guest × (inline→44px flex), allergen Edit/Delete pills (padding 3px→8px). Dish chip × converted from `<span>` to `<button type="button">`.

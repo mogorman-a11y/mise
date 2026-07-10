@@ -2878,7 +2878,15 @@ function renderAllergenGuests() {
       if (conflicts.length) {
         var detail = conflicts.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; ');
         allConflictLines.push(g.name+' — '+detail);
-        conflictHtml = '<div style="background:#fde8e8;border:1px solid #f5c6c6;border-radius:6px;padding:7px 10px;margin-top:6px;font-size:13px;color:#A32D2D;font-weight:600">⚠ CONFLICT — '+detail+'</div>';
+        var conflictRows = conflicts.map(function(a){
+          return '<div><strong>'+esc(a)+'</strong> — in: '+dishAllergens[a].map(function(d){return esc(d);}).join(', ')+'</div>';
+        }).join('');
+        conflictHtml = '<div style="background:#fde8e8;border:1px solid #f5c6c6;border-radius:6px;padding:8px 12px;margin-top:8px;font-size:13px;color:#A32D2D">'
+          +'<div style="font-weight:700;margin-bottom:4px">⚠ Allergen conflict</div>'
+          +conflictRows
+          +'<div style="margin-top:6px;font-size:12px;font-weight:400">Confirm a safe alternative is served or remove the dish from the menu.</div>'
+          +'<button type="button" onclick="event.stopPropagation();document.getElementById(\'allergen-log\').scrollIntoView({behavior:\'smooth\'})" style="margin-top:8px;background:#fff;border:1px solid #A32D2D;color:#A32D2D;border-radius:5px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">View allergen log ↑</button>'
+          +'</div>';
       }
       var allergenTags = (g.allergens||[]).length
         ? (g.allergens||[]).map(function(a){ return '<span style="background:'+(conflicts.indexOf(a)!==-1?'#fde8e8':'#f5f4f0')+';border:1px solid '+(conflicts.indexOf(a)!==-1?'#f5c6c6':'#ccc')+';border-radius:4px;padding:1px 6px;font-size:12px;color:'+(conflicts.indexOf(a)!==-1?'#A32D2D':'#555')+'">'+a+'</span>'; }).join(' ')
@@ -2897,8 +2905,16 @@ function renderAllergenGuests() {
 }
 
 function _renderAllergenConflictBanners(conflictLines) {
-  ['allergen-conflict-banner', 'allergen-conflict-banner-home'].forEach(function(id) {
-    var banner = document.getElementById(id);
+  var defs = [
+    { id: 'allergen-conflict-banner',
+      cta: '<button type="button" onclick="event.stopPropagation();document.getElementById(\'guest-allergen-list\').scrollIntoView({behavior:\'smooth\'})" style="background:#fff;border:1px solid #A32D2D;color:#A32D2D;border-radius:5px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">Review guests ↓</button>'
+    },
+    { id: 'allergen-conflict-banner-home',
+      cta: '<button type="button" onclick="event.stopPropagation();haccpTab(\'allergen\')" style="background:#fff;border:1px solid #A32D2D;color:#A32D2D;border-radius:5px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">View allergen log →</button>'
+    }
+  ];
+  defs.forEach(function(def) {
+    var banner = document.getElementById(def.id);
     if (!banner) return;
     if (conflictLines && conflictLines.length) {
       var n = conflictLines.length;
@@ -2908,12 +2924,16 @@ function _renderAllergenConflictBanners(conflictLines) {
       }).join('');
       banner.style.display = 'block';
       banner.style.cursor = 'pointer';
-      banner.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center">'
+      banner.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">'
         +'<span>⚠ ALLERGEN CONFLICT — '+summary+'</span>'
-        +'<span class="acb-toggle" style="font-size:11px;font-weight:400;text-decoration:underline;margin-left:8px;flex-shrink:0">Show details</span>'
+        +'<div style="display:flex;gap:8px;align-items:center;flex-shrink:0">'
+        +'<span class="acb-toggle" style="font-size:11px;font-weight:400;text-decoration:underline">Show details</span>'
+        +def.cta
+        +'</div>'
         +'</div>'
         +'<div class="acb-detail" style="display:none">'+detailHtml+'</div>';
-      banner.onclick = function() {
+      banner.onclick = function(e) {
+        if (e.target.tagName === 'BUTTON') return;
         var detail = this.querySelector('.acb-detail');
         var toggle = this.querySelector('.acb-toggle');
         if (!detail) return;
