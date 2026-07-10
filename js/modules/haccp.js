@@ -311,9 +311,9 @@ function renderFoodLibraryTab() {
       menusList.innerHTML = '<div class="empty">No dishes saved in Menus yet — add dishes in the Menus module.</div>';
     } else {
       menusList.innerHTML = dishes.map(function(d){
-        var cats = d.category ? '<span style="font-size:11px;color:#888;margin-left:6px">'+d.category+'</span>' : '';
-        var alg = d.allergens && d.allergens.length ? '<div style="font-size:11px;color:#888;margin-top:2px">Allergens: '+d.allergens.join(', ')+'</div>' : '';
-        return '<div class="setting-item"><div><span class="setting-item-name">'+d.dish+'</span>'+cats+alg+'</div></div>';
+        var cats = d.category ? '<span style="font-size:11px;color:#888;margin-left:6px">'+esc(d.category)+'</span>' : '';
+        var alg = d.allergens && d.allergens.length ? '<div style="font-size:11px;color:#888;margin-top:2px">Allergens: '+d.allergens.map(esc).join(', ')+'</div>' : '';
+        return '<div class="setting-item"><div><span class="setting-item-name">'+esc(d.dish)+'</span>'+cats+alg+'</div></div>';
       }).join('');
     }
   }
@@ -327,7 +327,7 @@ function renderFoodLibraryTab() {
       haccpList.innerHTML = '<div class="empty">No HACCP-only items added yet.</div>';
     } else {
       haccpList.innerHTML = items.map(function(item,i){
-        return '<div class="setting-item"><span class="setting-item-name">'+item+'</span>'+
+        return '<div class="setting-item"><span class="setting-item-name">'+esc(item)+'</span>'+
           '<button class="btn-remove" aria-label="Remove" onclick="removeItem(\'foodLibrary\','+i+',\'settings-food-list\');renderFoodLibraryTab()">&times;</button></div>';
       }).join('');
     }
@@ -1331,7 +1331,7 @@ function updateHaccpDashboard() {
     ac.innerHTML=alerts.slice().reverse().map(function(r){
       var cls=r.status==='fail'?'fail':'warn';
       var label=recordLabel(r).name;
-      var sub = (r.type==='allergen' && r.allergens && r.allergens.length) ? r.time+' — '+r.allergens.map(esc).join(', ') : r.time+' — '+r.msg;
+      var sub = (r.type==='allergen' && r.allergens && r.allergens.length) ? r.time+' — '+r.allergens.map(esc).join(', ') : r.time+' — '+esc(r.msg||'');
       var action = r.type==='allergen' ? '_openAllergenBrief()' : "showFilter('"+r.status+"')";
       return '<div class="alert-strip '+cls+'" onclick="'+action+'" style="cursor:pointer"><div class="alert-text"><strong>'+label+'</strong><div class="alert-sub">'+sub+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
@@ -1348,7 +1348,7 @@ function updateHaccpDashboard() {
     var _acLines = [];
     _acGuests.forEach(function(g){
       var hits = (g.allergens||[]).filter(function(a){ return _acDishAllergens[a]; });
-      if (hits.length) _acLines.push(g.name+' — '+hits.map(function(a){ return a+' (in: '+_acDishAllergens[a].join(', ')+')'; }).join('; '));
+      if (hits.length) _acLines.push(esc(g.name)+' — '+hits.map(function(a){ return esc(a)+' (in: '+_acDishAllergens[a].map(esc).join(', ')+')'; }).join('; '));
     });
     _renderAllergenConflictBanners(_acLines);
   } else {
@@ -1390,17 +1390,17 @@ function updateNextJobBanner() {
   }
   var html = '';
   var dateStr = job.eventDate===TODAY ? 'Today' : fmtDate(job.eventDate);
-  html += njRow('Date', dateStr + (job.eventTime ? ' at '+job.eventTime : ''));
-  if(job.jobType) html += njRow('Type', job.jobType);
-  if(job.covers)  html += njRow('Covers', job.covers+' covers');
-  if(job.location) html += njRow('Location', '<a href="https://maps.google.com/?q='+encodeURIComponent(job.location)+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9" target="_blank">'+job.location+' ↗</a>');
-  if(job.phone)   html += njRow('Phone', '<a href="tel:'+job.phone+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+job.phone+'</a>');
-  if(job.email)   html += njRow('Email', '<a href="mailto:'+job.email+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+job.email+'</a>');
-  if(job.notes)   html += njRow('Notes', job.notes);
+  html += njRow('Date', dateStr + (job.eventTime ? ' at '+esc(job.eventTime) : ''));
+  if(job.jobType) html += njRow('Type', esc(job.jobType));
+  if(job.covers)  html += njRow('Covers', esc(String(job.covers))+' covers');
+  if(job.location) html += njRow('Location', '<a href="https://maps.google.com/?q='+encodeURIComponent(job.location)+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9" target="_blank">'+esc(job.location)+' ↗</a>');
+  if(job.phone)   html += njRow('Phone', '<a href="tel:'+encodeURIComponent(job.phone)+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+esc(job.phone)+'</a>');
+  if(job.email)   html += njRow('Email', '<a href="mailto:'+encodeURIComponent(job.email)+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+esc(job.email)+'</a>');
+  if(job.notes)   html += njRow('Notes', esc(job.notes));
   if(job.menus&&job.menus.length){
     var mHtml = job.menus.map(function(m){
-      var chips = (m.dishes||[]).map(function(d){ return '<span style="display:inline-block;background:rgba(255,255,255,0.08);border-radius:5px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:#e8e0d0">'+d.dish+'</span>'; }).join('');
-      return '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:3px">'+m.name+'</div>'+(chips||'<span style="font-size:12px;color:rgba(255,255,255,0.5)">No dishes listed</span>')+'</div>';
+      var chips = (m.dishes||[]).map(function(d){ return '<span style="display:inline-block;background:rgba(255,255,255,0.08);border-radius:5px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:#e8e0d0">'+esc(d.dish)+'</span>'; }).join('');
+      return '<div style="margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:3px">'+esc(m.name)+'</div>'+(chips||'<span style="font-size:12px;color:rgba(255,255,255,0.5)">No dishes listed</span>')+'</div>';
     }).join('');
     html += njRow('Menu', mHtml);
   } else {
@@ -4365,7 +4365,7 @@ function _checkJobConflictsOnLoad() {
   var conflictLines = [];
   guests.forEach(function(g){
     var hits = (g.allergens||[]).filter(function(a){ return dishMap[a]; });
-    if (hits.length) conflictLines.push(esc(g.name)+' — '+hits.map(function(a){ return a+' (in: '+dishMap[a].join(', ')+')'; }).join('; '));
+    if (hits.length) conflictLines.push(esc(g.name)+' — '+hits.map(function(a){ return esc(a)+' (in: '+dishMap[a].map(esc).join(', ')+')'; }).join('; '));
   });
   _renderAllergenConflictBanners(conflictLines);
 }
