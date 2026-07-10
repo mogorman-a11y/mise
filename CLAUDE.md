@@ -173,6 +173,24 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
 
+### v63 — Allergen Brief modal
+Tapping the active job banner or any allergen warning strip now opens a focused bottom sheet (`#allergen-brief-modal` / `_openAllergenBrief()`) instead of navigating to the full allergen tab. Shows: job header (client, date, type, covers); per-guest allergen tags with conflicting ones highlighted red and the offending dish named; "Dishes to watch" section (only dishes clashing with a guest); allergen records logged today with OK/Warning badges. "View full allergen log →" footer link to the full tab.
+
+### v62 — allergen alert label/sub and covers label
+Alert strip for allergen records now shows dish name as label (was "allergen") and allergen names in sub-line (was cryptic "2 allergens — Yes"). Next booking card: "4 guests" → "4 covers" to match active job banner.
+
+### v61 — active job banner and alert strips tappable
+Active job banner: tapping navigates to Allergen Brief; allergen guest count in bold; → arrow signals interactivity. Alert strips: all have `cursor:pointer` + onclick; allergen strips open Allergen Brief; other warning/fail strips open filter panel filtered to that status.
+
+### v60 — sample day announce modal shows every refresh
+Supabase settings sync wiped the local `settings` object on pull, resetting `sampleDayAnnounceShown` on every refresh. Fixed by storing the flag in plain localStorage (`vq_sampleDayAnnounceShown`) that sync cannot touch.
+
+### v59 — wire HACCP checklist button + allergen conflict banners on load
+`openJobHaccpChecklist()` implemented: event header, HACCP task checklist with tick/strikethrough if today's job, progress bar; wired to `#next-job-checklist-btn`. Fixed duplicate `display:none`/`display:flex` on button. `_checkJobConflictsOnLoad()` computes guest-dish conflicts on HACCP init so both conflict banners populate without needing to visit the allergen tab first.
+
+### v58 — scope allergen conflicts to active job's guests only
+`_getJobGuestsForConflict()` now returns only the active job's guests when a job is loaded (was merging with global `settings.allergenGuests`). Falls back to global guests when no job is active.
+
 ### v57 — Job Packet: link Menus jobs to HACCP (haccp.js v57 + menus.js v23)
 Job becomes a "packet": client + menu + named guests with allergens. On the service day, HACCP auto-loads the job. Active job banner (`#active-job-banner`) shows client, covers, and guest counts. `_findJobForToday()` scans all `mise_*` localStorage keys for a job whose `eventDate === todayStr()`. Guests added via a new Guests section in the job edit form (name + allergen checkboxes). `renderAllergenGuests()` now merges job guests (shown in a separate "Today's job" section, read-only) with global guests. Conflict detection uses `_getJobGuestsForConflict()` and `_getJobDishAllergenMap()` so conflicts fire from both allergen log records and job menu dishes. All HACCP log functions use `_pushRecord()` helper which stamps `jobId` on every record. `sync.js` persists guests through Supabase `jobs.metadata`.
 
