@@ -1330,7 +1330,7 @@ function updateHaccpDashboard() {
       var cls=r.status==='fail'?'fail':'warn';
       var label=r.type==='allergen'?r.dish:r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='opening'||r.type==='closing'||r.type==='crosscontam'?titles[r.type]:r.type;
       var sub = (r.type==='allergen' && r.allergens && r.allergens.length) ? r.time+' — '+r.allergens.join(', ') : r.time+' — '+r.msg;
-      var action = r.type==='allergen' ? "haccpTab('allergen')" : "showFilter('"+r.status+"')";
+      var action = r.type==='allergen' ? '_openAllergenBrief()' : "showFilter('"+r.status+"')";
       return '<div class="alert-strip '+cls+'" onclick="'+action+'" style="cursor:pointer"><div class="alert-text"><strong>'+label+'</strong><div class="alert-sub">'+sub+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
   }
@@ -4224,6 +4224,129 @@ function openJobHaccpChecklist(job) {
   modal.style.display = 'flex';
 }
 
+function closeAllergenBrief() {
+  var modal = document.getElementById('allergen-brief-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function _openAllergenBrief() {
+  var modal = document.getElementById('allergen-brief-modal');
+  var contentEl = document.getElementById('allergen-brief-content');
+  if (!modal || !contentEl) return;
+
+  var guests = _getJobGuestsForConflict();
+  var loggedRecs = records.filter(function(r){ return r.type === 'allergen'; });
+
+  // Build combined dish → allergens map (job menu + logged records)
+  var dishAllergenMap = {}; // {dish: [allergen]}
+  var jobDishMap = _getJobDishAllergenMap(); // {allergen: [dish]}
+  Object.keys(jobDishMap).forEach(function(a){
+    jobDishMap[a].forEach(function(dish){
+      if (!dishAllergenMap[dish]) dishAllergenMap[dish] = [];
+      if (dishAllergenMap[dish].indexOf(a) === -1) dishAllergenMap[dish].push(a);
+    });
+  });
+  loggedRecs.forEach(function(r){
+    if (!dishAllergenMap[r.dish]) dishAllergenMap[r.dish] = [];
+    (r.allergens||[]).forEach(function(a){
+      if (dishAllergenMap[r.dish].indexOf(a) === -1) dishAllergenMap[r.dish].push(a);
+    });
+  });
+
+  // Compute conflicts: {dish → [{guest, allergens[]}]}
+  var dishConflicts = {}; // dish → [{guestName, allergen}]
+  guests.forEach(function(g){
+    Object.keys(dishAllergenMap).forEach(function(dish){
+      var hits = (g.allergens||[]).filter(function(a){ return dishAllergenMap[dish].indexOf(a) !== -1; });
+      hits.forEach(function(a){
+        if (!dishConflicts[dish]) dishConflicts[dish] = [];
+        dishConflicts[dish].push({guest: g.name, allergen: a});
+      });
+    });
+  });
+
+  var html = '';
+
+  // Job header
+  if (_haccpActiveJob) {
+    var j = _haccpActiveJob;
+    var meta = [];
+    if (j.eventDate === TODAY) meta.push('Today'); else { var _d = new Date(j.eventDate+'T12:00:00'); meta.push(_d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})); }
+    if (j.jobType) meta.push(j.jobType);
+    if (j.covers) meta.push(j.covers+' covers');
+    html += '<div style="background:#EAF3DE;border-radius:8px;padding:10px 14px;margin-bottom:16px">'
+      +'<div style="font-size:15px;font-weight:700;color:#1C2B1E">'+esc(j.client)+'</div>'
+      +'<div style="font-size:12px;color:#4a6655;margin-top:2px">'+meta.join(' · ')+'</div>'
+      +'</div>';
+  }
+
+  // Guests section
+  html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin-bottom:8px">Guests</div>';
+  if (guests.length) {
+    html += guests.map(function(g){
+      var gDishConflicts = [];
+      Object.keys(dishConflicts).forEach(function(dish){
+        dishConflicts[dish].forEach(function(c){ if (c.guest === g.name) gDishConflicts.push({dish:dish,allergen:c.allergen}); });
+      });
+      var hasConflict = gDishConflicts.length > 0;
+      var allergenTags = (g.allergens||[]).length
+        ? (g.allergens||[]).map(function(a){
+            var flagged = gDishConflicts.some(function(c){ return c.allergen === a; });
+            return '<span style="display:inline-block;background:'+(flagged?'#A32D2D':'#e8e4de')+';color:'+(flagged?'#fff':'#555')+';border-radius:4px;padding:2px 7px;font-size:12px;font-weight:'+(flagged?'700':'400')+';margin:2px 2px 2px 0">'+esc(a)+'</span>';
+          }).join('')
+        : '<span style="font-size:12px;color:#aaa">No allergens declared</span>';
+      return '<div style="background:'+(hasConflict?'#fff8f8':'#fafaf8')+';border:1px solid '+(hasConflict?'#f5c6c6':'#e8e4de')+';border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+        +'<div style="font-size:14px;font-weight:700;color:'+(hasConflict?'#A32D2D':'#1a1a18')+';margin-bottom:6px">'
+        +(hasConflict?'⚠ ':'')
+        +esc(g.name)+'</div>'
+        +'<div style="display:flex;flex-wrap:wrap;gap:2px">'+allergenTags+'</div>'
+        +(hasConflict
+          ? '<div style="margin-top:8px;font-size:12px;color:#A32D2D;border-top:1px solid #f5c6c6;padding-top:8px">'
+            +'Conflict: '+gDishConflicts.map(function(c){ return '<strong>'+esc(c.dish)+'</strong> contains '+esc(c.allergen); }).join('; ')
+            +'</div>'
+          : '')
+        +'</div>';
+    }).join('');
+  } else {
+    html += '<div style="color:#aaa;font-size:13px;padding:8px 0 12px">No guests with allergen requirements for this job.</div>';
+  }
+
+  // Dishes to watch
+  var conflictDishes = Object.keys(dishConflicts);
+  if (conflictDishes.length) {
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#A32D2D;letter-spacing:0.05em;margin:16px 0 8px">🚨 Dishes to watch</div>';
+    html += conflictDishes.map(function(dish){
+      var items = dishConflicts[dish];
+      return '<div style="background:#fff4f4;border:1px solid #f5c6c6;border-radius:10px;padding:12px 14px;margin-bottom:8px">'
+        +'<div style="font-size:14px;font-weight:700;color:#A32D2D;margin-bottom:6px">'+esc(dish)+'</div>'
+        +items.map(function(c){
+          return '<div style="font-size:12px;color:#7a2020;margin-top:3px">'+esc(c.guest)+' — '+esc(c.allergen)+'</div>';
+        }).join('')
+        +'</div>';
+    }).join('');
+  }
+
+  // Logged today
+  if (loggedRecs.length) {
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin:16px 0 8px">Logged today</div>';
+    html += loggedRecs.map(function(r){
+      var isWarn = r.status === 'warn';
+      return '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f0ede8">'
+        +'<div><div style="font-size:13px;font-weight:600;color:#1a1a18">'+esc(r.dish)+'</div>'
+        +'<div style="font-size:12px;color:#888;margin-top:2px">'+r.time+(r.allergens&&r.allergens.length?' — '+r.allergens.map(esc).join(', '):'')+'</div>'
+        +'</div>'
+        +'<span style="flex-shrink:0;margin-left:10px;font-size:11px;font-weight:600;border-radius:4px;padding:2px 8px;background:'+(isWarn?'#FEF3CD':'#EAF3DE')+';color:'+(isWarn?'#854F0B':'#2D7A3A')+'">'+( isWarn?'Warning':'OK')+'</span>'
+        +'</div>';
+    }).join('');
+  } else {
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin:16px 0 8px">Logged today</div>'
+      +'<div style="color:#aaa;font-size:13px;padding:6px 0">No allergen records logged yet.</div>';
+  }
+
+  contentEl.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
 function _checkJobConflictsOnLoad() {
   var guests = _getJobGuestsForConflict();
   if (!guests.length) { _renderAllergenConflictBanners([]); return; }
@@ -4306,7 +4429,7 @@ function _renderActiveJobBanner() {
     + (gCount ? ' · ' + gCount + ' guest' + (gCount !== 1 ? 's' : '')
         + (gWithAllergens ? ' <strong>(' + gWithAllergens + ' with allergen requirements)</strong>' : '') : '')
     + '</span><span style="margin-left:6px;opacity:0.6">→</span>';
-  b.onclick = function() { haccpTab('allergen'); };
+  b.onclick = function() { _openAllergenBrief(); };
 }
 
 function _getJobGuestsForConflict() {
