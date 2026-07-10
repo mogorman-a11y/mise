@@ -4230,13 +4230,8 @@ function _renderActiveJobBanner() {
 }
 
 function _getJobGuestsForConflict() {
-  var global = settings.allergenGuests || [];
-  var jobGuests = _haccpActiveJob ? (_haccpActiveJob.guests || []) : [];
-  var merged = global.slice();
-  jobGuests.forEach(function(g) {
-    if (!merged.some(function(m){ return m.id === g.id; })) merged.push(g);
-  });
-  return merged;
+  if (_haccpActiveJob) return _haccpActiveJob.guests || [];
+  return settings.allergenGuests || [];
 }
 
 function _getJobDishAllergenMap() {
