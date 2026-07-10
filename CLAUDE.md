@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v66**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v67**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,7 +23,7 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=66` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=67` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=23` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=6` | `app.html` |
@@ -172,6 +172,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v67 — Security sweep round 4: final tidy (haccp.js)
+`r.time` now wrapped with `esc()` in `renderSection()`, `refreshFilterPanel()`, and `buildDayBlock()`. `buildDayBlock()` typeLabels map extended to cover all PC_TYPES (job, kitchenassess, allergen, transport, mobileset, incident) with `|| t` fallback so unknown types show the type key rather than "undefined". Delivery photo: guard changed from truthy check to `/^data:image\//.test(r.photo)` so only genuine FileReader data URLs are accepted as img src.
 
 ### v66 — Security sweep round 3: daily record views (haccp.js)
 `renderSuppliersLog()`: escape `s.name`, `s.products`, `s.contact`, `s.phone`, `s.approval`. `renderSection()`: escape `r.msg` in main log row; escape `r.startTime`, `r.endTime`, `r.method` in cooling extra row. `refreshFilterPanel()`: escape `r.msg`. `buildDayBlock()`: escape `r.msg` in archive record rows. Temperatures and `r.time` (system-generated via `todayTime()`) left unescaped as safe.

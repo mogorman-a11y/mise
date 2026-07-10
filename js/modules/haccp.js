@@ -1091,9 +1091,9 @@ function renderSection(type) {
       if(r.chilledTemp!=='') details.push('Chilled: '+r.chilledTemp+'°C');
       if(r.frozenTemp!=='') details.push('Frozen: '+r.frozenTemp+'°C');
       if(details.length) extra+='<div class="log-time">'+details.join(' · ')+'</div>';
-      if(r.photo) extra+='<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>';
+      if(r.photo && /^data:image\//.test(r.photo)) extra+='<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>';
     }
-    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+esc(r.msg||'')+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
+    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+esc(r.time||'')+' — '+esc(r.msg||'')+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
   }).join('');
 }
 
@@ -1135,7 +1135,7 @@ function refreshFilterPanel(status) {
         '<div style="flex:1">'+
           '<div style="font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">'+lbl.type+'</div>'+
           '<div class="log-name">'+lbl.name+'</div>'+
-          '<div class="log-time">'+r.time+' — '+esc(r.msg||'')+'</div>'+
+          '<div class="log-time">'+esc(r.time||'')+' — '+esc(r.msg||'')+'</div>'+
         '</div>'+
         statusBadge(r.status)+
       '</div>';
@@ -1448,13 +1448,13 @@ function buildDayBlock(dateStr,recs,isToday) {
   var ok=recs.filter(function(r){return r.status==='ok';}).length;
   var warn=recs.filter(function(r){return r.status==='warn';}).length;
   var fail=recs.filter(function(r){return r.status==='fail';}).length;
-  var typeLabels={fridge:'Fridge temps',cooking:'Cooking',cooling:'Cooling',reheating:'Reheating',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe',pest:'Pest',illness:'Illness',opening:'Opening',closing:'Closing',crosscontam:'Cross-contam'};
+  var typeLabels={fridge:'Fridge temps',cooking:'Cooking',cooling:'Cooling',reheating:'Reheating',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe',pest:'Pest',illness:'Illness',opening:'Opening',closing:'Closing',crosscontam:'Cross-contam',job:'Job',kitchenassess:'Kitchen assess',allergen:'Allergen',transport:'Transport',mobileset:'Mobile setup',incident:'Incident'};
   var bodyRows=ALL_TYPES.map(function(t){
     var tr=recs.filter(function(r){return r.type===t;});
     if(!tr.length)return '';
-    return '<div class="divider" style="margin-top:10px">'+typeLabels[t]+'</div>'+tr.map(function(r){
+    return '<div class="divider" style="margin-top:10px">'+(typeLabels[t]||t)+'</div>'+tr.map(function(r){
       var label=recordLabel(r).name;
-      return '<div class="log-row"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+r.time+' — '+esc(r.msg||'')+'</div></div>'+statusBadge(r.status)+'</div>';
+      return '<div class="log-row"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+esc(r.time||'')+' — '+esc(r.msg||'')+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
   }).join('');
   var todayTag=isToday?'<span class="today-label">Today</span>':'';
