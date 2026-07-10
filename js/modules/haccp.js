@@ -1416,6 +1416,13 @@ function updateNextJobBanner() {
     allergenBtn.onclick = function(){ _printNextJobAllergenMatrix(job); };
   }
 
+  // Wire the HACCP checklist button
+  var checklistBtn = document.getElementById('next-job-checklist-btn');
+  if (checklistBtn) {
+    checklistBtn.style.display = 'flex';
+    checklistBtn.onclick = function(){ openJobHaccpChecklist(job); };
+  }
+
   // Wire share button — only show for Carte-sourced jobs (have a jobs table row)
   var shareBtn = document.getElementById('next-job-share-btn');
   if (shareBtn) {
@@ -4163,6 +4170,72 @@ function closeJobHaccpChecklist() {
   if (modal) modal.style.display = 'none';
 }
 
+function openJobHaccpChecklist(job) {
+  var modal = document.getElementById('job-haccp-modal');
+  if (!modal) return;
+  var nameEl = document.getElementById('job-checklist-event-name');
+  var metaEl = document.getElementById('job-checklist-event-meta');
+  var progEl = document.getElementById('job-checklist-progress');
+  var contentEl = document.getElementById('job-checklist-content');
+  if (nameEl) nameEl.textContent = job.client || 'Event';
+  var parts = [];
+  if (job.eventDate === TODAY) parts.push('Today');
+  else { var dd = new Date(job.eventDate+'T12:00:00'); parts.push(dd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})); }
+  if (job.eventTime) parts.push('at '+job.eventTime);
+  if (job.covers) parts.push(job.covers+' covers');
+  if (metaEl) metaEl.textContent = parts.join(' · ');
+  var isToday = job.eventDate === TODAY;
+  var hasAllergenGuests = (job.guests || []).some(function(g){ return g.allergens && g.allergens.length; });
+  var hasMenu = job.menus && job.menus.length > 0;
+  var items = [
+    { label: 'Opening checks', check: function(r){ return r.type==='opening'; } },
+    { label: 'Fridge temperatures logged', check: function(r){ return r.type==='fridge'; } }
+  ];
+  if (hasMenu) items.push({ label: 'Cooking temperatures logged', check: function(r){ return r.type==='cooking'||r.type==='reheating'; } });
+  if (hasAllergenGuests) items.push({ label: 'Allergen records logged', check: function(r){ return r.type==='allergen'; } });
+  items.push({ label: 'Cleaning completed', check: function(r){ return r.type==='cleaning'; } });
+  items.push({ label: 'Closing checks', check: function(r){ return r.type==='closing'; } });
+  var dayRecs = isToday ? records : [];
+  var done = 0;
+  var html = items.map(function(item){
+    var completed = isToday && dayRecs.some(item.check);
+    if (completed) done++;
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0ede8">'
+      +'<span style="font-size:18px;color:'+(completed?'#2D7A3A':'#ccc')+';font-weight:700;width:22px;text-align:center;flex-shrink:0">'+(completed?'✓':'○')+'</span>'
+      +'<span style="font-size:14px;color:'+(completed?'#888':'#1a1a18')+';'+(completed?'text-decoration:line-through;':'')+'">'
+      +esc(item.label)+'</span>'
+      +'</div>';
+  }).join('');
+  if (contentEl) contentEl.innerHTML = html || '<div style="padding:20px 0;text-align:center;color:#888;font-size:14px">No checklist items</div>';
+  if (progEl) {
+    if (isToday) {
+      var pct = items.length ? Math.round(done/items.length*100) : 0;
+      progEl.innerHTML = '<div style="font-size:12px;color:#5a5752;margin-bottom:6px">'+done+' of '+items.length+' completed</div>'
+        +'<div style="background:#f0ede8;border-radius:6px;height:8px;overflow:hidden">'
+        +'<div style="background:#2D7A3A;height:100%;width:'+pct+'%;border-radius:6px"></div>'
+        +'</div>';
+    } else {
+      progEl.innerHTML = '<div style="font-size:12px;color:#5a5752;padding:4px 0">HACCP checklist for '+esc(parts[0]||job.eventDate)+'</div>';
+    }
+  }
+  modal.style.display = 'flex';
+}
+
+function _checkJobConflictsOnLoad() {
+  var guests = _getJobGuestsForConflict();
+  if (!guests.length) { _renderAllergenConflictBanners([]); return; }
+  var dishMap = _getJobDishAllergenMap();
+  records.filter(function(r){ return r.type==='allergen'; }).forEach(function(r){
+    (r.allergens||[]).forEach(function(a){ if(!dishMap[a]) dishMap[a]=[]; if(dishMap[a].indexOf(r.dish)===-1) dishMap[a].push(r.dish); });
+  });
+  var conflictLines = [];
+  guests.forEach(function(g){
+    var hits = (g.allergens||[]).filter(function(a){ return dishMap[a]; });
+    if (hits.length) conflictLines.push(esc(g.name)+' — '+hits.map(function(a){ return a+' (in: '+dishMap[a].join(', ')+')'; }).join('; '));
+  });
+  _renderAllergenConflictBanners(conflictLines);
+}
+
 // --- THRESHOLD VALIDATION ---
 var THRESHOLD_BOUNDS = {
   'fridge-warn':   { min: 0,   max: 8   },
@@ -4213,6 +4286,7 @@ function _findJobForToday() {
   } catch(e) {}
   _haccpActiveJob = found;
   _renderActiveJobBanner();
+  _checkJobConflictsOnLoad();
 }
 
 function _renderActiveJobBanner() {
