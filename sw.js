@@ -26,7 +26,6 @@ const APP_SHELL = [
   './js/modules/menus.js',
   './js/modules/costing.js',
   './js/modules/team.js',
-  './yield-sync.js',
   // CSS
   './css/tokens.css',
   './css/shell.css',
@@ -34,11 +33,12 @@ const APP_SHELL = [
   './css/haccp.css',
   './css/menus.css',
   './css/costing.css',
+  './css/prep.css',
   // PWA
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon-v2.png'
 ];
 
 // ── Install ────────────────────────────────────────────────────────────────

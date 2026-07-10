@@ -40,11 +40,13 @@ window.modules.dashboard = (function () {
       '</div>';
   }
 
+  function _esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+
   // ── Greeting ──────────────────────────────────────────────
   function _greeting(name) {
     var hour = new Date().getHours();
     var greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-    return '<div class="db-greeting">' + greet + (name ? ', ' + name.split(' ')[0] : '') + '</div>';
+    return '<div class="db-greeting">' + greet + (name ? ', ' + _esc(name.split(' ')[0]) : '') + '</div>';
   }
 
   // ── HACCP KPI card ────────────────────────────────────────

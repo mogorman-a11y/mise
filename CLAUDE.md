@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v52**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v54**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -23,10 +23,10 @@
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=52` | `app.html` script tag |
+| `js/modules/haccp.js` | `?v=54` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=21` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
-| `js/modules/dashboard.js` | `?v=5` | `app.html` |
+| `js/modules/dashboard.js` | `?v=6` | `app.html` |
 | `sync.js` | — | no version param needed (SW network-first) |
 | Service worker cache | `veriqo-v112` | `sw.js` line 8 |
 
@@ -172,6 +172,12 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### v54 — escape user-entered values in settings list renderers
+Added module-level `esc()` to haccp.js. Applied to `renderSettingsList`, `renderSettingsChecklistList`, and `renderChecklists` so staff names, checklist labels/notes render via `esc()` instead of raw innerHTML. Added `_esc()` to dashboard.js IIFE; applied to profile name in `_greeting`. Bumped dashboard.js to v6.
+
+### v53 — fix kitchenassess log not updating after save
+`logKitchenAssess()` was calling `renderSection('kitchenassess')` but `kitchenassess` is a PC_TYPE, so `renderSection()` exits early and the log silently fails to refresh. Fixed to `renderSection_PC('kitchenassess')`.
 
 ### v52 — sample day: more prominent links + one-time announce for existing users
 - Both "See a sample day" entry points (shift-empty-state, starter checklist footer) upgraded from plain text links to outlined green buttons — more visible without competing with the primary CTA.

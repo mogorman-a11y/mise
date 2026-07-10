@@ -242,6 +242,8 @@ var DEFAULT_CHECKLISTS = {
 
 var settings = {};
 
+function esc(s) { return s ? String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''; }
+
 function loadHaccpSettings() {
   try { var r=localStorage.getItem('haccp_settings'); settings=r?JSON.parse(r):{}; } catch(e){ settings={}; }
   Object.keys(DEFAULTS).forEach(function(k){ if(!settings[k]||!settings[k].length) settings[k]=DEFAULTS[k].slice(); });
@@ -342,7 +344,7 @@ function renderChecklists() {
     c.innerHTML=CHECKLISTS[type].map(function(item){
       return '<div class="checklist-item">'+
         '<input type="checkbox" id="chk-'+item.id+'">'+
-        '<label for="chk-'+item.id+'">'+item.label+(item.note?'<span class="check-note">'+item.note+'</span>':'')+'</label>'+
+        '<label for="chk-'+item.id+'">'+esc(item.label)+(item.note?'<span class="check-note">'+esc(item.note)+'</span>':'')+'</label>'+
       '</div>';
     }).join('');
   });
@@ -354,7 +356,7 @@ function renderSettingsList(listKey, containerId) {
   if(!items.length){c.innerHTML='<div class="empty">No items.</div>';return;}
   c.innerHTML=items.map(function(item,i){
     var isDef=defs.indexOf(item)!==-1;
-    return '<div class="setting-item"><span class="setting-item-name">'+item+(isDef?'<span class="setting-item-default"> (default)</span>':'')+'</span>'+
+    return '<div class="setting-item"><span class="setting-item-name">'+esc(item)+(isDef?'<span class="setting-item-default"> (default)</span>':'')+'</span>'+
       '<button class="btn-remove" onclick="removeItem(\''+listKey+'\','+i+',\''+containerId+'\')">&times;</button></div>';
   }).join('');
 }
@@ -368,8 +370,8 @@ function renderSettingsChecklistList(type) {
   c.innerHTML=items.map(function(item,i){
     var isDef=defLabels.indexOf(item.label)!==-1;
     return '<div class="setting-item">'+
-      '<div style="flex:1"><span class="setting-item-name">'+item.label+(isDef?'<span class="setting-item-default"> (default)</span>':'')+'</span>'+
-      (item.note?'<div style="font-size:11px;color:#aaa;margin-top:2px">'+item.note+'</div>':'')+'</div>'+
+      '<div style="flex:1"><span class="setting-item-name">'+esc(item.label)+(isDef?'<span class="setting-item-default"> (default)</span>':'')+'</span>'+
+      (item.note?'<div style="font-size:11px;color:#aaa;margin-top:2px">'+esc(item.note)+'</div>':'')+'</div>'+
       '<button class="btn-remove" onclick="removeChecklistItem(\''+type+'\','+i+')">&times;</button>'+
     '</div>';
   }).join('');
@@ -1732,7 +1734,7 @@ function renderPCChecklists() {
     c.innerHTML = items.map(function(item){
       return '<div class="checklist-item">'+
         '<input type="checkbox" id="chk-'+item.id+'">'+
-        '<label for="chk-'+item.id+'">'+item.label+(item.note?'<span class="check-note">'+item.note+'</span>':'')+'</label>'+
+        '<label for="chk-'+item.id+'">'+esc(item.label)+(item.note?'<span class="check-note">'+esc(item.note)+'</span>':'')+'</label>'+
       '</div>';
     }).join('');
   });
@@ -2751,7 +2753,7 @@ function logKitchenAssess() {
   saveHaccpToday();
   document.getElementById('ka-client').value=''; document.getElementById('ka-fridge-temp').value=''; document.getElementById('ka-notes').value=''; clearKaPhoto();
   items.forEach(function(item){ var el=document.getElementById('chk-'+item.id); if(el) el.checked=false; });
-  renderSection('kitchenassess'); updateHaccpDashboard();
+  renderSection_PC('kitchenassess'); updateHaccpDashboard();
   if(status==='ok')toast('Saved — kitchen assessment complete'); else if(status==='warn')toast('Warning — issues noted','warn'); else toast('Alert — kitchen unsuitable',false);
 }
 
