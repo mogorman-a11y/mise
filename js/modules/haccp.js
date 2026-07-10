@@ -1328,9 +1328,10 @@ function updateHaccpDashboard() {
   } else {
     ac.innerHTML=alerts.slice().reverse().map(function(r){
       var cls=r.status==='fail'?'fail':'warn';
-      var label=r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='opening'||r.type==='closing'||r.type==='crosscontam'?titles[r.type]:r.type;
+      var label=r.type==='allergen'?r.dish:r.type==='fridge'?r.unit:r.type==='cooking'?r.food:r.type==='cooling'?r.food:r.type==='reheating'?r.food:r.type==='delivery'?r.supplier:r.type==='cleaning'?r.task:r.type==='opening'||r.type==='closing'||r.type==='crosscontam'?titles[r.type]:r.type;
+      var sub = (r.type==='allergen' && r.allergens && r.allergens.length) ? r.time+' — '+r.allergens.join(', ') : r.time+' — '+r.msg;
       var action = r.type==='allergen' ? "haccpTab('allergen')" : "showFilter('"+r.status+"')";
-      return '<div class="alert-strip '+cls+'" onclick="'+action+'" style="cursor:pointer"><div class="alert-text"><strong>'+label+'</strong><div class="alert-sub">'+r.time+' — '+r.msg+'</div></div>'+statusBadge(r.status)+'</div>';
+      return '<div class="alert-strip '+cls+'" onclick="'+action+'" style="cursor:pointer"><div class="alert-text"><strong>'+label+'</strong><div class="alert-sub">'+sub+'</div></div>'+statusBadge(r.status)+'</div>';
     }).join('');
   }
   if(currentFilter) refreshFilterPanel(currentFilter);
@@ -1377,7 +1378,7 @@ function updateNextJobBanner() {
   if(job.eventDate===TODAY) parts.push('Today');
   else { var dd=new Date(job.eventDate+'T12:00:00'); parts.push(dd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})); }
   if(job.jobType) parts.push(job.jobType);
-  if(job.covers) parts.push(job.covers+' guests');
+  if(job.covers) parts.push(job.covers+' covers');
   if(job.location) parts.push(job.location);
   document.getElementById('next-job-detail').textContent = parts.join(' · ');
 
@@ -1389,7 +1390,7 @@ function updateNextJobBanner() {
   var dateStr = job.eventDate===TODAY ? 'Today' : fmtDate(job.eventDate);
   html += njRow('Date', dateStr + (job.eventTime ? ' at '+job.eventTime : ''));
   if(job.jobType) html += njRow('Type', job.jobType);
-  if(job.covers)  html += njRow('Covers', job.covers+' guests');
+  if(job.covers)  html += njRow('Covers', job.covers+' covers');
   if(job.location) html += njRow('Location', '<a href="https://maps.google.com/?q='+encodeURIComponent(job.location)+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9" target="_blank">'+job.location+' ↗</a>');
   if(job.phone)   html += njRow('Phone', '<a href="tel:'+job.phone+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+job.phone+'</a>');
   if(job.email)   html += njRow('Email', '<a href="mailto:'+job.email+'" onclick="event.stopPropagation()" style="color:#fff;text-decoration:underline;text-underline-offset:2px;opacity:0.9">'+job.email+'</a>');
