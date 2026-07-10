@@ -1099,7 +1099,7 @@ function renderSavedMenus(){
       +'<div style="font-size:15px;font-weight:600;color:#1C2B1E">'+_esc(m.name)+'</div>'
       +'<div style="display:flex;align-items:center;gap:4px">'
       +(isEditing?'':'<button onclick="event.stopPropagation();editMenu(\''+m.id+'\')" style="background:none;border:none;color:#A09890;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 6px">Edit</button>')
-      +'<button onclick="event.stopPropagation();deleteMenu(\''+m.id+'\')" class="btn-remove">×</button>'
+      +'<button onclick="event.stopPropagation();deleteMenu(\''+m.id+'\')" class="btn-remove" aria-label="Delete menu">×</button>'
       +'</div></div>'
       +(dishList?'<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:8px">'+dishList+'</div>':'')
       +(isEditing ? _menuInlineEditHTML(m) : '')
@@ -1555,12 +1555,12 @@ function _renderMenuState(prefix){
   el.innerHTML = '<div style="margin-bottom:8px">'+menus.map(function(m,idx){
     var chips = (m.dishes||[]).map(function(d){
       return '<span style="display:inline-flex;align-items:center;gap:3px;background:#E8F5E9;border:1px solid #b8dfbf;border-radius:6px;padding:2px 7px;font-size:11px;color:#1C2B1E;margin:2px 2px 2px 0">'
-        +_esc(d.dish)+'<span onclick="removeDishFromJobMenu(\''+prefix+'\','+idx+',\''+d.id+'\')" style="cursor:pointer;color:#888;font-size:15px;line-height:1;margin-left:1px">×</span></span>';
+        +_esc(d.dish)+'<button type="button" onclick="removeDishFromJobMenu(\''+prefix+'\','+idx+',\''+d.id+'\')" aria-label="Remove dish" style="cursor:pointer;color:#888;font-size:15px;line-height:1;margin-left:2px;background:none;border:none;padding:0;min-width:24px;min-height:24px;display:inline-flex;align-items:center;justify-content:center;vertical-align:middle">×</button></span>';
     }).join('');
     return '<div style="background:#F0F8F1;border:1px solid #b8dfbf;border-radius:8px;padding:10px 12px;margin-bottom:6px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">'
       +'<div style="font-size:13px;font-weight:700;color:#1C2B1E">'+_esc(m.name)+'</div>'
-      +'<button onclick="removeJobMenu(\''+prefix+'\','+idx+')" type="button" style="background:none;border:none;color:#A09890;font-size:20px;cursor:pointer;padding:0 0 0 8px;line-height:1">×</button>'
+      +'<button onclick="removeJobMenu(\''+prefix+'\','+idx+')" type="button" aria-label="Remove menu" style="background:none;border:none;color:#A09890;font-size:20px;cursor:pointer;padding:0;line-height:1;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center">×</button>'
       +'</div>'+(chips||'<span style="font-size:12px;color:#A09890">No dishes</span>')+'</div>';
   }).join('')+'</div>';
 }
@@ -2384,7 +2384,7 @@ function renderCredentialsList(){
       + '<div class="cred-name"><div class="cred-title">'+_esc(c.name)+'</div>'
       + '<div class="cred-issuer">'+(c.holder?_esc(c.holder)+' · ':'')+( c.issuer?_esc(c.issuer):'')+'</div></div>'
       + (expText ? '<div class="cred-expiry '+expClass+'">'+expText+'</div>' : '')
-      + '<button onclick="deleteCred(\''+c.id+'\')" class="btn-remove">×</button>'
+      + '<button onclick="deleteCred(\''+c.id+'\')" class="btn-remove" aria-label="Delete credential">×</button>'
       + '</div>';
   }).join('') + '</div>';
 }
@@ -2548,7 +2548,7 @@ function renderStaffList(){
   if(staff.length===0){ el.innerHTML='<p class="empty" style="padding:4px 0 8px">No staff added yet.</p>'; return; }
   el.innerHTML = staff.map(function(s){
     return '<div class="setting-item"><span class="setting-item-name">'+_esc(s)+'</span>'
-      + '<button class="btn-remove" onclick="removeStaff(\''+_esc(s)+'\')">×</button></div>';
+      + '<button class="btn-remove" aria-label="Remove" onclick="removeStaff(\''+_esc(s)+'\')">×</button></div>';
   }).join('');
 }
 

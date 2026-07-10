@@ -325,7 +325,7 @@ function renderFoodLibraryTab() {
     } else {
       haccpList.innerHTML = items.map(function(item,i){
         return '<div class="setting-item"><span class="setting-item-name">'+item+'</span>'+
-          '<button class="btn-remove" onclick="removeItem(\'foodLibrary\','+i+',\'settings-food-list\');renderFoodLibraryTab()">&times;</button></div>';
+          '<button class="btn-remove" aria-label="Remove" onclick="removeItem(\'foodLibrary\','+i+',\'settings-food-list\');renderFoodLibraryTab()">&times;</button></div>';
       }).join('');
     }
   }
@@ -357,7 +357,7 @@ function renderSettingsList(listKey, containerId) {
   c.innerHTML=items.map(function(item,i){
     var isDef=defs.indexOf(item)!==-1;
     return '<div class="setting-item"><span class="setting-item-name">'+esc(item)+(isDef?'<span class="setting-item-default"> (default)</span>':'')+'</span>'+
-      '<button class="btn-remove" onclick="removeItem(\''+listKey+'\','+i+',\''+containerId+'\')">&times;</button></div>';
+      '<button class="btn-remove" aria-label="Remove" onclick="removeItem(\''+listKey+'\','+i+',\''+containerId+'\')">&times;</button></div>';
   }).join('');
 }
 function renderSettingsChecklistList(type) {
@@ -372,7 +372,7 @@ function renderSettingsChecklistList(type) {
     return '<div class="setting-item">'+
       '<div style="flex:1"><span class="setting-item-name">'+esc(item.label)+(isDef?'<span class="setting-item-default"> (default)</span>':'')+'</span>'+
       (item.note?'<div style="font-size:11px;color:#aaa;margin-top:2px">'+esc(item.note)+'</div>':'')+'</div>'+
-      '<button class="btn-remove" onclick="removeChecklistItem(\''+type+'\','+i+')">&times;</button>'+
+      '<button class="btn-remove" aria-label="Remove item" onclick="removeChecklistItem(\''+type+'\','+i+')">&times;</button>'+
     '</div>';
   }).join('');
 }
@@ -1012,7 +1012,7 @@ function _renderIncidentPhotoThumbs() {
   c.innerHTML = _incidentPhotos.map(function(src, i) {
     return '<div style="position:relative;display:inline-block">'
       + '<img src="' + src + '" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)">'
-      + '<button type="button" onclick="removeIncidentPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#A32D2D;border:none;color:#fff;font-size:12px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">×</button>'
+      + '<button type="button" aria-label="Remove photo" onclick="removeIncidentPhoto(' + i + ')" style="position:absolute;top:-6px;right:-6px;width:28px;height:28px;border-radius:50%;background:#A32D2D;border:none;color:#fff;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0">×</button>'
       + '</div>';
   }).join('');
 }
@@ -2886,7 +2886,7 @@ function renderAllergenGuests() {
       return '<div style="background:#fff;border:1px solid '+(conflicts.length?'#f5c6c6':'#e0ddd6')+';border-radius:8px;padding:10px 12px;margin-bottom:8px">'
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
         +'<div style="font-weight:600;font-size:14px">'+g.name+'</div>'
-        +'<button onclick="deleteAllergenGuest(\''+g.id+'\')" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0 4px;line-height:1" title="Remove guest">×</button>'
+        +'<button onclick="deleteAllergenGuest(\''+g.id+'\')" aria-label="Remove guest" style="background:none;border:none;color:#999;font-size:16px;cursor:pointer;padding:0;line-height:1;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center">×</button>'
         +'</div>'
         +'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">'+allergenTags+'</div>'
         +conflictHtml
@@ -3115,7 +3115,7 @@ function renderSection_PC(type) {
     var label = r.type==='job'?r.client : r.type==='kitchenassess'?r.client : r.type==='allergen'?r.dish : r.type==='transport'?r.food : r.type==='incident'?r.incidentType : r.by||'';
     var extra = '';
     if (r.type==='allergen' && r.allergens && r.allergens.length) extra += '<div class="log-time">'+r.allergens.join(', ')+'</div>';
-    if (r.type==='allergen') extra += '<div style="display:flex;gap:6px;margin-top:6px"><button onclick="event.stopPropagation();editHaccpAllergen('+recIdx+')" style="padding:3px 10px;font-size:12px;background:#f5f4f0;border:1px solid #ccc;border-radius:5px;cursor:pointer;font-family:inherit">Edit</button><button onclick="event.stopPropagation();deleteHaccpAllergen('+recIdx+')" style="padding:3px 10px;font-size:12px;background:#fde8e8;border:1px solid #f5c6c6;border-radius:5px;color:#A32D2D;cursor:pointer;font-family:inherit">Delete</button></div>';
+    if (r.type==='allergen') extra += '<div style="display:flex;gap:6px;margin-top:6px"><button onclick="event.stopPropagation();editHaccpAllergen('+recIdx+')" aria-label="Edit allergen record" style="padding:8px 14px;font-size:12px;background:#f5f4f0;border:1px solid #ccc;border-radius:5px;cursor:pointer;font-family:inherit">Edit</button><button onclick="event.stopPropagation();deleteHaccpAllergen('+recIdx+')" aria-label="Delete allergen record" style="padding:8px 14px;font-size:12px;background:#fde8e8;border:1px solid #f5c6c6;border-radius:5px;color:#A32D2D;cursor:pointer;font-family:inherit">Delete</button></div>';
     if (r.type==='transport') extra += '<div class="log-time">'+r.startTemp+'°C at '+r.startTime+' → '+r.endTemp+'°C at '+r.endTime+'</div>';
     if (r.type==='incident') {
       extra += '<div class="log-time">Severity: '+r.severity+'</div>';
