@@ -4115,15 +4115,16 @@ function dismissStarterChecklist() {
 // link once its 3 steps are done, so they'd otherwise have no way to
 // discover the feature. Show a one-time modal on their next login instead.
 function _maybeShowSampleDayAnnounce() {
-  if (_demoMode || settings.sampleDayAnnounceShown) return;
+  if (_demoMode) return;
+  // Use a plain localStorage key so Supabase settings sync can't reset it
+  if (localStorage.getItem('vq_sampleDayAnnounceShown')) return;
   var have = _starterStepsDone();
   var doneCount = (have.opening?1:0) + (have.fridge?1:0) + (have.cooking?1:0);
   if (doneCount < 3) return; // still onboarding — they'll see the checklist link instead
   var el = document.getElementById('sample-day-announce-modal');
   if (!el) return;
   el.style.display = 'flex';
-  settings.sampleDayAnnounceShown = true;
-  saveHaccpSettings();
+  localStorage.setItem('vq_sampleDayAnnounceShown', '1');
   if (window.posthog) posthog.capture('sample_day_announce_shown');
 }
 
