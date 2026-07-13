@@ -325,6 +325,7 @@ Static content pages at `/resources/{slug}` → `/resources/{slug}.html` (alread
 | `do-private-chefs-need-haccp-uk` | Do Private Chefs Need HACCP in the UK? | 22 Jun 2026 |
 | `what-eho-inspector-checks-private-chef` | What Does an EHO Inspector Actually Check? | 28 Jun 2026 |
 | `private-chef-allergen-management-guide` | The Private Chef's Guide to Allergen Management | 4 Jul 2026 |
+| `how-to-register-food-business-uk-private-chef` | How to Register as a Food Business in the UK | 13 Jul 2026 |
 
 ### Printable lead-magnet templates
 | Slug | Description |
@@ -345,14 +346,23 @@ Static content pages at `/resources/{slug}` → `/resources/{slug}.html` (alread
 
 ```
 /app           → app.html
-/veriqo        → veriqo-landing.html
-/carte         → carte-landing.html
-/yield-info    → yield-info.html
+/veriqo        → veriqo-landing.html   (canonical tag points to "/" — see note below)
+/haccp         → haccp.html
+/menus         → menus.html
+/costing       → costing.html
+/prep-lists    → prep-lists.html
 /resources     → resources.html
+/resources/*   → resources/*.html
 /mise          → 301 /app
 /yield         → 301 /app
+/carte         → 301 /app   (retired 2026-07-13 — was carte-landing.html)
+/yield-info    → 301 /app   (retired 2026-07-13 — was yield-info.html)
 /api/*         → api/*.js
 ```
+
+**Do not re-add `/carte` or `/yield-info` as live pages.** Both were standalone marketing pages for the pre-unification Carte and Yield products (retired 2026-05-17), still showing the old £12/mo price and separate branding months after the merge. Retired to 301s on 2026-07-13. `carte-landing.html`, `yield-info.html`, `app-legacy.html`, and `mise-manifest.json` were deleted the same day — nothing routes to or links them.
+
+`veriqo-landing.html` (`/veriqo`) is a near-duplicate of the homepage (same `<title>`, near-identical hero) with zero schema of its own. Rather than remove it, it now has `<link rel="canonical" href="https://getveriqo.co.uk/">` so it doesn't compete with `/` in search. It's excluded from `sitemap.xml` for the same reason — don't add it back.
 
 ---
 
@@ -391,6 +401,8 @@ prep-lists.html             ← /prep-lists module landing page (SEO)
 ```
 
 **Retired files** still on disk (do not load or edit): `mise.html`, `yield.html`, `mise-sync.js`, `yield-sync.js`, various old manifests. They are not served.
+
+**Deleted 2026-07-13** (do not recreate): `carte-landing.html`, `yield-info.html`, `app-legacy.html`, `mise-manifest.json`. Fully removed, not just retired-in-place — nothing routes to or references them.
 
 ---
 
