@@ -86,16 +86,26 @@
     .hero-eyebrow { display: inline-flex; align-items: center; gap: .7rem; margin-bottom: 1.5rem; }
     .hero-pip { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
     .hero-eyebrow-text { font-family: var(--mono); font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(2rem,5vw,5rem); align-items: center; }
     .hero-h1 { font-family: var(--serif); font-size: clamp(2.5rem,5.5vw,4.5rem); font-weight: 900; line-height: 1; letter-spacing: -.03em; margin-bottom: 1.25rem; }
     .hero-h1 em { font-style: italic; color: var(--green); }
     .hero-sub { font-size: clamp(.95rem,1.4vw,1.05rem); color: var(--ink-2); line-height: 1.8; font-weight: 300; margin-bottom: 2rem; max-width: 520px; }
     .hero-actions { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; margin-bottom: 1rem; }
     .btn-primary { display: inline-flex; align-items: center; gap: .5rem; background: var(--green); color: white; font-family: var(--mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; padding: .85rem 1.75rem; border-radius: 5px; box-shadow: 0 2px 12px rgba(45,122,58,.25); transition: background .2s, transform .15s; }
     .btn-primary:hover { background: var(--green-mid); transform: translateY(-2px); }
+    .btn-primary svg { width: 13px; height: 13px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .btn-ghost { font-family: var(--mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: color .2s, border-color .2s; }
     .btn-ghost:hover { color: var(--green); border-color: var(--green); }
     .hero-note { font-family: var(--mono); font-size: .65rem; letter-spacing: .1em; color: var(--ink-3); }
     .hero-note span { color: var(--green); }
+    .hero-visual { background: var(--green-pale); border: 1px solid var(--green-dim); border-radius: 16px; padding: 2rem; }
+    .check-list { list-style: none; display: flex; flex-direction: column; gap: .75rem; }
+    .check-list li { display: flex; align-items: flex-start; gap: .75rem; font-size: .9rem; color: var(--ink-2); }
+    .check-icon { width: 20px; height: 20px; border-radius: 5px; background: var(--green); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+    .check-icon svg { width: 11px; height: 11px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .check-list li strong { display: block; font-weight: 500; color: var(--ink); font-size: .88rem; }
+    .check-list li span { font-size: .8rem; color: var(--ink-3); line-height: 1.4; }
+    @media (max-width: 720px) { .hero-grid { grid-template-columns: 1fr; } }
     .trust { background: var(--cream); border-bottom: 1px solid var(--rule); padding: .85rem 0; }
     .trust-inner { display: flex; align-items: center; justify-content: center; gap: clamp(1.5rem,4vw,3rem); flex-wrap: wrap; }
     .trust-item { display: flex; align-items: center; gap: .45rem; font-family: var(--mono); font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
@@ -169,20 +179,52 @@
 <section class="hero">
   <div class="container">
     <div class="breadcrumb"><a href="/">Home</a><span>/</span>Costing</div>
-    <div class="hero-eyebrow">
-      <div class="hero-pip"></div>
-      <span class="hero-eyebrow-text">Costing, quotes &amp; invoices for private chefs</span>
+    <div class="hero-grid" style="margin-top: 2.5rem;">
+      <div>
+        <div class="hero-eyebrow">
+          <div class="hero-pip"></div>
+          <span class="hero-eyebrow-text">Costing, quotes &amp; invoices for private chefs</span>
+        </div>
+        <h1 class="hero-h1">Know your numbers.<br><em>Before you say yes.</em></h1>
+        <p class="hero-sub">Guessing your margins is the fastest way to lose money on a job. Veriqo Costing lets private chefs log ingredient costs per dish, set a margin, generate a professional quote and send an invoice — all connected to the menus and bookings you've already saved.</p>
+        <div class="hero-actions">
+          <a href="https://getveriqo.co.uk/app" class="btn-primary">
+            Start free trial
+            <svg viewBox="0 0 14 14"><path d="M3 7h8M7 3l4 4-4 4"/></svg>
+          </a>
+          <a href="/menus" class="btn-ghost">See Menus →</a>
+        </div>
+        <p class="hero-note"><span>14-day free trial</span> · No credit card required</p>
+      </div>
+      <div class="hero-visual">
+        <ul class="check-list">
+          <li>
+            <div class="check-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9.5 10,2.5"/></svg></div>
+            <div><strong>Ingredient costing</strong><span>Cost per cover calculated automatically as you build the dish</span></div>
+          </li>
+          <li>
+            <div class="check-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9.5 10,2.5"/></svg></div>
+            <div><strong>Margin calculator</strong><span>Set a target margin or a price — the other updates live</span></div>
+          </li>
+          <li>
+            <div class="check-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9.5 10,2.5"/></svg></div>
+            <div><strong>Professional quotes</strong><span>Itemised, client-ready quotes generated in one tap</span></div>
+          </li>
+          <li>
+            <div class="check-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9.5 10,2.5"/></svg></div>
+            <div><strong>Invoicing</strong><span>Issue invoices straight from a completed job — nothing re-entered</span></div>
+          </li>
+          <li>
+            <div class="check-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9.5 10,2.5"/></svg></div>
+            <div><strong>Job profitability</strong><span>See revenue, food cost and margin for every job</span></div>
+          </li>
+          <li>
+            <div class="check-icon"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9.5 10,2.5"/></svg></div>
+            <div><strong>Yield tracking</strong><span>Log usable yield per ingredient for costs that reflect reality</span></div>
+          </li>
+        </ul>
+      </div>
     </div>
-    <h1 class="hero-h1">Know your numbers.<br><em>Before you say yes.</em></h1>
-    <p class="hero-sub">Guessing your margins is the fastest way to lose money on a job. Veriqo Costing lets private chefs log ingredient costs per dish, set a margin, generate a professional quote and send an invoice — all connected to the menus and bookings you've already saved.</p>
-    <div class="hero-actions">
-      <a href="https://getveriqo.co.uk/app" class="btn-primary">
-        Start free trial
-        <svg viewBox="0 0 14 14"><path d="M3 7h8M7 3l4 4-4 4"/></svg>
-      </a>
-      <a href="/menus" class="btn-ghost">See Menus →</a>
-    </div>
-    <p class="hero-note"><span>14-day free trial</span> · No credit card required</p>
   </div>
 </section>
 
@@ -300,7 +342,7 @@
       </div>
       <div>
         <div class="faq-q">Is Veriqo only for costing, or is it a full private chef app?</div>
-        <p class="faq-a">Veriqo Pro includes Costing alongside HACCP food safety records, Menus &amp; booking management, and Prep Lists — all connected. The Costing module is available on its own as the Starter plan if you only need that. See <a href="/" style="color:var(--green);">pricing on the homepage</a>.</p>
+        <p class="faq-a">Costing is part of the Veriqo Pro plan, alongside HACCP food safety records, Menus &amp; booking management, and Prep Lists — all connected and sharing the same job records. The Starter plan covers HACCP only. See <a href="/" style="color:var(--green);">pricing on the homepage</a>.</p>
       </div>
     </div>
   </div>
