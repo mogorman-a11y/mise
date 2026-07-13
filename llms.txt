@@ -1,48 +1,38 @@
 # Veriqo
 
-Veriqo is a HACCP food safety compliance web app for private chefs and mobile caterers in the UK.
+Veriqo is a kitchen management app for private chefs and mobile caterers in the UK — HACCP food safety records, bookings and menus, and job costing in one place.
 
 - Homepage: https://getveriqo.co.uk
 - App: https://getveriqo.co.uk/app
 - Operated by: Side Order Catering
 - Contact: hello@getveriqo.co.uk
 
-## What Veriqo does
+## Modules
 
-Veriqo helps private chefs and mobile caterers meet UK food hygiene law record-keeping requirements. Features include:
+Veriqo is one app made up of four connected modules, sharing a single dish library and job record:
 
-- Fridge and freezer temperature logs
-- Cooking, cooling, and reheating temperature records
-- Delivery and transport temperature logs
-- Cleaning and disinfection records
-- Opening and closing checklists
-- Allergen declarations and cross-contamination records
-- Pest control logs
-- Staff illness and injury records
-- Staff credentials and certificate tracker with 90-day expiry warnings
-- Approved supplier register
-- Customer and job records for private chef engagements
-- Menu and dish library
+### HACCP — https://getveriqo.co.uk/haccp
+Digital food safety records to meet UK food hygiene law. Fridge and freezer temperature logs, cooking/cooling/reheating records, delivery and transport temperature logs, cleaning and disinfection records, opening and closing checklists, allergen declarations, pest control logs, staff illness and injury records, staff credentials and certificate tracking with 90-day expiry warnings, approved supplier register. EHO-ready PDF exports.
+
+### Menus — https://getveriqo.co.uk/menus
+Booking and menu management. Job and client records, dish library (name, course, description, allergens, prep tasks), client dietary and allergen tracking, job notes and transport log. Shared dish library feeds HACCP, Costing, and Prep Lists.
+
+### Costing — https://getveriqo.co.uk/costing
+Job costing, quotes and invoices. Ingredient costing per dish, margin calculator, professional quote generation, invoicing from completed jobs, job profitability tracking, ingredient yield tracking.
+
+### Prep Lists — https://getveriqo.co.uk/prep-lists
+Auto-generated prep lists from the Menus dish library, split into prep-ahead and finishing tasks, grouped by course, tickable from a phone in the kitchen. Works offline.
+
+## Pricing
+
+- **Starter — £7/month**: HACCP module only (food safety records, allergen records, EHO-ready exports).
+- **Pro — £15/month**: Everything in Starter, plus Menus, Costing, and Prep Lists, with data shared across all modules.
+- 14-day free trial, no credit card required, cancel any time.
 
 Veriqo is designed to meet the record-keeping requirements of the UK Food Safety Act 1990 and the Food Standards Agency's Safer Food Better Business guidance for caterers.
 
-## Carte
+## Guides
 
-Carte is the companion business management app for private chefs, available at https://getveriqo.co.uk/mise
+Practical articles for private chefs at https://getveriqo.co.uk/resources, covering HACCP compliance, EHO inspections, allergen management, food business registration, and pricing.
 
-Features include:
-
-- Client CRM with contact history
-- Job booking calendar
-- Menu and dish library (shared with Veriqo)
-- Frozen menu snapshots attached to bookings
-- Kitchen assessments
-- Allergen logs
-- Transport temperature records
-- Certificate and credential tracking
-
-## How the apps relate
-
-Veriqo and Carte share one account and one data layer. Clients, menus, dishes, and job bookings sync between both apps automatically. A chef uses Veriqo for daily HACCP compliance records and Carte for business organisation.
-
-Both apps are installable as progressive web apps (PWA) on iPhone and Android.
+Veriqo is installable as a Progressive Web App (PWA) on iPhone and Android.
