@@ -17,8 +17,8 @@
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
     { "src": "/veriqo", "dest": "/veriqo-landing.html" },
-    { "src": "/carte", "dest": "/carte-landing.html" },
-    { "src": "/yield-info", "dest": "/yield-info.html" },
+    { "src": "/carte", "status": 301, "dest": "/app" },
+    { "src": "/yield-info", "status": 301, "dest": "/app" },
     { "src": "/resources", "dest": "/resources.html" },
     { "src": "/haccp", "dest": "/haccp.html" },
     { "src": "/menus", "dest": "/menus.html" },
