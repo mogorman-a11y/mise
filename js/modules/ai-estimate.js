@@ -43,6 +43,27 @@
     return res.data && res.data.session ? res.data.session.access_token : null;
   }
 
+  // yieldSync (yield-sync.js) is only initialized lazily, the first time the
+  // user visits the Costing module in a session (window.modules.costing.init
+  // -> yieldSync.init(sb, uid)) — sign-in itself does NOT initialize it (see
+  // app.html's window.Mise.onSignedIn, which only calls Mise.sync.loadAll).
+  // A user reaching the AI Estimate screen straight from the dashboard,
+  // without ever opening Costing this session, would otherwise hit
+  // yieldSync.saveCosting()'s "not ready" fallback ({error:null}) on every
+  // call — a silent, misleadingly-successful no-op, not a real save. Ensure
+  // it's initialized before relying on it. Found by live testing: a
+  // saveCosting() error-path test returned {error:null} in ~0ms (the
+  // fallback) until this was added, instead of a real network round-trip.
+  async function _ensureYieldSyncReady() {
+    if (!window.Mise || !window.Mise.yieldSync) return false;
+    if (window.Mise.yieldSync.isReady && window.Mise.yieldSync.isReady()) return true;
+    var res = await supabaseClient.auth.getSession();
+    var uid = res.data && res.data.session && res.data.session.user && res.data.session.user.id;
+    if (!uid) return false;
+    await window.Mise.yieldSync.init(supabaseClient, uid);
+    return true;
+  }
+
   function _isVatRegistered() {
     try {
       var s = JSON.parse(localStorage.getItem('yield_settings') || '{}');
@@ -283,6 +304,12 @@
     }
 
     if (document.getElementById('ai-quote-price')) document.getElementById('ai-quote-price').value = job.quoted_price_pence != null ? (job.quoted_price_pence / 100).toFixed(2) : '';
+
+    // Restore this job's other-costs value (never the ambient value left
+    // over from whatever job was previously open) before any GP calc runs.
+    var otherCostsEl = document.getElementById('ai-other-costs');
+    if (otherCostsEl) otherCostsEl.value = window.Veriqo.getStoredOtherCosts(job.id);
+
     _refreshAIGPTargets();
 
     var reconcileResult = document.getElementById('ai-reconcile-result');
@@ -300,6 +327,11 @@
 
   function _refreshAIGPTargets() {
     if (!_state.currentJob) return;
+    // Persist whatever is currently in the field against this job's id —
+    // called on every keystroke (wired via the input's oninput) as well as
+    // from _renderResult (a harmless write-back of the value just restored).
+    var otherCostsEl = document.getElementById('ai-other-costs');
+    if (otherCostsEl) window.Veriqo.setStoredOtherCosts(_state.currentJob.id, otherCostsEl.value || '');
     var targetsEl = document.getElementById('ai-gp-targets');
     if (targetsEl) targetsEl.style.display = '';
     var cost = _currentAllInCostPence();
@@ -382,6 +414,11 @@
   // this one stays consistent too.
   async function _saveAsCosting(job) {
     if (!window.Mise || !window.Mise.yieldSync) return;
+    var ready = await _ensureYieldSyncReady();
+    if (!ready) {
+      toast('Saved locally, but could not sync the costing — will retry later', 'warn');
+      return;
+    }
     var ingredients = (job.post_job_actuals || []).map(function (ing) {
       return { name: ing.ingredient_name, packDesc: ing.course || '', packCost: ((ing.estimated_portion_cost_pence || 0) / 100).toFixed(2), qty: '1' };
     });
