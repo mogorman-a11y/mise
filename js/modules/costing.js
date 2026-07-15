@@ -82,6 +82,7 @@
       else if (screenId === 'invoices') renderInvoices();
       else if (screenId === 'jobs') renderJobs();
       else if (screenId === 'costing') renderSavedCostings();
+      else if (screenId === 'ai-estimate' && typeof loadAIJobs === 'function') loadAIJobs();
     }
 
     function showSettingsTab(tabId) {
