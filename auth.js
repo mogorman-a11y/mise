@@ -586,6 +586,12 @@ window.Mise.auth = (function () {
     _injectAccountCard(user);
     if (window.posthog) posthog.identify(user.id, { email: user.email });
 
+    // Self-heal: if signup's auth.signUp() succeeded but bootstrap_new_account()
+    // never ran (e.g. dropped connection), this account has no profile row and
+    // every venue-scoped RLS policy will silently block it. Retry bootstrap
+    // here rather than leaving the account permanently stuck.
+    await _ensureProfileExists(user);
+
     // Generic hook for apps (e.g. Yield) that manage their own init
     if (window.Mise && typeof window.Mise.onSignedIn === 'function') {
       await window.Mise.onSignedIn(user);
@@ -655,37 +661,35 @@ window.Mise.auth = (function () {
     settingsTab.insertBefore(card, settingsTab.firstChild);
   }
 
+  // ── internal: _ensureProfileExists ─────────────────────────────────────────
+  async function _ensureProfileExists(user) {
+    var check = await supabaseClient.from('profiles').select('id').eq('id', user.id).maybeSingle();
+    if (check.error) { console.warn('[Veriqo] profile existence check failed:', check.error.message); return; }
+    if (check.data) return; // profile already exists, nothing to heal
+    console.warn('[Veriqo] signed-in user has no profile row — retrying account bootstrap');
+    try {
+      await createProfile(user, '', '');
+    } catch (err) {
+      console.error('[Veriqo] profile self-heal failed:', err.message);
+      _setMsg('Your account setup did not finish. Please refresh the page, or contact support if this continues.', 'error');
+    }
+  }
+
   // ── internal: createProfile ────────────────────────────────────────────────
+  // Creates venue + kitchen + profile + kitchen_members atomically via the
+  // bootstrap_new_account() RPC (single Postgres transaction) — a profile
+  // must never end up existing with venue_id = NULL, since that permanently
+  // locks the account out of its own data under venue-scoped RLS. See
+  // CLAUDE.md "Account bootstrap" for details. Do not revert to sequential
+  // client-side inserts.
   async function createProfile(user, businessName, chefName) {
-    var trialEnds = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-
-    // Create kitchen for this user
-    var kitchenName = businessName || (chefName ? chefName + "'s Kitchen" : 'My Kitchen');
-    var kitchenResult = await supabaseClient.from('kitchens').insert({
-      name: kitchenName,
-      owner_user_id: user.id
-    }).select('id').single();
-
-    var kitchenId = kitchenResult.data ? kitchenResult.data.id : null;
-
-    // Create profile
-    var result = await supabaseClient.from('profiles').insert({
-      id: user.id,
-      business_name: businessName || '',
-      chef_name: chefName || '',
-      subscription_status: 'trial',
-      trial_ends_at: trialEnds,
-      kitchen_id: kitchenId
+    var result = await supabaseClient.rpc('bootstrap_new_account', {
+      p_business_name: businessName || '',
+      p_chef_name: chefName || ''
     });
-    if (result.error) console.warn('[Veriqo] createProfile error:', result.error.message);
-
-    // Add owner row to kitchen_members
-    if (kitchenId) {
-      await supabaseClient.from('kitchen_members').insert({
-        kitchen_id: kitchenId,
-        user_id: user.id,
-        role: 'owner'
-      });
+    if (result.error) {
+      console.error('[Veriqo] bootstrap_new_account failed:', result.error.message);
+      throw new Error('We could not finish setting up your account. Please try again, or contact support if this keeps happening.');
     }
   }
 
