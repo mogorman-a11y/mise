@@ -8,10 +8,10 @@
 // type='receipt' → procurement auditor mode
 //   Returns: { vendor: string, items: [{ itemName, unit, pricePerUnit }] }
 
-const ALLERGENS = [
-  'Celery','Cereals with gluten','Crustaceans','Eggs','Fish',
-  'Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphites'
-];
+// Canonical allergen list — same file the browser modules use (js/core/allergens.js).
+// Do not hardcode a second copy here; a spelling drift between this prompt's
+// vocabulary and the client's is what broke allergen conflict detection.
+const { ALLERGENS_14: ALLERGENS, normalizeAllergen } = require('../js/core/allergens.js');
 
 const PROMPTS = {
   label: `You are a strict food safety compliance officer working in a UK professional kitchen. You will be shown a photo of a food packaging label, product spec sheet, or ingredient declaration.
@@ -111,7 +111,9 @@ module.exports = async function handler(req, res) {
         return res.status(502).json({ error: 'No ingredientName in AI response' });
       }
       if (!Array.isArray(parsed.allergens)) parsed.allergens = [];
-      parsed.allergens = parsed.allergens.filter(a => ALLERGENS.includes(a));
+      // Never trust model output verbatim — normalize spelling before the
+      // exact-match filter so near-miss wording from the model isn't dropped.
+      parsed.allergens = parsed.allergens.map(normalizeAllergen).filter(a => ALLERGENS.includes(a));
     }
 
     if (type === 'receipt') {

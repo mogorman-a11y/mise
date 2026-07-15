@@ -457,6 +457,8 @@ window.Mise.sync = (function () {
       var mappedDishes = dishesData.map(function (d) {
         return { id: d.id, dish: d.name || '', category: d.category || '', allergens: Array.isArray(d.allergens) ? d.allergens : [], prep_tasks: Array.isArray(d.prep_tasks) ? d.prep_tasks : [] };
       });
+      var dishesById = {};
+      mappedDishes.forEach(function (d) { dishesById[String(d.id)] = d; });
       var mappedMenus = menusData.map(function (m) {
         var mDishRows = menuDishes
           .filter(function (md) { return md.menu_id === m.id; })
@@ -467,7 +469,14 @@ window.Mise.sync = (function () {
           dishIds = localMenuDishIds[String(m.id)];
         }
         var mDishes = mDishRows.map(function (md) { return { dish: md.dish_name, category: md.category || '', allergens: md.allergens || [] }; });
-        return { id: m.id, name: m.name || '', dishes: mDishes, dishIds: dishIds };
+        // If the menu_dishes join produced nothing (missing relationship rows —
+        // see the AI-import atomicity fix) but we do have dishIds, resolve
+        // those against the just-pulled dish library instead of leaving
+        // `dishes` empty — otherwise every consumer that reads menu.dishes
+        // (Costing's menu library, HACCP's allergen views) silently shows 0
+        // dishes for a menu that actually has real dish relationships.
+        var resolvedDishes = mDishes.length ? mDishes : window.Veriqo.resolveMenuDishes({ dishIds: dishIds }, dishesById);
+        return { id: m.id, name: m.name || '', dishes: resolvedDishes, dishIds: dishIds };
       });
 
       // Apply to HACCP settings var + localStorage

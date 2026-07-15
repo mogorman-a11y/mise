@@ -1,5 +1,7 @@
 // ═══════════════════════════════════════════════════════ CONSTANTS & STATE ═══
-var ALLERGENS_14 = ['Celery','Cereals with gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphites'];
+// Canonical list now lives in js/core/allergens.js (loaded before this file) —
+// keep this local alias so existing call sites below don't all need editing.
+var ALLERGENS_14 = window.Veriqo.ALLERGENS_14;
 var DISH_CATEGORIES = ['','Canapé','Starter','Fish course','Main','Side','Sauce','Pre-dessert','Dessert','Cheese','Petit four','Bread','Other'];
 var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 var DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -1661,7 +1663,7 @@ function toggleSavedMenuOnJob(prefix, menuId){
   var idx=-1;
   for(var i=0;i<menus.length;i++){ if(menus[i].name===menu.name){ idx=i; break; } }
   if(idx!==-1) menus.splice(idx,1);
-  else menus.push({name:menu.name, dishes:(menu.dishIds||[]).map(function(id){ return dishMap[id]; }).filter(Boolean)});
+  else menus.push({name:menu.name, dishes:window.Veriqo.resolveMenuDishes(menu, dishMap)});
   _renderMenuState(prefix);
   _syncLibraryCheckboxes(prefix);
 }
@@ -1835,7 +1837,7 @@ function addLibraryMenuToJob(menuId) {
   if (alreadyAdded) { toast('"' + menu.name + '" already attached', 'warn'); return; }
   _jobMenuState[_jmbPrefix].push({
     name: menu.name,
-    dishes: (menu.dishIds || []).map(function(id) { return dishMap[id]; }).filter(Boolean)
+    dishes: window.Veriqo.resolveMenuDishes(menu, dishMap)
   });
   _renderMenuState(_jmbPrefix);
   closeJobMenuBuilder();
@@ -2005,7 +2007,8 @@ async function handleMagicImport(event) {
         var existing = mSettings.savedDishes[existingIdx];
         if (existing) newDishIds.push(existing.id);
       } else {
-        var dish = { id: uid(), dish: d.name.trim(), category: d.category || '', allergens: d.allergens || [] };
+        var _importedAllergens = (d.allergens || []).map(window.Veriqo.normalizeAllergen);
+        var dish = { id: uid(), dish: d.name.trim(), category: d.category || '', allergens: _importedAllergens };
         mSettings.savedDishes.push(dish);
         existingNames.push(lower);
         newDishIds.push(dish.id);

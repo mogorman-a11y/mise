@@ -565,12 +565,14 @@
       let mSettings = {};
       try { mSettings = JSON.parse(localStorage.getItem('mise_settings') || '{}'); } catch (e) {}
       const menus = mSettings.savedMenus || [];
+      const dishesById = {};
+      (mSettings.savedDishes || []).forEach(d => { dishesById[d.id] = d; });
 
       if (menus.length === 0) {
         list.innerHTML = '<p style="color:var(--muted);font-size:14px;padding:12px 0;">No saved menus found. Create menus in Veriqo Menus first, then come back to load them here.</p>';
       } else {
         list.innerHTML = menus.map((menu, i) => {
-          const dishes = menu.dishes || [];
+          const dishes = window.Veriqo.resolveMenuDishes(menu, dishesById);
           const dishCount = dishes.length;
           const dishNames = dishes.slice(0, 3).map(d => typeof d === 'string' ? d : (d.dish || d.name || '')).filter(Boolean).join(', ');
           return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
@@ -591,7 +593,9 @@
       const menus = mSettings.savedMenus || [];
       const menu = menus[menuIndex];
       if (!menu) return;
-      const dishes = menu.dishes || [];
+      const dishesById = {};
+      (mSettings.savedDishes || []).forEach(d => { dishesById[d.id] = d; });
+      const dishes = window.Veriqo.resolveMenuDishes(menu, dishesById);
       dishes.forEach(d => {
         const name = typeof d === 'string' ? d : (d.dish || d.name || '');
         if (name) addIngredient(name, '', '', '');

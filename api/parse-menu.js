@@ -3,10 +3,10 @@
 //   POST { image: base64, mimeType }                        → menu image parsing (gpt-4o vision)
 //   POST { action: 'prep-tasks', dishName, dishCategory }   → AI prep task generation (gpt-4o-mini)
 
-const ALLERGENS = [
-  'Celery','Cereals with gluten','Crustaceans','Eggs','Fish',
-  'Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphites'
-];
+// Canonical allergen list — same file the browser modules use (js/core/allergens.js).
+// Do not hardcode a second copy here; a spelling drift between this prompt's
+// vocabulary and the client's is what broke allergen conflict detection.
+const ALLERGENS = require('../js/core/allergens.js').ALLERGENS_14;
 
 const CATEGORIES = [
   'Canapé','Starter','Fish course','Main','Side','Sauce',
@@ -142,6 +142,14 @@ Be specific to this dish. Return only the JSON, no extra text.`;
     if (!Array.isArray(parsed.dishes)) {
       return res.status(502).json({ error: 'No dishes array in AI response' });
     }
+
+    // Never trust model output verbatim — normalize allergen spelling so it
+    // matches the canonical vocabulary even if the model drifts from the
+    // prompt's requested exact strings.
+    const normalizeAllergen = require('../js/core/allergens.js').normalizeAllergen;
+    parsed.dishes.forEach(function (d) {
+      if (Array.isArray(d.allergens)) d.allergens = d.allergens.map(normalizeAllergen);
+    });
 
     return res.status(200).json(parsed);
 
