@@ -283,7 +283,7 @@ window.Mise.sync = (function () {
     menuImport: { save: function(p){ return _coreImportMenu(p); } }
   };
 
-  var importMenu = _entityWrapper('menuImport', 'save', _coreImportMenu, function(p){ return p.menu && p.menu.name; });
+  var importMenu = _entityWrapper('menuImport', 'save', _coreImportMenu, null, function(p){ return p.menu && p.menu.name; });
 
   async function _drainRetryQueue() {
     if (!_userId) return;
