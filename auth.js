@@ -581,8 +581,9 @@ window.Mise.auth = (function () {
         if (isAuthToken || isPrivatePrefixed || isPrivateKey) localStorage.removeItem(k);
       });
     } catch(e) {}
-    if (window.Mise && window.Mise.idbQueue && window.Mise.idbQueue.setCosting) {
-      try { await window.Mise.idbQueue.setCosting([]); } catch(e) {}
+    if (window.Mise && window.Mise.idbQueue) {
+      if (window.Mise.idbQueue.set) { try { await window.Mise.idbQueue.set([]); } catch(e) {} }
+      if (window.Mise.idbQueue.setCosting) { try { await window.Mise.idbQueue.setCosting([]); } catch(e) {} }
     }
     window.location.reload();
   }
