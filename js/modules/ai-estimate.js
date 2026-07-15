@@ -365,29 +365,52 @@
     // Mirror into the existing Costing module's costings table (same schema
     // manual costing uses) so this AI estimate shows up in the normal
     // Costing list — not only inside this screen's own "Past Estimates".
-    _saveAsCosting(_state.currentJob);
+    await _saveAsCosting(_state.currentJob);
 
     toast('Quote price saved ✓');
   }
 
-  function _saveAsCosting(job) {
+  // Mirrors the AI job into the existing Costing module's costings table.
+  // The GP/margin shown on the AI Estimate screen (_currentAllInCostPence,
+  // _aiUpdateCustomGP) always includes "other direct costs" (#ai-other-costs)
+  // on top of the food cost — this must save using the exact same all-in
+  // cost, or a user sees one GP on screen and a different one after opening
+  // the saved costing. "Other costs" is persisted into the costing's own
+  // `overhead` field (costing.js's calcCostingFoodPct already treats
+  // `overhead` as a flat £ addition to total cost — same semantics as
+  // "other direct costs" here), so a manually-edited costing derived from
+  // this one stays consistent too.
+  async function _saveAsCosting(job) {
     if (!window.Mise || !window.Mise.yieldSync) return;
     var ingredients = (job.post_job_actuals || []).map(function (ing) {
       return { name: ing.ingredient_name, packDesc: ing.course || '', packCost: ((ing.estimated_portion_cost_pence || 0) / 100).toFixed(2), qty: '1' };
     });
+    var otherCostsEl = document.getElementById('ai-other-costs');
+    var otherCostsPounds = otherCostsEl && otherCostsEl.value ? parseFloat(otherCostsEl.value) || 0 : 0;
+    var allInCostPence = _currentAllInCostPence();
     var costing = {
       id: 'ai_' + job.id, // stable id derived from the AI job — re-saving (e.g. after reconciliation) updates the same row rather than creating a duplicate
       jobName: job.dish_name,
       covers: String(job.serves || ''),
       wastage: '0',
-      hourlyRate: '', hours: '', miles: '', overhead: '',
-      margin: job.quoted_price_pence ? String(window.Veriqo.gpForPrice(_totalEstimatedPence(job), job.quoted_price_pence)) : '',
+      hourlyRate: '', hours: '', miles: '',
+      overhead: otherCostsPounds ? otherCostsPounds.toFixed(2) : '',
+      margin: job.quoted_price_pence ? String(window.Veriqo.gpForPrice(allInCostPence, job.quoted_price_pence)) : '',
       ingredients: ingredients,
       source: 'ai-estimate',
       aiJobId: job.id,
       createdAt: job.created_at || new Date().toISOString()
     };
-    window.Mise.yieldSync.saveCosting(costing);
+    try {
+      var result = await window.Mise.yieldSync.saveCosting(costing);
+      if (result && result.error) {
+        console.error('[ai-estimate] saveCosting failed:', result.error.message);
+        toast('Saved locally, but could not sync the costing — will retry later', 'warn');
+      }
+    } catch (e) {
+      console.error('[ai-estimate] saveCosting threw:', e.message);
+      toast('Saved locally, but could not sync the costing — will retry later', 'warn');
+    }
   }
 
   // ── quickReconcileAIJob ────────────────────────────────────────────────────
@@ -412,7 +435,7 @@
     if (!_setCurrentJob(result.data)) return;
     _renderResult(_state.currentJob);
     _renderReconcileSummary(_state.currentJob.financials);
-    _saveAsCosting(_state.currentJob);
+    await _saveAsCosting(_state.currentJob);
     toast('Reconciled ✓');
   }
 
@@ -467,7 +490,7 @@
       if (refreshed.ok && _setCurrentJob(refreshed.data)) {
         _renderResult(_state.currentJob);
         if (_state.currentJob.financials) _renderReconcileSummary(_state.currentJob.financials);
-        _saveAsCosting(_state.currentJob);
+        await _saveAsCosting(_state.currentJob);
       }
     } catch (e) {
       toast('Receipt scan failed — please try again', 'err');
@@ -485,13 +508,16 @@
       listEl.innerHTML = '<p style="color:var(--muted);font-size:14px;text-align:center;padding:16px 0">Could not load past estimates — ' + _esc(result.error) + '</p>';
       return;
     }
-    var jobs = (result.data && result.data.jobs) || [];
+    // Defensive: don't let one malformed list entry take down the whole
+    // list render (same reasoning as _setCurrentJob's validation).
+    var jobs = ((result.data && result.data.jobs) || []).filter(window.Veriqo.isValidJobShape);
     if (!jobs.length) {
       listEl.innerHTML = '<p style="color:var(--muted);font-size:14px;text-align:center;padding:16px 0">No estimates yet — create your first one above.</p>';
       return;
     }
     listEl.innerHTML = jobs.map(function (job) {
-      var total = job.post_job_actuals.reduce(function (s, x) { return s + (x.estimated_portion_cost_pence || 0); }, 0);
+      var actuals = window.Veriqo.sanitizePostJobActuals(job.post_job_actuals);
+      var total = actuals.reduce(function (s, x) { return s + (x.estimated_portion_cost_pence || 0); }, 0);
       var statusLabel = { estimated: 'estimated', partial: 'partial', reconciled: 'reconciled', reconciled_total_only: 'reconciled' }[job.reconciliation_status] || job.reconciliation_status;
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="_aiLoadJob(\'' + job.id + '\')">'
         + '<div><div style="font-weight:600;font-size:14px">' + _esc(job.dish_name) + '</div>'

@@ -1,4 +1,4 @@
-// sync.js v14 — unified cloud sync for all modules (HACCP + Menus + shared tables)
+// sync.js v15 — unified cloud sync for all modules (HACCP + Menus + shared tables)
 // Handles: haccp_records, mise_records, settings, mise_settings, clients, dishes,
 //          menus, menu_dishes, jobs tables. Each module passes its name as the
 //          third argument to saveDay/saveSettings to route to the correct table.

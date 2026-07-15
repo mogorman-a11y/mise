@@ -125,19 +125,22 @@ window.Mise = window.Mise || {};
       if (_sb && _uid) _sb.from('quotes').delete().eq('id', String(id)).eq('user_id', _uid);
     },
 
+    // Returns the Supabase upsert result ({data, error}) so callers can await
+    // and handle a sync failure, instead of firing-and-forgetting it.
     saveCosting: function (costing) {
       var costings = _lsArr('yield_costings');
       var idx = costings.findIndex(function (c) { return c.id === costing.id; });
       if (idx >= 0) costings[idx] = costing; else costings.unshift(costing);
       _lsSet('yield_costings', costings);
       if (_sb && _uid) {
-        _sb.from('costings').upsert({
+        return _sb.from('costings').upsert({
           id: costing.id,
           user_id: _uid,
           costing_data: costing,
           created_at: costing.createdAt || new Date().toISOString()
         }, { onConflict: 'id' });
       }
+      return Promise.resolve({ error: null });
     },
 
     deleteCosting: function (id) {
