@@ -264,7 +264,7 @@ function showTab(name){
   if(name==='assess')      { populateStaffSelects(); populateClientSelects(); renderAssessList(); }
   if(name==='allergen')    { populateClientSelects(); renderAllergenList(); }
   if(name==='credentials') { populateStaffSelects(); renderCredentialsList(); }
-  if(name==='mise-settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); renderCarteSubscriptionCard(); loadEmailPreferences(); }
+  if(name==='mise-settings')    { loadProfileUI(); renderStaffList(); loadSettingsToggles(); renderCarteSubscriptionCard(); loadEmailPreferences(); if (typeof renderTemplatesList === 'function') renderTemplatesList(); }
   if(name==='prep')             { if (typeof renderPrepIndex === 'function') renderPrepIndex(); }
 
   // Set date fields to today if empty
@@ -377,6 +377,7 @@ function toggleNewJobForm(){
     _renderMenuState('log');
     var el = document.getElementById('job-event-date');
     if(el && !el.value) el.value = TODAY;
+    if (typeof renderTemplateDropdown === 'function') renderTemplateDropdown();
   }
 }
 

@@ -2713,31 +2713,13 @@
       </div>
     </div>
 
-    <!-- LOG INCOME — for partner/direct bookings that don't need a full quote -->
-    <div id="log-income-modal" class="modal" style="display:none">
-      <div class="modal-card">
-        <span class="modal-close" onclick="closeLogIncomeModal()">&times;</span>
-        <h2 class="modal-title">Log Income</h2>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:14px">For partner bookings or jobs that don't need a Veriqo quote — record the income directly.</div>
-        <div style="background:#f5f4f0;border-radius:8px;padding:10px 12px;margin-bottom:16px">
-          <div style="font-size:14px;font-weight:600;color:var(--ink)" id="log-income-client"></div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px" id="log-income-date"></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Amount received (£) *</label>
-          <input type="number" id="log-income-amount" class="form-input" placeholder="0.00" step="0.01" min="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Source / note</label>
-          <input type="text" id="log-income-source" class="form-input" placeholder="e.g. Hire A Chef, direct payment…">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Date received</label>
-          <input type="date" id="log-income-paid-date" class="form-input">
-        </div>
-        <button class="btn btn-primary" onclick="saveLoggedIncome()" style="margin-top:4px">Save Income</button>
-      </div>
-    </div>
+    <!-- LOG INCOME modal removed 2026-07 — was scaffolded (commit 64e1578) with no
+         backing implementation and no control anywhere that opened it (dead markup
+         calling undefined closeLogIncomeModal()/saveLoggedIncome()). Its intended
+         data model is genuinely ambiguous — a jobs.metadata field, a payments row,
+         or a standalone transaction all fit "For partner bookings or jobs that
+         don't need a Veriqo quote — record the income directly" equally well.
+         Needs a product decision before it's rebuilt; see PR notes. -->
 
     <div id="quote-modal" class="modal" style="display: none;">
       <div class="modal-card">
@@ -3212,9 +3194,10 @@ function vqIcon(name, size) {
 
 <script src="js/modules/dashboard.js?v=6"></script>
 <script src="js/modules/haccp.js?v=68"></script>
-<script src="js/modules/menus.js?v=25"></script>
+<script src="js/modules/menus.js?v=26"></script>
 <script src="js/modules/costing.js?v=30"></script>
 <script src="js/modules/ai-estimate.js?v=1"></script>
+<script src="js/modules/intake.js?v=1"></script>
 
 <script src="auth.js?v=34"></script>
 <script src="js/core/idb-queue.js?v=1"></script>

@@ -5,7 +5,7 @@
 //   Supabase API calls          → network-first (sync when online, skip offline)
 //   Everything else             → network with cache fallback
 
-const CACHE = 'veriqo-v115';
+const CACHE = 'veriqo-v116';
 
 const APP_SHELL = [
   './app.html',
@@ -32,6 +32,7 @@ const APP_SHELL = [
   './js/modules/menus.js',
   './js/modules/costing.js',
   './js/modules/ai-estimate.js',
+  './js/modules/intake.js',
   './js/modules/team.js',
   // CSS
   './css/tokens.css',
