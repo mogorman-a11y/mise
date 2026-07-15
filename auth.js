@@ -558,14 +558,32 @@ window.Mise.auth = (function () {
   }
 
   // ── logout ─────────────────────────────────────────────────────────────────
+  // Clears private cached data (HACCP/Menus/Costing records, settings, sync
+  // retry queue) so it can't be read by whoever uses this device next, while
+  // preserving device-level UI preferences (theme, last module, install
+  // banner dismissal) which aren't account-specific. Previously this only
+  // removed the Supabase auth token, leaving every other module's data
+  // sitting in localStorage indefinitely after sign-out.
+  var _PRIVATE_KEY_PREFIXES = ['haccp_', 'mise_', 'yield_'];
+  var _PRIVATE_KEYS = ['veriqo_profile', 'veriqo_sync_retry_queue'];
+
   async function logout() {
     if (window.posthog) posthog.reset();
+    if (window.Mise && window.Mise.sync && window.Mise.sync.clearRetryQueue) {
+      try { window.Mise.sync.clearRetryQueue(); } catch(e) {}
+    }
     try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(e) {}
     try {
-      Object.keys(localStorage)
-        .filter(function(k) { return k.startsWith('sb-') && k.endsWith('-auth-token'); })
-        .forEach(function(k) { localStorage.removeItem(k); });
+      Object.keys(localStorage).forEach(function(k) {
+        var isAuthToken = k.startsWith('sb-') && k.endsWith('-auth-token');
+        var isPrivatePrefixed = _PRIVATE_KEY_PREFIXES.some(function(p) { return k.startsWith(p); });
+        var isPrivateKey = _PRIVATE_KEYS.indexOf(k) !== -1;
+        if (isAuthToken || isPrivatePrefixed || isPrivateKey) localStorage.removeItem(k);
+      });
     } catch(e) {}
+    if (window.Mise && window.Mise.idbQueue && window.Mise.idbQueue.setCosting) {
+      try { await window.Mise.idbQueue.setCosting([]); } catch(e) {}
+    }
     window.location.reload();
   }
 

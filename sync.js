@@ -1,4 +1,4 @@
-// sync.js v13 — unified cloud sync for all modules (HACCP + Menus + shared tables)
+// sync.js v14 — unified cloud sync for all modules (HACCP + Menus + shared tables)
 // Handles: haccp_records, mise_records, settings, mise_settings, clients, dishes,
 //          menus, menu_dishes, jobs tables. Each module passes its name as the
 //          third argument to saveDay/saveSettings to route to the correct table.
@@ -69,6 +69,16 @@ window.Mise.sync = (function () {
   }
 
   // ── Retry queue ────────────────────────────────────────────────────────────
+  // Two item shapes share one localStorage array:
+  //  - legacy day-record items: {dateStr, module, records, retries, ts}
+  //    (saveDay/saveSettings — unchanged from before this refactor)
+  //  - generic entity items: {id, userScope, entityType, operation, payload,
+  //    createdAt, attemptCount, lastError, idempotencyKey, dependencyIds}
+  //    (saveDish/deleteDish/saveMenu/deleteMenu/saveJob/deleteJob/
+  //    saveClient/deleteClient)
+  // The queue is scoped to the signed-in user via userScope and is cleared
+  // entirely on sign-out (auth.js logout()) so one account's queued writes
+  // can never be processed under a different account on the same device.
   var _RETRY_KEY = 'veriqo_sync_retry_queue';
   var _MAX_RETRIES = 5;
   var _MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -79,43 +89,243 @@ window.Mise.sync = (function () {
   function _saveRetryQueue(q) {
     try { localStorage.setItem(_RETRY_KEY, JSON.stringify(q)); } catch(e) {}
   }
+  function _genId() {
+    return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('rq_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+  }
+  function _clearRetryQueue() {
+    try { localStorage.removeItem(_RETRY_KEY); } catch(e) {}
+  }
+
+  // Legacy day-record retry (saveDay/saveSettings only).
   function _enqueueRetry(item) {
     var q = _loadRetryQueue();
-    // Replace any existing entry for same date+module to avoid stacking stale versions
     q = q.filter(function(x){ return !(x.dateStr === item.dateStr && x.module === item.module); });
     q.push(Object.assign({}, item, { retries: 0, ts: Date.now() }));
     _saveRetryQueue(q);
     console.log('[Veriqo sync] queued for retry:', item.dateStr, item.module || 'haccp');
   }
+
+  // Generic entity retry — used by saveDish/deleteDish/saveMenu/deleteMenu/
+  // saveJob/deleteJob/saveClient/deleteClient on failure.
+  function _enqueueEntityRetry(entityType, operation, payload, opts) {
+    opts = opts || {};
+    var q = _loadRetryQueue();
+    var idempotencyKey = opts.idempotencyKey || (entityType + ':' + operation + ':' + (payload && payload.id != null ? payload.id : ''));
+    // Replace any existing queued item for the same entity+operation so
+    // retries don't stack stale versions of the same edit.
+    q = q.filter(function(x){ return x.idempotencyKey !== idempotencyKey; });
+    q.push({
+      id: _genId(),
+      userScope: _userId,
+      entityType: entityType,
+      operation: operation,
+      payload: payload,
+      createdAt: Date.now(),
+      attemptCount: 0,
+      lastError: null,
+      idempotencyKey: idempotencyKey,
+      dependencyIds: opts.dependencyIds || []
+    });
+    _saveRetryQueue(q);
+    console.log('[Veriqo sync] queued for retry:', entityType, operation, idempotencyKey);
+  }
+
+  // Core writers — no toast, no enqueue-on-failure. Shared by the public
+  // save*/delete* functions (which DO toast + enqueue) and the retry drain
+  // loop (which manages the queue array itself and must not trigger a
+  // second, duplicate enqueue when a retry attempt itself fails).
+  async function _coreSaveDish(d) {
+    var r = await supabaseClient.from('dishes').upsert({
+      id: String(d.id),
+      user_id: _userId,
+      name: d.dish || d.name || '',
+      category: d.category || null,
+      allergens: d.allergens || [],
+      prep_tasks: Array.isArray(d.prep_tasks) ? d.prep_tasks : [],
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    return r.error ? { ok: false, error: r.error } : { ok: true, data: r.data };
+  }
+  async function _coreDeleteDish(id) {
+    await supabaseClient.from('menu_dishes').delete().eq('dish_id', String(id)).eq('user_id', _userId);
+    var r = await supabaseClient.from('dishes').delete().eq('id', String(id)).eq('user_id', _userId);
+    return r.error ? { ok: false, error: r.error } : { ok: true };
+  }
+  async function _coreSaveMenu(m) {
+    var menuId = String(m.id);
+    var mr = await supabaseClient.from('menus').upsert({
+      id: menuId,
+      user_id: _userId,
+      name: m.name,
+      notes: m.notes || null,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    if (mr.error) return { ok: false, error: mr.error };
+    await supabaseClient.from('menu_dishes').delete().eq('menu_id', menuId).eq('user_id', _userId);
+
+    var rows = [];
+    if (m.dishes && m.dishes.length) {
+      var dishRes = await supabaseClient.from('dishes').select('id, name').eq('user_id', _userId);
+      var dishNameMap = {};
+      if (!dishRes.error && dishRes.data) {
+        dishRes.data.forEach(function (d) { dishNameMap[(d.name || '').toLowerCase()] = d.id; });
+      }
+      rows = m.dishes.map(function (d, i) {
+        return {
+          user_id: _userId,
+          menu_id: menuId,
+          dish_id: dishNameMap[(d.dish || d.name || '').toLowerCase()] || null,
+          dish_name: d.dish || d.name || '',
+          category: d.category || null,
+          allergens: d.allergens || [],
+          sort_order: i
+        };
+      });
+    } else if (m.dishIds && m.dishIds.length) {
+      var dishRes2 = await supabaseClient.from('dishes').select('id, name, category, allergens').eq('user_id', _userId);
+      var dishById = {};
+      if (!dishRes2.error && dishRes2.data) {
+        dishRes2.data.forEach(function (d) { dishById[String(d.id)] = d; });
+      }
+      rows = m.dishIds.map(function (id, i) {
+        var d = dishById[String(id)] || {};
+        return {
+          user_id: _userId,
+          menu_id: menuId,
+          dish_id: String(id),
+          dish_name: d.name || '',
+          category: d.category || null,
+          allergens: d.allergens || [],
+          sort_order: i
+        };
+      });
+    }
+
+    if (!rows.length) return { ok: true, data: { menu: mr.data, dishRows: 0 } };
+    var ir = await supabaseClient.from('menu_dishes').insert(rows);
+    return ir.error ? { ok: false, error: ir.error } : { ok: true, data: { menu: mr.data, dishRows: rows.length } };
+  }
+  async function _coreDeleteMenu(id) {
+    await supabaseClient.from('menu_dishes').delete().eq('menu_id', String(id)).eq('user_id', _userId);
+    var r = await supabaseClient.from('menus').delete().eq('id', String(id)).eq('user_id', _userId);
+    return r.error ? { ok: false, error: r.error } : { ok: true };
+  }
+  async function _coreSaveJob(rec) {
+    var r = await supabaseClient.from('jobs').upsert({
+      id: String(rec.id),
+      user_id: _userId,
+      title: rec.jobType || '',
+      job_date: rec.eventDate,
+      start_time: rec.eventTime || null,
+      location: rec.location || null,
+      headcount: rec.covers ? (parseInt(rec.covers) || null) : null,
+      status: rec.status || 'confirmed',
+      notes: rec.notes || null,
+      source: rec.source || 'carte',
+      metadata: {
+        client_name: rec.client || '',
+        menus: rec.menus || [],
+        guests: rec.guests || [],
+        tabDepositPaid: rec.tabDepositPaid || false,
+        tabBalancePaid: rec.tabBalancePaid || false,
+        tabClosed: rec.tabClosed || false
+      },
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    return r.error ? { ok: false, error: r.error } : { ok: true, data: r.data };
+  }
+  async function _coreDeleteJob(id) {
+    var r = await supabaseClient.from('jobs').delete().eq('id', String(id)).eq('user_id', _userId);
+    return r.error ? { ok: false, error: r.error } : { ok: true };
+  }
+  async function _coreSaveClient(client) {
+    var r = await supabaseClient.from('clients').upsert({
+      id: String(client.id),
+      user_id: _userId,
+      name: client.name || '',
+      email: client.email || null,
+      phone: client.phone || null,
+      address: client.address || null,
+      notes: client.diet || client.notes || null,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    return r.error ? { ok: false, error: r.error } : { ok: true, data: r.data };
+  }
+  async function _coreDeleteClient(id) {
+    var r = await supabaseClient.from('clients').delete().eq('id', String(id)).eq('user_id', _userId);
+    return r.error ? { ok: false, error: r.error } : { ok: true };
+  }
+
+  var _ENTITY_CORE = {
+    dish:   { save: function(p){ return _coreSaveDish(p); },   delete: function(p){ return _coreDeleteDish(p.id); } },
+    menu:   { save: function(p){ return _coreSaveMenu(p); },   delete: function(p){ return _coreDeleteMenu(p.id); } },
+    job:    { save: function(p){ return _coreSaveJob(p); },    delete: function(p){ return _coreDeleteJob(p.id); } },
+    client: { save: function(p){ return _coreSaveClient(p); }, delete: function(p){ return _coreDeleteClient(p.id); } }
+  };
+
   async function _drainRetryQueue() {
     if (!_userId) return;
     var q = _loadRetryQueue();
     if (!q.length) return;
-    // Drop stale items
     var now = Date.now();
-    q = q.filter(function(x){ return (now - x.ts) < _MAX_AGE_MS && x.retries < _MAX_RETRIES; });
-    var remaining = [];
-    for (var i = 0; i < q.length; i++) {
-      var item = q[i];
+
+    var legacy = q.filter(function(x){ return x.dateStr !== undefined; })
+                  .filter(function(x){ return (now - x.ts) < _MAX_AGE_MS && x.retries < _MAX_RETRIES; });
+    var entity = q.filter(function(x){ return x.dateStr === undefined; })
+                  .filter(function(x){ return (now - x.createdAt) < _MAX_AGE_MS && x.attemptCount < _MAX_RETRIES && x.userScope === _userId; });
+
+    var legacyRemaining = [];
+    for (var i = 0; i < legacy.length; i++) {
+      var item = legacy[i];
       var table = item.module === 'menus' ? 'mise_records' : 'haccp_records';
       try {
         var r = await supabaseClient.from(table).upsert({
-          user_id: _userId,
-          date: item.dateStr,
-          records: item.records
+          user_id: _userId, date: item.dateStr, records: item.records
         }, { onConflict: 'user_id,date' });
         if (r.error) throw r.error;
         console.log('[Veriqo sync] ✓ retry succeeded:', item.dateStr, item.module || 'haccp');
       } catch(err) {
         item.retries = (item.retries || 0) + 1;
         console.warn('[Veriqo sync] retry failed (attempt ' + item.retries + '):', item.dateStr, err.message || err);
-        remaining.push(item);
+        legacyRemaining.push(item);
       }
     }
-    _saveRetryQueue(remaining);
-    if (remaining.length === 0 && q.length > 0) {
+
+    // Respect dependencyIds: don't retry an item while anything it depends
+    // on (e.g. a menu waiting on its dishes) is still itself queued.
+    var stillQueuedIds = {};
+    entity.forEach(function(x){ stillQueuedIds[x.id] = true; });
+    var entityRemaining = [];
+    for (var j = 0; j < entity.length; j++) {
+      var eItem = entity[j];
+      var blocked = (eItem.dependencyIds || []).some(function(depId){ return stillQueuedIds[depId]; });
+      if (blocked) { entityRemaining.push(eItem); continue; }
+      var core = _ENTITY_CORE[eItem.entityType];
+      var fn = core && core[eItem.operation];
+      if (!fn) { entityRemaining.push(eItem); continue; }
+      try {
+        var result = await fn(eItem.payload);
+        if (!result.ok) throw result.error || new Error('retry failed');
+        console.log('[Veriqo sync] ✓ retry succeeded:', eItem.entityType, eItem.operation, eItem.idempotencyKey);
+        delete stillQueuedIds[eItem.id];
+      } catch (err) {
+        eItem.attemptCount = (eItem.attemptCount || 0) + 1;
+        eItem.lastError = (err && err.message) || String(err);
+        console.warn('[Veriqo sync] retry failed (attempt ' + eItem.attemptCount + '):', eItem.entityType, eItem.idempotencyKey, eItem.lastError);
+        entityRemaining.push(eItem);
+      }
+    }
+
+    _saveRetryQueue(legacyRemaining.concat(entityRemaining));
+    if (legacyRemaining.length === 0 && entityRemaining.length === 0 && q.length > 0) {
       if (typeof toast === 'function') toast('Sync recovered — all pending records saved');
     }
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', function () {
+      if (_userId) _drainRetryQueue().catch(function(){});
+    });
   }
 
   // ── saveDay ────────────────────────────────────────────────────────────────
@@ -162,156 +372,41 @@ window.Mise.sync = (function () {
     }
   }
 
-  // ── saveDish ───────────────────────────────────────────────────────────────
-  async function saveDish(d) {
-    if (!_userId) return;
-    var r = await supabaseClient.from('dishes').upsert({
-      id: String(d.id),
-      user_id: _userId,
-      name: d.dish || d.name || '',
-      category: d.category || null,
-      allergens: d.allergens || [],
-      prep_tasks: Array.isArray(d.prep_tasks) ? d.prep_tasks : [],
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-    if (r.error) console.error('[Veriqo sync] saveDish failed:', r.error.message);
-    else console.log('[Veriqo sync] ✓ dish saved:', d.dish || d.name);
-  }
-
-  // ── deleteDish ─────────────────────────────────────────────────────────────
-  async function deleteDish(id) {
-    if (!_userId) return;
-    await supabaseClient.from('menu_dishes').delete().eq('dish_id', String(id)).eq('user_id', _userId);
-    var r = await supabaseClient.from('dishes').delete().eq('id', String(id)).eq('user_id', _userId);
-    if (r.error) console.error('[Veriqo sync] deleteDish failed:', r.error.message);
-  }
-
-  // ── saveMenu ───────────────────────────────────────────────────────────────
-  async function saveMenu(m) {
-    if (!_userId) return;
-    var menuId = String(m.id);
-    var mr = await supabaseClient.from('menus').upsert({
-      id: menuId,
-      user_id: _userId,
-      name: m.name,
-      notes: m.notes || null,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-    if (mr.error) { console.error('[Veriqo sync] saveMenu failed:', mr.error.message); return; }
-    await supabaseClient.from('menu_dishes').delete().eq('menu_id', menuId).eq('user_id', _userId);
-
-    var rows = [];
-    if (m.dishes && m.dishes.length) {
-      // dishes is an array of objects — look up Supabase IDs by name
-      var dishRes = await supabaseClient.from('dishes').select('id, name').eq('user_id', _userId);
-      var dishNameMap = {};
-      if (!dishRes.error && dishRes.data) {
-        dishRes.data.forEach(function (d) { dishNameMap[(d.name || '').toLowerCase()] = d.id; });
+  // ── entity save/delete wrappers ──────────────────────────────────────────
+  // Each returns { ok:true, data } or { ok:false, error, queued }. On failure
+  // the write is queued for retry (see _enqueueEntityRetry above) and a toast
+  // tells the user it's saved locally but not yet synced — callers (e.g. the
+  // AI-menu-import flow) must check `ok` rather than assuming success.
+  //
+  // Save payloads are the entity object itself (already has .id). Delete
+  // functions are called with a bare id (matching every existing call site,
+  // e.g. Mise.sync.deleteDish(id)) but are normalized to {id} before being
+  // passed to the core function or the retry queue, so _ENTITY_CORE (used by
+  // the retry drain loop) and every queued payload agree on one shape.
+  function _entityWrapper(entityType, operation, coreFn, toPayload, labelFn) {
+    return async function (arg) {
+      if (!_userId) return { ok: false, error: new Error('not signed in') };
+      var payload = toPayload ? toPayload(arg) : arg;
+      var result = await coreFn(payload);
+      if (!result.ok) {
+        console.error('[Veriqo sync] ' + entityType + ' ' + operation + ' failed:', result.error && result.error.message);
+        if (typeof toast === 'function') toast('Sync error — ' + entityType + ' saved locally, will retry when online', 'err');
+        _enqueueEntityRetry(entityType, operation, payload);
+        return { ok: false, error: result.error, queued: true };
       }
-      rows = m.dishes.map(function (d, i) {
-        return {
-          user_id: _userId,
-          menu_id: menuId,
-          dish_id: dishNameMap[(d.dish || d.name || '').toLowerCase()] || null,
-          dish_name: d.dish || d.name || '',
-          category: d.category || null,
-          allergens: d.allergens || [],
-          sort_order: i
-        };
-      });
-    } else if (m.dishIds && m.dishIds.length) {
-      // dishIds is an array of IDs — look up names/details from Supabase
-      var dishRes2 = await supabaseClient.from('dishes').select('id, name, category, allergens').eq('user_id', _userId);
-      var dishById = {};
-      if (!dishRes2.error && dishRes2.data) {
-        dishRes2.data.forEach(function (d) { dishById[String(d.id)] = d; });
-      }
-      rows = m.dishIds.map(function (id, i) {
-        var d = dishById[String(id)] || {};
-        return {
-          user_id: _userId,
-          menu_id: menuId,
-          dish_id: String(id),
-          dish_name: d.name || '',
-          category: d.category || null,
-          allergens: d.allergens || [],
-          sort_order: i
-        };
-      });
-    }
-
-    if (!rows.length) return;
-    var ir = await supabaseClient.from('menu_dishes').insert(rows);
-    if (ir.error) console.error('[Veriqo sync] saveMenu dishes failed:', ir.error.message);
-    else console.log('[Veriqo sync] ✓ menu saved:', m.name);
+      console.log('[Veriqo sync] ✓ ' + entityType + ' ' + operation + ':', labelFn ? labelFn(payload) : '');
+      return result;
+    };
   }
 
-  // ── deleteMenu ─────────────────────────────────────────────────────────────
-  async function deleteMenu(id) {
-    if (!_userId) return;
-    await supabaseClient.from('menu_dishes').delete().eq('menu_id', String(id)).eq('user_id', _userId);
-    var r = await supabaseClient.from('menus').delete().eq('id', String(id)).eq('user_id', _userId);
-    if (r.error) console.error('[Veriqo sync] deleteMenu failed:', r.error.message);
-  }
-
-  // ── saveJob ────────────────────────────────────────────────────────────────
-  async function saveJob(rec) {
-    if (!_userId) return;
-    var r = await supabaseClient.from('jobs').upsert({
-      id: String(rec.id),
-      user_id: _userId,
-      title: rec.jobType || '',
-      job_date: rec.eventDate,
-      start_time: rec.eventTime || null,
-      location: rec.location || null,
-      headcount: rec.covers ? (parseInt(rec.covers) || null) : null,
-      status: rec.status || 'confirmed',
-      notes: rec.notes || null,
-      source: rec.source || 'carte',
-      metadata: {
-        client_name: rec.client || '',
-        menus: rec.menus || [],
-        guests: rec.guests || [],
-        tabDepositPaid: rec.tabDepositPaid || false,
-        tabBalancePaid: rec.tabBalancePaid || false,
-        tabClosed: rec.tabClosed || false
-      },
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-    if (r.error) console.error('[Veriqo sync] saveJob failed:', r.error.message);
-    else console.log('[Veriqo sync] ✓ job saved:', rec.id);
-  }
-
-  // ── deleteJob ──────────────────────────────────────────────────────────────
-  async function deleteJob(id) {
-    if (!_userId) return;
-    var r = await supabaseClient.from('jobs').delete().eq('id', String(id)).eq('user_id', _userId);
-    if (r.error) console.error('[Veriqo sync] deleteJob failed:', r.error.message);
-  }
-
-  // ── saveClient ─────────────────────────────────────────────────────────────
-  async function saveClient(client) {
-    if (!_userId) return;
-    var r = await supabaseClient.from('clients').upsert({
-      id: String(client.id),
-      user_id: _userId,
-      name: client.name || '',
-      email: client.email || null,
-      phone: client.phone || null,
-      address: client.address || null,
-      notes: client.diet || client.notes || null,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-    if (r.error) console.error('[Veriqo sync] saveClient failed:', r.error.message);
-    else console.log('[Veriqo sync] ✓ client saved:', client.name);
-  }
-
-  // ── deleteClient ───────────────────────────────────────────────────────────
-  async function deleteClient(id) {
-    if (!_userId) return;
-    var r = await supabaseClient.from('clients').delete().eq('id', String(id)).eq('user_id', _userId);
-    if (r.error) console.error('[Veriqo sync] deleteClient failed:', r.error.message);
-  }
+  var saveDish     = _entityWrapper('dish', 'save', _coreSaveDish, null, function(d){ return d.dish || d.name; });
+  var deleteDish   = _entityWrapper('dish', 'delete', function(p){ return _coreDeleteDish(p.id); }, function(id){ return { id: id }; }, function(p){ return p.id; });
+  var saveMenu     = _entityWrapper('menu', 'save', _coreSaveMenu, null, function(m){ return m.name; });
+  var deleteMenu   = _entityWrapper('menu', 'delete', function(p){ return _coreDeleteMenu(p.id); }, function(id){ return { id: id }; }, function(p){ return p.id; });
+  var saveJob      = _entityWrapper('job', 'save', _coreSaveJob, null, function(rec){ return rec.id; });
+  var deleteJob    = _entityWrapper('job', 'delete', function(p){ return _coreDeleteJob(p.id); }, function(id){ return { id: id }; }, function(p){ return p.id; });
+  var saveClient   = _entityWrapper('client', 'save', _coreSaveClient, null, function(c){ return c.name; });
+  var deleteClient = _entityWrapper('client', 'delete', function(p){ return _coreDeleteClient(p.id); }, function(id){ return { id: id }; }, function(p){ return p.id; });
 
   // ── saveProfileField ───────────────────────────────────────────────────────
   async function saveProfileField(field, value) {
@@ -602,6 +697,7 @@ window.Mise.sync = (function () {
     saveClient, deleteClient,
     saveProfileField,
     refreshSharedJobs,
+    clearRetryQueue: _clearRetryQueue,
     // expose profile via getter for app.html usage
     get profile() { return _resolveProfile(); }
   };

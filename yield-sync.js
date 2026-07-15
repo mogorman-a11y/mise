@@ -1,5 +1,5 @@
 // yield-sync.js — Supabase sync module for Yield (Finance App)
-// Mise Labs suite · App 3 of 3 · v11
+// Mise Labs suite · App 3 of 3 · v12
 // Phase 3: jobs read from shared jobs table; syncTabStatusToCarte/syncQuoteToCarte/
 // removeQuoteFromCarte write to jobs table instead of mise_records bridge.
 
@@ -241,59 +241,70 @@ window.Mise = window.Mise || {};
     isReady: function () { return !!(_sb && _uid); }
   };
 
+  // Applies a Supabase select result to a localStorage cache using the
+  // shared decision rule in js/core/pull-result.js (unit-tested separately —
+  // see tests/sync-merge-logic.test.js). Returns true if the cache was updated.
+  function _applyPullResult(key, res, transform) {
+    var outcome = window.Veriqo.decidePullOutcome(res);
+    if (outcome.keep) {
+      console.error('[Yield] pull ' + key + ' failed:', outcome.error.message);
+      _err('Could not refresh ' + key.replace('yield_', '') + ' — showing last saved data');
+      return false;
+    }
+    _lsSet(key, transform ? transform(outcome.data) : outcome.data);
+    return true;
+  }
+
   async function _pullCostings() {
     var res = await _sb.from('costings').select('costing_data').eq('user_id', _uid).order('created_at', { ascending: false });
-    if (res.data && res.data.length > 0) {
-      _lsSet('yield_costings', res.data.map(function (r) { return r.costing_data; }));
-    }
+    _applyPullResult('yield_costings', res, function (data) { return data.map(function (r) { return r.costing_data; }); });
   }
 
   async function _pullQuotes() {
     var res = await _sb.from('quotes').select('quote_data').eq('user_id', _uid).order('created_at', { ascending: false });
-    if (res.data && res.data.length > 0) {
-      _lsSet('yield_quotes', res.data.map(function (r) { return r.quote_data; }));
-    }
+    _applyPullResult('yield_quotes', res, function (data) { return data.map(function (r) { return r.quote_data; }); });
   }
 
   async function _pullInvoices() {
     var res = await _sb.from('invoices').select('*').eq('user_id', _uid).order('created_at', { ascending: false });
-    if (res.data) _lsSet('yield_invoices', res.data);
+    _applyPullResult('yield_invoices', res);
   }
 
   async function _pullPayments() {
     var res = await _sb.from('payments').select('*').eq('user_id', _uid).order('paid_at', { ascending: false });
-    if (res.data) _lsSet('yield_payments', res.data);
+    _applyPullResult('yield_payments', res);
   }
 
   async function _pullClients() {
     var res = await _sb.from('clients').select('*').eq('user_id', _uid).order('name');
-    if (res.data) _lsSet('yield_clients', res.data);
+    _applyPullResult('yield_clients', res);
   }
 
   async function _pullJobs() {
     var res = await _sb.from('jobs').select('*').eq('user_id', _uid).order('job_date', { ascending: false });
-    var jobs = (res.data || []).map(function (j) {
-      var meta = j.metadata || {};
-      return {
-        _source: j.source || 'shared',
-        id: j.id,
-        type: 'job',
-        eventDate: j.job_date,
-        client: meta.client_name || '',
-        eventTime: j.start_time || '',
-        covers: j.headcount ? String(j.headcount) : '',
-        jobType: j.title || '',
-        location: j.location || '',
-        notes: j.notes || '',
-        menus: meta.menus || [],
-        status: j.status || 'confirmed',
-        tabDepositPaid: meta.tabDepositPaid || false,
-        tabBalancePaid: meta.tabBalancePaid || false,
-        tabClosed: meta.tabClosed || false,
-        _dateKey: j.job_date
-      };
+    _applyPullResult('yield_jobs', res, function (data) {
+      return data.map(function (j) {
+        var meta = j.metadata || {};
+        return {
+          _source: j.source || 'shared',
+          id: j.id,
+          type: 'job',
+          eventDate: j.job_date,
+          client: meta.client_name || '',
+          eventTime: j.start_time || '',
+          covers: j.headcount ? String(j.headcount) : '',
+          jobType: j.title || '',
+          location: j.location || '',
+          notes: j.notes || '',
+          menus: meta.menus || [],
+          status: j.status || 'confirmed',
+          tabDepositPaid: meta.tabDepositPaid || false,
+          tabBalancePaid: meta.tabBalancePaid || false,
+          tabClosed: meta.tabClosed || false,
+          _dateKey: j.job_date
+        };
+      });
     });
-    _lsSet('yield_jobs', jobs);
   }
 
   async function _pullMenusAndDishes() {
@@ -302,16 +313,31 @@ window.Mise = window.Mise || {};
       _sb.from('menu_dishes').select('*').eq('user_id', _uid).order('sort_order'),
       _sb.from('dishes').select('*').eq('user_id', _uid).order('name')
     ]);
-    var menus = results[0].data || [];
-    var menuDishes = results[1].data || [];
-    var dishes = results[2].data || [];
+    var menusRes = results[0], menuDishesRes = results[1], dishesRes = results[2];
 
-    var menusWithDishes = menus.map(function (m) {
-      return Object.assign({}, m, { dishes: menuDishes.filter(function (md) { return md.menu_id === m.id; }) });
-    });
+    // menus and menu_dishes are coupled (menus needs menu_dishes to build a
+    // correct `dishes` field) but dishes is independent — each collection's
+    // clear/keep decision must not be coupled to the others' success/failure.
+    if (menusRes.error) {
+      console.error('[Yield] pull menus failed:', menusRes.error.message);
+      _err('Could not refresh menus — showing last saved data');
+    } else if (menuDishesRes.error) {
+      console.error('[Yield] pull menu_dishes failed:', menuDishesRes.error.message);
+      _err('Could not refresh menu dishes — showing last saved data');
+    } else {
+      var menus = menusRes.data || [];
+      var menuDishes = menuDishesRes.data || [];
+      var dishesById = {};
+      (dishesRes.data || []).forEach(function (d) { dishesById[String(d.id)] = d; });
+      var menusWithDishes = menus.map(function (m) {
+        var joinedDishes = menuDishes.filter(function (md) { return md.menu_id === m.id; });
+        var resolvedDishes = joinedDishes.length ? joinedDishes : window.Veriqo.resolveMenuDishes(m, dishesById);
+        return Object.assign({}, m, { dishes: resolvedDishes });
+      });
+      _lsSet('yield_menus', menusWithDishes);
+    }
 
-    _lsSet('yield_menus', menusWithDishes);
-    _lsSet('yield_dishes', dishes);
+    _applyPullResult('yield_dishes', dishesRes);
   }
 
   async function _recalcInvoicePaidTotal(invoiceId) {
