@@ -110,7 +110,11 @@ window.Mise.sync = (function () {
   function _enqueueEntityRetry(entityType, operation, payload, opts) {
     opts = opts || {};
     var q = _loadRetryQueue();
-    var idempotencyKey = opts.idempotencyKey || (entityType + ':' + operation + ':' + (payload && payload.id != null ? payload.id : ''));
+    // menu-import payloads have no top-level .id (the identity is
+    // payload.menu.id) — fall back to that so different imports don't all
+    // collide onto the same queue key.
+    var payloadId = payload && (payload.id != null ? payload.id : (payload.menu && payload.menu.id));
+    var idempotencyKey = opts.idempotencyKey || (entityType + ':' + operation + ':' + (payloadId != null ? payloadId : ''));
     // Replace any existing queued item for the same entity+operation so
     // retries don't stack stale versions of the same edit.
     q = q.filter(function(x){ return x.idempotencyKey !== idempotencyKey; });
@@ -256,12 +260,30 @@ window.Mise.sync = (function () {
     return r.error ? { ok: false, error: r.error } : { ok: true };
   }
 
+  // ── importMenu ─────────────────────────────────────────────────────────────
+  // Atomic AI-menu-import: upserts every new dish, upserts the menu, and
+  // replaces its menu_dishes relationships in ONE Postgres transaction via
+  // the menu_import_upsert() RPC — so a partial failure can never leave a
+  // menu saved with no dish relationships (or vice versa). payload:
+  // { dishes: [{id,name,category,allergens}], menu: {id,name}, dishIds: [id,...] }
+  async function _coreImportMenu(payload) {
+    var r = await supabaseClient.rpc('menu_import_upsert', {
+      p_dishes: payload.dishes || [],
+      p_menu: payload.menu,
+      p_menu_dish_ids: payload.dishIds || []
+    });
+    return r.error ? { ok: false, error: r.error } : { ok: true, data: r.data };
+  }
+
   var _ENTITY_CORE = {
     dish:   { save: function(p){ return _coreSaveDish(p); },   delete: function(p){ return _coreDeleteDish(p.id); } },
     menu:   { save: function(p){ return _coreSaveMenu(p); },   delete: function(p){ return _coreDeleteMenu(p.id); } },
     job:    { save: function(p){ return _coreSaveJob(p); },    delete: function(p){ return _coreDeleteJob(p.id); } },
-    client: { save: function(p){ return _coreSaveClient(p); }, delete: function(p){ return _coreDeleteClient(p.id); } }
+    client: { save: function(p){ return _coreSaveClient(p); }, delete: function(p){ return _coreDeleteClient(p.id); } },
+    menuImport: { save: function(p){ return _coreImportMenu(p); } }
   };
+
+  var importMenu = _entityWrapper('menuImport', 'save', _coreImportMenu, function(p){ return p.menu && p.menu.name; });
 
   async function _drainRetryQueue() {
     if (!_userId) return;
@@ -695,6 +717,7 @@ window.Mise.sync = (function () {
     saveMenu, deleteMenu, deleteSuiteMenu, deleteSuiteDish,
     saveJob, deleteJob,
     saveClient, deleteClient,
+    importMenu,
     saveProfileField,
     refreshSharedJobs,
     clearRetryQueue: _clearRetryQueue,

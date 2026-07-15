@@ -2024,18 +2024,38 @@ async function handleMagicImport(event) {
         finalName = baseName + ' (' + suffix++ + ')';
       }
       var _importedMenu = { id: uid(), name: finalName, dishIds: newDishIds };
+      // Local save always happens first and is never lost, regardless of
+      // whether the cloud sync below succeeds — the user's import is never
+      // at risk even if they're offline or the request fails.
       mSettings.savedMenus.push(_importedMenu);
       saveMiseSettings();
-      if (window.Mise && window.Mise.sync) {
-        var _newDishObjs = (mSettings.savedDishes||[]).filter(function(d){ return newDishIds.indexOf(d.id) !== -1; });
-        _newDishObjs.forEach(function(d){ if (Mise.sync.saveDish) Mise.sync.saveDish(d); });
-        if (Mise.sync.saveMenu) Mise.sync.saveMenu(_importedMenu);
-      }
       renderDishLibrary();
       renderMenuDishSelect();
       renderSavedMenus();
-      resetBtn(false);
-      toast('✨ ' + newDishIds.length + ' dish' + (newDishIds.length !== 1 ? 'es' : '') + ' imported into "' + finalName + '"');
+      // Button stays disabled until the sync below settles (success or
+      // failure) — re-enabling it immediately would let a rapid double-click
+      // kick off a second concurrent import of the same file/menu.
+
+      // Sync: upsert dishes + menu + menu_dishes relationships atomically
+      // (one Postgres transaction via menu_import_upsert) so this can never
+      // show success with the menu saved but its dish relationships missing
+      // — the exact bug that silently produced 0-dish "AI-imported" menus in
+      // Costing/HACCP before this fix. On failure the import is queued for
+      // retry and the toast says so instead of claiming an unqualified win.
+      if (window.Mise && window.Mise.sync && window.Mise.sync.importMenu) {
+        var _newDishObjs = (mSettings.savedDishes || []).filter(function(d){ return newDishIds.indexOf(d.id) !== -1; })
+          .map(function(d){ return { id: d.id, name: d.dish, category: d.category, allergens: d.allergens }; });
+        var _importResult = await Mise.sync.importMenu({ dishes: _newDishObjs, menu: { id: _importedMenu.id, name: finalName }, dishIds: newDishIds });
+        resetBtn(false);
+        if (_importResult && _importResult.ok) {
+          toast('✨ ' + newDishIds.length + ' dish' + (newDishIds.length !== 1 ? 'es' : '') + ' imported into "' + finalName + '"');
+        } else {
+          toast('Imported locally — syncing to your other devices, will retry', 'warn');
+        }
+      } else {
+        resetBtn(false);
+        toast('✨ ' + newDishIds.length + ' dish' + (newDishIds.length !== 1 ? 'es' : '') + ' imported into "' + finalName + '" (saved locally only)');
+      }
     } else {
       saveMiseSettings();
       resetBtn(false);
