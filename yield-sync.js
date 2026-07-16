@@ -1,5 +1,5 @@
 // yield-sync.js — Supabase sync module for Yield (Finance App)
-// Mise Labs suite · App 3 of 3 · v14
+// Mise Labs suite · App 3 of 3 · v15
 // Phase 3: jobs read from shared jobs table; syncTabStatusToCarte/syncQuoteToCarte/
 // removeQuoteFromCarte write to jobs table instead of mise_records bridge.
 // v13: costing saves that fail or land before yieldSync is ready are now
@@ -9,6 +9,11 @@
 // whichever account happens to be signed in at flush time); enqueue/flush
 // serialised through one lock; init() returns the drain promise so a pull
 // right after init can await it instead of racing an in-flight flush.
+// v15: a queue persist failure (IndexedDB unavailable/full/corrupted) now
+// propagates instead of being swallowed, so saveCosting only reports
+// queued:true after confirmed storage; every costing save now verifies the
+// live Supabase session instead of trusting the module-level _uid, which
+// could otherwise go stale without a full logout+reload.
 
 window.Mise = window.Mise || {};
 
@@ -45,13 +50,15 @@ window.Mise = window.Mise || {};
   // in flight).
   var _queueLock = Promise.resolve();
 
-  // Resolves the real authenticated uid directly from Supabase, never from
-  // the possibly-unset/stale module-level _uid — used when queuing a write
-  // that arrived before init() ran. Falls back to the already-initialized
-  // client if present, otherwise the page-level `supabaseClient` global
-  // (supabase.js loads before this file).
+  // Resolves the real authenticated uid directly from the live Supabase
+  // session — never trusts the module-level _uid, which can go stale
+  // without a full logout+reload (a session replaced in place, test-account
+  // switching, or future account-switch functionality). Called before every
+  // financial write, not just when not-ready, so a save can never proceed
+  // or queue under a uid the current session doesn't actually match. Falls
+  // back to the page-level `supabaseClient` global (supabase.js loads
+  // before this file) when _sb hasn't been set via init() yet.
   function _resolveAuthedUserId() {
-    if (_uid) return Promise.resolve(_uid);
     var client = _sb || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
     if (!client || !client.auth) return Promise.resolve(null);
     return client.auth.getSession().then(function (res) {
@@ -60,10 +67,16 @@ window.Mise = window.Mise || {};
   }
 
   // userScope is required — callers must resolve a real uid before calling
-  // this (see _resolveAuthedUserId). Returns the still-pending lock promise.
+  // this (see _resolveAuthedUserId). Returns a promise that reflects the
+  // REAL outcome of the persist (rejects if idbQueue.setCosting() failed —
+  // e.g. IndexedDB unavailable/full/corrupted) — callers must not report
+  // "queued" until this resolves. _queueLock itself is kept always-resolved
+  // (via the trailing .catch below) purely for serialisation ordering, so
+  // one failed attempt can't permanently wedge future enqueue/flush calls.
   function _queueFailedWrite(table, payload, userScope) {
-    _queueLock = _queueLock.then(function () {
-      if (!userScope || !window.Mise || !window.Mise.idbQueue) return;
+    var attempt = _queueLock.then(function () {
+      if (!userScope) throw new Error('cannot queue a costing without a known user');
+      if (!window.Mise || !window.Mise.idbQueue) throw new Error('offline queue unavailable');
       return window.Mise.idbQueue.getCosting().then(function (q) {
         // Dedupe by table+userScope+id — a later save of the same costing by
         // the same account replaces the earlier queued one. Drop any
@@ -74,15 +87,23 @@ window.Mise = window.Mise || {};
         });
         filtered.push({ userScope: userScope, table: table, payload: payload, queuedAt: new Date().toISOString() });
         return window.Mise.idbQueue.setCosting(filtered);
-      }).then(function () { _showCostingQueueBanner(); });
-    }).catch(function () {});
-    return _queueLock;
+      }).then(function () { _showCostingQueueBanner(userScope); });
+    });
+    _queueLock = attempt.catch(function () {});
+    return attempt;
   }
 
-  function _showCostingQueueBanner() {
+  // scopeHint: the uid whose queue state should drive the banner. Passed
+  // explicitly by _queueFailedWrite (the uid it just wrote under) because
+  // that may be a freshly-verified uid that differs from the module-level
+  // _uid (e.g. a session change without a fresh init()) — falling back to
+  // stale _uid here would risk not showing the banner for the account that
+  // actually has something queued.
+  function _showCostingQueueBanner(scopeHint) {
     if (!window.Mise || !window.Mise.idbQueue) return;
+    var scope = scopeHint || _uid;
     window.Mise.idbQueue.getCosting().then(function (q) {
-      var relevant = _uid ? q.filter(function (e) { return e.userScope === _uid; }) : [];
+      var relevant = scope ? q.filter(function (e) { return e.userScope === scope; }) : [];
       var existing = document.getElementById('vq-yield-sync-banner');
       if (!relevant.length) { if (existing) existing.remove(); return; }
       if (existing) return;
@@ -259,34 +280,21 @@ window.Mise = window.Mise || {};
     // Always writes the local cache first — the local save must never be
     // skipped just because the cloud sync can't happen yet. Returns explicit
     // booleans, never to be inferred from the presence/absence of `error`:
-    //   { synced: true,  queued: false, error: null }   — confirmed cloud write
-    //   { synced: false, queued: true,  error }          — queued for retry
-    //   { synced: false, queued: false, error }          — could not even queue (no known user)
+    //   { synced: true,  queued: false, error: null }                    — confirmed cloud write
+    //   { synced: false, queued: true,  error }                          — genuinely queued for retry
+    //   { synced: false, queued: false, error, queueError? }             — could not sync AND could not queue
+    //
+    // Verifies the live Supabase session before every call rather than
+    // trusting the module-level _uid, which can go stale without a full
+    // logout+reload (a session replaced in place, test-account switching,
+    // or future account-switch functionality) — a save can never proceed
+    // or queue under a uid the current session doesn't actually match.
     saveCosting: function (costing) {
       var costings = _lsArr('yield_costings');
       var idx = costings.findIndex(function (c) { return c.id === costing.id; });
       if (idx >= 0) costings[idx] = costing; else costings.unshift(costing);
       _lsSet('yield_costings', costings);
 
-      if (_sb && _uid) {
-        var payload = {
-          id: costing.id,
-          user_id: _uid,
-          costing_data: costing,
-          created_at: costing.createdAt || new Date().toISOString()
-        };
-        return _sb.from('costings').upsert(payload, { onConflict: 'id' }).then(function (res) {
-          if (res.error) return _queueFailedWrite('costings', payload, _uid).then(function () { return { synced: false, queued: true, error: res.error }; });
-          return { synced: true, queued: false, error: null };
-        }).catch(function (e) {
-          return _queueFailedWrite('costings', payload, _uid).then(function () { return { synced: false, queued: true, error: e }; });
-        });
-      }
-
-      // Not ready via init() — resolve the real authenticated uid directly
-      // from Supabase (never the possibly-stale/unset _uid) so the queued
-      // entry is correctly and immutably attributed. Never queued without a
-      // known owner.
       return _resolveAuthedUserId().then(function (uid) {
         if (!uid) return { synced: false, queued: false, error: 'not signed in' };
         var payload = {
@@ -295,7 +303,27 @@ window.Mise = window.Mise || {};
           costing_data: costing,
           created_at: costing.createdAt || new Date().toISOString()
         };
-        return _queueFailedWrite('costings', payload, uid).then(function () { return { synced: false, queued: true, error: 'sync not ready — queued for retry' }; });
+
+        if (_sb && uid === _uid) {
+          return _sb.from('costings').upsert(payload, { onConflict: 'id' }).then(function (res) {
+            if (res.error) {
+              return _queueFailedWrite('costings', payload, uid)
+                .then(function () { return { synced: false, queued: true, error: res.error }; })
+                .catch(function (queueError) { return { synced: false, queued: false, error: res.error, queueError: queueError }; });
+            }
+            return { synced: true, queued: false, error: null };
+          }).catch(function (e) {
+            return _queueFailedWrite('costings', payload, uid)
+              .then(function () { return { synced: false, queued: true, error: e }; })
+              .catch(function (queueError) { return { synced: false, queued: false, error: e, queueError: queueError }; });
+          });
+        }
+
+        // Not ready, or the live session no longer matches the initialized
+        // _uid — queue under the freshly-verified uid, never the stale one.
+        return _queueFailedWrite('costings', payload, uid)
+          .then(function () { return { synced: false, queued: true, error: 'sync not ready — queued for retry' }; })
+          .catch(function (queueError) { return { synced: false, queued: false, error: 'sync not ready', queueError: queueError }; });
       });
     },
 

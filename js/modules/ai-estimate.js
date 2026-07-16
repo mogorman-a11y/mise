@@ -464,11 +464,13 @@
         return { local: true, synced: true };
       }
       var queued = !!(result && result.queued);
-      console.error('[ai-estimate] saveCosting did not sync:', result && (result.error && result.error.message || result.error));
-      // "will retry" is only shown when saveCosting actually queued the
-      // write (see yield-sync.js) — don't claim a retry that isn't scheduled.
+      console.error('[ai-estimate] saveCosting did not sync:', result && (result.error && result.error.message || result.error),
+        result && result.queueError ? ('(also failed to queue: ' + (result.queueError.message || result.queueError) + ')') : '');
+      // "will retry" is only shown when saveCosting actually confirmed the
+      // write was persisted to the retry queue (see yield-sync.js/idb-queue.js)
+      // — don't claim a retry that isn't genuinely scheduled.
       toast(queued ? 'Saved locally — will sync automatically when back online' : 'Saved locally, but could not sync the costing', 'warn');
-      return { local: true, synced: false, queued: queued, error: result && result.error };
+      return { local: true, synced: false, queued: queued, error: result && result.error, queueError: result && result.queueError };
     } catch (e) {
       console.error('[ai-estimate] saveCosting threw:', e.message);
       toast('Saved locally, but could not sync the costing', 'warn');
