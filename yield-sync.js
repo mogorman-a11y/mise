@@ -1,5 +1,5 @@
 // yield-sync.js — Supabase sync module for Yield (Finance App)
-// Mise Labs suite · App 3 of 3 · v15
+// Mise Labs suite · App 3 of 3 · v16
 // Phase 3: jobs read from shared jobs table; syncTabStatusToCarte/syncQuoteToCarte/
 // removeQuoteFromCarte write to jobs table instead of mise_records bridge.
 // v13: costing saves that fail or land before yieldSync is ready are now
@@ -14,6 +14,10 @@
 // queued:true after confirmed storage; every costing save now verifies the
 // live Supabase session instead of trusting the module-level _uid, which
 // could otherwise go stale without a full logout+reload.
+// v16: added isReadyFor(uid) — isReady() only proves the module was
+// initialized for *some* account, not that it's still the live one after an
+// in-place session change. Callers acting on behalf of a specific uid
+// should check isReadyFor(uid) and re-init when it's false.
 
 window.Mise = window.Mise || {};
 
@@ -426,6 +430,13 @@ window.Mise = window.Mise || {};
     getSharedMenus: function () { return _lsArr('yield_menus'); },
     getSharedDishes: function () { return _lsArr('yield_dishes'); },
     isReady: function () { return !!(_sb && _uid); },
+    // isReady() only proves *some* account was initialized — not that it's
+    // still the live one. A caller that's about to act on behalf of a
+    // specific (freshly-resolved) uid must use this instead: it's only true
+    // when the module is initialized AND initialized for that exact uid, so
+    // an in-place session change (no full logout+reload) is correctly
+    // treated as "not ready for this user" until init() runs again.
+    isReadyFor: function (uid) { return !!(_sb && _uid && uid && _uid === uid); },
     flushCostingQueue: _flushCostingQueue
   };
 

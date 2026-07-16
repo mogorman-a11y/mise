@@ -38,44 +38,50 @@
   var REQUEST_TIMEOUT_MS = 90000; // GPT-4o vision calls can be slow
 
   // ── helpers ────────────────────────────────────────────────────────────────
+  // Most recently resolved uid from a REAL session check (see _getToken /
+  // _ensureYieldSyncReady below) — used for the other-costs store instead of
+  // trusting window.Mise.yieldSync.getUserId(), which is only as fresh as
+  // yieldSync's own last init() and can go stale after an in-place session
+  // change (no full logout+reload) until something re-initializes it.
+  var _liveUid = null;
+
   // Every AI Estimate action (startAIEstimate, quickReconcileAIJob,
   // handleAIScanReceipt, loadAIJobs, _aiLoadJob) calls _apiFetch — and
   // therefore this — before it can reach _renderResult/_refreshAIGPTargets.
-  // Piggy-backing the yieldSync ready-check on the session fetch these
-  // already make means window.Mise.yieldSync.getUserId() is populated by the
-  // time those functions need a uid for the other-costs store, without a
-  // second network round trip.
+  // Checks isReadyFor(uid), not isReady(): isReady() only proves yieldSync
+  // was initialized for *some* account, which stays true (wrongly) after the
+  // live session moves to a different user without a full logout+reload —
+  // that state would otherwise leave AI Estimate silently reading/writing
+  // the previous account's data (other-costs draft under the old uid, saves
+  // queued under an account whose flush never runs because _uid still
+  // points at someone else). Re-initializes yieldSync whenever the live
+  // session's uid doesn't match what it's currently set up for.
   async function _getToken() {
     var res = await supabaseClient.auth.getSession();
     var session = res.data && res.data.session;
-    if (session && session.user && window.Mise && window.Mise.yieldSync
-        && !(window.Mise.yieldSync.isReady && window.Mise.yieldSync.isReady())) {
-      await window.Mise.yieldSync.init(supabaseClient, session.user.id);
+    var uid = session && session.user && session.user.id;
+    _liveUid = uid || null;
+    if (uid && window.Mise && window.Mise.yieldSync
+        && !(window.Mise.yieldSync.isReadyFor && window.Mise.yieldSync.isReadyFor(uid))) {
+      await window.Mise.yieldSync.init(supabaseClient, uid);
     }
     return session ? session.access_token : null;
   }
 
   function _currentUserId() {
-    return (window.Mise && window.Mise.yieldSync && window.Mise.yieldSync.getUserId) ? window.Mise.yieldSync.getUserId() : null;
+    return _liveUid;
   }
 
-  // yieldSync (yield-sync.js) is only initialized lazily, the first time the
-  // user visits the Costing module in a session (window.modules.costing.init
-  // -> yieldSync.init(sb, uid)) — sign-in itself does NOT initialize it (see
-  // app.html's window.Mise.onSignedIn, which only calls Mise.sync.loadAll).
-  // A user reaching the AI Estimate screen straight from the dashboard,
-  // without ever opening Costing this session, would otherwise hit
-  // yieldSync.saveCosting()'s "not ready" fallback ({error:null}) on every
-  // call — a silent, misleadingly-successful no-op, not a real save. Ensure
-  // it's initialized before relying on it. Found by live testing: a
-  // saveCosting() error-path test returned {error:null} in ~0ms (the
-  // fallback) until this was added, instead of a real network round-trip.
+  // Same isReadyFor(uid) re-initialization as _getToken above, called
+  // directly from _saveAsCosting as a defensive backstop in case it's ever
+  // reached without _getToken having run first in the same call chain.
   async function _ensureYieldSyncReady() {
     if (!window.Mise || !window.Mise.yieldSync) return false;
-    if (window.Mise.yieldSync.isReady && window.Mise.yieldSync.isReady()) return true;
     var res = await supabaseClient.auth.getSession();
     var uid = res.data && res.data.session && res.data.session.user && res.data.session.user.id;
     if (!uid) return false;
+    _liveUid = uid;
+    if (window.Mise.yieldSync.isReadyFor && window.Mise.yieldSync.isReadyFor(uid)) return true;
     await window.Mise.yieldSync.init(supabaseClient, uid);
     return true;
   }
