@@ -1674,7 +1674,9 @@ function buildPDFExport(dateLabel, recs) {
 var PC_TYPES = ['job','customers','kitchenassess','allergen','transport','mobileset','credentials','incident'];
 
 var DISH_CATEGORIES = ['','Canapé','Starter','Fish course','Main','Side','Sauce','Pre-dessert','Dessert','Cheese','Petit four','Bread','Other'];
-var ALLERGENS_14 = ['Celery','Cereals containing gluten','Crustaceans','Eggs','Fish','Lupin','Milk','Molluscs','Mustard','Nuts','Peanuts','Sesame','Soya','Sulphur dioxide'];
+// Canonical list now lives in js/core/allergens.js (loaded before this file) —
+// keep this local alias so the ~30 call sites below don't all need editing.
+var ALLERGENS_14 = window.Veriqo.ALLERGENS_14;
 var DIETARY_PREFS = ['Vegetarian','Vegan','Gluten-free','Dairy-free','Halal','Kosher','Nut-free','Shellfish-free'];
 
 var DEFAULT_CHECKLISTS_PC = {
@@ -1782,17 +1784,15 @@ function _sortByMealOrder(dishes) {
 }
 
 // ═══════════════════════════════════════════════════ AI VISION ═══════════
-// Normalise allergen names returned by /api/ai-scan + /api/parse-menu (which
-// use Carte's allergen vocabulary) into Veriqo's ALLERGENS_14 vocabulary.
+// Normalise allergen names into Veriqo's canonical ALLERGENS_14 vocabulary.
+// Delegates to js/core/allergens.js — the shared normalizer used everywhere
+// (dish create/edit, AI import, label scan, conflict detection) so all
+// modules agree on one spelling. Unlike the old version, unrecognized values
+// are preserved (not dropped as null) so an allergen can never silently
+// disappear from a record.
 function _normaliseAllergenForVeriqo(a) {
   if (!a) return null;
-  var lc = String(a).toLowerCase().trim();
-  if (lc.indexOf('cereal') >= 0 || lc.indexOf('gluten') >= 0) return 'Cereals containing gluten';
-  if (lc.indexOf('sulph') >= 0 || lc.indexOf('sulfite') >= 0)  return 'Sulphur dioxide';
-  for (var i = 0; i < ALLERGENS_14.length; i++) {
-    if (ALLERGENS_14[i].toLowerCase() === lc) return ALLERGENS_14[i];
-  }
-  return null;
+  return window.Veriqo.normalizeAllergen(a);
 }
 
 function _veriqoReadFileAsDataUrl(file) {
@@ -4449,10 +4449,16 @@ function _getJobDishAllergenMap() {
   var map = {};
   if (!_haccpActiveJob) return map;
   (_haccpActiveJob.menus || []).forEach(function(m) {
-    (m.dishes || []).forEach(function(d) {
+    (window.Veriqo.resolveMenuDishes(m, null) || []).forEach(function(d) {
+      // Dish allergens may have been tagged via Menus or AI import, which
+      // historically used different spellings than HACCP's own guest-allergen
+      // checkboxes ("Cereals with gluten" vs "Cereals containing gluten",
+      // "Sulphites" vs "Sulphur dioxide") — normalize here so conflict
+      // detection actually matches. See js/core/allergens.js.
       (d.allergens || []).forEach(function(a) {
-        if (!map[a]) map[a] = [];
-        if (map[a].indexOf(d.dish) === -1) map[a].push(d.dish);
+        var na = window.Veriqo.normalizeAllergen(a);
+        if (!map[na]) map[na] = [];
+        if (map[na].indexOf(d.dish) === -1) map[na].push(d.dish);
       });
     });
   });

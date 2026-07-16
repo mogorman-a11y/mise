@@ -81,6 +81,11 @@ window.Mise.idbQueue = (function () {
     }).catch(function () { return []; });
   }
 
+  // Deliberately does not swallow failures the way get()/getCosting() do —
+  // yield-sync.js's retry queue reports "queued for retry" to the UI only
+  // after this genuinely persists, so a caller that can't tell an IndexedDB
+  // failure (unavailable/full/corrupted) from a real success would show a
+  // false retry guarantee.
   function setCosting(arr) {
     return _open().then(function (db) {
       return new Promise(function (resolve, reject) {
@@ -89,7 +94,7 @@ window.Mise.idbQueue = (function () {
         req.onsuccess = function () { resolve(); };
         req.onerror   = function (e) { reject(e.target.error); };
       });
-    }).catch(function () {});
+    });
   }
 
   return { get, set, migrate, getCosting, setCosting };
