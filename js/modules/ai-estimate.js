@@ -38,9 +38,25 @@
   var REQUEST_TIMEOUT_MS = 90000; // GPT-4o vision calls can be slow
 
   // ── helpers ────────────────────────────────────────────────────────────────
+  // Every AI Estimate action (startAIEstimate, quickReconcileAIJob,
+  // handleAIScanReceipt, loadAIJobs, _aiLoadJob) calls _apiFetch — and
+  // therefore this — before it can reach _renderResult/_refreshAIGPTargets.
+  // Piggy-backing the yieldSync ready-check on the session fetch these
+  // already make means window.Mise.yieldSync.getUserId() is populated by the
+  // time those functions need a uid for the other-costs store, without a
+  // second network round trip.
   async function _getToken() {
     var res = await supabaseClient.auth.getSession();
-    return res.data && res.data.session ? res.data.session.access_token : null;
+    var session = res.data && res.data.session;
+    if (session && session.user && window.Mise && window.Mise.yieldSync
+        && !(window.Mise.yieldSync.isReady && window.Mise.yieldSync.isReady())) {
+      await window.Mise.yieldSync.init(supabaseClient, session.user.id);
+    }
+    return session ? session.access_token : null;
+  }
+
+  function _currentUserId() {
+    return (window.Mise && window.Mise.yieldSync && window.Mise.yieldSync.getUserId) ? window.Mise.yieldSync.getUserId() : null;
   }
 
   // yieldSync (yield-sync.js) is only initialized lazily, the first time the
@@ -308,7 +324,7 @@
     // Restore this job's other-costs value (never the ambient value left
     // over from whatever job was previously open) before any GP calc runs.
     var otherCostsEl = document.getElementById('ai-other-costs');
-    if (otherCostsEl) otherCostsEl.value = window.Veriqo.getStoredOtherCosts(job.id);
+    if (otherCostsEl) otherCostsEl.value = window.Veriqo.getStoredOtherCosts(job.id, _currentUserId());
 
     _refreshAIGPTargets();
 
@@ -331,7 +347,7 @@
     // called on every keystroke (wired via the input's oninput) as well as
     // from _renderResult (a harmless write-back of the value just restored).
     var otherCostsEl = document.getElementById('ai-other-costs');
-    if (otherCostsEl) window.Veriqo.setStoredOtherCosts(_state.currentJob.id, otherCostsEl.value || '');
+    if (otherCostsEl) window.Veriqo.setStoredOtherCosts(_state.currentJob.id, _currentUserId(), otherCostsEl.value || '');
     var targetsEl = document.getElementById('ai-gp-targets');
     if (targetsEl) targetsEl.style.display = '';
     var cost = _currentAllInCostPence();
@@ -412,13 +428,14 @@
   // `overhead` as a flat £ addition to total cost — same semantics as
   // "other direct costs" here), so a manually-edited costing derived from
   // this one stays consistent too.
+  // Returns { local, synced, queued, error } — local/synced are always
+  // present; queued and error only apply when synced is false. The local
+  // save must happen regardless of whether yieldSync could be made ready,
+  // so a failed/impossible cloud sync never means the costing was never
+  // saved at all.
   async function _saveAsCosting(job) {
-    if (!window.Mise || !window.Mise.yieldSync) return;
-    var ready = await _ensureYieldSyncReady();
-    if (!ready) {
-      toast('Saved locally, but could not sync the costing — will retry later', 'warn');
-      return;
-    }
+    if (!window.Mise || !window.Mise.yieldSync) return { local: false, synced: false, error: 'sync module unavailable' };
+    await _ensureYieldSyncReady(); // best-effort — saveCosting still saves locally and queues for retry if this fails
     var ingredients = (job.post_job_actuals || []).map(function (ing) {
       return { name: ing.ingredient_name, packDesc: ing.course || '', packCost: ((ing.estimated_portion_cost_pence || 0) / 100).toFixed(2), qty: '1' };
     });
@@ -441,12 +458,17 @@
     try {
       var result = await window.Mise.yieldSync.saveCosting(costing);
       if (result && result.error) {
-        console.error('[ai-estimate] saveCosting failed:', result.error.message);
-        toast('Saved locally, but could not sync the costing — will retry later', 'warn');
+        console.error('[ai-estimate] saveCosting failed:', (result.error.message || result.error));
+        // "will retry" is only true when saveCosting actually queued the
+        // write (see yield-sync.js) — don't claim a retry that isn't scheduled.
+        toast(result.queued ? 'Saved locally — will sync automatically when back online' : 'Saved locally, but could not sync the costing', 'warn');
+        return { local: true, synced: false, queued: !!result.queued, error: result.error };
       }
+      return { local: true, synced: true };
     } catch (e) {
       console.error('[ai-estimate] saveCosting threw:', e.message);
-      toast('Saved locally, but could not sync the costing — will retry later', 'warn');
+      toast('Saved locally, but could not sync the costing', 'warn');
+      return { local: true, synced: false, queued: false, error: e };
     }
   }
 

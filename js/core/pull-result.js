@@ -14,7 +14,9 @@
     module.exports = factory();
   } else {
     root.Veriqo = root.Veriqo || {};
-    root.Veriqo.decidePullOutcome = factory().decidePullOutcome;
+    var api = factory();
+    root.Veriqo.decidePullOutcome = api.decidePullOutcome;
+    root.Veriqo.mergeUnsyncedRecords = api.mergeUnsyncedRecords;
   }
 })(typeof window !== 'undefined' ? window : this, function () {
   // res: {data, error} — the shape returned by a Supabase client call.
@@ -25,5 +27,21 @@
     return { keep: false, data: (res && res.data) || [] };
   }
 
-  return { decidePullOutcome: decidePullOutcome };
+  // Merges a cloud-sourced record set with records that are locally saved
+  // but not yet confirmed on the server (e.g. sitting in an offline retry
+  // queue). Without this, a successful pull that replaces the cache wholesale
+  // would silently discard a record the server genuinely doesn't have yet —
+  // that's not staleness, it's data the pull just hasn't caught up to.
+  // Unsynced wins over cloud for the same id; unsynced-only records are
+  // appended. Both inputs and the result use plain objects with `id` and
+  // `createdAt` fields; result is sorted by createdAt descending.
+  function mergeUnsyncedRecords(cloudRecords, unsyncedRecords) {
+    var byId = {};
+    (cloudRecords || []).forEach(function (r) { byId[r.id] = r; });
+    (unsyncedRecords || []).forEach(function (r) { byId[r.id] = r; });
+    return Object.keys(byId).map(function (id) { return byId[id]; })
+      .sort(function (a, b) { return new Date(b.createdAt || 0) - new Date(a.createdAt || 0); });
+  }
+
+  return { decidePullOutcome: decidePullOutcome, mergeUnsyncedRecords: mergeUnsyncedRecords };
 });

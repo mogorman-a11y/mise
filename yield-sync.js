@@ -1,7 +1,10 @@
 // yield-sync.js — Supabase sync module for Yield (Finance App)
-// Mise Labs suite · App 3 of 3 · v12
+// Mise Labs suite · App 3 of 3 · v13
 // Phase 3: jobs read from shared jobs table; syncTabStatusToCarte/syncQuoteToCarte/
 // removeQuoteFromCarte write to jobs table instead of mise_records bridge.
+// v13: costing saves that fail or land before yieldSync is ready are now
+// actually queued (IDB costing queue) and drained on reconnect/init, instead
+// of a "will retry later" message with nothing behind it.
 
 window.Mise = window.Mise || {};
 
@@ -19,12 +22,91 @@ window.Mise = window.Mise || {};
   function _lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
   function _lsArr(key) { return _ls(key) || []; }
 
+  // ── Costing offline queue ──────────────────────────────────────────────────
+  // Backs the "will retry later" message on failed costing saves with a real
+  // retry: failed/not-ready writes land in the IDB costing queue (idb-queue.js)
+  // and get drained on reconnect/init, instead of the message being aspirational.
+  // Writes are serialised through a promise chain so two saves failing near-
+  // simultaneously can't race each other's read-modify-write of the queue.
+  var _queueLock = Promise.resolve();
+
+  function _queueFailedWrite(table, payload) {
+    _queueLock = _queueLock.then(async function () {
+      if (!window.Mise || !window.Mise.idbQueue) return;
+      var q = await window.Mise.idbQueue.getCosting();
+      // Dedupe by table+id — a later save of the same costing replaces the
+      // earlier queued one rather than both being replayed in order.
+      var filtered = q.filter(function (e) {
+        return !(e.table === table && e.payload && payload && e.payload.id === payload.id);
+      });
+      filtered.push({ table: table, payload: payload, queuedAt: new Date().toISOString() });
+      await window.Mise.idbQueue.setCosting(filtered);
+      _showCostingQueueBanner();
+    }).catch(function () {});
+    return _queueLock;
+  }
+
+  function _showCostingQueueBanner() {
+    if (!window.Mise || !window.Mise.idbQueue) return;
+    window.Mise.idbQueue.getCosting().then(function (q) {
+      var existing = document.getElementById('vq-yield-sync-banner');
+      if (!q.length) { if (existing) existing.remove(); return; }
+      if (existing) return;
+      var banner = document.createElement('div');
+      banner.id = 'vq-yield-sync-banner';
+      banner.style.cssText = 'position:fixed;bottom:70px;left:0;right:0;z-index:9001;background:#b45309;color:#fff;font-size:13px;font-weight:600;text-align:center;padding:10px 16px;line-height:1.4;display:flex;align-items:center;justify-content:center;gap:10px;';
+      banner.innerHTML = '⚠ Finance data not fully synced — will retry when online'
+        + '<button onclick="window.Mise.yieldSync.flushCostingQueue()" style="background:rgba(255,255,255,0.25);border:none;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;">Retry now</button>';
+      document.body.appendChild(banner);
+    }).catch(function () {});
+  }
+
+  function _flushCostingQueue() {
+    if (!_sb || !_uid || !window.Mise || !window.Mise.idbQueue) return Promise.resolve();
+    return window.Mise.idbQueue.getCosting().then(async function (q) {
+      if (!q.length) return;
+      var remaining = [];
+      for (var i = 0; i < q.length; i++) {
+        var entry = q[i];
+        try {
+          var payload = Object.assign({}, entry.payload, { user_id: _uid });
+          var res = await _sb.from(entry.table).upsert(payload, { onConflict: 'id' });
+          if (res.error) throw new Error(res.error.message);
+        } catch (e) {
+          remaining.push(entry);
+        }
+      }
+      await window.Mise.idbQueue.setCosting(remaining);
+      var banner = document.getElementById('vq-yield-sync-banner');
+      if (!remaining.length && banner) banner.remove();
+      _showCostingQueueBanner();
+    }).catch(function () {});
+  }
+
+  // Local costings not yet confirmed on the server — a successful pull must
+  // not silently drop these from the cache just because the server doesn't
+  // have them yet (see _pullCostings below).
+  function _queuedCostingRecords() {
+    if (!window.Mise || !window.Mise.idbQueue) return Promise.resolve([]);
+    return window.Mise.idbQueue.getCosting().then(function (q) {
+      return q.filter(function (e) { return e.table === 'costings'; })
+        .map(function (e) { return e.payload && e.payload.costing_data; })
+        .filter(Boolean);
+    }).catch(function () { return []; });
+  }
+
   var yieldSync = {
 
     init: function (supabaseClient, userId) {
       _sb = supabaseClient;
       _uid = userId;
+      // Becoming ready is itself a reconnect event for anything queued while
+      // not ready — e.g. an AI Costing save that landed before yieldSync had
+      // ever been initialized this session.
+      _flushCostingQueue();
     },
+
+    getUserId: function () { return _uid; },
 
     pull: async function () {
       if (!_sb || !_uid) return;
@@ -125,22 +207,31 @@ window.Mise = window.Mise || {};
       if (_sb && _uid) _sb.from('quotes').delete().eq('id', String(id)).eq('user_id', _uid);
     },
 
-    // Returns the Supabase upsert result ({data, error}) so callers can await
-    // and handle a sync failure, instead of firing-and-forgetting it.
+    // Always writes the local cache first — the local save must never be
+    // skipped just because the cloud sync can't happen yet. Returns
+    // { error: null } on a confirmed cloud write, or { error, queued: true }
+    // when the write was queued for retry (not-ready, request failure, or
+    // exception) — callers should only claim "will retry" when queued is true.
     saveCosting: function (costing) {
       var costings = _lsArr('yield_costings');
       var idx = costings.findIndex(function (c) { return c.id === costing.id; });
       if (idx >= 0) costings[idx] = costing; else costings.unshift(costing);
       _lsSet('yield_costings', costings);
-      if (_sb && _uid) {
-        return _sb.from('costings').upsert({
-          id: costing.id,
-          user_id: _uid,
-          costing_data: costing,
-          created_at: costing.createdAt || new Date().toISOString()
-        }, { onConflict: 'id' });
+      var payload = {
+        id: costing.id,
+        user_id: _uid,
+        costing_data: costing,
+        created_at: costing.createdAt || new Date().toISOString()
+      };
+      if (!_sb || !_uid) {
+        return _queueFailedWrite('costings', payload).then(function () { return { error: null, queued: true }; });
       }
-      return Promise.resolve({ error: null });
+      return _sb.from('costings').upsert(payload, { onConflict: 'id' }).then(function (res) {
+        if (res.error) return _queueFailedWrite('costings', payload).then(function () { return { error: res.error, queued: true }; });
+        return res;
+      }).catch(function (e) {
+        return _queueFailedWrite('costings', payload).then(function () { return { error: e, queued: true }; });
+      });
     },
 
     deleteCosting: function (id) {
@@ -241,8 +332,16 @@ window.Mise = window.Mise || {};
 
     getSharedMenus: function () { return _lsArr('yield_menus'); },
     getSharedDishes: function () { return _lsArr('yield_dishes'); },
-    isReady: function () { return !!(_sb && _uid); }
+    isReady: function () { return !!(_sb && _uid); },
+    flushCostingQueue: _flushCostingQueue
   };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', function () { _flushCostingQueue(); });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') _flushCostingQueue();
+    });
+  }
 
   // Applies a Supabase select result to a localStorage cache using the
   // shared decision rule in js/core/pull-result.js (unit-tested separately —
@@ -258,9 +357,22 @@ window.Mise = window.Mise || {};
     return true;
   }
 
+  // Not routed through _applyPullResult: an unqualified replace would discard
+  // any costing that's locally saved but still sitting in the offline retry
+  // queue (e.g. saved while offline, or before yieldSync was ready) — the
+  // server genuinely doesn't have it yet, but that doesn't make it stale.
+  // The queued version wins over whatever the server returns for the same id.
   async function _pullCostings() {
     var res = await _sb.from('costings').select('costing_data').eq('user_id', _uid).order('created_at', { ascending: false });
-    _applyPullResult('yield_costings', res, function (data) { return data.map(function (r) { return r.costing_data; }); });
+    var outcome = window.Veriqo.decidePullOutcome(res);
+    if (outcome.keep) {
+      console.error('[Yield] pull yield_costings failed:', outcome.error.message);
+      _err('Could not refresh costings — showing last saved data');
+      return;
+    }
+    var cloud = outcome.data.map(function (r) { return r.costing_data; });
+    var queued = await _queuedCostingRecords();
+    _lsSet('yield_costings', window.Veriqo.mergeUnsyncedRecords(cloud, queued));
   }
 
   async function _pullQuotes() {

@@ -565,7 +565,7 @@ window.Mise.auth = (function () {
   // removed the Supabase auth token, leaving every other module's data
   // sitting in localStorage indefinitely after sign-out.
   var _PRIVATE_KEY_PREFIXES = ['haccp_', 'mise_', 'yield_'];
-  var _PRIVATE_KEYS = ['veriqo_profile', 'veriqo_sync_retry_queue'];
+  var _PRIVATE_KEYS = ['veriqo_profile', 'veriqo_sync_retry_queue', 'vq_ai_other_costs'];
 
   async function logout() {
     if (window.posthog) posthog.reset();

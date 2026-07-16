@@ -6,6 +6,14 @@
 // instead so switching between jobs (or reloading one after reconciliation)
 // always shows the correct value for the job actually on screen, never a
 // blank field or a value left over from a *different* job.
+//
+// Entries are also scoped by authenticated user id, not just job id: this is
+// financial data, so it must not survive to a different account on the same
+// device. logout() also removes this key outright (see auth.js's
+// _PRIVATE_KEYS) — the per-user scoping is a second, independent guard for
+// the case where two accounts are used in the same session without an
+// intervening logout. Without a uid, reads/writes are no-ops rather than
+// falling back to a shared, unscoped bucket.
 (function (root, factory) {
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = factory();
@@ -32,17 +40,22 @@
 
   // storage param is injectable for testing (any object with getItem/setItem);
   // defaults to the real localStorage in a browser.
-  function getStoredOtherCosts(jobId, storage) {
+  function getStoredOtherCosts(jobId, uid, storage) {
+    if (!uid) return '';
     var s = _storage(storage);
     if (!s) return '';
-    return _readMap(s)[jobId] || '';
+    var userMap = _readMap(s)[uid];
+    return (userMap && userMap[jobId]) || '';
   }
 
-  function setStoredOtherCosts(jobId, poundsStr, storage) {
+  function setStoredOtherCosts(jobId, uid, poundsStr, storage) {
+    if (!uid) return;
     var s = _storage(storage);
     if (!s) return;
     var map = _readMap(s);
-    if (poundsStr) map[jobId] = poundsStr; else delete map[jobId];
+    var userMap = map[uid] || {};
+    if (poundsStr) userMap[jobId] = poundsStr; else delete userMap[jobId];
+    if (Object.keys(userMap).length) map[uid] = userMap; else delete map[uid];
     try { s.setItem(KEY, JSON.stringify(map)); } catch (e) {}
   }
 
