@@ -13,7 +13,7 @@
 
 3. **Deploy chain:** push to `main` → Vercel auto-deploys → live at `getveriqo.co.uk`. No manual step.
 
-4. **Bump `haccp.js` version on every change.** Update the `?v=N` query string in `app.html` each time `js/modules/haccp.js` is modified. Current version: **v67**. Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient. **Every commit that touches haccp.js must bump the version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
+4. **Bump the `?v=N` query string in `app.html` on every change to any `js/modules/*.js` or `js/core/*.js` file** (not just `haccp.js` — this now applies repo-wide; see "Live versions" below for current values). Do NOT bump `sw.js` cache name — the SW uses network-first so query string bumps are sufficient (though this repo has often bumped it anyway alongside version bumps — harmless, not required). **Every commit that touches a versioned file must bump its version — including bug fixes. Skipping this causes browsers to serve stale cached code.**
 
 5. **Update this file** when versions change or architecture changes.
 
@@ -21,14 +21,30 @@
 
 ## Live versions
 
+Source of truth is always `app.html`'s own `<script src>` tags — this table can drift; grep `app.html` if in doubt. Last checked 2026-07-16.
+
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=67` | `app.html` script tag |
-| `js/modules/menus.js` | `?v=23` | `app.html` |
+| `js/modules/haccp.js` | `?v=68` | `app.html` script tag |
+| `js/modules/menus.js` | `?v=26` | `app.html` |
+| `js/modules/costing.js` | `?v=31` | `app.html` |
+| `js/modules/ai-estimate.js` | `?v=6` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=6` | `app.html` |
-| `sync.js` | — | no version param needed (SW network-first) |
-| Service worker cache | `veriqo-v113` | `sw.js` line 8 |
+| `js/modules/intake.js` | `?v=1` | `app.html` |
+| `js/modules/lead-scripts.js` | `?v=1` | `app.html` |
+| `js/modules/team.js` | `?v=2` | `app.html` |
+| `auth.js` | `?v=37` | `app.html` |
+| `yield-sync.js` (root) | `?v=16` | `app.html` |
+| `sync.js` | `?v=20` | `app.html` |
+| `js/core/idb-queue.js` | `?v=2` | `app.html` |
+| `js/core/pull-result.js` | `?v=2` | `app.html` |
+| `js/core/ai-other-costs-store.js` | `?v=2` | `app.html` |
+| `js/core/allergens.js` / `menu-dishes.js` / `gp-math.js` / `ai-job-shape.js` | `?v=1` each | `app.html` |
+| `js/core/subscription.js` | `?v=10` | `app.html` |
+| Service worker cache | `veriqo-v123` | `sw.js` line 8 |
+
+Bumping `sw.js`'s cache name is **not required** for JS module changes (network-first, per rule 4) but this project has bumped it alongside every round of fixes in the 2026-07 critical-fixes pass anyway — harmless belt-and-braces, not a hard requirement.
 
 ---
 
@@ -50,9 +66,12 @@ One unified PWA (`app.html`) with five modules: Dashboard, HACCP, Menus, Costing
 | HACCP  | `js/modules/haccp.js` | `haccp_` |
 | Menus  | `js/modules/menus.js` | `mise_` |
 | Prep Lists | `js/modules/prep.js` | — (Supabase only) |
-| Costing | `js/modules/costing.js` | `yield_` |
+| Costing (incl. AI Estimate screen) | `js/modules/costing.js` + `js/modules/ai-estimate.js` | `yield_` (+ `vq_ai_other_costs`) |
 | Dashboard | `js/modules/dashboard.js` | — |
-| Sync   | `sync.js` | — |
+| Sync (Menus/HACCP/shared) | `sync.js` | — |
+| Sync (Costing/Yield-specific) | `yield-sync.js` (repo root) | — |
+
+AI Estimate is a screen inside the Costing module (`showScreen('ai-estimate')`), not a separate top-level module — it shares Costing's sync layer (`yield-sync.js`) and saves its results as normal rows in the same `costings` table manual costing uses.
 
 ### Key globals
 
@@ -61,6 +80,16 @@ One unified PWA (`app.html`) with five modules: Dashboard, HACCP, Menus, Costing
 - `mSettings` — Menus settings (`window.mSettings`, set in menus.js)
 - `window.Mise.profile` — user profile (chef_name, business_name, etc.)
 - `window.Mise.sync` — sync functions (saveDay, loadAll, etc.)
+
+---
+
+## Testing
+
+`node --test tests/*.test.js` — plain Node test runner, zero added dependencies. As of 2026-07-16: 6 files, 43 tests, covering allergen normalization, menu-dish resolution, sync merge/pull-decision logic, AI job-shape validation, API contract shape, the other-costs store, and a static scanner (`onclick-handlers.test.js`) that checks every inline `onclick`/`onchange`/`oninput`/etc. in `app.html` resolves to a real function — a regression guard against dead-handler bugs (a real, repeated bug class in this app), not proof of correctness.
+
+No browser/DOM test runner is set up — anything touching live DOM rendering, IndexedDB, or a real Supabase session needs manual testing (or an ad hoc `vm.runInContext`-based script loading the real source files into a mocked `window`/`document`/`indexedDB`, as used to verify the sync retry queue during the 2026-07 critical-fixes pass — see PR #3's description for the pattern if you need to reuse it).
+
+`node --check <file>.js` for a quick syntax sanity check before committing.
 
 ---
 
@@ -117,6 +146,41 @@ Uses `api/parse-menu.js` with `action: 'prep-tasks'`. This is a branch added to 
 ### Back button
 On **mobile**: `menus-back-btn` in the Menus module header is shown/hidden programmatically.
 On **desktop** (sidebar layout): `menus-back-btn` is CSS-hidden, so `_renderPrepListView` embeds a `← All prep lists` button directly in the rendered HTML.
+
+---
+
+## AI Costing (AI Estimate screen) — key facts
+
+**File:** `js/modules/ai-estimate.js`. **Backend:** `api/veriqo-estimate.js` (GPT-4o cost estimation, 3 modes: describe / multi-course / menu-photo-upload) + `api/veriqo-job.js` (job CRUD, reconciliation, quote price). Both verify the caller's Supabase session directly (`verifyUser()` fetches `${SUPABASE_URL}/auth/v1/user`) rather than trusting a client-supplied user id.
+
+### Two-stage model
+1. **AI job** (`costing_*` Postgres RPCs — `costing_insert_job`, `costing_get_ingredient_prices`, `costing_set_quoted_price`, `costing_list_jobs`) — the working/staging representation during estimation and reconciliation.
+2. **Saved costing** — once a quote price is set, `_saveAsCosting()` mirrors the job into a normal row in the same `costings` table manual Costing entries use (`id: 'ai_' + job.id`, `source: 'ai-estimate'`, `aiJobId` for traceability) — so it shows up in the ordinary Costing list, not a second silo.
+
+### "Other direct costs" draft
+Stored client-side only (no `costings`/AI-job column for it) in `js/core/ai-other-costs-store.js`, keyed by **both** job id and the authenticated user id (`vq_ai_other_costs` in localStorage, nested `{[uid]: {[jobId]: poundsStr}}`) — never falls back to a shared/unscoped bucket. Cleared on logout (`auth.js`'s `_PRIVATE_KEYS`).
+
+### Session/readiness gotcha — do not regress
+`yield-sync.js` (the module that actually saves costings) is only initialized lazily — first Costing-module visit, or the first AI Estimate action (`_getToken()`/`_ensureYieldSyncReady()` in `ai-estimate.js` call `yieldSync.init()` if needed). Critically, **`yieldSync.isReady()` only proves it was initialized for *some* account** — after an in-place session change (no full logout+reload: token refresh, test-account switching), it stays wrongly `true` for the *previous* user. Always gate on `yieldSync.isReadyFor(uid)` (checks the exact uid matches), not `isReady()`, before trusting cached state for a specific user. `ai-estimate.js` re-resolves the live session uid before every action for this reason — don't "optimize" that away.
+
+---
+
+## Sync & offline queue architecture (`yield-sync.js`)
+
+`yield-sync.js` (repo root — see the retired-files correction above) is Costing's Supabase sync layer: `saveCosting`, `saveQuote`, `saveInvoice`, `savePayment`, the `_pull*` functions, and the offline retry queue.
+
+### Costing retry queue
+Failed/not-ready `saveCosting()` calls persist into IndexedDB (`js/core/idb-queue.js`'s `getCosting`/`setCosting`, key `'costing-queue'`) rather than being silently dropped. Each queued entry is `{ userScope, table, payload, queuedAt }` — **`userScope` is mandatory and immutable**, resolved from the live Supabase session at queue time (never from the module's cached `_uid`, which can be stale). Flushing (`yieldSync.flushCostingQueue()`, called automatically from `init()`, the `online` event, and tab visibility change) only ever replays entries whose `userScope` matches the *currently authenticated* user — an entry from a different/previous account is left queued untouched, never replayed under the wrong owner, never silently discarded either. Entries with no `userScope` (can only be pre-2026-07 test artifacts) are dropped as unattributable.
+
+`saveCosting()`'s return contract is explicit booleans — never infer success from `error` being falsy:
+```js
+{ synced: true,  queued: false, error: null }   // confirmed cloud write
+{ synced: false, queued: true,  error }          // genuinely queued for retry (confirmed IDB persist)
+{ synced: false, queued: false, error, queueError? } // could not sync AND could not even queue
+```
+
+### Pull vs. queue interaction
+`_pullCostings()` merges the cloud result with anything still sitting in the retry queue (`js/core/pull-result.js`'s `mergeUnsyncedRecords()`) — a successful pull must never silently overwrite a costing that's saved locally but not yet confirmed on the server just because the server doesn't have it yet.
 
 ---
 
@@ -295,6 +359,19 @@ supabaseClient.from('haccp_records').upsert(
 )
 ```
 
+### RLS claims gotcha — JWT `venue_id`/`user_role` can go stale
+
+A custom Auth Hook (`custom_access_token_hook`, Postgres function) bakes `venue_id` and `user_role` into every JWT **at the moment it's minted**, reading `profiles.venue_id`/`profiles.role` at that instant:
+```sql
+select venue_id, role into v_venue_id, v_role from public.profiles where id = (event->>'user_id')::uuid;
+-- claims.venue_id = v_venue_id (or null); claims.user_role = coalesce(v_role, 'staff')
+```
+`auth_venue_id()`/`auth_user_role()`/`is_venue_manager()` all check the **JWT claim first**, live `profiles` row only as a fallback (`coalesce(jwt claim, profiles lookup, default)`). If a token is minted **before** `profiles.role`/`profiles.venue_id` are set — e.g. `auth.signUp()` mints the first session before `bootstrap_new_account()` has run — the claim gets baked in wrong (`user_role: 'staff'`, `venue_id: null`) and **does not self-correct** until the token's next natural refresh (up to ~1hr). Any RLS policy gating writes on `is_venue_manager()` (e.g. `costings`' `venue_manage` policy) silently rejects the account in the meantime, even though the database itself is correct.
+
+**Fix in place:** `auth.js`'s `createProfile()` calls `supabaseClient.auth.refreshSession()` immediately after `bootstrap_new_account()` succeeds, forcing a fresh JWT mint against the now-correct profile. Applies to both first-time signup and `_ensureProfileExists()`'s self-heal path. **Do not remove this call** — without it, new accounts intermittently get RLS-blocked on their first writes with no obvious cause (looks like a permissions bug, but the database side is fine — it's the cached JWT that's wrong).
+
+**Debugging an unexplained RLS 403/42501:** don't just check the `profiles` row — simulate the actual JWT via `set_config('request.jwt.claims', '{"sub":"<uid>","role":"authenticated"}', true); set local role authenticated;` in a transaction (roll back after) to see whether a *clean* claim set passes. If it does, but the real user's browser still fails, the live session's cached claims are the suspect, not the RLS policy or the data.
+
 ---
 
 ## Subscription
@@ -370,20 +447,31 @@ Static content pages at `/resources/{slug}` → `/resources/{slug}.html` (alread
 
 ```
 app.html                    ← unified shell
-sw.js                       ← service worker (veriqo-v112)
-sync.js                     ← cloud sync
-auth.js                     ← auth
+sw.js                       ← service worker (veriqo-v123)
+sync.js                     ← cloud sync (Menus/HACCP/shared)
+yield-sync.js               ← cloud sync (Costing/AI Estimate) — LIVE, see note above, do not confuse with js/core/yield-sync.js (dead)
+auth.js                     ← auth (incl. account bootstrap + session-refresh fix)
 js/
   core/
     subscription.js
-    idb-queue.js
+    idb-queue.js             ← IDB queues: main sync queue + costing retry queue
+    allergens.js              ← canonical 14-allergen list + normalizeAllergen()
+    menu-dishes.js             ← resolveMenuDishes() shared dish-resolver
+    pull-result.js            ← decidePullOutcome() + mergeUnsyncedRecords()
+    gp-math.js                 ← priceForTargetGP() / gpForPrice()
+    ai-job-shape.js            ← isValidJobShape() / sanitizePostJobActuals()
+    ai-other-costs-store.js    ← AI Estimate's per-user, per-job "other costs" draft store
+    yield-sync.js              ← DEAD, unreferenced duplicate — do not load or edit
   modules/
-    haccp.js   (v50)
-    menus.js   (v21)
-    prep.js    (v9)
-    costing.js
-    dashboard.js (v5)
-    team.js
+    haccp.js        (v68)
+    menus.js        (v26)
+    prep.js         (v9)
+    costing.js      (v31)
+    ai-estimate.js  (v6)   ← AI Estimate screen, inside Costing module
+    dashboard.js    (v6)
+    intake.js       (v1)   ← intake form / event templates
+    lead-scripts.js (v1)   ← sales script modal
+    team.js         (v2)
 css/
   tokens.css
   shell.css
@@ -391,7 +479,9 @@ css/
   menus.css
   costing.css
   dashboard.css
-api/                        ← Vercel serverless functions
+api/                        ← Vercel serverless functions (incl. veriqo-estimate.js, veriqo-job.js — AI Costing backend)
+tests/                       ← node --test unit tests, see "Testing" below
+supabase/migrations/         ← tracked migrations (partial history — see supabase/migrations/README_DRIFT.md)
 veriqo-landing.html
 index.html                  ← getveriqo.co.uk/ homepage — nav has module page links only (no scroll anchors)
 haccp.html                  ← /haccp module landing page (SEO)
@@ -400,7 +490,11 @@ costing.html                ← /costing module landing page (SEO)
 prep-lists.html             ← /prep-lists module landing page (SEO)
 ```
 
-**Retired files** still on disk (do not load or edit): `mise.html`, `yield.html`, `mise-sync.js`, `yield-sync.js`, various old manifests. They are not served.
+**Retired files** still on disk (do not load or edit): `mise.html`, `yield.html`, `mise-sync.js`, various old manifests. They are not served.
+
+**`yield-sync.js` (repo root) is LIVE, not retired** — despite older notes in this file, it's the Costing module's Supabase sync engine, loaded by `app.html` and actively maintained (retry queue, account-scoped writes, etc. — see "Sync & offline queue" below). Do not delete or ignore it.
+
+**`js/core/yield-sync.js` (different file, same name, different folder) IS dead** — an earlier, unused duplicate `app.html` does not load. Do not confuse the two. If you need to check which one is live, grep `app.html` for the actual `<script src>` tag.
 
 **Deleted 2026-07-13** (do not recreate): `carte-landing.html`, `yield-info.html`, `app-legacy.html`, `mise-manifest.json`. Fully removed, not just retired-in-place — nothing routes to or references them.
 
