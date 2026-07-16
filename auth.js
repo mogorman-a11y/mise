@@ -710,6 +710,20 @@ window.Mise.auth = (function () {
       console.error('[Veriqo] bootstrap_new_account failed:', result.error.message);
       throw new Error('We could not finish setting up your account. Please try again, or contact support if this keeps happening.');
     }
+    // The current session's JWT was minted before this profile existed, so
+    // its venue_id/user_role claims (stamped by the custom_access_token_hook
+    // at token-mint time) are stale — the hook's fallback defaults
+    // (venue_id: null, user_role: 'staff') rather than what bootstrap just
+    // wrote. Every RLS policy that gates writes on those claims (via
+    // auth_venue_id()/is_venue_manager()) would silently reject this
+    // otherwise-valid session until its next natural refresh (up to ~1hr).
+    // Force one now so the claims are correct immediately, not eventually.
+    var refreshed = await supabaseClient.auth.refreshSession();
+    if (refreshed.error) {
+      // Not fatal — the account itself is correctly set up in the database;
+      // the session will still self-correct on its next natural refresh.
+      console.error('[Veriqo] session refresh after bootstrap failed:', refreshed.error.message);
+    }
   }
 
   // ── internal: message helpers ──────────────────────────────────────────────
