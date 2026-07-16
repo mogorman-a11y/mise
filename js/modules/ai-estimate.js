@@ -457,14 +457,18 @@
     };
     try {
       var result = await window.Mise.yieldSync.saveCosting(costing);
-      if (result && result.error) {
-        console.error('[ai-estimate] saveCosting failed:', (result.error.message || result.error));
-        // "will retry" is only true when saveCosting actually queued the
-        // write (see yield-sync.js) — don't claim a retry that isn't scheduled.
-        toast(result.queued ? 'Saved locally — will sync automatically when back online' : 'Saved locally, but could not sync the costing', 'warn');
-        return { local: true, synced: false, queued: !!result.queued, error: result.error };
+      // Success/failure/queued must come from saveCosting's explicit
+      // synced/queued booleans, never inferred from the absence of `error`
+      // — a queued write can legitimately resolve with error:null.
+      if (result && result.synced) {
+        return { local: true, synced: true };
       }
-      return { local: true, synced: true };
+      var queued = !!(result && result.queued);
+      console.error('[ai-estimate] saveCosting did not sync:', result && (result.error && result.error.message || result.error));
+      // "will retry" is only shown when saveCosting actually queued the
+      // write (see yield-sync.js) — don't claim a retry that isn't scheduled.
+      toast(queued ? 'Saved locally — will sync automatically when back online' : 'Saved locally, but could not sync the costing', 'warn');
+      return { local: true, synced: false, queued: queued, error: result && result.error };
     } catch (e) {
       console.error('[ai-estimate] saveCosting threw:', e.message);
       toast('Saved locally, but could not sync the costing', 'warn');
