@@ -67,6 +67,12 @@ test('resolveMenuDishes: filters out dishIds with no matching lookup entry, neve
   assert.deepEqual(resolveMenuDishes(menu, dishesById), [dishesById.d1]);
 });
 
+test('resolveMenuDishes: legacy record with only embedded dishes (no dishIds at all) still resolves', () => {
+  const { resolveMenuDishes } = require('../js/core/menu-dishes.js');
+  const menu = { dishes: [{ id: 'd1', dish: 'Soup' }] };
+  assert.deepEqual(resolveMenuDishes(menu, {}), [{ id: 'd1', dish: 'Soup' }]);
+});
+
 test('resolveMenuDishes: empty/missing menu never throws', () => {
   const { resolveMenuDishes } = require('../js/core/menu-dishes.js');
   assert.deepEqual(resolveMenuDishes(null, {}), []);
