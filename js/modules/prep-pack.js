@@ -49,6 +49,22 @@ var PREP_PACK_PROFILES = {
   }
 };
 
+// mSettings.prepPackTemplates lets a chef customize the always-list and any
+// profile's items (Settings > "Manage default items"); Generate reads through
+// these resolvers rather than the raw constants, so a customization applies
+// to every future job, not just the one being edited. Falls back to the
+// built-in defaults for anything not yet customized (whole thing, or just
+// one profile) — a chef who's never opened the editor sees identical
+// behaviour to before this existed.
+function _ppEffectiveAlways() {
+  var custom = window.mSettings && mSettings.prepPackTemplates && mSettings.prepPackTemplates.always;
+  return custom || PREP_PACK_ALWAYS;
+}
+function _ppEffectiveProfile(key) {
+  var custom = window.mSettings && mSettings.prepPackTemplates && mSettings.prepPackTemplates[key];
+  return custom || PREP_PACK_PROFILES[key];
+}
+
 function _inferPrepPackProfiles(job) {
   var text = [
     job.jobType || '',
@@ -74,12 +90,13 @@ function generatePrepPackSections(job) {
   var byId = {};
   PREP_PACK_SECTIONS.forEach(function (s) { byId[s.id] = []; });
 
-  Object.keys(PREP_PACK_ALWAYS).forEach(function (sectionId) {
-    PREP_PACK_ALWAYS[sectionId].forEach(function (desc) { byId[sectionId].push(_ppMakeItem(desc)); });
+  var always = _ppEffectiveAlways();
+  Object.keys(always).forEach(function (sectionId) {
+    always[sectionId].forEach(function (desc) { byId[sectionId].push(_ppMakeItem(desc)); });
   });
 
   _inferPrepPackProfiles(job).forEach(function (profileKey) {
-    var profile = PREP_PACK_PROFILES[profileKey];
+    var profile = _ppEffectiveProfile(profileKey);
     if (!profile) return;
     Object.keys(profile).forEach(function (sectionId) {
       profile[sectionId].forEach(function (desc) {
@@ -166,6 +183,16 @@ function togglePrepPackItem(jobId, sectionId, itemId) {
   if (updated) _renderPrepPackPanel(jobId);
 }
 
+function removePrepPackItem(jobId, sectionId, itemId) {
+  var updated = _ppFindAndSaveJob(jobId, function (rec) {
+    if (!rec.prepAndPack || !rec.prepAndPack.sections) return;
+    var section = rec.prepAndPack.sections.filter(function (s) { return s.id === sectionId; })[0];
+    if (!section) return;
+    section.items = (section.items || []).filter(function (it) { return it.id !== itemId; });
+  });
+  if (updated) _renderPrepPackPanel(jobId);
+}
+
 function addPrepPackItem(jobId, sectionId) {
   var input = document.getElementById('pp-add-' + jobId + '-' + sectionId);
   if (!input) return;
@@ -188,9 +215,12 @@ function addPrepPackItem(jobId, sectionId) {
 function _ppSectionHTML(jobId, section) {
   var rows = (section.items || []).map(function (it) {
     var checkedStyle = it.checked ? 'text-decoration:line-through;color:#A09890' : 'color:#1C2B1E';
-    return '<div onclick="event.stopPropagation();togglePrepPackItem(\'' + jobId + '\',\'' + section.id + '\',\'' + it.id + '\')" style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer">'
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0">'
+      + '<span onclick="event.stopPropagation();togglePrepPackItem(\'' + jobId + '\',\'' + section.id + '\',\'' + it.id + '\')" style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;min-width:0">'
       + '<span style="width:16px;height:16px;border-radius:4px;border:1.5px solid ' + (it.checked ? '#3A7D44' : '#D0C8BE') + ';background:' + (it.checked ? '#3A7D44' : '#fff') + ';flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:#fff">' + (it.checked ? '✓' : '') + '</span>'
       + '<span style="font-size:13px;' + checkedStyle + '">' + _esc(it.description) + '</span>'
+      + '</span>'
+      + '<button onclick="event.stopPropagation();removePrepPackItem(\'' + jobId + '\',\'' + section.id + '\',\'' + it.id + '\')" aria-label="Remove item" style="background:none;border:none;color:#C0BDB5;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0;min-width:24px;min-height:24px">&times;</button>'
       + '</div>';
   }).join('');
 
@@ -228,7 +258,10 @@ function _renderPrepPackPanel(jobId) {
   var pp = job.prepAndPack;
   var state = prepPackStatus(pp);
 
-  var html = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin-bottom:6px">🎒 Prep &amp; Pack</div>';
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    + '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#A09890;letter-spacing:0.05em">🎒 Prep &amp; Pack</div>'
+    + '<button onclick="event.stopPropagation();openPrepPackTemplateEditor()" style="background:none;border:none;color:#3A7D44;font-size:11px;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline">Manage default items</button>'
+    + '</div>';
 
   if (state.status === 'not_generated') {
     html += '<button onclick="event.stopPropagation();generatePrepPack(\'' + jobId + '\')" style="width:100%;padding:9px;background:#F97316;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Generate Prep &amp; Pack list</button>';
@@ -283,4 +316,125 @@ function renderPrepPackDashboardBanner() {
     + '</div>'
     + '<button onclick="event.stopPropagation();openPrepAndPackForJob(\'' + job.id + '\')" style="width:100%;margin-top:10px;padding:9px;background:#F97316;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">' + btnLabel + ' →</button>'
     + '</div>';
+}
+
+// ── "Manage default items" — editable per-profile templates ──────────────
+// Generate always reads through _ppEffectiveAlways()/_ppEffectiveProfile()
+// above, so anything saved here applies to every future job, not just the
+// one open when this was edited. Values here are plain description-string
+// arrays (unlike a job's prepAndPack, which has id/checked per item) — a
+// template has no checked-state of its own.
+
+var PP_TEMPLATE_GROUPS = [
+  { key: 'always',         label: 'Always included',          sections: [{ id: 'food_safety', label: 'Food Safety Kit' }, { id: 'admin_travel', label: 'Admin / Travel' }] },
+  { key: 'private_dinner', label: 'Private Dinner (default)',  sections: [{ id: 'equipment', label: 'Equipment' }, { id: 'service', label: 'Service Kit' }] },
+  { key: 'bbq',             label: 'BBQ',                      sections: [{ id: 'equipment', label: 'Equipment' }] },
+  { key: 'buffet',          label: 'Buffet',                   sections: [{ id: 'service', label: 'Service Kit' }] },
+  { key: 'canapes',         label: 'Canapés',                  sections: [{ id: 'service', label: 'Service Kit' }] }
+];
+
+var _ppTemplateDraft = null;
+
+function _ppDefaultForGroup(key) {
+  return key === 'always' ? PREP_PACK_ALWAYS : PREP_PACK_PROFILES[key];
+}
+
+function openPrepPackTemplateEditor() {
+  var draft = {};
+  PP_TEMPLATE_GROUPS.forEach(function (g) {
+    var current = g.key === 'always' ? _ppEffectiveAlways() : _ppEffectiveProfile(g.key);
+    draft[g.key] = JSON.parse(JSON.stringify(current || _ppDefaultForGroup(g.key)));
+  });
+  _ppTemplateDraft = draft;
+  _renderPrepPackTemplateModal();
+}
+
+function closePrepPackTemplateEditor() {
+  var el = document.getElementById('pp-template-modal');
+  if (el) el.remove();
+  _ppTemplateDraft = null;
+}
+
+function savePrepPackTemplates() {
+  if (!_ppTemplateDraft) return;
+  mSettings.prepPackTemplates = _ppTemplateDraft;
+  saveMiseSettings();
+  toast('Default Prep & Pack items saved ✓');
+  closePrepPackTemplateEditor();
+}
+
+function resetDraftTemplateGroup(groupKey) {
+  if (!_ppTemplateDraft) return;
+  _ppTemplateDraft[groupKey] = JSON.parse(JSON.stringify(_ppDefaultForGroup(groupKey)));
+  _renderPrepPackTemplateModal();
+}
+
+function removeDraftTemplateItem(groupKey, sectionId, index) {
+  if (!_ppTemplateDraft || !_ppTemplateDraft[groupKey] || !_ppTemplateDraft[groupKey][sectionId]) return;
+  _ppTemplateDraft[groupKey][sectionId].splice(index, 1);
+  _renderPrepPackTemplateModal();
+}
+
+function addDraftTemplateItem(groupKey, sectionId) {
+  var input = document.getElementById('pp-tpl-add-' + groupKey + '-' + sectionId);
+  if (!input) return;
+  var desc = (input.value || '').trim();
+  if (!desc) { toast('Enter an item first', 'err'); return; }
+  if (!_ppTemplateDraft[groupKey]) _ppTemplateDraft[groupKey] = {};
+  if (!_ppTemplateDraft[groupKey][sectionId]) _ppTemplateDraft[groupKey][sectionId] = [];
+  _ppTemplateDraft[groupKey][sectionId].push(desc);
+  _renderPrepPackTemplateModal();
+}
+
+function _ppTemplateSectionListHTML(groupKey, sectionId, label) {
+  var items = (_ppTemplateDraft[groupKey] && _ppTemplateDraft[groupKey][sectionId]) || [];
+  var rows = items.map(function (desc, idx) {
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
+      + '<span style="font-size:13px;color:#1C2B1E;flex:1">' + _esc(desc) + '</span>'
+      + '<button onclick="removeDraftTemplateItem(\'' + groupKey + '\',\'' + sectionId + '\',' + idx + ')" aria-label="Remove item" style="background:none;border:none;color:#C0BDB5;font-size:16px;cursor:pointer;padding:0;line-height:1;min-width:24px;min-height:24px">&times;</button>'
+      + '</div>';
+  }).join('');
+  return '<div style="margin-bottom:8px">'
+    + '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#A09890;margin-bottom:2px">' + _esc(label) + '</div>'
+    + (rows || '<div style="font-size:12px;color:#C8BFB0;padding:3px 0">No items</div>')
+    + '<div style="display:flex;gap:6px;margin-top:4px">'
+    + '<input id="pp-tpl-add-' + groupKey + '-' + sectionId + '" type="text" placeholder="Add item…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();addDraftTemplateItem(\'' + groupKey + '\',\'' + sectionId + '\');}" style="flex:1;padding:5px 8px;border:1px solid #D0C8BE;border-radius:6px;font-size:12px;font-family:inherit">'
+    + '<button onclick="addDraftTemplateItem(\'' + groupKey + '\',\'' + sectionId + '\')" style="padding:5px 10px;background:#F5F0E8;color:#1C2B1E;border:1px solid #D0C8BE;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit">+</button>'
+    + '</div>'
+    + '</div>';
+}
+
+function _ppTemplateGroupHTML(group) {
+  return '<div style="border:1px solid #E8E2D8;border-radius:8px;padding:10px 12px;margin-bottom:10px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    + '<div style="font-size:13px;font-weight:700;color:#1C2B1E">' + _esc(group.label) + '</div>'
+    + '<button onclick="resetDraftTemplateGroup(\'' + group.key + '\')" style="background:none;border:none;color:#A09890;font-size:11px;cursor:pointer;text-decoration:underline;font-family:inherit">Reset to default</button>'
+    + '</div>'
+    + group.sections.map(function (s) { return _ppTemplateSectionListHTML(group.key, s.id, s.label); }).join('')
+    + '</div>';
+}
+
+function _renderPrepPackTemplateModal() {
+  if (!_ppTemplateDraft) return;
+  var body = PP_TEMPLATE_GROUPS.map(_ppTemplateGroupHTML).join('');
+  var existing = document.getElementById('pp-template-modal');
+  if (existing) {
+    var bodyEl = existing.querySelector('.pp-modal-body');
+    if (bodyEl) bodyEl.innerHTML = body;
+    return;
+  }
+  var overlay = document.createElement('div');
+  overlay.id = 'pp-template-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(28,43,30,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.onclick = function (e) { if (e.target === overlay) closePrepPackTemplateEditor(); };
+  overlay.innerHTML = '<div style="background:#fff;border-radius:12px;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;padding:20px" onclick="event.stopPropagation()">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+    + '<div style="font-size:16px;font-weight:700;color:#1C2B1E">Default Prep &amp; Pack items</div>'
+    + '<button onclick="closePrepPackTemplateEditor()" aria-label="Close" style="background:none;border:none;font-size:22px;color:#A09890;cursor:pointer;line-height:1;min-width:32px;min-height:32px">&times;</button>'
+    + '</div>'
+    + '<div style="font-size:12px;color:#A09890;margin-bottom:14px">Changes apply to every job you generate a Prep &amp; Pack list for from now on — not to lists already generated.</div>'
+    + '<div class="pp-modal-body">' + body + '</div>'
+    + '<button onclick="savePrepPackTemplates()" style="width:100%;margin-top:4px;padding:11px;background:#3A7D44;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Save defaults</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
 }
