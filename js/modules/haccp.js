@@ -1846,13 +1846,16 @@ async function handleVeriqoMagicImport(event) {
 
   try {
     if (btn) { btn.innerHTML = '⏳ Analysing menu…'; btn.disabled = true; }
+    var _sess = await supabaseClient.auth.getSession();
+    var _token = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+    if (!_token) { resetBtn(true); _haccpToast('Please sign in and try again', false); return; }
     var dataUrl = await _veriqoReadFileAsDataUrl(file);
     var base64 = dataUrl.indexOf(',') !== -1 ? dataUrl.split(',')[1] : dataUrl;
     var mimeType = file.type || 'image/jpeg';
 
     var res = await fetch('/api/parse-menu', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
       body: JSON.stringify({ image: base64, mimeType: mimeType })
     });
     var data = await res.json();

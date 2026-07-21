@@ -971,9 +971,12 @@ async function generatePrepTasksAI() {
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
 
   try {
+    var _sess = await supabaseClient.auth.getSession();
+    var _token = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+    if (!_token) throw new Error('Please sign in and try again');
     var res = await fetch('/api/parse-menu', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
       body: JSON.stringify({ action: 'prep-tasks', dishName: dishName, dishCategory: dishCategory })
     });
     var data = await res.json();
@@ -1996,9 +1999,12 @@ async function handleMagicImport(event) {
   var base64 = dataUrl.indexOf(',') !== -1 ? dataUrl.split(',')[1] : dataUrl;
 
   try {
+    var _sess = await supabaseClient.auth.getSession();
+    var _token = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+    if (!_token) { resetBtn(true); toast('Please sign in and try again', 'err'); return; }
     var res = await fetch('/api/parse-menu', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
       body: JSON.stringify({ image: base64, mimeType: mimeType })
     });
     var data = await res.json();

@@ -2,11 +2,31 @@
 // Accepts:
 //   POST { image: base64, mimeType }                        → menu image parsing (gpt-4o vision)
 //   POST { action: 'prep-tasks', dishName, dishCategory }   → AI prep task generation (gpt-4o-mini)
+//
+// Both actions require a valid Supabase session (Authorization: Bearer <token>)
+// — this endpoint calls paid OpenAI models on every request and had no auth
+// check at all until 2026-07-21 (found via review), so anyone who knew the
+// URL could run up the OpenAI bill with zero rate limiting on our side.
 
 // Canonical allergen list — same file the browser modules use (js/core/allergens.js).
 // Do not hardcode a second copy here; a spelling drift between this prompt's
 // vocabulary and the client's is what broke allergen conflict detection.
 const ALLERGENS = require('../js/core/allergens.js').ALLERGENS_14;
+
+// Same pattern as api/veriqo-estimate.js's verifyUser() — verifies the
+// caller's Supabase session directly rather than trusting a client-supplied
+// user id.
+async function verifyUser(token) {
+  const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.id || null;
+}
 
 const CATEGORIES = [
   'Canapé','Starter','Fish course','Main','Side','Sauce',
@@ -34,12 +54,17 @@ function stripFences(str) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://getveriqo.co.uk');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const userId = await verifyUser(token);
+  if (!userId) return res.status(401).json({ error: 'Invalid or expired session' });
 
   const body = req.body || {};
   const action = body.action || 'menu';

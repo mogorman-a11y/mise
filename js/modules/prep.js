@@ -559,6 +559,10 @@ async function aiGeneratePrepList() {
   if (preview)    preview.innerHTML = '<div style="font-size:13px;color:var(--vq-muted);margin-top:6px">Generating tasks for ' + menuDishes.length + ' dish' + (menuDishes.length !== 1 ? 'es' : '') + '…</div>';
 
   try {
+    var _sess = await supabaseClient.auth.getSession();
+    var _token = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+    if (!_token) { if (typeof toast === 'function') toast('Please sign in and try again', 'err'); return; }
+
     // Use existing tasks where available; call AI for dishes that have none
     var results = await Promise.all(menuDishes.map(function(dish) {
       if (Array.isArray(dish.prep_tasks) && dish.prep_tasks.length > 0) {
@@ -566,7 +570,7 @@ async function aiGeneratePrepList() {
       }
       return fetch('/api/parse-menu', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
         body: JSON.stringify({ action: 'prep-tasks', dishName: dish.dish, dishCategory: dish.category || '' })
       })
       .then(function(r) { return r.json(); })
