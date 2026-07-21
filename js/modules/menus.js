@@ -2370,8 +2370,31 @@ function buildAllergenMatrixPDF(job, dishes){
   var now      = new Date();
   var genDate  = now.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
 
+  // Short horizontal labels, not rotated text — writing-mode+transform on a
+  // <th> inside an auto-layout table is a known WebKit weak spot (confirmed
+  // 2026-07-21 on iPhone Chrome/Safari: the 14 allergen columns collapsed to
+  // zero width, leaving only "Dish" visible). This matches the abbreviation
+  // convention already proven in resources/allergen-matrix-template.html's
+  // printable matrix, which uses the same short-label-plus-<br> approach.
+  var ALLERGEN_SHORT_LABELS = {
+    'Celery': 'Celery',
+    'Cereals containing gluten': 'Cereals /<br>Gluten',
+    'Crustaceans': 'Crusta-<br>ceans',
+    'Eggs': 'Eggs',
+    'Fish': 'Fish',
+    'Lupin': 'Lupin',
+    'Milk': 'Milk',
+    'Molluscs': 'Mol-<br>luscs',
+    'Mustard': 'Mustard',
+    'Nuts': 'Tree<br>Nuts',
+    'Peanuts': 'Pea-<br>nuts',
+    'Sesame': 'Sesame',
+    'Soya': 'Soya',
+    'Sulphur dioxide': 'Sul-<br>phites'
+  };
+
   var headerCells = ALLERGENS_14.map(function(a){
-    return '<th style="padding:6px 3px;font-size:9px;font-weight:700;color:#1C2B1E;border:1px solid #D4C9B5;background:#EAF4EC;white-space:nowrap;transform:rotate(180deg);writing-mode:vertical-rl;text-orientation:mixed">'+esc(a)+'</th>';
+    return '<th title="'+esc(a)+'" style="padding:6px 3px;min-width:42px;font-size:9px;font-weight:700;color:#1C2B1E;border:1px solid #D4C9B5;background:#EAF4EC;text-align:center;vertical-align:bottom;line-height:1.25">'+(ALLERGEN_SHORT_LABELS[a]||esc(a))+'</th>';
   }).join('');
 
   var rows = dishes.map(function(d){
