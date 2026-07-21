@@ -686,6 +686,7 @@ function calViewJob(id){
   }
   if(job && typeof _loadJobFoodCosts === 'function') _loadJobFoodCosts(job);
   showTab('jobs');
+  if(job && typeof _renderPrepPackPanel === 'function') _renderPrepPackPanel(id);
   setTimeout(function(){
     var el = document.querySelector('[data-job-id="'+id+'"]');
     if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
@@ -1304,6 +1305,7 @@ function _jobCardHTML(j){
             }).join('')
           +'</div>' : '')
       + '<div id="job-reconciliation-'+j.id+'" style="margin-top:10px;padding-top:10px;border-top:1px solid #F0EBE2"></div>'
+      + '<div id="prep-pack-'+j.id+'" style="margin-top:10px;padding-top:10px;border-top:1px solid #F0EBE2"></div>'
       + (j.guests && j.guests.length ? (function() {
           var withAllergens = j.guests.filter(function(g){ return g.allergens && g.allergens.length; });
           var rows = j.guests.map(function(g) {
@@ -1402,9 +1404,10 @@ function toggleJobCard(id){
   _expandedJobId = (_expandedJobId===id) ? null : id;
   _editingJobId = null;
   renderJobsHistory();
-  if(_expandedJobId === id && typeof _loadJobFoodCosts === 'function'){
+  if(_expandedJobId === id){
     var job = getAllJobs().filter(function(j){ return j.id === id; })[0];
-    if(job) _loadJobFoodCosts(job);
+    if(job && typeof _loadJobFoodCosts === 'function') _loadJobFoodCosts(job);
+    if(typeof _renderPrepPackPanel === 'function') _renderPrepPackPanel(id);
   }
 }
 

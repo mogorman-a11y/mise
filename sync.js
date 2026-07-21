@@ -232,7 +232,8 @@ window.Mise.sync = (function () {
         guests: rec.guests || [],
         tabDepositPaid: rec.tabDepositPaid || false,
         tabBalancePaid: rec.tabBalancePaid || false,
-        tabClosed: rec.tabClosed || false
+        tabClosed: rec.tabClosed || false,
+        prepAndPack: rec.prepAndPack || null
       },
       updated_at: new Date().toISOString()
     }, { onConflict: 'id' });
@@ -641,6 +642,7 @@ window.Mise.sync = (function () {
           notes: j.notes || '',
           menus: meta.menus || [],
           guests: meta.guests || [],
+          prepAndPack: meta.prepAndPack || null,
           source: j.source || 'carte',
           _fromCarte: j.source === 'carte',
           _fromYield: j.source === 'yield'

@@ -31,9 +31,13 @@ window.modules.dashboard = (function () {
 
     var name = profile.chef_name || cachedProfile.chef_name || profile.business_name || cachedProfile.business_name || '';
 
+    var prepPackBanner = (canMenus && typeof window.renderPrepPackDashboardBanner === 'function')
+      ? window.renderPrepPackDashboardBanner() : '';
+
     _container.innerHTML =
       '<div class="dashboard-wrap">' +
         _greeting(name) +
+        prepPackBanner +
         _haccpCard(canHaccp) +
         _menusCard(canMenus) +
         _costingCard(canCosting) +
