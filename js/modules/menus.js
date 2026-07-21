@@ -2324,6 +2324,90 @@ function buildJobsPDF(jobs){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
 }
 
+// Called via onclick from _jobCardHTML's "Print Allergen Matrix" button —
+// was referenced there with no backing function until this fix (2026-07-21).
+function generateAllergenMatrix(jobId){
+  var job = getAllJobs().filter(function(j){ return j.id===jobId; })[0];
+  if(!job){ toast('Job not found','err'); return; }
+  var dishes = [];
+  var seen = {};
+  (job.menus||[]).forEach(function(m){
+    (m.dishes||[]).forEach(function(d){
+      if(d && d.id && !seen[d.id]){ seen[d.id]=true; dishes.push(d); }
+    });
+  });
+  if(!dishes.length){ toast('No dishes on this job to chart','err'); return; }
+  buildAllergenMatrixPDF(job, dishes);
+}
+
+function buildAllergenMatrixPDF(job, dishes){
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  var businessName = mSettings.businessName || '';
+  var chefName     = mSettings.chefName     || '';
+  var logo         = mSettings.logo         || '';
+  var now      = new Date();
+  var genDate  = now.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  var headerCells = ALLERGENS_14.map(function(a){
+    return '<th style="padding:6px 3px;font-size:9px;font-weight:700;color:#1C2B1E;border:1px solid #D4C9B5;background:#EAF4EC;white-space:nowrap;transform:rotate(180deg);writing-mode:vertical-rl;text-orientation:mixed">'+esc(a)+'</th>';
+  }).join('');
+
+  var rows = dishes.map(function(d){
+    var allergens = _normaliseAllergens(d.allergens);
+    var cells = ALLERGENS_14.map(function(a){
+      var has = allergens.indexOf(a)!==-1;
+      return '<td style="padding:6px 3px;text-align:center;border:1px solid #EFE9DE;font-size:13px;'+(has?'background:#FDECEC;color:#A32D2D;font-weight:700':'color:#D8D2C8')+'">'+(has?'✓':'—')+'</td>';
+    }).join('');
+    return '<tr><td style="padding:7px 10px;border:1px solid #D4C9B5;font-size:13px;font-weight:600;color:#1C2B1E;white-space:nowrap">'+esc(d.dish)
+      +(d.category?'<div style="font-size:10px;color:#A09890;font-weight:400">'+esc(d.category)+'</div>':'')
+      +'</td>'+cells+'</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="utf-8">'
+    +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+    +'<title>Allergen Matrix — '+esc(job.client||'Job')+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1C2B1E;background:#fff;padding:24px}'
+    +'.toolbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #EFE9DE;padding:10px 0;margin:-24px -24px 20px;padding-left:24px;display:flex;gap:10px;align-items:center}'
+    +'.btn-pdf{background:#2D7A3A;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer}'
+    +'.btn-close{background:#f5f4f0;color:#1C2B1E;border:1px solid #D4C9B5;border-radius:6px;padding:9px 14px;font-size:14px;cursor:pointer}'
+    +'table{border-collapse:collapse;width:100%}'
+    +'@media print{@page{size:A4 landscape;margin:14mm}.no-print{display:none!important}body{padding:0}}'
+    +'</style></head><body>'
+    +'<div class="toolbar no-print">'
+    +'<button class="btn-pdf" onclick="window.print()">Save as PDF</button>'
+    +'<button class="btn-close" onclick="window.close()">Close</button>'
+    +'</div>'
+    +'<div style="border-bottom:3px solid #1C2B1E;padding-bottom:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">'
+    +  '<div style="display:flex;align-items:center;gap:14px">'
+    +    (logo ? '<img src="'+logo+'" alt="" style="max-height:56px;max-width:140px;object-fit:contain;border-radius:4px">' : '')
+    +    '<div>'
+    +      '<div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:#2D7A3A;font-weight:700;margin-bottom:4px">Allergen Matrix</div>'
+    +      '<div style="font-size:20px;font-weight:700;color:#1C2B1E">'+(job.client?esc(job.client):'Job')+'</div>'
+    +      '<div style="font-size:12px;color:#555;margin-top:3px">'+(job.eventDate?esc(fmtDate(job.eventDate)):'')+(job.covers?' · '+esc(job.covers)+' covers':'')+(chefName?' · '+esc(chefName):'')+'</div>'
+    +    '</div>'
+    +  '</div>'
+    +  '<div style="text-align:right;flex-shrink:0">'
+    +    '<div style="font-size:12px;font-weight:700;color:#2D7A3A;letter-spacing:0.02em">'+(businessName?esc(businessName):'Veriqo')+'</div>'
+    +    '<div style="font-size:11px;color:#A09890;margin-top:3px">'+esc(genDate)+'</div>'
+    +  '</div>'
+    +'</div>'
+    +'<table><thead><tr><th style="padding:6px 10px;border:1px solid #D4C9B5;background:#EAF4EC;font-size:11px;text-align:left">Dish</th>'+headerCells+'</tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<div style="margin-top:20px;font-size:11px;color:#A09890">✓ indicates the allergen is present in this dish, as recorded in the dish library. Always confirm dietary requirements with guests directly before service.</div>'
+    +'<div style="margin-top:24px;padding-top:12px;border-top:1px solid #EFE9DE;font-size:11px;color:#A09890">Generated by Veriqo &nbsp;|&nbsp; '+esc(genDate)+'</div>'
+    +'</body></html>';
+
+  var blob = new Blob([html],{type:'text/html'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 10000);
+}
+
 // ═══════════════════════════════════════════════════════ TRANSPORT ══════════
 function logTransport(){
   var food = (document.getElementById('mise-tr-food').value||'').trim();

@@ -2192,7 +2192,7 @@
         ).join('');
 
         html += `
-          <button class="past-jobs-toggle" onclick="togglePastJobs()">
+          <button class="past-jobs-toggle" onclick="_costingTogglePastJobs()">
             ${_costingPastJobsOpen ? '▲ Hide' : '▼ View'} previous jobs (${past.length})
           </button>
           <div id="past-jobs-section" style="display:${_costingPastJobsOpen ? 'block' : 'none'};margin-top:8px;">
@@ -2208,7 +2208,7 @@
       renderJobs();
     }
 
-    function togglePastJobs() {
+    function _costingTogglePastJobs() {
       _costingPastJobsOpen = !_costingPastJobsOpen;
       renderJobs();
     }
