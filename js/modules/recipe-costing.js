@@ -43,7 +43,10 @@ function _recipeTotals(dishId) {
   return { totalPence: totalPence, uncosted: uncosted, portionPence: totalPence / yieldPortions, yieldPortions: yieldPortions };
 }
 
-function _fmtPence(p) { return '£' + (Math.round(p) / 100).toFixed(2); }
+function _fmtPence(p) {
+  var neg = p < 0;
+  return (neg ? '-£' : '£') + (Math.round(Math.abs(p)) / 100).toFixed(2);
+}
 
 async function _getUid() {
   var sess = await supabaseClient.auth.getSession();
@@ -173,14 +176,111 @@ async function _loadJobFoodCosts(job) {
   try {
     var costMap = await _computeDishCostMap(allIds);
     var covers = parseFloat(job.covers) || 0;
+    var estimatedTotalPence = 0, uncostedCount = 0, anyCosted = false;
     job.menus.forEach(function (m, mi) {
-      var el = document.getElementById('job-menu-cost-' + job.id + '-' + mi);
-      if (!el) return;
       var dishIds = (m.dishes || []).map(function (d) { return d.id; });
-      el.innerHTML = _jobMenuCostLineHTML(_sumCostMap(dishIds, costMap), covers);
+      var sum = _sumCostMap(dishIds, costMap);
+      var el = document.getElementById('job-menu-cost-' + job.id + '-' + mi);
+      if (el) el.innerHTML = _jobMenuCostLineHTML(sum, covers);
+      estimatedTotalPence += sum.perHeadPence * covers;
+      uncostedCount += sum.uncostedCount;
+      if (sum.costedCount) anyCosted = true;
     });
+
+    var reconRes = await supabaseClient.from('job_cost_reconciliations').select('*').eq('job_id', String(job.id)).maybeSingle();
+    var reconciliation = reconRes.error ? null : reconRes.data;
+
+    _jobCostState[job.id] = {
+      estimatedTotalPence: estimatedTotalPence,
+      uncostedCount: uncostedCount,
+      covers: covers,
+      anyCosted: anyCosted,
+      reconciliation: reconciliation
+    };
+    _renderJobReconciliationPanel(job.id);
   } catch (e) {
     console.error('[RecipeCosting] job cost load failed:', e);
+  }
+}
+
+// ── Costing rebuild Phase 4: actual-cost reconciliation (quick total) ──────
+// One job_cost_reconciliations row per job: the Phase 3 estimate at
+// reconcile-time vs what the chef actually spent. Not itemized per
+// ingredient (that would need a receipt-scan or per-line entry UI to be
+// worth it) — see the migration file for the scope note.
+
+var _jobCostState = {}; // jobId -> { estimatedTotalPence, uncostedCount, covers, anyCosted, reconciliation }
+
+function _calculateVariance(estimatedPence, actualPence) {
+  var variance_pence = actualPence - estimatedPence;
+  var variance_percentage = estimatedPence === 0 ? 0 : Math.round((variance_pence / estimatedPence) * 100);
+  return { variance_pence: variance_pence, variance_percentage: variance_percentage };
+}
+
+function _renderJobReconciliationPanel(jobId) {
+  var el = document.getElementById('job-reconciliation-' + jobId);
+  if (!el) return;
+  var state = _jobCostState[jobId];
+  if (!state || !state.anyCosted) { el.innerHTML = ''; return; }
+  if (!(state.covers > 0)) {
+    el.innerHTML = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin-bottom:4px">Actual food cost</div>'
+      + '<div style="font-size:12px;color:#A09890">Set covers on this job to estimate a total.</div>';
+    return;
+  }
+
+  var estText = _fmtPence(state.estimatedTotalPence) + (state.uncostedCount ? ' <span style="color:#C05A18">(' + state.uncostedCount + ' dish' + (state.uncostedCount === 1 ? '' : 'es') + ' uncosted)</span>' : '');
+  var reconciled = state.reconciliation;
+  var currentVal = reconciled ? (reconciled.actual_total_pence / 100).toFixed(2) : '';
+
+  var varianceHtml = '';
+  if (reconciled) {
+    var over = reconciled.variance_pence > 0;
+    var varColor = over ? '#8A2D2D' : '#1C6B2A';
+    var sign = over ? '+' : '';
+    varianceHtml = '<div style="font-size:13px;margin-top:6px">Variance: <strong style="color:' + varColor + '">' + sign + _fmtPence(reconciled.variance_pence) + ' (' + sign + reconciled.variance_percentage + '%)</strong></div>';
+  }
+
+  el.innerHTML = '<div style="font-size:11px;font-weight:600;text-transform:uppercase;color:#A09890;letter-spacing:0.05em;margin-bottom:6px">Actual food cost</div>'
+    + '<div style="font-size:13px;color:#1C2B1E;margin-bottom:6px">Estimated: ' + estText + '</div>'
+    + '<div style="display:flex;gap:6px;align-items:center">'
+    + '<span style="font-size:12px;color:#A09890">Actual £</span>'
+    + '<input id="job-actual-cost-' + jobId + '" type="number" step="0.01" min="0" value="' + currentVal + '" placeholder="0.00" onclick="event.stopPropagation()" style="width:80px;padding:6px 8px;border:1px solid #D0C8BE;border-radius:6px;font-size:13px;font-family:inherit">'
+    + '<button onclick="event.stopPropagation();saveJobReconciliation(\'' + jobId + '\')" style="padding:6px 12px;background:#3A7D44;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">' + (reconciled ? 'Update' : 'Save') + '</button>'
+    + '</div>'
+    + varianceHtml;
+}
+
+async function saveJobReconciliation(jobId) {
+  var input = document.getElementById('job-actual-cost-' + jobId);
+  if (!input) return;
+  var actualPounds = parseFloat(input.value);
+  if (!(actualPounds >= 0)) { toast('Enter the actual amount spent', 'err'); return; }
+  var state = _jobCostState[jobId];
+  if (!state) { toast('Cost estimate not loaded yet', 'err'); return; }
+
+  var actualPence = Math.round(actualPounds * 100);
+  var variance = _calculateVariance(state.estimatedTotalPence, actualPence);
+
+  try {
+    var uidVal = await _getUid();
+    if (!uidVal) { toast('Not signed in', 'err'); return; }
+    var r = await supabaseClient.from('job_cost_reconciliations').upsert({
+      job_id: String(jobId),
+      method: 'quick_total',
+      estimated_total_pence: state.estimatedTotalPence,
+      actual_total_pence: actualPence,
+      variance_pence: variance.variance_pence,
+      variance_percentage: variance.variance_percentage,
+      created_by: uidVal,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'job_id' }).select().single();
+    if (r.error) throw r.error;
+    state.reconciliation = r.data;
+    _renderJobReconciliationPanel(jobId);
+    toast('Actual cost saved ✓');
+  } catch (e) {
+    console.error('[RecipeCosting] save reconciliation failed:', e);
+    toast('Failed: ' + (e.message || 'Unknown error'), 'err');
   }
 }
 

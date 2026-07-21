@@ -1300,6 +1300,7 @@ function _jobCardHTML(j){
                 +'</div>';
             }).join('')
           +'</div>' : '')
+      + '<div id="job-reconciliation-'+j.id+'" style="margin-top:10px;padding-top:10px;border-top:1px solid #F0EBE2"></div>'
       + (j.guests && j.guests.length ? (function() {
           var withAllergens = j.guests.filter(function(g){ return g.allergens && g.allergens.length; });
           var rows = j.guests.map(function(g) {
