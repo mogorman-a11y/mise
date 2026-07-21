@@ -684,6 +684,7 @@ function calViewJob(id){
   if(job && job.eventDate && job.eventDate < TODAY && !_pastJobsOpen){
     _pastJobsOpen = true;
   }
+  if(job && typeof _loadJobFoodCosts === 'function') _loadJobFoodCosts(job);
   showTab('jobs');
   setTimeout(function(){
     var el = document.querySelector('[data-job-id="'+id+'"]');
@@ -1112,9 +1113,12 @@ function renderSavedMenus(){
       +'<button onclick="event.stopPropagation();deleteMenu(\''+m.id+'\')" class="btn-remove" aria-label="Delete menu">×</button>'
       +'</div></div>'
       +(dishList?'<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:8px">'+dishList+'</div>':'')
+      +'<div id="menu-cost-'+m.id+'" style="font-size:12px;color:#A09890;margin-top:6px"></div>'
       +(isEditing ? _menuInlineEditHTML(m) : '')
       +'</div>';
   }).join('');
+
+  if (typeof _loadAllMenuFoodCosts === 'function') _loadAllMenuFoodCosts(menus);
 }
 
 var _editingMenuId = null;
@@ -1285,13 +1289,14 @@ function _jobCardHTML(j){
       + (j.jobType ? '<div class="job-detail-row"><span class="job-detail-key">Type</span>'+_esc(j.jobType)+'</div>' : '')
       + (j.notes ? '<div class="job-detail-row"><span class="job-detail-key">Notes</span>'+_esc(j.notes)+'</div>' : '')
       + (j.menus&&j.menus.length ? '<div style="margin-top:10px">'
-          + j.menus.map(function(m){
+          + j.menus.map(function(m, mi){
               var dishChips = (m.dishes||[]).map(function(d){
                 return '<span style="display:inline-block;background:#F5F0E8;border:1px solid #E8E2D8;border-radius:6px;padding:2px 8px;font-size:12px;margin:2px 2px 2px 0;color:#1C2B1E">'+_esc(d.dish)+(d.allergens&&d.allergens.length?' <span style="color:#A09890;font-size:11px">('+_esc(d.allergens.join(', '))+')</span>':'')+'</span>';
               }).join('');
               return '<div style="margin-bottom:8px">'
                 +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#2D7A3A;margin-bottom:4px">'+_esc(m.name)+'</div>'
                 +(dishChips||'<span style="font-size:12px;color:#A09890">No dishes</span>')
+                +'<div id="job-menu-cost-'+j.id+'-'+mi+'" style="font-size:12px;color:#A09890;margin-top:4px"></div>'
                 +'</div>';
             }).join('')
           +'</div>' : '')
@@ -1393,6 +1398,10 @@ function toggleJobCard(id){
   _expandedJobId = (_expandedJobId===id) ? null : id;
   _editingJobId = null;
   renderJobsHistory();
+  if(_expandedJobId === id && typeof _loadJobFoodCosts === 'function'){
+    var job = getAllJobs().filter(function(j){ return j.id === id; })[0];
+    if(job) _loadJobFoodCosts(job);
+  }
 }
 
 function _renderJobGuestEditor(jobId) {

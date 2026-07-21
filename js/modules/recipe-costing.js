@@ -67,6 +67,123 @@ async function _latestPricesFor(ingredientIds) {
   return out;
 }
 
+// ── Costing rebuild Phase 3: menu/job derived costing ──────────────────────
+// View/derive only — never writes back to dishes/menus/jobs. Aggregates
+// existing dish-level recipe costs (above) through whatever dish list a menu
+// or job already carries; does not touch resolveMenuDishes() or any part of
+// the Job Packet/allergen chain.
+
+async function _computeDishCostMap(dishIds) {
+  // Returns { [dishId]: costPerPortionPence } — a dish is omitted from the
+  // map entirely if it has no recipe, no ingredient lines, or any line is
+  // uncosted (unit mismatch / no price), so callers can tell "uncosted" apart
+  // from "genuinely free".
+  var uniqIds = dishIds.map(String).filter(function (id, i, arr) { return arr.indexOf(id) === i; });
+  var map = {};
+  if (!uniqIds.length) return map;
+
+  var recRes = await supabaseClient.from('dish_recipes').select('*').in('dish_id', uniqIds);
+  if (recRes.error) throw recRes.error;
+  var recipes = recRes.data || [];
+  var recipeByDishId = {};
+  recipes.forEach(function (r) { recipeByDishId[r.dish_id] = r; });
+  var recipeIds = recipes.map(function (r) { return r.id; });
+
+  var linesByRecipe = {};
+  if (recipeIds.length) {
+    var riRes = await supabaseClient.from('recipe_ingredients').select('*').in('dish_recipe_id', recipeIds);
+    if (riRes.error) throw riRes.error;
+    (riRes.data || []).forEach(function (r) {
+      if (!linesByRecipe[r.dish_recipe_id]) linesByRecipe[r.dish_recipe_id] = [];
+      linesByRecipe[r.dish_recipe_id].push(r);
+    });
+  }
+
+  var allIngredientIds = [];
+  Object.keys(linesByRecipe).forEach(function (rid) {
+    linesByRecipe[rid].forEach(function (l) { allIngredientIds.push(l.ingredient_id); });
+  });
+  var pricesByIngredient = await _latestPricesFor(allIngredientIds);
+
+  uniqIds.forEach(function (dishId) {
+    var recipe = recipeByDishId[dishId];
+    var lines = recipe ? (linesByRecipe[recipe.id] || []) : [];
+    if (!recipe || !lines.length) return; // stays out of the map — uncosted
+    var total = 0, anyMissing = false;
+    lines.forEach(function (l) {
+      var price = pricesByIngredient[l.ingredient_id];
+      var c = price ? _lineCostPence({ quantity: Number(l.quantity), unit: l.unit, price: price }) : null;
+      if (c === null) anyMissing = true; else total += c;
+    });
+    if (anyMissing) return; // any unpriced/unit-mismatched line makes the whole dish uncosted, not silently partial
+    map[dishId] = total / (recipe.yield_portions || 1);
+  });
+
+  return map;
+}
+
+function _sumCostMap(dishIds, costMap) {
+  var perHeadPence = 0, costedCount = 0, uncostedCount = 0;
+  (dishIds || []).forEach(function (id) {
+    var v = costMap[String(id)];
+    if (v == null) uncostedCount++; else { perHeadPence += v; costedCount++; }
+  });
+  return { perHeadPence: perHeadPence, costedCount: costedCount, uncostedCount: uncostedCount };
+}
+
+function _uncostedSuffix(sum) {
+  return sum.uncostedCount ? ' <span style="color:#C05A18">(' + sum.uncostedCount + ' dish' + (sum.uncostedCount === 1 ? '' : 'es') + ' uncosted)</span>' : '';
+}
+
+function _menuCostLineHTML(sum) {
+  if (sum.costedCount === 0 && sum.uncostedCount === 0) return '';
+  if (sum.costedCount === 0) return '<span style="color:#A09890">No recipe costing yet</span>';
+  return '💰 Est. cost/head: ' + _fmtPence(sum.perHeadPence) + _uncostedSuffix(sum);
+}
+
+async function _loadAllMenuFoodCosts(menus) {
+  var allIds = [];
+  (menus || []).forEach(function (m) { (m.dishIds || []).forEach(function (id) { allIds.push(String(id)); }); });
+  if (!allIds.length) return;
+  try {
+    var costMap = await _computeDishCostMap(allIds);
+    menus.forEach(function (m) {
+      var el = document.getElementById('menu-cost-' + m.id);
+      if (!el) return;
+      el.innerHTML = _menuCostLineHTML(_sumCostMap(m.dishIds || [], costMap));
+    });
+  } catch (e) {
+    console.error('[RecipeCosting] menu cost load failed:', e);
+  }
+}
+
+function _jobMenuCostLineHTML(sum, covers) {
+  if (sum.costedCount === 0 && sum.uncostedCount === 0) return '';
+  if (sum.costedCount === 0) return '<span style="color:#A09890">No recipe costing yet</span>';
+  var line = '💰 ' + _fmtPence(sum.perHeadPence) + '/head';
+  if (covers > 0) line += ' · est. total for ' + covers + ' covers: <strong>' + _fmtPence(sum.perHeadPence * covers) + '</strong>';
+  return line + _uncostedSuffix(sum);
+}
+
+async function _loadJobFoodCosts(job) {
+  if (!job || !job.menus || !job.menus.length) return;
+  var allIds = [];
+  job.menus.forEach(function (m) { (m.dishes || []).forEach(function (d) { if (d && d.id) allIds.push(String(d.id)); }); });
+  if (!allIds.length) return;
+  try {
+    var costMap = await _computeDishCostMap(allIds);
+    var covers = parseFloat(job.covers) || 0;
+    job.menus.forEach(function (m, mi) {
+      var el = document.getElementById('job-menu-cost-' + job.id + '-' + mi);
+      if (!el) return;
+      var dishIds = (m.dishes || []).map(function (d) { return d.id; });
+      el.innerHTML = _jobMenuCostLineHTML(_sumCostMap(dishIds, costMap), covers);
+    });
+  } catch (e) {
+    console.error('[RecipeCosting] job cost load failed:', e);
+  }
+}
+
 async function _loadDishRecipe(dishId) {
   _recipeState[dishId] = { loading: true, recipe: null, lines: [] };
   _renderRecipePanel(dishId);
