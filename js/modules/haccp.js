@@ -38,7 +38,7 @@ async function enablePushReminders() {
     } catch(e) {}
   }
   if (!userId) {
-    if (typeof toast === 'function') toast('Please sign in to enable reminders', false);
+    if (typeof _haccpToast === 'function') _haccpToast('Please sign in to enable reminders', false);
     return 'error';
   }
   if (Notification.permission !== 'granted') {
@@ -74,11 +74,11 @@ async function toggleReminder(btn) {
   var newStatus;
   if (status === 'enabled') {
     newStatus = await disablePushReminders();
-    if (typeof toast === 'function') toast('Reminders turned off');
+    if (typeof _haccpToast === 'function') _haccpToast('Reminders turned off');
   } else {
     newStatus = await enablePushReminders();
-    if (newStatus === 'enabled' && typeof toast === 'function') toast('Reminders enabled ✓');
-    if (newStatus === 'denied' && typeof toast === 'function') toast('Notifications blocked — check your browser settings', false);
+    if (newStatus === 'enabled' && typeof _haccpToast === 'function') _haccpToast('Reminders enabled ✓');
+    if (newStatus === 'denied' && typeof _haccpToast === 'function') _haccpToast('Notifications blocked — check your browser settings', false);
   }
   await renderRemindersCard();
   btn.disabled = false;
@@ -385,10 +385,10 @@ function addChecklistItem(type) {
   var noteEl=document.getElementById('add-'+type+'-note');
   var label=labelEl.value.trim();
   var note=noteEl?noteEl.value.trim():'';
-  if(!label){toast('Please enter a check item',false);return;}
+  if(!label){_haccpToast('Please enter a check item',false);return;}
   var key='checklist_'+type;
   var existing=settings[key].map(function(i){return i.label;});
-  if(existing.indexOf(label)!==-1){toast('Already in the list','warn');return;}
+  if(existing.indexOf(label)!==-1){_haccpToast('Already in the list','warn');return;}
   var newId=type[0]+Date.now();
   settings[key].push({id:newId,label:label,note:note});
   saveHaccpSettings();
@@ -396,7 +396,7 @@ function addChecklistItem(type) {
   CHECKLISTS[type]=settings[key];
   renderSettingsChecklistList(type);
   renderChecklists();
-  toast('Added: '+label);
+  _haccpToast('Added: '+label);
 }
 
 function removeChecklistItem(type,idx) {
@@ -408,7 +408,7 @@ function removeChecklistItem(type,idx) {
   CHECKLISTS[type]=settings[key];
   renderSettingsChecklistList(type);
   renderChecklists();
-  toast('Removed: '+item);
+  _haccpToast('Removed: '+item);
 }
 
 function renderThresholds() {
@@ -426,10 +426,10 @@ function saveThresholds() {
     if(el && el.value !== '') proposed[key] = parseFloat(el.value);
   });
   var errors = validateThresholds(proposed);
-  if(errors.length) { toast('Invalid threshold: ' + errors[0], false); return; }
+  if(errors.length) { _haccpToast('Invalid threshold: ' + errors[0], false); return; }
   Object.assign(settings.thresholds, proposed);
   saveHaccpSettings();
-  toast('Temperature thresholds saved');
+  _haccpToast('Temperature thresholds saved');
 }
 
 function renderAllSettingsLists() {
@@ -445,22 +445,22 @@ function renderAllSettingsLists() {
 }
 function addItem(listKey,inputId,containerId) {
   var input=document.getElementById(inputId); var val=input.value.trim();
-  if(!val){toast('Please enter a value',false);return;}
-  if(settings[listKey].indexOf(val)!==-1){toast('Already in the list','warn');return;}
+  if(!val){_haccpToast('Please enter a value',false);return;}
+  if(settings[listKey].indexOf(val)!==-1){_haccpToast('Already in the list','warn');return;}
   settings[listKey].push(val); saveHaccpSettings(); input.value='';
-  renderSettingsList(listKey,containerId); populateHaccpSelects(); toast('Added: '+val);
+  renderSettingsList(listKey,containerId); populateHaccpSelects(); _haccpToast('Added: '+val);
 }
 function removeItem(listKey,idx,containerId) {
   var item=settings[listKey][idx]; settings[listKey].splice(idx,1);
   if(!settings[listKey].length) settings[listKey]=DEFAULTS[listKey].slice();
-  saveHaccpSettings(); renderSettingsList(listKey,containerId); populateHaccpSelects(); toast('Removed: '+item);
+  saveHaccpSettings(); renderSettingsList(listKey,containerId); populateHaccpSelects(); _haccpToast('Removed: '+item);
 }
 
 function now() { var d=new Date(); return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0'); }
 function todayStr() { return new Date().toISOString().slice(0,10); }
-function fmtDate(str) { var d=str?new Date(str+'T12:00:00'):new Date(); return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+function _haccpFmtDate(str) { var d=str?new Date(str+'T12:00:00'):new Date(); return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
 
-document.getElementById('header-date').textContent = fmtDate();
+document.getElementById('header-date').textContent = _haccpFmtDate();
 ['fridge-time','cook-time','cool-start-time','cool-end-time','reheat-time','del-time','clean-time'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=now(); });
 ['probe-date','pest-date','illness-date'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=todayStr(); });
 
@@ -468,7 +468,7 @@ function saveHaccpToday() {
   // Sample-day demo mode: never persist demo records to localStorage or Supabase
   if (_demoMode) return;
   var _today = todayStr();
-  try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){ console.error('[HACCP] localStorage write failed:', e); toast('Storage error — check phone storage space', false); }
+  try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){ console.error('[HACCP] localStorage write failed:', e); _haccpToast('Storage error — check phone storage space', false); }
   // Cloud sync — pass snapshot so in-flight mutations don't corrupt the payload
   if (window.Mise && window.Mise.sync) Mise.sync.saveDay(_today, records.slice());
   // Track the most recently added record type
@@ -483,7 +483,7 @@ function getAllDays() {
   try { for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('haccp_')===0&&k!=='haccp_settings'&&k!=='haccp_suppliers'&&k!=='haccp_credentials'){ days.push(k.replace('haccp_','')); } } } catch(e){}
   return days.sort().reverse();
 }
-function getDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return r?JSON.parse(r):[]; } catch(e){ return []; } }
+function _haccpGetDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
@@ -530,7 +530,7 @@ function _getTodayJob() {
     if (records[i].type === 'job' && records[i].eventDate === todayStr()) return records[i];
   }
   // Check haccp_ localStorage (HACCP-entered jobs)
-  var hRecs = getDayRecords(TODAY);
+  var hRecs = _haccpGetDayRecords(TODAY);
   for (var i = 0; i < hRecs.length; i++) {
     if (hRecs[i].type === 'job' && hRecs[i].eventDate === todayStr()) return hRecs[i];
   }
@@ -592,7 +592,7 @@ function haccpTab(name) {
   if(window.posthog) posthog.capture('tab_viewed', { tab: name });
 }
 
-function toast(msg,ok) {
+function _haccpToast(msg,ok) {
   var t=document.getElementById('toast');
   t.textContent=msg;
   t.style.background=ok===false?'#A32D2D':(ok==='warn'?'#854F0B':'#2D7A3A');
@@ -638,7 +638,7 @@ function logChecklist(type) {
   if (document.getElementById(notesId)) document.getElementById(notesId).value='';
   if (isPCType) renderSection_PC(type); else renderChecklistLog(type);
   updateHaccpDashboard();
-  if(status==='ok') toast('Saved — '+msg); else toast('Saved — '+msg,'warn');
+  if(status==='ok') _haccpToast('Saved — '+msg); else _haccpToast('Saved — '+msg,'warn');
 }
 
 function renderChecklistLog(type) {
@@ -717,7 +717,7 @@ function logFridge() {
   var temp=isNA?null:parseFloat(document.getElementById('fridge-temp').value);
   var time=document.getElementById('fridge-time').value;
   var notes=document.getElementById('fridge-notes').value;
-  if(!isNA&&isNaN(temp)){toast('Please enter a temperature',false);return;}
+  if(!isNA&&isNaN(temp)){_haccpToast('Please enter a temperature',false);return;}
   var isFreezer=unit.toLowerCase().includes('freezer');
   var status,msg;
   if(isNA){
@@ -737,7 +737,7 @@ function logFridge() {
   saveHaccpToday(); document.getElementById('fridge-temp').value=''; document.getElementById('fridge-notes').value=''; document.getElementById('fridge-time').value=now();
   if(isNA)toggleNA('fridge-temp',naBtn);
   renderSection('fridge'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+unit+' '+msg); else if(status==='warn')toast('Warning — '+msg,'warn'); else toast('Alert — '+msg,false);
+  if(status==='ok')_haccpToast('Saved — '+unit+' '+msg); else if(status==='warn')_haccpToast('Warning — '+msg,'warn'); else _haccpToast('Alert — '+msg,false);
 }
 
 // --- COOKING ---
@@ -746,8 +746,8 @@ function logCooking() {
   var temp=parseFloat(document.getElementById('cook-temp').value);
   var time=document.getElementById('cook-time').value;
   var chef=document.getElementById('cook-chef').value;
-  if(!food){toast('Please enter a food item',false);return;}
-  if(isNaN(temp)){toast('Please enter a temperature',false);return;}
+  if(!food){_haccpToast('Please enter a food item',false);return;}
+  if(isNaN(temp)){_haccpToast('Please enter a temperature',false);return;}
   var status,msg;
   if(temp<T('cooking-fail')){status='fail';msg=temp+'°C — must reach '+T('cooking-fail')+'°C minimum';}
   else if(temp<T('cooking-warn')){status='warn';msg=temp+'°C — borderline, target '+T('cooking-warn')+'°C';}
@@ -756,7 +756,7 @@ function logCooking() {
   saveHaccpToday(); document.getElementById('cook-food').value=''; document.getElementById('cook-temp').value=''; document.getElementById('cook-time').value=now();
   renderSection('cooking'); updateHaccpDashboard();
   _checkCookingConflict(food);
-  if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
+  if(status==='ok')_haccpToast('Saved — '+food+' '+msg); else _haccpToast('Alert — '+food+' '+msg,false);
 }
 
 // --- COOLING ---
@@ -778,10 +778,10 @@ function logCooling() {
   var endTime=document.getElementById('cool-end-time').value;
   var method=document.getElementById('cool-method').value;
   var by=document.getElementById('cool-by').value;
-  if(!food){toast('Please enter a food item',false);return;}
-  if(isNaN(endTemp)){toast('Please enter an end temperature',false);return;}
-  if(!startTime){toast('Please enter a start time',false);return;}
-  if(!endTime){toast('Please enter an end time',false);return;}
+  if(!food){_haccpToast('Please enter a food item',false);return;}
+  if(isNaN(endTemp)){_haccpToast('Please enter an end temperature',false);return;}
+  if(!startTime){_haccpToast('Please enter a start time',false);return;}
+  if(!endTime){_haccpToast('Please enter an end time',false);return;}
 
   var durationMins = _timeDiffMinutes(startTime, endTime);
   var durationStr = durationMins !== null ? (durationMins >= 60 ? Math.floor(durationMins/60)+'h '+( durationMins%60 ? (durationMins%60)+'m' : '') : durationMins+'m') : '';
@@ -814,7 +814,7 @@ function logCooling() {
   document.getElementById('cool-food').value=''; document.getElementById('cool-start-temp').value=''; document.getElementById('cool-end-temp').value='';
   document.getElementById('cool-start-time').value=now(); document.getElementById('cool-end-time').value=now();
   renderSection('cooling'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+food+': '+msg); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
+  if(status==='ok')_haccpToast('Saved — '+food+': '+msg); else if(status==='warn')_haccpToast('Warning — '+food+': '+msg,'warn'); else _haccpToast('Alert — '+food+': '+msg,false);
 }
 
 // --- REHEATING ---
@@ -824,8 +824,8 @@ function logReheating() {
   var time=document.getElementById('reheat-time').value;
   var chef=document.getElementById('reheat-chef').value;
   var notes=document.getElementById('reheat-notes').value;
-  if(!food){toast('Please enter a food item',false);return;}
-  if(isNaN(temp)){toast('Please enter a temperature',false);return;}
+  if(!food){_haccpToast('Please enter a food item',false);return;}
+  if(isNaN(temp)){_haccpToast('Please enter a temperature',false);return;}
   var status,msg;
   if(temp<T('reheat-fail')){status='fail';msg=temp+'°C — must reach '+T('reheat-fail')+'°C for reheating';}
   else if(temp<T('reheat-warn')){status='warn';msg=temp+'°C — borderline, target '+T('reheat-warn')+'°C';}
@@ -834,7 +834,7 @@ function logReheating() {
   saveHaccpToday(); document.getElementById('reheat-food').value=''; document.getElementById('reheat-temp').value=''; document.getElementById('reheat-notes').value=''; document.getElementById('reheat-time').value=now();
   renderSection('reheating'); updateHaccpDashboard();
   _checkCookingConflict(food);
-  if(status==='ok')toast('Saved — '+food+' '+msg); else toast('Alert — '+food+' '+msg,false);
+  if(status==='ok')_haccpToast('Saved — '+food+' '+msg); else _haccpToast('Alert — '+food+' '+msg,false);
 }
 
 // --- DELIVERY ---
@@ -868,7 +868,7 @@ function logDelivery() {
   var photo=photoImg.src&&photoImg.src!==window.location.href?photoImg.src:'';
   // Delivery temp is optional — you may log chilled/frozen only. Only reject if
   // a value was entered but isn't a valid number.
-  if(tempRaw!==''&&isNaN(temp)){toast('Please enter a valid delivery temperature',false);return;}
+  if(tempRaw!==''&&isNaN(temp)){_haccpToast('Please enter a valid delivery temperature',false);return;}
   var cF=chilledCond==='Rejected'||(chilledTemp!==''&&parseFloat(chilledTemp)>T('chilled-fail'));
   var cW=chilledCond==='Issues noted'||(chilledTemp!==''&&parseFloat(chilledTemp)>T('chilled-warn'));
   var fF=frozenCond==='Rejected'||(frozenTemp!==''&&parseFloat(frozenTemp)>T('frozen-fail'));
@@ -886,7 +886,7 @@ function logDelivery() {
   document.getElementById('del-frozen-temp').value=''; document.getElementById('del-frozen-cond').selectedIndex=0;
   document.getElementById('del-time').value=now(); clearPhoto();
   renderSection('delivery'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+supplier); else if(status==='warn')toast('Warning — '+supplier,'warn'); else toast('Alert — '+supplier,false);
+  if(status==='ok')_haccpToast('Saved — '+supplier); else if(status==='warn')_haccpToast('Warning — '+supplier,'warn'); else _haccpToast('Alert — '+supplier,false);
 }
 
 // --- CLEANING ---
@@ -900,7 +900,7 @@ function logCleaning() {
   _pushRecord({type:'cleaning',task:task,time:time,by:by,chem:chem,status:'ok',msg:'Completed by '+by});
   saveHaccpToday(); document.getElementById('clean-chem').value=''; document.getElementById('clean-time').value=now();
   if(isNA)toggleNA('clean-chem',naBtn);
-  renderSection('cleaning'); updateHaccpDashboard(); toast('Saved — '+task+' completed');
+  renderSection('cleaning'); updateHaccpDashboard(); _haccpToast('Saved — '+task+' completed');
 }
 
 // --- PROBE ---
@@ -910,13 +910,13 @@ function logProbe() {
   var date=document.getElementById('probe-date').value;
   var result=document.getElementById('probe-result').value;
   var by=document.getElementById('probe-by').value;
-  if(isNaN(reading)){toast('Please enter a reading',false);return;}
+  if(isNaN(reading)){_haccpToast('Please enter a reading',false);return;}
   var status=result.indexOf('Pass')===0?'ok':'fail';
   var msg=result+' ('+reading+'°C)';
   _pushRecord({type:'probe',probeId:id,reading:reading,date:date,result:result,by:by,time:now(),status:status,msg:msg});
   saveHaccpToday(); document.getElementById('probe-reading').value=''; document.getElementById('probe-id').value='';
   renderSection('probe'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+id+' passed'); else toast('Alert — '+id+' failed',false);
+  if(status==='ok')_haccpToast('Saved — '+id+' passed'); else _haccpToast('Alert — '+id+' failed',false);
 }
 
 // --- PEST ---
@@ -930,7 +930,7 @@ function logPest() {
   var msg=type+(location?' at '+location:'');
   _pushRecord({type:'pest',pestType:type,location:location,date:date,action:action,by:by,time:now(),status:status,msg:msg});
   saveHaccpToday(); document.getElementById('pest-location').value=''; document.getElementById('pest-action').value=''; document.getElementById('pest-date').value=todayStr();
-  renderSection('pest'); updateHaccpDashboard(); toast('Saved — pest record logged');
+  renderSection('pest'); updateHaccpDashboard(); _haccpToast('Saved — pest record logged');
 }
 
 // --- ILLNESS ---
@@ -945,7 +945,7 @@ function logIllness() {
   _pushRecord({type:'illness',staff:staff,illnessType:type,symptoms:symptoms,date:date,by:by,time:now(),status:status,msg:msg});
   saveHaccpToday(); document.getElementById('illness-symptoms').value=''; document.getElementById('illness-date').value=todayStr();
   renderSection('illness'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+staff+' return to work logged'); else toast('Saved — '+staff+' stood down','warn');
+  if(status==='ok')_haccpToast('Saved — '+staff+' return to work logged'); else _haccpToast('Saved — '+staff+' stood down','warn');
 }
 
 // --- INCIDENT LOG ---
@@ -965,7 +965,7 @@ function logIncident() {
   var description = document.getElementById('inc-description').value.trim();
   var action = document.getElementById('inc-action').value.trim();
   var by = document.getElementById('inc-by').value.trim() || 'Unknown';
-  if (!description) { toast('Please describe the incident', false); return; }
+  if (!description) { _haccpToast('Please describe the incident', false); return; }
   var status = severity === 'Critical' ? 'fail' : severity === 'High' ? 'warn' : 'ok';
   var locationObj = _incidentLocation ? Object.assign({}, _incidentLocation, { text: locationText || _incidentLocation.text }) : (locationText ? { text: locationText } : null);
   var msg = type + ' — ' + severity + ' severity. ' + description + (action ? ' Action: ' + action : '');
@@ -978,14 +978,14 @@ function logIncident() {
   document.getElementById('inc-gps-status').style.display = 'none';
   _incidentPhotos = []; _incidentLocation = null;
   _renderIncidentPhotoThumbs();
-  if (status === 'fail') toast('Critical incident logged', 'warn');
-  else toast('Incident logged — ' + type);
+  if (status === 'fail') _haccpToast('Critical incident logged', 'warn');
+  else _haccpToast('Incident logged — ' + type);
 }
 
 function addIncidentPhoto(input) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
-  if (file.size > 8 * 1024 * 1024) { toast('Photo too large — use an image under 8MB', false); return; }
+  if (file.size > 8 * 1024 * 1024) { _haccpToast('Photo too large — use an image under 8MB', false); return; }
   var reader = new FileReader();
   reader.onload = function(e) {
     var img = new Image();
@@ -1024,7 +1024,7 @@ function _renderIncidentPhotoThumbs() {
 
 function captureIncidentLocation() {
   var statusEl = document.getElementById('inc-gps-status');
-  if (!navigator.geolocation) { toast('GPS not available on this device', false); return; }
+  if (!navigator.geolocation) { _haccpToast('GPS not available on this device', false); return; }
   statusEl.textContent = 'Getting location…'; statusEl.style.display = 'block';
   navigator.geolocation.getCurrentPosition(function(pos) {
     var lat = pos.coords.latitude.toFixed(6);
@@ -1036,7 +1036,7 @@ function captureIncidentLocation() {
     statusEl.textContent = '📍 GPS captured — ' + lat + ', ' + lng + ' (±' + acc + 'm)';
   }, function() {
     statusEl.textContent = 'Could not get location — enter manually above';
-    toast('GPS unavailable — enter location manually', false);
+    _haccpToast('GPS unavailable — enter location manually', false);
   }, { timeout: 10000, enableHighAccuracy: true });
 }
 
@@ -1048,12 +1048,12 @@ document.addEventListener('DOMContentLoaded', function() {
 // --- SUPPLIERS ---
 function logSupplier() {
   var name=document.getElementById('supp-name').value.trim();
-  if(!name){toast('Please enter a supplier name',false);return;}
+  if(!name){_haccpToast('Please enter a supplier name',false);return;}
   var list=loadSuppliers();
   list.push({name:name,contact:document.getElementById('supp-contact').value.trim(),phone:document.getElementById('supp-phone').value.trim(),products:document.getElementById('supp-products').value.trim(),approval:document.getElementById('supp-approval').value,notes:document.getElementById('supp-notes').value.trim(),date:todayStr()});
   saveSuppliers(list);
   ['supp-name','supp-contact','supp-phone','supp-products','supp-notes'].forEach(function(id){document.getElementById(id).value='';});
-  renderSuppliersLog(); toast('Saved — '+name+' added to register');
+  renderSuppliersLog(); _haccpToast('Saved — '+name+' added to register');
 }
 function renderSuppliersLog() {
   var list=loadSuppliers(); var c=document.getElementById('suppliers-log');
@@ -1068,7 +1068,7 @@ function renderSuppliersLog() {
   }).join('');
 }
 function removeSupplier(i) {
-  var list=loadSuppliers(); list.splice(i,1); saveSuppliers(list); renderSuppliersLog(); toast('Supplier removed');
+  var list=loadSuppliers(); list.splice(i,1); saveSuppliers(list); renderSuppliersLog(); _haccpToast('Supplier removed');
 }
 
 // --- RENDER SECTIONS ---
@@ -1364,7 +1364,7 @@ function updateNextJobBanner() {
   var allJobs = []; var _seenJobIds = {};
   function _addJob(r){ if(r.type==='job'&&r.eventDate&&!_seenJobIds[r.id]){ _seenJobIds[r.id]=true; allJobs.push(r); } }
   // haccp_ keys (all days including today)
-  getAllDays().forEach(function(d){ getDayRecords(d).forEach(_addJob); });
+  getAllDays().forEach(function(d){ _haccpGetDayRecords(d).forEach(_addJob); });
   // in-memory today records
   records.forEach(_addJob);
   // mise_ key for today — catches jobs booked in the Menus module
@@ -1389,7 +1389,7 @@ function updateNextJobBanner() {
     return '<div style="margin-top:10px"><div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:2px">'+label+'</div><div style="font-size:13px;color:#fff;line-height:1.4">'+val+'</div></div>';
   }
   var html = '';
-  var dateStr = job.eventDate===TODAY ? 'Today' : fmtDate(job.eventDate);
+  var dateStr = job.eventDate===TODAY ? 'Today' : _haccpFmtDate(job.eventDate);
   html += njRow('Date', dateStr + (job.eventTime ? ' at '+esc(job.eventTime) : ''));
   if(job.jobType) html += njRow('Type', esc(job.jobType));
   if(job.covers)  html += njRow('Covers', esc(String(job.covers))+' covers');
@@ -1460,7 +1460,7 @@ function buildDayBlock(dateStr,recs,isToday) {
   var todayTag=isToday?'<span class="today-label">Today</span>':'';
   return '<div class="day-block">'+
     '<div class="day-block-header" onclick="toggleDay(\'day-'+dateStr+'\')">'+
-      '<div><div class="day-block-title">'+fmtDate(dateStr)+todayTag+'</div>'+
+      '<div><div class="day-block-title">'+_haccpFmtDate(dateStr)+todayTag+'</div>'+
       '<div class="day-block-meta">'+recs.length+' record'+(recs.length!==1?'s':'')+(fail?' · <span style="color:#A32D2D;font-weight:600">'+fail+' failed</span>':'')+(warn?' · <span style="color:#854F0B;font-weight:600">'+warn+' warning</span>':'')+'</div></div>'+
       '<span style="font-size:18px;color:#aaa" id="chevron-'+dateStr+'">›</span>'+
     '</div>'+
@@ -1484,7 +1484,7 @@ function renderRecords() {
   var c=document.getElementById('records-list');
   var allDays=getAllDays().filter(function(d){return d!==TODAY;});
   var html=buildDayBlock(TODAY,records,true);
-  if(allDays.length){html+='<div class="divider">Previous days</div>';html+=allDays.map(function(d){return buildDayBlock(d,getDayRecords(d),false);}).join('');}
+  if(allDays.length){html+='<div class="divider">Previous days</div>';html+=allDays.map(function(d){return buildDayBlock(d,_haccpGetDayRecords(d),false);}).join('');}
   c.innerHTML=html;
   var chev=document.getElementById('chevron-'+TODAY); if(chev)chev.textContent='⌄';
 }
@@ -1495,7 +1495,7 @@ function toggleDay(id) {
   else{el.classList.add('open');if(chev)chev.textContent='⌄';}
 }
 
-function exportDay(dateStr) { var recs=dateStr===TODAY?records:getDayRecords(dateStr); buildExport(fmtDate(dateStr),recs,'haccp-log-'+dateStr+'.txt'); }
+function exportDay(dateStr) { var recs=dateStr===TODAY?records:_haccpGetDayRecords(dateStr); buildExport(_haccpFmtDate(dateStr),recs,'haccp-log-'+dateStr+'.txt'); }
 
 function buildExport(dateLabel,recs,filename) {
   var header='HACCP Daily Log — '+dateLabel+'\n'+'='.repeat(40)+'\n\n';
@@ -1509,13 +1509,13 @@ function buildExport(dateLabel,recs,filename) {
     }).join('\n')+'\n';
   }).filter(Boolean).join('\n');
   var blob=new Blob([header+sections],{type:'text/plain'});
-  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); toast('Report exported');
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); _haccpToast('Report exported');
 }
 
 function exportDayPDF(dateStr) {
-  var recs = dateStr === todayStr() ? records : getDayRecords(dateStr);
+  var recs = dateStr === todayStr() ? records : _haccpGetDayRecords(dateStr);
   if(window.posthog) posthog.capture('pdf_exported', { date: dateStr, record_count: recs.length });
-  buildPDFExport(fmtDate(dateStr), recs);
+  buildPDFExport(_haccpFmtDate(dateStr), recs);
 }
 
 function buildPDFExport(dateLabel, recs) {
@@ -1825,7 +1825,7 @@ async function handleVeriqoMagicImport(event) {
   event.target.value = '';
 
   if (file.size > 4 * 1024 * 1024) {
-    toast('File too large — please use an image under 4MB', false);
+    _haccpToast('File too large — please use an image under 4MB', false);
     return;
   }
 
@@ -1859,7 +1859,7 @@ async function handleVeriqoMagicImport(event) {
 
     if (!res.ok || data.error) {
       resetBtn(true);
-      toast('Import failed: ' + (data.error || 'server error'), false);
+      _haccpToast('Import failed: ' + (data.error || 'server error'), false);
       console.error('[Veriqo] Magic import API:', data.error);
       return;
     }
@@ -1867,7 +1867,7 @@ async function handleVeriqoMagicImport(event) {
     var dishes = Array.isArray(data.dishes) ? data.dishes : [];
     if (!dishes.length) {
       resetBtn(true);
-      toast('No dishes detected — try a clearer photo', false);
+      _haccpToast('No dishes detected — try a clearer photo', false);
       return;
     }
 
@@ -1885,10 +1885,10 @@ async function handleVeriqoMagicImport(event) {
     if (typeof menuRenderDishes === 'function') menuRenderDishes();
 
     resetBtn(false);
-    toast('✨ Imported ' + dishes.length + ' dish' + (dishes.length !== 1 ? 'es' : '') + ' — review & save', true);
+    _haccpToast('✨ Imported ' + dishes.length + ' dish' + (dishes.length !== 1 ? 'es' : '') + ' — review & save', true);
   } catch (err) {
     resetBtn(true);
-    toast('Import failed — check your connection', false);
+    _haccpToast('Import failed — check your connection', false);
     console.error('[Veriqo] Magic import fetch:', err);
   }
 }
@@ -1905,7 +1905,7 @@ function renderMenuDishAllergens() {
 
 function menuAddDish() {
   var name = (document.getElementById('menu-dish-name').value || '').trim();
-  if (!name) { toast('Enter a dish name first', false); return; }
+  if (!name) { _haccpToast('Enter a dish name first', false); return; }
   var allergens = ALLERGENS_14.filter(function(a) {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
@@ -1992,7 +1992,7 @@ function menuDishToggleEdit(idx) {
 function menuDishSaveEdit(idx) {
   var nameEl = document.getElementById('mde-name-' + idx);
   var name = nameEl ? (nameEl.value || '').trim() : '';
-  if (!name) { toast('Dish name required', false); return; }
+  if (!name) { _haccpToast('Dish name required', false); return; }
   var catEl = document.getElementById('mde-cat-' + idx);
   var cat = catEl ? catEl.value : '';
   var allergens = ALLERGENS_14.filter(function(a) {
@@ -2007,8 +2007,8 @@ function menuDishSaveEdit(idx) {
 
 function menuSave() {
   var name = (document.getElementById('menu-name').value || '').trim();
-  if (!name) { toast('Enter a menu name first', false); return; }
-  if (!_menuDishes.length) { toast('Add at least one dish', false); return; }
+  if (!name) { _haccpToast('Enter a menu name first', false); return; }
+  if (!_menuDishes.length) { _haccpToast('Add at least one dish', false); return; }
   if (!settings.savedMenus) settings.savedMenus = [];
   var _savedMenu;
   if (_editingMenuId !== null) {
@@ -2020,11 +2020,11 @@ function menuSave() {
     _editingMenuId = null;
     var btn = document.getElementById('menu-save-btn');
     if (btn) btn.textContent = 'Save menu';
-    toast('Menu updated');
+    _haccpToast('Menu updated');
   } else {
     _savedMenu = { id: String(Date.now()), name: name, dishes: _menuDishes.slice() };
     settings.savedMenus.push(_savedMenu);
-    toast('Menu "' + name + '" saved');
+    _haccpToast('Menu "' + name + '" saved');
   }
   saveHaccpSettings();
   if (_savedMenu && window.Mise && window.Mise.sync && window.Mise.sync.saveMenu) Mise.sync.saveMenu(_savedMenu);
@@ -2051,7 +2051,7 @@ function menuEdit(id) {
   // Scroll to top of menu form
   var tab = document.getElementById('tab-job');
   if (tab) tab.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  toast('Editing "' + menu.name + '" — make changes and tap Update menu');
+  _haccpToast('Editing "' + menu.name + '" — make changes and tap Update menu');
 }
 
 function menuDelete(id) {
@@ -2060,7 +2060,7 @@ function menuDelete(id) {
   saveHaccpSettings();
   renderMenuLibrary();
   custPopulateMenuSelect();
-  toast('Menu deleted');
+  _haccpToast('Menu deleted');
   if (window.Mise && window.Mise.sync && window.Mise.sync.deleteMenu) {
     window.Mise.sync.deleteMenu(String(id)).catch(function(){});
   }
@@ -2068,7 +2068,7 @@ function menuDelete(id) {
 
 function menuAddDishAndSave() {
   var name = (document.getElementById('menu-dish-name').value || '').trim();
-  if (!name) { toast('Enter a dish name first', false); return; }
+  if (!name) { _haccpToast('Enter a dish name first', false); return; }
   var allergens = ALLERGENS_14.filter(function(a) {
     var el = document.getElementById('mda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
@@ -2142,7 +2142,7 @@ function saveDishToLibrary(name, allergens, category) {
   if (!name) return false;
   if (!settings.savedDishes) settings.savedDishes = [];
   var exists = settings.savedDishes.some(function(d) { return d.dish.toLowerCase() === name.toLowerCase(); });
-  if (exists) { toast('"' + name + '" is already in your dish library'); return false; }
+  if (exists) { _haccpToast('"' + name + '" is already in your dish library'); return false; }
   var _newDish = { id: Date.now(), dish: name, allergens: allergens.slice(), category: category || '' };
   settings.savedDishes.push(_newDish);
   saveHaccpSettings();
@@ -2157,7 +2157,7 @@ function dishDelete(id) {
   settings.savedDishes = settings.savedDishes.filter(function(d) { return d.id !== id; });
   saveHaccpSettings();
   renderDishLibrary();
-  toast('Dish removed from library');
+  _haccpToast('Dish removed from library');
   if (window.Mise && window.Mise.sync && window.Mise.sync.deleteDish) {
     window.Mise.sync.deleteDish(id).catch(function(){});
   }
@@ -2182,7 +2182,7 @@ function dishToggleEdit(id) {
 function dishSaveEdit(id) {
   var nameEl = document.getElementById('dish-edit-name-' + id);
   var name = nameEl ? (nameEl.value || '').trim() : '';
-  if (!name) { toast('Dish name required', false); return; }
+  if (!name) { _haccpToast('Dish name required', false); return; }
   var allergens = ALLERGENS_14.filter(function(a) {
     var el = document.getElementById('dish-edit-al-' + id + '-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
@@ -2198,7 +2198,7 @@ function dishSaveEdit(id) {
   if (_updDish && window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(_updDish);
   _expandedDishId = null;
   renderDishLibrary();
-  toast('"' + name + '" updated');
+  _haccpToast('"' + name + '" updated');
 }
 
 function renderDishLibrary() {
@@ -2404,7 +2404,7 @@ function custEditJob(recIdx) {
   // Scroll to top of customers form
   var tab = document.getElementById('tab-customers');
   if (tab) tab.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  toast('Editing job for ' + r.client + ' — make changes and tap Save customer job');
+  _haccpToast('Editing job for ' + r.client + ' — make changes and tap Save customer job');
 }
 
 function renderCustAllergens() {
@@ -2468,11 +2468,11 @@ function custPopulateMenuSelect() {
 
 function custAddMenu() {
   var sel = document.getElementById('cust-menu-select');
-  if (!sel || !sel.value) { toast('Choose a menu to add', false); return; }
+  if (!sel || !sel.value) { _haccpToast('Choose a menu to add', false); return; }
   var val = sel.value;
   // Don't add the same menu twice
   var already = _custAddedMenus.some(function(e) { return String(e.id) === val; });
-  if (already) { toast('That menu is already added', false); return; }
+  if (already) { _haccpToast('That menu is already added', false); return; }
   if (val === 'custom') {
     _custAddedMenus.push({ id: 'custom', name: 'Custom dishes' });
     var cs = document.getElementById('cust-custom-section');
@@ -2577,7 +2577,7 @@ function custCheckConflicts(dishes) {
 
 function custAddDish() {
   var name = (document.getElementById('cust-dish-name').value || '').trim();
-  if (!name) { toast('Enter a dish name first', false); return; }
+  if (!name) { _haccpToast('Enter a dish name first', false); return; }
   var allergens = ALLERGENS_14.filter(function(a) {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
@@ -2598,7 +2598,7 @@ function custAddDish() {
 
 function custAddDishAndSave() {
   var name = (document.getElementById('cust-dish-name').value || '').trim();
-  if (!name) { toast('Enter a dish name first', false); return; }
+  if (!name) { _haccpToast('Enter a dish name first', false); return; }
   var allergens = ALLERGENS_14.filter(function(a) {
     var el = document.getElementById('cda-' + a.replace(/\s+/g,'_'));
     return el && el.checked;
@@ -2663,7 +2663,7 @@ function logCustomerJob() {
   var notes     =  document.getElementById('cust-notes').value;
   var dietNotes =  document.getElementById('cust-diet-notes').value;
 
-  if (!client) { toast('Please enter a client name', false); return; }
+  if (!client) { _haccpToast('Please enter a client name', false); return; }
 
   var clientAllergens = custGetAllergens();
   var dietaryPrefs = DIETARY_PREFS.filter(function(p) {
@@ -2735,7 +2735,7 @@ function logCustomerJob() {
 
   renderSection_PC('customers');
   updateHaccpDashboard();
-  toast(conflicts.length
+  _haccpToast(conflicts.length
     ? '⚠️ Saved — ' + conflicts.length + ' allergen conflict' + (conflicts.length > 1 ? 's' : '')
     : 'Saved — job logged for ' + client,
     conflicts.length ? 'warn' : true);
@@ -2768,7 +2768,7 @@ function logKitchenAssess() {
   document.getElementById('ka-client').value=''; document.getElementById('ka-fridge-temp').value=''; document.getElementById('ka-notes').value=''; clearKaPhoto();
   items.forEach(function(item){ var el=document.getElementById('chk-'+item.id); if(el) el.checked=false; });
   renderSection_PC('kitchenassess'); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — kitchen assessment complete'); else if(status==='warn')toast('Warning — issues noted','warn'); else toast('Alert — kitchen unsuitable',false);
+  if(status==='ok')_haccpToast('Saved — kitchen assessment complete'); else if(status==='warn')_haccpToast('Warning — issues noted','warn'); else _haccpToast('Alert — kitchen unsuitable',false);
 }
 
 function logHaccpAllergen() {
@@ -2776,7 +2776,7 @@ function logHaccpAllergen() {
   var dish = document.getElementById('al-dish').value.trim();
   var confirmed = document.getElementById('al-confirmed').value;
   var notes = document.getElementById('al-notes').value;
-  if (!dish) { toast('Please enter a dish name', false); return; }
+  if (!dish) { _haccpToast('Please enter a dish name', false); return; }
   var present = ALLERGENS_14.filter(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); return el&&el.checked; });
   var status = present.length > 0 ? 'warn' : 'ok';
   var msg = present.length > 0 ? present.length+' allergen'+(present.length>1?'s':'')+' — '+confirmed.split(' —')[0] : 'No allergens — '+confirmed.split(' —')[0];
@@ -2794,7 +2794,7 @@ function logHaccpAllergen() {
   document.getElementById('al-client').value=''; document.getElementById('al-dish').value=''; document.getElementById('al-notes').value='';
   ALLERGENS_14.forEach(function(a){ var el=document.getElementById('al-'+a.replace(/\s/g,'_')); if(el) el.checked=false; });
   renderSection_PC('allergen'); renderAllergenGuests(); updateHaccpDashboard();
-  if (!_checkImmediateConflict(dish, present)) toast('Saved — allergen record for '+dish);
+  if (!_checkImmediateConflict(dish, present)) _haccpToast('Saved — allergen record for '+dish);
 }
 
 function editHaccpAllergen(recIdx) {
@@ -2833,7 +2833,7 @@ function addAllergenGuest() {
   var nameEl = document.getElementById('ga-name');
   if (!nameEl) return;
   var name = nameEl.value.trim();
-  if (!name) { toast('Please enter a guest name', false); return; }
+  if (!name) { _haccpToast('Please enter a guest name', false); return; }
   var allergens = ALLERGENS_14.filter(function(a){ var el=document.getElementById('ga-'+a.replace(/\s/g,'_')); return el&&el.checked; });
   if (!settings.allergenGuests) settings.allergenGuests = [];
   settings.allergenGuests.push({id:'g'+Date.now(), name:name, allergens:allergens});
@@ -2847,9 +2847,9 @@ function addAllergenGuest() {
   });
   var hits = allergens.filter(function(a){ return dishAllergens[a]; });
   if (hits.length) {
-    toast('⚠ ALLERGEN CONFLICT — '+name+': '+hits.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; '), false);
+    _haccpToast('⚠ ALLERGEN CONFLICT — '+name+': '+hits.map(function(a){ return a+' (in: '+dishAllergens[a].join(', ')+')'; }).join('; '), false);
   } else {
-    toast('Guest added — '+name);
+    _haccpToast('Guest added — '+name);
   }
 }
 
@@ -3008,14 +3008,14 @@ function _haccpLogTransport() {
   var endTime = document.getElementById('tr-end-time').value;
   var method = document.getElementById('tr-method').value;
   var by = document.getElementById('tr-by').value;
-  if (!food) { toast('Please enter a food item', false); return; }
+  if (!food) { _haccpToast('Please enter a food item', false); return; }
   var type = _trType || 'cold';
   var status='ok', msgs=[], startTemp, endTemp, hotStart, hotEnd;
 
   if(type==='cold'||type==='both') {
     startTemp = parseFloat(document.getElementById('tr-start-temp').value);
     endTemp   = parseFloat(document.getElementById('tr-end-temp').value);
-    if(isNaN(endTemp)){toast('Please enter the cold arrival temperature',false);return;}
+    if(isNaN(endTemp)){_haccpToast('Please enter the cold arrival temperature',false);return;}
     if(endTemp > T('fridge-fail')){status='fail';msgs.push('Cold arrived at '+endTemp+'°C — must be below '+T('fridge-fail')+'°C (UK legal limit)');}
     else if(endTemp > T('fridge-warn')){if(status!=='fail')status='warn';msgs.push('Cold arrived at '+endTemp+'°C — borderline, monitor closely');}
     else{msgs.push('Cold arrived safely at '+endTemp+'°C');}
@@ -3024,7 +3024,7 @@ function _haccpLogTransport() {
   if(type==='frozen') {
     startTemp = parseFloat(document.getElementById('tr-start-temp').value);
     endTemp   = parseFloat(document.getElementById('tr-end-temp').value);
-    if(isNaN(endTemp)){toast('Please enter the frozen food arrival temperature',false);return;}
+    if(isNaN(endTemp)){_haccpToast('Please enter the frozen food arrival temperature',false);return;}
     // EC 37/2005: -18°C storage, +3°C transit tolerance permitted (so -15°C is the fail threshold in transit)
     if(endTemp > -15){status='fail';msgs.push('Frozen arrived at '+endTemp+'°C — must be -15°C or below in transit (EC 37/2005)');}
     else if(endTemp > -18){if(status!=='fail')status='warn';msgs.push('Frozen arrived at '+endTemp+'°C — approaching -18°C legal storage limit');}
@@ -3034,7 +3034,7 @@ function _haccpLogTransport() {
   if(type==='hot'||type==='both') {
     hotStart = parseFloat(document.getElementById('tr-hot-start-temp').value);
     hotEnd   = parseFloat(document.getElementById('tr-hot-end-temp').value);
-    if(isNaN(hotEnd)){toast('Please enter the hot food arrival temperature',false);return;}
+    if(isNaN(hotEnd)){_haccpToast('Please enter the hot food arrival temperature',false);return;}
     // UK Food Safety (Temperature Control) Regulations: hot food must be held at 63°C or above
     if(hotEnd < 63){status='fail';msgs.push('Hot arrived at '+hotEnd+'°C — must be 63°C or above (UK law)');}
     else if(hotEnd < 70){if(status!=='fail')status='warn';msgs.push('Hot arrived at '+hotEnd+'°C — approaching minimum (63°C)');}
@@ -3053,7 +3053,7 @@ function _haccpLogTransport() {
   renderSection_PC('transport');
   updateHaccpDashboard();
   var _trCount = records.filter(function(r){return r.type==='transport';}).length;
-  if(status==='ok')toast('Saved — '+food+' ('+_trCount+' transport logged)'); else if(status==='warn')toast('Warning — '+food+': '+msg,'warn'); else toast('Alert — '+food+': '+msg,false);
+  if(status==='ok')_haccpToast('Saved — '+food+' ('+_trCount+' transport logged)'); else if(status==='warn')_haccpToast('Warning — '+food+': '+msg,'warn'); else _haccpToast('Alert — '+food+': '+msg,false);
 }
 function haccpLogTransport(){_haccpLogTransport();}
 
@@ -3063,7 +3063,7 @@ function logCredential() {
   var expiry = document.getElementById('cred-expiry').value;
   var issuer = document.getElementById('cred-issuer').value.trim();
   var ref = document.getElementById('cred-ref').value.trim();
-  if (!expiry) { toast('Please enter an expiry date', false); return; }
+  if (!expiry) { _haccpToast('Please enter an expiry date', false); return; }
   var daysLeft = Math.floor((new Date(expiry) - new Date()) / (1000*60*60*24));
   var status = daysLeft < 0 ? 'fail' : daysLeft < 30 ? 'warn' : 'ok';
   var msg = daysLeft < 0 ? 'Expired '+Math.abs(daysLeft)+' days ago' : daysLeft < 30 ? 'Expires in '+daysLeft+' days' : 'Valid — expires '+new Date(expiry).toLocaleDateString('en-GB');
@@ -3076,7 +3076,7 @@ function logCredential() {
   document.getElementById('cred-issuer').value=''; document.getElementById('cred-ref').value='';
   clearCredPhoto();
   renderCredentials(); updateHaccpDashboard();
-  if(status==='ok')toast('Saved — '+type); else if(status==='warn')toast('Warning — '+type+' expiring soon','warn'); else toast('Alert — '+type+' has expired',false);
+  if(status==='ok')_haccpToast('Saved — '+type); else if(status==='warn')_haccpToast('Warning — '+type+' expiring soon','warn'); else _haccpToast('Alert — '+type+' has expired',false);
 }
 
 function previewCredPhoto(input) {
@@ -3140,7 +3140,7 @@ function renderCredentials() {
 }
 
 function removeCredential(i) {
-  var list = loadCredentials(); list.splice(i,1); saveCredentials(list); renderCredentials(); toast('Credential removed');
+  var list = loadCredentials(); list.splice(i,1); saveCredentials(list); renderCredentials(); _haccpToast('Credential removed');
 }
 
 // --- PC RENDER ---
@@ -3299,7 +3299,7 @@ async function openPortal(btn) {
     console.error('[Veriqo] Portal error:', err);
     btn.textContent = orig;
     btn.disabled = false;
-    if (typeof toast === 'function') toast('Could not open — please try again', false);
+    if (typeof _haccpToast === 'function') _haccpToast('Could not open — please try again', false);
   }
 }
 
@@ -3345,7 +3345,7 @@ async function saveProfile() {
     var user = userResult.data && userResult.data.user;
     if (!user) {
       // Not signed in — localStorage save above is all we can do
-      toast('Saved locally (not signed in)', 'warn');
+      _haccpToast('Saved locally (not signed in)', 'warn');
       return;
     }
     var { error } = await supabaseClient
@@ -3355,19 +3355,19 @@ async function saveProfile() {
     if (error) {
       // Show the real Supabase error so it can be diagnosed
       console.error('[Veriqo] saveProfile Supabase error:', error);
-      toast('Cloud save failed: ' + error.message, false);
+      _haccpToast('Cloud save failed: ' + error.message, false);
       return;
     }
   } catch(e) {
     console.warn('[Veriqo] saveProfile exception:', e.message);
-    toast('Cloud save failed — check connection', false);
+    _haccpToast('Cloud save failed — check connection', false);
     return;
   }
 
   // Show confirmation
   var msg = document.getElementById('profile-save-msg');
   if (msg) { msg.style.display = 'block'; setTimeout(function(){ msg.style.display = 'none'; }, 2000); }
-  toast('Profile saved ✓');
+  _haccpToast('Profile saved ✓');
 }
 
 async function loadEmailPreferences(){
@@ -3390,10 +3390,10 @@ async function setEmailPref(optedIn){
   try {
     var res = await supabaseClient.from('profiles').update({ email_opt_out: !optedIn }).eq('id', userId);
     if (res.error) throw res.error;
-    toast(optedIn ? 'Emails turned back on ✓' : 'Emails turned off ✓', true);
+    _haccpToast(optedIn ? 'Emails turned back on ✓' : 'Emails turned off ✓', true);
   } catch (e) {
     console.error('[Veriqo] setEmailPref:', e);
-    toast('Could not save preference');
+    _haccpToast('Could not save preference');
     if (toggle) toggle.checked = !optedIn;
   }
 }
@@ -3554,7 +3554,7 @@ function renderInspector() {
     + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">'
     +   '<div>'
     +     (businessName ? '<div style="font-size:17px;font-weight:700;color:#1a1a18">'+_esc(businessName)+'</div>' : '')
-    +     '<div style="font-size:13px;color:#888;margin-top:2px">'+_esc(fmtDate(TODAY))+'</div>'
+    +     '<div style="font-size:13px;color:#888;margin-top:2px">'+_esc(_haccpFmtDate(TODAY))+'</div>'
     +     '<div style="font-size:12px;color:#aaa;margin-top:1px">'+recs.length+' record'+(recs.length!==1?'s':'')+' logged today</div>'
     +   '</div>'
     +   '<div style="text-align:right;flex-shrink:0;margin-left:12px">'
@@ -3698,8 +3698,8 @@ function setInspectorRange(days) {
 function downloadRangePDF() {
   var from = document.getElementById('range-from');
   var to   = document.getElementById('range-to');
-  if (!from || !to || !from.value || !to.value) { toast('Please select a date range', false); return; }
-  if (from.value > to.value) { toast('Start date must be before end date', false); return; }
+  if (!from || !to || !from.value || !to.value) { _haccpToast('Please select a date range', false); return; }
+  if (from.value > to.value) { _haccpToast('Start date must be before end date', false); return; }
   var btn = document.getElementById('range-pdf-btn');
   if (btn) { btn.textContent = 'Building PDF…'; btn.disabled = true; }
   // Small delay so the UI updates before blocking PDF build
@@ -3757,15 +3757,15 @@ function buildMultiDayPDF(startDateStr, endDateStr) {
   var end = new Date(endDateStr   + 'T12:00:00');
   while (cur <= end) { days.push(cur.toISOString().slice(0,10)); cur.setDate(cur.getDate()+1); }
 
-  if (days.length > 93) { toast('Maximum range is 3 months', false); return; }
+  if (days.length > 93) { _haccpToast('Maximum range is 3 months', false); return; }
 
   var dayData = days.map(function(d) {
-    var recs = d === todayStr() ? records.slice() : getDayRecords(d);
-    return { dateStr: d, label: fmtDate(d), recs: recs };
+    var recs = d === todayStr() ? records.slice() : _haccpGetDayRecords(d);
+    return { dateStr: d, label: _haccpFmtDate(d), recs: recs };
   });
 
   var daysWithData = dayData.filter(function(d){ return d.recs.length > 0; });
-  if (daysWithData.length === 0) { toast('No records found in that date range', false); return; }
+  if (daysWithData.length === 0) { _haccpToast('No records found in that date range', false); return; }
 
   // ── Overall summary counts ────────────────────────────────────────────────
   var totalRecs = 0, totalOk = 0, totalWarn = 0, totalFail = 0;
@@ -3785,7 +3785,7 @@ function buildMultiDayPDF(startDateStr, endDateStr) {
   var now        = new Date();
   var genDateStr = now.toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});
   var genTimeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  var rangeLabel = fmtDate(startDateStr) + ' — ' + fmtDate(endDateStr);
+  var rangeLabel = _haccpFmtDate(startDateStr) + ' — ' + _haccpFmtDate(endDateStr);
   var refNum     = startDateStr.replace(/-/g,'') + '_' + endDateStr.replace(/-/g,'');
 
   // ── Build one section per day ─────────────────────────────────────────────
@@ -4053,7 +4053,7 @@ function _starterStepsDone() {
   var have = { opening:false, fridge:false, cooking:false };
   function scan(recs) { recs.forEach(function(r){ if (have.hasOwnProperty(r.type)) have[r.type] = true; }); }
   scan(records);
-  getAllDays().forEach(function(d){ if (d !== todayStr()) scan(getDayRecords(d)); });
+  getAllDays().forEach(function(d){ if (d !== todayStr()) scan(_haccpGetDayRecords(d)); });
   return have;
 }
 
@@ -4068,7 +4068,7 @@ function renderStarterChecklist() {
     if (_starterWasShown && !settings.starterCompleted) {
       settings.starterCompleted = true;
       saveHaccpSettings();
-      toast('Setup complete — your kitchen is EHO-ready');
+      _haccpToast('Setup complete — your kitchen is EHO-ready');
       if (window.posthog) posthog.capture('setup_checklist_completed');
     }
     return;
@@ -4474,7 +4474,7 @@ function _checkImmediateConflict(dishName, allergensPresentArray) {
     if (hits.length) conflicts.push(esc(g.name) + ': ' + hits.map(esc).join(', '));
   });
   if (conflicts.length) {
-    toast('⚠ ALLERGEN CONFLICT — ' + conflicts.join(' | '), false);
+    _haccpToast('⚠ ALLERGEN CONFLICT — ' + conflicts.join(' | '), false);
     renderAllergenGuests();
     _renderAllergenConflictBanners(conflicts);
   }
@@ -4496,7 +4496,7 @@ function _checkCookingConflict(foodName) {
       }
     });
   });
-  if (conflicts.length) toast('⚠ ALLERGEN CONFLICT — ' + conflicts.join(' | '), false);
+  if (conflicts.length) _haccpToast('⚠ ALLERGEN CONFLICT — ' + conflicts.join(' | '), false);
 }
 
 function _pushRecord(rec) {
@@ -4572,7 +4572,7 @@ function _printNextJobAllergenMatrix(job) {
   }).join('');
 
   var clientName = _e(job.client || 'Unknown client');
-  var dateStr = job.eventDate ? fmtDate(job.eventDate) : '';
+  var dateStr = job.eventDate ? _haccpFmtDate(job.eventDate) : '';
   var coverStr = job.covers ? job.covers + ' covers' : '';
   var businessName = _e(settings.businessName || settings.chefName || '');
   var todayStr = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });

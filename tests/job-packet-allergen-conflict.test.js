@@ -73,7 +73,7 @@ function makeContext(localStorageContents) {
     _renderActiveJobBanner: function () { calls.renderActiveJobBannerCalls++; },
     _renderAllergenConflictBanners: function (lines) { calls.conflictLines = lines; },
     renderAllergenGuests: function () {},
-    toast: function (msg) { calls.toasts.push(msg); },
+    _haccpToast: function (msg) { calls.toasts.push(msg); },
     _calls: calls,
   });
   vm.runInContext(SOURCE, context);

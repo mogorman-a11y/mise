@@ -21,13 +21,14 @@
 
 ## Live versions
 
-Source of truth is always `app.html`'s own `<script src>` tags — this table can drift; grep `app.html` if in doubt. Last checked 2026-07-16.
+Source of truth is always `app.html`'s own `<script src>` tags — this table can drift; grep `app.html` if in doubt. Last checked 2026-07-21.
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=68` | `app.html` script tag |
-| `js/modules/menus.js` | `?v=26` | `app.html` |
-| `js/modules/costing.js` | `?v=31` | `app.html` |
+| `js/modules/haccp.js` | `?v=69` | `app.html` script tag |
+| `js/modules/menus.js` | `?v=30` | `app.html` |
+| `js/modules/costing.js` | `?v=32` | `app.html` |
+| `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
 | `js/modules/ai-estimate.js` | `?v=6` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
 | `js/modules/dashboard.js` | `?v=6` | `app.html` |
@@ -42,7 +43,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | `js/core/ai-other-costs-store.js` | `?v=2` | `app.html` |
 | `js/core/allergens.js` / `menu-dishes.js` / `gp-math.js` / `ai-job-shape.js` | `?v=1` each | `app.html` |
 | `js/core/subscription.js` | `?v=10` | `app.html` |
-| Service worker cache | `veriqo-v123` | `sw.js` line 8 |
+| Service worker cache | `veriqo-v125` | `sw.js` line 8 |
 
 Bumping `sw.js`'s cache name is **not required** for JS module changes (network-first, per rule 4) but this project has bumped it alongside every round of fixes in the 2026-07 critical-fixes pass anyway — harmless belt-and-braces, not a hard requirement.
 
@@ -216,8 +217,16 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 |---------------|-----------|-------|
 | `logTransport()` | `menus.js` (line ~2047) | Menus module transport — saves to `mRecords`, used by Mise transport button in app.html |
 | `_haccpLogTransport()` | `haccp.js` | HACCP transport — renamed from `logTransport` to avoid collision. `haccpLogTransport()` calls this. |
+| `toast()` | `menus.js` | `toast(msg, type)` — `type` is a string (`'err'`/`'warn'`). |
+| `_haccpToast()` | `haccp.js` | Renamed from `toast` 2026-07-21 — **had a live signature-mismatch bug**, not just a naming clash: haccp.js's original convention was `toast(msg, ok)` with `ok` a *boolean* (`false`→fail red). Because menus.js's string-based version was silently winning, every fail toast in HACCP (~100 call sites) rendered with the generic/neutral color instead of red — success and failure looked the same. Fixed by renaming and updating all internal call sites; verified `_haccpToast('x', false)` now renders `#A32D2D` again. |
+| `fmtDate()` | `menus.js` | Short format: `21 Jul 2026`. |
+| `_haccpFmtDate()` | `haccp.js` | Renamed from `fmtDate` 2026-07-21 — HACCP's own long format (`Tuesday, 21 July 2026`, via `toLocaleDateString` with `weekday:'long'`) was being silently replaced by menus.js's short format throughout HACCP (header date, day-block titles, log exports). Cosmetic, but real. |
+| `getDayRecords()` | `menus.js` | Reads `localStorage['mise_'+date]` — Menus/job records. |
+| `_haccpGetDayRecords()` | `haccp.js` | Renamed from `getDayRecords` 2026-07-21 — **the serious one**: HACCP's own version reads `localStorage['haccp_'+date]`. Because menus.js's version was silently winning, HACCP's "Previous days" view and its day/date-range log exports (text + PDF) were reading from the *Menus* localStorage namespace instead of HACCP's — wrong or empty compliance data for any past-day export, a real problem for EHO-inspection use. |
+| `togglePastJobs()` | `menus.js` | Toggles `_pastJobsOpen` for the Menus > Jobs tab's own past-bookings list; wired to `#jobs-past-btn` in app.html. |
+| `_costingTogglePastJobs()` | `costing.js` | Renamed from `togglePastJobs` 2026-07-21 — costing.js had its own identically-named toggle for the Costing module's own past-jobs list. Since costing.js loads after menus.js, its version was winning globally, so the Jobs tab's "View previous bookings" button silently did nothing (toggled unrelated Costing-module state instead). |
 
-`menus.js` loads after `haccp.js` in app.html. Any function defined in both files: menus.js wins. Keep HACCP-specific functions prefixed with `_haccp` if they share names with menus functions.
+`menus.js` loads after `haccp.js` (and `costing.js` loads after both) in app.html. Any function defined in more than one of these files: **whichever module loads last silently wins** — the other module's calls to that name run the wrong implementation with no error, which is exactly how the four bugs above went undetected. Keep HACCP-specific functions prefixed with `_haccp`, Costing-specific ones prefixed with `_costing`, if they'd otherwise share a name with a menus.js (or another module's) function. Before adding any new top-level `function name(...)` to haccp.js or costing.js, grep the other module-level `js/modules/*.js` files for that exact name first.
 
 ---
 
@@ -348,6 +357,7 @@ Added module-level `esc()` to haccp.js. Applied to `renderSettingsList`, `render
 - `haccp_records` — `(user_id, date)` unique, `records` JSONB array
 - `kitchens` / `kitchen_members` — multi-venue (owner auto-created on signup)
 - `clients`, `dishes`, `menus`, `menu_dishes`, `jobs`, `mise_records`, `quotes`, `costings`, `invoices`, `payments`
+- Costing rebuild (additive, added 2026-07-21 — see Architecture Decisions.md): `ingredients`, `ingredient_supplier_aliases`, `ingredient_prices`, `dish_recipes`, `recipe_ingredients`, `job_cost_reconciliations`. All keyed off `dishes.id`/`jobs.id`, all RLS via the same `venue_rw` pattern. Backing JS is `js/modules/recipe-costing.js`.
 
 **RLS on haccp_records:**
 - INSERT/UPDATE require `venue_id = auth_venue_id()` (column default, auto-populated)
@@ -465,10 +475,11 @@ js/
     ai-other-costs-store.js    ← AI Estimate's per-user, per-job "other costs" draft store
     yield-sync.js              ← DEAD, unreferenced duplicate — do not load or edit
   modules/
-    haccp.js        (v68)
-    menus.js        (v26)
-    prep.js         (v9)
-    costing.js      (v31)
+    haccp.js           (v69)
+    menus.js           (v30)
+    prep.js            (v9)
+    costing.js         (v32)
+    recipe-costing.js  (v3)   ← Costing rebuild Phases 2-4: recipe entry in dish editor, menu/job derived cost, actual-cost reconciliation. Supabase-only, no localStorage — same pattern as prep.js.
     ai-estimate.js  (v6)   ← AI Estimate screen, inside Costing module
     dashboard.js    (v6)
     intake.js       (v1)   ← intake form / event templates
