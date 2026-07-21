@@ -746,6 +746,10 @@ function _dishRowHTML(d) {
     + '<button onclick="event.stopPropagation();addPrepTask()" style="padding:7px 10px;background:#F97316;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0">Add</button>'
     + '</div>'
     + '</div>';
+  var recipeCostingHtml = '<div style="margin-bottom:10px;padding:10px;background:#F2F8F3;border:1px solid #C7E2CB;border-radius:8px">'
+    + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#3A7D44;margin-bottom:8px">💰 Recipe Costing</div>'
+    + '<div id="recipe-costing-body-'+d.id+'"><p style="font-size:12px;color:#A09890;padding:4px 0">Loading…</p></div>'
+    + '</div>';
   var editForm = isEditing
     ? '<div id="dish-edit-'+d.id+'" style="margin-top:10px;padding-top:10px;border-top:1px solid #D4C9B5">'
       + '<input id="dish-edit-name-'+d.id+'" class="form-input" type="text" value="'+_esc(d.dish)+'" style="margin-bottom:8px" placeholder="Dish name">'
@@ -759,6 +763,7 @@ function _dishRowHTML(d) {
         }).join('')
       + '</div>'
       + prepTasksHtml
+      + recipeCostingHtml
       + '<div style="display:flex;gap:8px">'
       + '<button onclick="saveDishEdit(\''+d.id+'\')" class="btn-primary" style="flex:1;margin:0;padding:9px">Save changes</button>'
       + '<button onclick="event.stopPropagation();cancelDishEdit()" style="background:none;border:none;color:#A09890;font-size:13px;cursor:pointer;padding:4px 8px;font-family:inherit">Cancel</button>'
@@ -833,6 +838,7 @@ function editDish(id){
   }
   renderDishLibrary();
   if(_editingDishId){
+    if (typeof _loadDishRecipe === 'function') _loadDishRecipe(id);
     setTimeout(function(){
       var el = document.getElementById('dish-edit-'+id);
       if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
