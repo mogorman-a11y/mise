@@ -250,6 +250,13 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
 
+### 2026-07-22 — VQ-009: baseline security headers via Edge Middleware (middleware.js) — ON A BRANCH, NOT YET MERGED
+Production had no `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`, or clickjacking control at all. `vercel.json` uses the legacy `routes` array (15+ custom rewrites/redirects) which is mutually exclusive with Vercel's `headers` config key, so headers can't be added there — added `middleware.js` (Vercel Edge Middleware) instead, which is additive and doesn't touch `vercel.json`. Matcher excludes `/api/*` (those already set their own CORS headers per function).
+
+Ships unconditionally: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`, a conservative `Permissions-Policy`. CSP ships in **Report-Only** mode (`CSP_ENFORCE = false` in middleware.js) rather than enforcing — this app relies on inline `onclick=`/`onchange=` handlers and inline `style=` attributes throughout by long-standing design (not something this pass touched), and Google Tag Manager is loaded, which can inject third-party scripts (PostHog, GA) whose exact origins aren't fully knowable from static source alone. Report-Only surfaces console violations without blocking anything.
+
+**Before merging to main:** this was pushed to a branch (not main) specifically because this repo has no staging and a misconfigured header/CSP could break the live site instantly. Check the Vercel preview deployment for that branch first — click through sign-in, `/app`, `/pay`, and the AI photo-scan flow, and check the browser console for CSP report-only violations to see whether the allowlist in `middleware.js` needs adjusting before ever setting `CSP_ENFORCE = true`.
+
 ### 2026-07-22 — VQ-008: duplicate dismissMenusBanner (menus.js v38)
 `dismissMenusBanner()` was defined twice in `menus.js`: the real implementation (persists `carte_install_dismissed` to localStorage) followed later in the same file by a stub that only hides the banner and doesn't persist. The later declaration wins within a single file, so the persisting version was always shadowed — the install banner's dismissal was never remembered and could reappear on later visits. Deleted the stub, kept the persistence-aware original.
 
