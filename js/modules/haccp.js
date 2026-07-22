@@ -1718,7 +1718,7 @@ function togglePrivateChefMode(on) {
     renderCustDietaryPrefs();
     renderCustDishAllergens();
     renderMenuLibrary();
-    renderDishLibrary();
+    _haccpRenderDishLibrary();
     custPopulateMenuSelect();
     populateSelect('tr-by','staff');
     populateSelect('ms-by','staff');
@@ -1734,7 +1734,7 @@ function initPrivateChefMode() {
   renderCustDietaryPrefs();
   renderCustDishAllergens();
   renderMenuLibrary();
-  renderDishLibrary();
+  _haccpRenderDishLibrary();
   custPopulateMenuSelect();
   populateSelect('tr-by','staff');
   populateSelect('ms-by','staff');
@@ -2149,7 +2149,7 @@ function saveDishToLibrary(name, allergens, category) {
   var _newDish = { id: Date.now(), dish: name, allergens: allergens.slice(), category: category || '' };
   settings.savedDishes.push(_newDish);
   saveHaccpSettings();
-  renderDishLibrary();
+  _haccpRenderDishLibrary();
   if (window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(_newDish);
   showNudge('dish_added');
   return true;
@@ -2159,7 +2159,7 @@ function dishDelete(id) {
   if (!settings.savedDishes) return;
   settings.savedDishes = settings.savedDishes.filter(function(d) { return d.id !== id; });
   saveHaccpSettings();
-  renderDishLibrary();
+  _haccpRenderDishLibrary();
   _haccpToast('Dish removed from library');
   if (window.Mise && window.Mise.sync && window.Mise.sync.deleteDish) {
     window.Mise.sync.deleteDish(id).catch(function(){});
@@ -2172,7 +2172,7 @@ var _expandedDishId = null;
 
 function dishToggleEdit(id) {
   _expandedDishId = (_expandedDishId === id) ? null : id;
-  renderDishLibrary();
+  _haccpRenderDishLibrary();
   // Scroll the expanded item into view
   if (_expandedDishId) {
     setTimeout(function() {
@@ -2200,11 +2200,11 @@ function dishSaveEdit(id) {
   saveHaccpSettings();
   if (_updDish && window.Mise && window.Mise.sync && window.Mise.sync.saveDish) Mise.sync.saveDish(_updDish);
   _expandedDishId = null;
-  renderDishLibrary();
+  _haccpRenderDishLibrary();
   _haccpToast('"' + name + '" updated');
 }
 
-function renderDishLibrary() {
+function _haccpRenderDishLibrary() {
   var c = document.getElementById('dish-library-list');
   if (!c) return;
   var dishes = settings.savedDishes || [];
