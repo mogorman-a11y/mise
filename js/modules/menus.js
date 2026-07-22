@@ -2947,7 +2947,6 @@ function renderMiseSections(){
 // Unified shell stubs — routing handled by showModule() in app.html
 function openVeriqo() { if (typeof showModule === 'function') showModule('haccp'); }
 function openYield()  { if (typeof showModule === 'function') showModule('costing'); }
-function dismissMenusBanner() { var b = document.getElementById('menus-install-banner'); if (b) b.style.display = 'none'; }
 
 // ── NUDGE_MAP — cross-module upgrade nudges ────────────────
 var MENUS_NUDGE_MAP = {
