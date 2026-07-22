@@ -27,7 +27,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 |---|---|---|
 | `js/modules/haccp.js` | `?v=69` | `app.html` script tag |
 | `js/modules/menus.js` | `?v=30` | `app.html` |
-| `js/modules/costing.js` | `?v=32` | `app.html` |
+| `js/modules/costing.js` | `?v=33` | `app.html` |
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
 | `js/modules/ai-estimate.js` | `?v=6` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
@@ -247,6 +247,13 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### 2026-07-22 — VQ-001/VQ-002 critical audit fixes (api/magic-link.js, api/stripe-connect.js, costing.js v33)
+Full audit in `VERIQO_AUDIT_2026-07-22.md`. Two release-blocking findings fixed:
+- **VQ-001 (open redirect → token leak):** `api/magic-link.js` accepted an unvalidated `redirectTo` and embedded the Supabase `token_hash` in it. Added `_safeRedirect()`, which only accepts URLs whose origin is exactly `https://getveriqo.co.uk`; anything else falls back to the app's own default URL. Also scoped `Access-Control-Allow-Origin` from `*` to `https://getveriqo.co.uk`. Deleted `api/auth-link.js`, `api/carte-magic-link.js`, `api/yield-magic-link.js` — unreferenced duplicates of the now-merged handler that carried the identical unvalidated-redirect bug and were still live/callable.
+- **VQ-002 (Stripe Connect IDOR):** `api/stripe-connect.js`'s `onboard`/`refresh`/`dashboard` actions trusted a caller-supplied `uid` query param with no auth check, letting anyone who knew/guessed a UUID create/mutate a chef's Stripe Express account or obtain their Dashboard login link. Fixed: these three actions are now POST-only, require an `Authorization: Bearer <supabase access token>` header, and derive the uid exclusively from `verifyUser()` (same pattern as `api/veriqo-estimate.js`) — any client-sent uid is ignored. `handleCheckout` (client `/pay` portal) is intentionally unchanged/unauthenticated — it only accepts a `quoteId`. Client call sites in `costing.js` (`connectStripeAccount`, `refreshStripeStatus`, `openStripeDashboard`) updated to POST with the live session token instead of GET with `?uid=`; the now-dead `_yieldUid()` helper was removed.
+
+Not yet fixed from the same audit (see `VERIQO_AUDIT_2026-07-22.md` for full list): VQ-003 predictable quote-portal IDs, VQ-004 stored XSS in Costing/one-pager `innerHTML`, VQ-005 unauthenticated/unmetered AI endpoints, VQ-006 broken AI bio writer, VQ-007 HACCP dish-library render collision, VQ-008 duplicate banner-dismiss function, VQ-009 missing CSP/security headers, VQ-011 leaked provider error messages, VQ-012 remaining dead code (`api/create-checkout.js` stub, duplicate `yield-sync.js`), VQ-013 test-coverage gaps.
 
 ### v67 — Security sweep round 4: final tidy (haccp.js)
 `r.time` now wrapped with `esc()` in `renderSection()`, `refreshFilterPanel()`, and `buildDayBlock()`. `buildDayBlock()` typeLabels map extended to cover all PC_TYPES (job, kitchenassess, allergen, transport, mobileset, incident) with `|| t` fallback so unknown types show the type key rather than "undefined". Delivery photo: guard changed from truthy check to `/^data:image\//.test(r.photo)` so only genuine FileReader data URLs are accepted as img src.

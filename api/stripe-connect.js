@@ -2,14 +2,16 @@
 //
 // Single endpoint, multi-action. Action selected by ?action= query string.
 //
-// CHEF-FACING (Yield Settings → Payment tab):
-//   GET  /api/stripe-connect?action=onboard&uid=<userId>
+// CHEF-FACING (Yield Settings → Payment tab) — all require an
+// "Authorization: Bearer <supabase access token>" header; the uid is derived
+// from that verified session, never from the request:
+//   POST /api/stripe-connect?action=onboard
 //     Creates Stripe Express account if needed, stores acct_id on profiles,
 //     returns { url } — Account Link URL for chef to complete onboarding.
-//   GET  /api/stripe-connect?action=refresh&uid=<userId>
+//   POST /api/stripe-connect?action=refresh
 //     Re-fetches Stripe account, updates profiles.stripe_account_status,
 //     returns { status, charges_enabled, payouts_enabled, details_submitted }.
-//   GET  /api/stripe-connect?action=dashboard&uid=<userId>
+//   POST /api/stripe-connect?action=dashboard
 //     Creates an Express Dashboard login link, returns { url }.
 //
 // CLIENT-FACING (/pay portal):
@@ -30,6 +32,18 @@ const SITE = 'https://getveriqo.co.uk';
 
 function sb() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
+async function verifyUser(token) {
+  const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.id || null;
 }
 
 function deriveStatus(acct) {
@@ -253,27 +267,30 @@ async function handleCheckout(body, res) {
 
 // ── Main handler ─────────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://getveriqo.co.uk');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const action = (req.query?.action || '').toLowerCase();
-  const uid = req.query?.uid;
+
+  // Chef-facing actions mutate/reveal a specific chef's Stripe state — the
+  // caller must prove who they are. The uid is derived exclusively from the
+  // verified session token; any uid the client sends is ignored.
+  const CHEF_ACTIONS = ['onboard', 'refresh', 'dashboard'];
 
   try {
-    if (action === 'onboard') {
-      if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-      return await handleOnboard(uid, res);
-    }
-    if (action === 'refresh') {
-      if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-      return await handleRefresh(uid, res);
-    }
-    if (action === 'dashboard') {
-      if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-      return await handleDashboard(uid, res);
+    if (CHEF_ACTIONS.includes(action)) {
+      if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+      const token = (req.headers.authorization || '').replace('Bearer ', '');
+      if (!token) return res.status(401).json({ error: 'Unauthorized' });
+      const uid = await verifyUser(token);
+      if (!uid) return res.status(401).json({ error: 'Invalid or expired session' });
+
+      if (action === 'onboard') return await handleOnboard(uid, res);
+      if (action === 'refresh') return await handleRefresh(uid, res);
+      if (action === 'dashboard') return await handleDashboard(uid, res);
     }
     if (action === 'checkout') {
       if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });

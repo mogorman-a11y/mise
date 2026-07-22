@@ -2361,13 +2361,6 @@
     }
 
     // ─────────────────────── STRIPE CONNECT (chef onboarding) ────────────
-    function _yieldUid() {
-      try { return (window.Mise && window.Mise.yieldSync && window.Mise.yieldSync.uid && window.Mise.yieldSync.uid())
-        || (yProfile && yProfile.id)
-        || (JSON.parse(localStorage.getItem('yield_profile') || '{}').id); }
-      catch (e) { return null; }
-    }
-
     function renderStripeConnectCard() {
       const body = document.getElementById('stripe-connect-body');
       if (!body) return;
@@ -2407,13 +2400,24 @@
         '<button class="btn btn-ghost" onclick="refreshStripeStatus(true)" style="width:100%;">Refresh status</button>';
     }
 
+    async function _stripeConnectToken() {
+      try {
+        const res = await supabaseClient.auth.getSession();
+        const session = res.data && res.data.session;
+        return session ? session.access_token : null;
+      } catch (e) { return null; }
+    }
+
     async function connectStripeAccount() {
-      const uid = _yieldUid();
-      if (!uid) { showToast('Sign in first'); return; }
+      const token = await _stripeConnectToken();
+      if (!token) { showToast('Sign in first'); return; }
       const btn = document.getElementById('stripe-connect-btn');
       if (btn) { btn.innerHTML = 'Opening Stripe…'; btn.disabled = true; }
       try {
-        const res = await fetch('/api/stripe-connect?action=onboard&uid=' + encodeURIComponent(uid));
+        const res = await fetch('/api/stripe-connect?action=onboard', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
         const data = await res.json();
         if (!res.ok || !data.url) throw new Error(data.error || 'Could not start onboarding');
         window.location.href = data.url;
@@ -2425,10 +2429,13 @@
     }
 
     async function refreshStripeStatus(showFeedback) {
-      const uid = _yieldUid();
-      if (!uid) return;
+      const token = await _stripeConnectToken();
+      if (!token) return;
       try {
-        const res = await fetch('/api/stripe-connect?action=refresh&uid=' + encodeURIComponent(uid));
+        const res = await fetch('/api/stripe-connect?action=refresh', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
         const data = await res.json();
         if (res.ok) {
           if (!yProfile) yProfile = {};
@@ -2450,10 +2457,13 @@
     }
 
     async function openStripeDashboard() {
-      const uid = _yieldUid();
-      if (!uid) return;
+      const token = await _stripeConnectToken();
+      if (!token) return;
       try {
-        const res = await fetch('/api/stripe-connect?action=dashboard&uid=' + encodeURIComponent(uid));
+        const res = await fetch('/api/stripe-connect?action=dashboard', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
         const data = await res.json();
         if (!res.ok || !data.url) throw new Error(data.error || 'Could not open dashboard');
         window.open(data.url, '_blank');

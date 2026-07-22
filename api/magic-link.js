@@ -43,8 +43,24 @@ const CFG = {
   },
 };
 
+// Only ever redirect back into a page VeriQo actually serves. Anything else
+// (a different host, or a non-http(s) scheme like javascript:) is rejected
+// and the caller falls back to the app's own default URL — this is what
+// stops an attacker from riding a genuine magic-link email to their own
+// token-harvesting page.
+function _safeRedirect(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url, 'https://getveriqo.co.uk');
+    if (parsed.origin !== 'https://getveriqo.co.uk') return null;
+    return parsed.href;
+  } catch (e) {
+    return null;
+  }
+}
+
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://getveriqo.co.uk');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -56,7 +72,7 @@ module.exports = async function handler(req, res) {
     if (!['magiclink', 'recovery'].includes(type)) return res.status(400).json({ error: 'invalid type' });
 
     const cfg = CFG[app] || CFG.veriqo;
-    const dest = redirectTo || cfg.appUrl;
+    const dest = _safeRedirect(redirectTo) || cfg.appUrl;
 
     const adminRes = await fetch(
       process.env.SUPABASE_URL + '/auth/v1/admin/generate_link',
