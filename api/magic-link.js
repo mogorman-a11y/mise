@@ -125,6 +125,11 @@ module.exports = async function handler(req, res) {
   }
 };
 
+// Exposed for direct unit testing (tests/api-security-regressions.test.js) —
+// the Vercel handler contract only needs module.exports to be callable, so
+// attaching this as a property doesn't change runtime behaviour at all.
+module.exports._safeRedirect = _safeRedirect;
+
 function _buildEmail(link, type, cfg) {
   if (cfg.isDark) return _buildDarkEmail(link, type, cfg);
 
