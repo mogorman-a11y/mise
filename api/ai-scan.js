@@ -7,11 +7,33 @@
 //
 // type='receipt' → procurement auditor mode
 //   Returns: { vendor: string, items: [{ itemName, unit, pricePerUnit }] }
+//
+// Requires a valid Supabase session (Authorization: Bearer <token>), same
+// verifyUser() pattern as api/parse-menu.js / api/veriqo-estimate.js — this
+// calls paid OpenAI vision models on every request and had no auth check at
+// all until 2026-07-22 (VQ-005), so anyone who knew the URL could run up the
+// OpenAI bill and, with no image-size cap either, send oversized payloads to
+// burn serverless resources.
 
 // Canonical allergen list — same file the browser modules use (js/core/allergens.js).
 // Do not hardcode a second copy here; a spelling drift between this prompt's
 // vocabulary and the client's is what broke allergen conflict detection.
 const { ALLERGENS_14: ALLERGENS, normalizeAllergen } = require('../js/core/allergens.js');
+
+// Same pattern as api/parse-menu.js / api/veriqo-estimate.js's verifyUser() —
+// verifies the caller's Supabase session directly rather than trusting a
+// client-supplied user id.
+async function verifyUser(token) {
+  const res = await fetch(`${process.env.SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    },
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.id || null;
+}
 
 const PROMPTS = {
   label: `You are a strict food safety compliance officer working in a UK professional kitchen. You will be shown a photo of a food packaging label, product spec sheet, or ingredient declaration.
@@ -52,16 +74,24 @@ Rules:
 };
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', 'https://getveriqo.co.uk');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const token = (req.headers.authorization || '').replace('Bearer ', '');
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  const userId = await verifyUser(token);
+  if (!userId) return res.status(401).json({ error: 'Invalid or expired session' });
+
   const { type, image, mimeType } = req.body || {};
   if (!image) return res.status(400).json({ error: 'image (base64) is required' });
   if (!PROMPTS[type]) return res.status(400).json({ error: 'type must be "label" or "receipt"' });
+  // Same 5MB-ish decoded-size cap as api/veriqo-estimate.js's scan branch —
+  // base64 is ~4/3 the decoded size, so this is a generous upper bound.
+  if (image.length > 6_990_000) return res.status(400).json({ error: 'Image too large (max 5 MB)' });
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY not configured on server' });

@@ -3195,8 +3195,8 @@ function vqIcon(name, size) {
 
 <script src="js/modules/dashboard.js?v=7"></script>
 <script src="js/modules/haccp.js?v=70"></script>
-<script src="js/modules/menus.js?v=36"></script>
-<script src="js/modules/costing.js?v=35"></script>
+<script src="js/modules/menus.js?v=37"></script>
+<script src="js/modules/costing.js?v=36"></script>
 <script src="js/modules/ai-estimate.js?v=6"></script>
 <script src="js/modules/intake.js?v=1"></script>
 <script src="js/modules/lead-scripts.js?v=1"></script>
@@ -4208,7 +4208,10 @@ async function vqGenerateBio() {
     tone:            (document.getElementById('vqBioTone')       || {}).value || 'Warm'
   };
   try {
-    var res = await fetch('/api/parse-menu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ action: 'bio' }, payload)) });
+    var _sess = await supabaseClient.auth.getSession();
+    var _token = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+    if (!_token) throw new Error('Please sign in and try again');
+    var res = await fetch('/api/parse-menu', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token }, body: JSON.stringify(Object.assign({ action: 'bio' }, payload)) });
     var data = await res.json();
     if (!res.ok || !data.bio) throw new Error(data.error || 'Bio generation failed');
     var preview = document.getElementById('vqBioPreview');

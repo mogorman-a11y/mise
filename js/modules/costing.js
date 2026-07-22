@@ -674,9 +674,12 @@
       const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
 
       try {
+        const _sess = await supabaseClient.auth.getSession();
+        const _token = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+        if (!_token) { resetBtn(true); showToast('Please sign in and try again'); return; }
         const res = await fetch('/api/ai-scan', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _token },
           body: JSON.stringify({ type: 'receipt', image: base64, mimeType })
         });
         const data = await res.json();

@@ -31,10 +31,11 @@
 //     ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
 //
 // ── FUNCTION CAP NOTE ─────────────────────────────────────────────────────────
-// Vercel Hobby plan allows 12 serverless functions. This file brings the count
-// to 13. Before deploying, exclude one existing function in .vercelignore.
-// Suggested candidate: api/generate-bio.js → merge into api/parse-menu.js,
-// or upgrade to Vercel Pro.
+// Vercel Hobby plan allows 12 serverless functions. api/generate-bio.js was
+// merged into api/parse-menu.js as the 'bio' action (2026-07-22, VQ-006) —
+// that was the suggested candidate for exactly this headroom. If this file
+// still pushes the count over the cap, exclude another function in
+// .vercelignore or upgrade to Vercel Pro.
 //
 // ── ENV VARS REQUIRED ─────────────────────────────────────────────────────────
 //   SUPABASE_URL
