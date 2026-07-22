@@ -21,6 +21,15 @@
     let _costingPastJobsOpen = false;
 
     // ═══════════════════════════════════════════════════════ UTILITIES ═══
+    // Escapes user/cloud-controlled text before it goes into innerHTML
+    // (client names, notes, job names, invoice numbers, etc — VQ-004).
+    // Prefixed to avoid colliding with menus.js/haccp.js's own esc()
+    // globals per the naming convention in CLAUDE.md's collisions table.
+    // Escapes quotes too (not just &/</>) so this is also safe inside
+    // quoted HTML attributes (e.g. value="${_costingEsc(x)}"), not just
+    // text nodes — several call sites below need both.
+    function _costingEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
     // Carte bridge jobs use eventDate/_dateKey; shared jobs use job_date
     function getJobDate(j) { return j.job_date || j.eventDate || j._dateKey || ''; }
     function getJobClient(j) { return j.client_name || j.client || ''; }
@@ -1013,7 +1022,7 @@
         return `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);">
           <div>
-            <div style="font-weight:600;color:var(--text);">${costing.jobName || 'Untitled'}</div>
+            <div style="font-weight:600;color:var(--text);">${_costingEsc(costing.jobName) || 'Untitled'}</div>
             <div style="font-size:12px;color:var(--muted);">${costing.covers} covers • ${formatDate(costing.createdAt)}${pct > 0 ? ' · <span style="color:' + pctColor + '">' + pct.toFixed(1) + '% food cost</span>' : ''}</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
@@ -1116,11 +1125,11 @@
         <div id="quote-standalone-fields" style="${isJobLinked ? 'display:none' : ''}">
           <div class="form-group">
             <label class="form-label">Client / Event Name</label>
-            <input class="form-input" id="quote-client-name" type="text" placeholder="e.g. Smith Wedding" value="${pClient}">
+            <input class="form-input" id="quote-client-name" type="text" placeholder="e.g. Smith Wedding" value="${_costingEsc(pClient)}">
           </div>
           <div class="form-group">
             <label class="form-label">Event Date</label>
-            <input class="form-input" id="quote-event-date" type="date" value="${pDate}" onchange="checkYieldDateUnavailable(this.value)">
+            <input class="form-input" id="quote-event-date" type="date" value="${_costingEsc(pDate)}" onchange="checkYieldDateUnavailable(this.value)">
             <div id="yield-date-warn" style="display:none;background:rgba(45,122,58,0.08);border:1px solid var(--gold);border-radius:8px;padding:8px 12px;margin-top:6px;font-size:13px;color:var(--gold)">⚠️ This date is marked unavailable in Menus</div>
           </div>
         </div>
@@ -1153,7 +1162,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">Notes</label>
-          <textarea class="form-input" id="quote-notes" rows="3">${pNotes}</textarea>
+          <textarea class="form-input" id="quote-notes" rows="3">${_costingEsc(pNotes)}</textarea>
         </div>
         <button class="btn btn-primary" onclick="saveQuote()">${existingQuote ? 'Update Quote' : 'Save Quote'}</button>
       `;
@@ -1320,7 +1329,7 @@
           <div class="card" style="margin-bottom:12px;cursor:pointer;" onclick="showQuoteDetail('${quote.id}')">
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
               <div>
-                <div style="font-weight:600;color:var(--text);">${displayClient}</div>
+                <div style="font-weight:600;color:var(--text);">${_costingEsc(displayClient)}</div>
                 <div style="font-size:12px;color:var(--muted);">${displayDate} · ${quote.covers} covers</div>
               </div>
               <div style="text-align:right;">
@@ -1409,7 +1418,7 @@
           <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;color:var(--muted);">
             <span>Balance (due ${balanceDays} days before event)${vatEnabled ? ' <em style="font-style:normal;font-size:10px">inc. VAT</em>' : ''}</span><span>${formatCurrency(balanceAmt)}</span>
           </div>
-          ${ySettings.paymentInstructions ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);white-space:pre-wrap;">${ySettings.paymentInstructions}</div>` : ''}
+          ${ySettings.paymentInstructions ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);white-space:pre-wrap;">${_costingEsc(ySettings.paymentInstructions)}</div>` : ''}
         </div>`;
 
       let paySection = '';
@@ -1449,7 +1458,7 @@
             <span class="badge ${_quoteBadgeClass(quote)}">${_quoteStatusLabel(quote)}</span>
           </div>
         </div>
-        ${quote.notes ? `<div style="background:var(--surface-el);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--muted);margin-bottom:12px;white-space:pre-wrap;">${quote.notes}</div>` : ''}
+        ${quote.notes ? `<div style="background:var(--surface-el);border-radius:var(--radius);padding:12px;font-size:13px;color:var(--muted);margin-bottom:12px;white-space:pre-wrap;">${_costingEsc(quote.notes)}</div>` : ''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;">${actions}</div>
         ${tabSummary}
         ${paySection}
@@ -1633,15 +1642,15 @@
       document.getElementById('email-compose-form').innerHTML = `
         <div class="form-group">
           <label class="form-label">To</label>
-          <input class="form-input" id="email-to" type="email" placeholder="client@email.com" value="${quote.client_email || ''}">
+          <input class="form-input" id="email-to" type="email" placeholder="client@email.com" value="${_costingEsc(quote.client_email || '')}">
         </div>
         <div class="form-group">
           <label class="form-label">Subject</label>
-          <input class="form-input" id="email-subject" value="Your Quote from ${businessName}">
+          <input class="form-input" id="email-subject" value="Your Quote from ${_costingEsc(businessName)}">
         </div>
         <div class="form-group">
           <label class="form-label">Preview</label>
-          <textarea class="form-input" rows="7" style="font-size:12px;color:var(--muted)" readonly>${bodyText}</textarea>
+          <textarea class="form-input" rows="7" style="font-size:12px;color:var(--muted)" readonly>${_costingEsc(bodyText)}</textarea>
         </div>
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="btn btn-primary" style="flex:1" onclick="sendQuoteEmail('${quoteId}','${subject}','${body}')">Open Mail App →</button>
@@ -1675,15 +1684,15 @@
       document.getElementById('email-compose-form').innerHTML = `
         <div class="form-group">
           <label class="form-label">To</label>
-          <input class="form-input" id="email-to" type="email" placeholder="client@email.com" value="${inv.client_email || ''}">
+          <input class="form-input" id="email-to" type="email" placeholder="client@email.com" value="${_costingEsc(inv.client_email || '')}">
         </div>
         <div class="form-group">
           <label class="form-label">Subject</label>
-          <input class="form-input" id="email-subject" value="${typeLabel} from ${businessName}">
+          <input class="form-input" id="email-subject" value="${typeLabel} from ${_costingEsc(businessName)}">
         </div>
         <div class="form-group">
           <label class="form-label">Preview</label>
-          <textarea class="form-input" rows="7" style="font-size:12px;color:var(--muted)" readonly>${invBodyText}</textarea>
+          <textarea class="form-input" rows="7" style="font-size:12px;color:var(--muted)" readonly>${_costingEsc(invBodyText)}</textarea>
         </div>
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="btn btn-primary" style="flex:1" onclick="sendInvoiceEmail('${invId}','${subject}','${body}')">Open Mail App →</button>
@@ -1790,7 +1799,7 @@
         ${timeline}
         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px;">
           <div>
-            <div style="font-weight:600;font-size:15px;">${inv.client_name || '—'}</div>
+            <div style="font-weight:600;font-size:15px;">${_costingEsc(inv.client_name) || '—'}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px;">Due: ${formatDate(inv.due_date)}</div>
           </div>
           <div style="text-align:right;">
@@ -1939,7 +1948,7 @@
               const job = yJobs.find(j => j.id === quote.job_id);
               const label = job ? getJobClient(job) : (quote.client_name || 'Standalone');
               const total = parseFloat(quote.price_per_head||0) * parseInt(quote.covers||0);
-              return `<option value="${quote.id}">${label} — ${formatCurrency(total)}</option>`;
+              return `<option value="${quote.id}">${_costingEsc(label)} — ${formatCurrency(total)}</option>`;
             }).join('')}
           </select>
         </div>
@@ -2031,8 +2040,8 @@
         const invNum = inv.inv_number || ('INV-' + inv.id.slice(-4).toUpperCase());
         return `
           <tr class="inv-row" style="${rowStyle}" onclick="showInvoiceDetail('${inv.id}')">
-            <td style="font-family:monospace;font-size:12px">${invNum}</td>
-            <td>${clientDisplay}</td>
+            <td style="font-family:monospace;font-size:12px">${_costingEsc(invNum)}</td>
+            <td>${_costingEsc(clientDisplay)}</td>
             <td>${jobDateDisplay}</td>
             <td><span style="font-size:12px;color:var(--muted)">${typeLabel}</span></td>
             <td style="font-weight:600">${formatCurrency(inv.total)}</td>

@@ -3196,7 +3196,7 @@ function vqIcon(name, size) {
 <script src="js/modules/dashboard.js?v=7"></script>
 <script src="js/modules/haccp.js?v=70"></script>
 <script src="js/modules/menus.js?v=36"></script>
-<script src="js/modules/costing.js?v=34"></script>
+<script src="js/modules/costing.js?v=35"></script>
 <script src="js/modules/ai-estimate.js?v=6"></script>
 <script src="js/modules/intake.js?v=1"></script>
 <script src="js/modules/lead-scripts.js?v=1"></script>
@@ -4223,16 +4223,28 @@ async function vqGenerateBio() {
   }
 }
 
+// Escapes for both HTML text nodes and quoted attributes (also covers
+// logoUrl in the img src="..." below — a bare &/< /> escaper isn't enough
+// there since a `"` in the value would break out of the attribute).
+function _vqEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function vqGeneratePositioningPDF() {
   vqSavePositioning();
-  var tagline  = (document.getElementById('vqPdfTagline') || {}).value || 'Executive Private Chef';
-  var bio      = (document.getElementById('vqPdfBio')     || {}).value || '';
-  var why      = (document.getElementById('vqPdfWhy')     || {}).value || '';
+  var tagline  = _vqEsc((document.getElementById('vqPdfTagline') || {}).value || 'Executive Private Chef');
+  var bio      = _vqEsc((document.getElementById('vqPdfBio')     || {}).value || '');
+  var why      = _vqEsc((document.getElementById('vqPdfWhy')     || {}).value || '');
   var profile  = {};
   try { profile = JSON.parse(localStorage.getItem('veriqo_profile') || '{}'); } catch(_) {}
-  var bizName  = profile.business_name || 'Private Chef Services';
-  var chefName = profile.chef_name || '';
-  var logoUrl  = profile.logo || '';
+  var bizName  = _vqEsc(profile.business_name || 'Private Chef Services');
+  var chefName = _vqEsc(profile.chef_name || '');
+  var logoUrl  = _vqEsc(profile.logo || '');
   var container = document.getElementById('vqPrintContainer');
   if (!container) return;
   var logoHtml = logoUrl
