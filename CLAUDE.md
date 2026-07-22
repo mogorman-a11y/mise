@@ -35,7 +35,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | `js/modules/intake.js` | `?v=1` | `app.html` |
 | `js/modules/lead-scripts.js` | `?v=1` | `app.html` |
 | `js/modules/team.js` | `?v=2` | `app.html` |
-| `auth.js` | `?v=37` | `app.html` |
+| `auth.js` | `?v=38` | `app.html` |
 | `yield-sync.js` (root) | `?v=17` | `app.html` |
 | `sync.js` | `?v=20` | `app.html` |
 | `js/core/idb-queue.js` | `?v=2` | `app.html` |
@@ -249,6 +249,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### v37 — chef name in transport dropdown
 `populateHaccpSelects()` was called post-signin but `window.Mise.profile` loads async and may not be ready then. Fixed: call `populateHaccpSelects()` whenever any HACCP tab opens via `haccpTab()`.
+
+### 2026-07-22 — auth.js v38: removed Google sign-in button
+Supabase's Google provider was toggled on but had no Client ID/Secret configured, so `signInWithOAuth({ provider: 'google' })` failed with "provider is not enabled." Rather than configure Google OAuth credentials, removed the "Continue with Google" button from the sign-in/sign-up form — email/password and magic-link remain. `loginGoogle()`/`_google()` in `auth.js` are left in place (unused, harmless) in case Google sign-in is wired back in later.
 
 ### 2026-07-22 — VQ-009: baseline security headers via Edge Middleware (middleware.js)
 Production had no `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`, or clickjacking control at all. `vercel.json` uses the legacy `routes` array (15+ custom rewrites/redirects) which is mutually exclusive with Vercel's `headers` config key, so headers can't be added there — added `middleware.js` (Vercel Edge Middleware) instead, which is additive and doesn't touch `vercel.json`. Matcher excludes `/api/*` (those already set their own CORS headers per function).
