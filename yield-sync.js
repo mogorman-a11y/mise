@@ -255,7 +255,7 @@ window.Mise = window.Mise || {};
         return;
       }
       try {
-        var res = await _sb.from('quotes').upsert({
+        var payload = {
           id: String(quote.id),
           user_id: _uid,
           client_name: quote.client_name || null,
@@ -263,7 +263,13 @@ window.Mise = window.Mise || {};
           status: quote.status || 'draft',
           quote_data: quote,
           created_at: quote.created_at || new Date().toISOString()
-        }, { onConflict: 'id' });
+        };
+        // Only set portal_token when the client actually has one (new quotes
+        // generate it at creation). Omitting the key on an update leaves the
+        // DB's existing/backfilled token alone rather than clobbering it —
+        // see VQ-003, this token is the public /pay portal's bearer credential.
+        if (quote.portal_token) payload.portal_token = quote.portal_token;
+        var res = await _sb.from('quotes').upsert(payload, { onConflict: 'id' });
         if (res.error) {
           console.error('[Yield] saveQuote error:', res.error.message, res.error);
           _err('Quote save failed: ' + res.error.message);
@@ -480,8 +486,17 @@ window.Mise = window.Mise || {};
   }
 
   async function _pullQuotes() {
-    var res = await _sb.from('quotes').select('quote_data').eq('user_id', _uid).order('created_at', { ascending: false });
-    _applyPullResult('yield_quotes', res, function (data) { return data.map(function (r) { return r.quote_data; }); });
+    var res = await _sb.from('quotes').select('quote_data, portal_token').eq('user_id', _uid).order('created_at', { ascending: false });
+    _applyPullResult('yield_quotes', res, function (data) {
+      return data.map(function (r) {
+        var q = r.quote_data;
+        // The DB column is authoritative (NOT NULL, defaulted) — always wins
+        // over whatever's embedded in quote_data, so quotes saved before
+        // VQ-003 pick up their backfilled token on the next pull.
+        if (r.portal_token) q.portal_token = r.portal_token;
+        return q;
+      });
+    });
   }
 
   async function _pullInvoices() {

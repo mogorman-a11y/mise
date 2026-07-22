@@ -161,6 +161,10 @@ async function handleDashboard(uid, res) {
 }
 
 // ── Client: create Checkout Session ──────────────────────────────────────────
+// `quoteId` in the request body is actually quotes.portal_token, not the row's
+// internal id — see VQ-003 / migration 20260722000000. Kept as `quoteId` on the
+// wire since that's what the /pay page already sends and echoes into its own
+// URL; only the DB lookup column changed.
 async function handleCheckout(body, res) {
   const { quoteId, type } = body || {};
   if (!quoteId) return res.status(400).json({ error: 'quoteId required' });
@@ -173,7 +177,7 @@ async function handleCheckout(body, res) {
   const { data: row, error } = await supabase
     .from('quotes')
     .select('quote_data, user_id, status')
-    .eq('id', quoteId)
+    .eq('portal_token', quoteId)
     .single();
 
   if (error || !row) return res.status(404).json({ error: 'Quote not found' });

@@ -1202,6 +1202,15 @@
       btn.closest('.extra-row').remove();
     }
 
+    // Public /pay portal bearer credential — must never be guessable (VQ-003).
+    // 16 random bytes = 128 bits, hex-encoded to match the DB column's format
+    // (quotes.portal_token, see migration 20260722000000).
+    function _generatePortalToken() {
+      const bytes = new Uint8Array(16);
+      (window.crypto || window.msCrypto).getRandomValues(bytes);
+      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     function _collectExtras() {
       const extras = [];
       document.querySelectorAll('.extra-row').forEach(row => {
@@ -1248,6 +1257,7 @@
 
       const quote = {
         id: Date.now().toString(),
+        portal_token: _generatePortalToken(),
         job_id: jobId || null,
         client_name: !jobId && clientEl ? clientEl.value : null,
         event_date: !jobId && dateEl ? dateEl.value : null,
@@ -1573,7 +1583,11 @@
         showToast('Send the quote to the client first — draft links show "not available" to clients', 'error');
         return;
       }
-      const portalUrl = window.location.origin + '/pay?q=' + window._currentQuoteId;
+      if (!quote || !quote.portal_token) {
+        showToast('This quote needs to sync before its link is ready — try again in a moment', 'error');
+        return;
+      }
+      const portalUrl = window.location.origin + '/pay?q=' + quote.portal_token;
       const orig = btn.textContent;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(portalUrl).then(function() {
@@ -1599,13 +1613,17 @@
     function showSendQuoteEmailPanel(quoteId) {
       const quote = yQuotes.find(q => q.id === quoteId);
       if (!quote) return;
+      if (!quote.portal_token) {
+        showToast('This quote needs to sync before it can be sent — try again in a moment', 'error');
+        return;
+      }
       const job = yJobs.find(j => j.id === quote.job_id);
       const clientName = job ? getJobClient(job) : (quote.client_name || 'Client');
       const businessName = yProfile.business_name || ySettings.businessName || 'Your Chef';
       const grandTotal = getQuoteTotal(quote);
       const depositPct = parseFloat(ySettings.defaultDepositPct || 30);
       const depositAmt = grandTotal * (depositPct / 100);
-      const portalLink = window.location.origin + '/pay?q=' + quoteId;
+      const portalLink = window.location.origin + '/pay?q=' + quote.portal_token;
       const subject = encodeURIComponent(`Your Quote from ${businessName}`);
       const defaultQuoteBody = `Hi ${clientName},\n\nPlease find your quote details below.\n\nEvent Total: ${formatCurrency(grandTotal)}\nDeposit (${depositPct}%): ${formatCurrency(depositAmt)}\n\nYou can view your quote here:\n${portalLink}\n\nPlease let me know if you have any questions.\n\nBest regards,\n${businessName}`;
       const templateVars = { clientName, businessName, total: formatCurrency(grandTotal), depositPct, depositAmt: formatCurrency(depositAmt), portalLink };

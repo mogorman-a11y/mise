@@ -1,7 +1,13 @@
 // api/get-quote.js — Public client portal quote lookup
-// GET /api/get-quote?q={quoteId}
+// GET /api/get-quote?q={portalToken}
 // Uses service role to bypass RLS — only returns non-draft quotes.
 // Powers the /pay client portal page.
+//
+// `q` is quotes.portal_token, a random per-quote credential (see migration
+// 20260722000000) — NOT the row's internal `id`. The old id-keyed lookup
+// was VQ-003: ids are client-generated Date.now() timestamps, low-entropy
+// and enumerable, so they doubled as guessable access credentials for
+// client financial/PII data.
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -13,8 +19,8 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const quoteId = req.query.q;
-  if (!quoteId) return res.status(400).json({ error: 'Quote ID required' });
+  const token = req.query.q;
+  if (!token) return res.status(400).json({ error: 'Quote ID required' });
 
   const sb = createClient(
     process.env.SUPABASE_URL,
@@ -25,7 +31,7 @@ module.exports = async function handler(req, res) {
   const { data: row, error } = await sb
     .from('quotes')
     .select('quote_data, user_id, status')
-    .eq('id', quoteId)
+    .eq('portal_token', token)
     .single();
 
   if (error || !row) {
@@ -65,7 +71,6 @@ module.exports = async function handler(req, res) {
 
   return res.status(200).json({
     quote: {
-      id: quote.id,
       client_name: quote.client_name || null,
       event_date: quote.event_date || null,
       covers: parseInt(quote.covers || 0),
