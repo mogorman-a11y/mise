@@ -1,29 +1,51 @@
 # Local migration folder drift
 
-As of 2026-07-15, `supabase list_migrations` shows **19 migrations applied**
-to the live project (`yixrwyfodipfcbhjcszp`), but this folder only tracks
-**8**: the 3 that predate this note plus the 5 added alongside it
-(`20260715184201` through `20260715211734`, from PR #3).
+**Reconciled 2026-07-25.** `supabase migration list --linked` now shows local
+and remote in full agreement except for two intentional local-only entries
+(see below). Reconciliation was done read-only, via `supabase db query
+--linked` against `supabase_migrations.schema_migrations` — no Docker
+required, nothing written to prod.
 
-The 11 migrations between `20260515161154` and `20260618163706` (freelancer
-access, client intake form, the initial Carte→Veriqo unification, the
-costing schema + RPC wrappers, `add_profiles_status`, `enable_pg_net_extension`,
-`create_email_events_table`, `add_prep_tasks_to_dishes_and_menu_to_prep_lists`)
-were applied to prod before this repo's local `supabase/migrations/` folder
-was being kept in sync, and their SQL was never captured locally. Running
-`supabase db pull` or `supabase db dump` to properly reconcile requires
-Docker (bundles the CLI's own `pg_dump`), which wasn't available in the
-session that wrote this note.
+## What was fixed
 
-**To fully reconcile:** on a machine with Docker running, `supabase link`
-to the project and run `supabase db pull` — it will detect the local/remote
-mismatch and offer to write the missing migration files. Do **not** run the
-"repair" commands the CLI suggests without Docker access (`supabase migration
-repair --status reverted ...` for the 19 real migrations, `--status applied`
-for the 3 stale local-only ones) — that marks real, already-applied
-migrations as reverted in the tracking table, which is backwards and does
-not actually revert anything in the live database.
+- **13 migrations that were applied to prod but never captured locally**
+  (freelancer access, client intake form, Carte→Veriqo unification phase 7,
+  the original costing schema + RPC wrappers, `add_profiles_status`,
+  `backfill_venues_roles_kitchen_ids`, `enable_pg_net_extension`,
+  `create_email_events_table`, `add_prep_tasks_to_dishes_and_menu_to_prep_lists`,
+  and `menu_import_upsert_rpc_v3_validated`) were recovered verbatim from
+  `schema_migrations.statements` and added as new files under their real
+  remote version numbers.
+- **4 migrations that were applied correctly but tracked under
+  hand-picked round-number filenames** locally
+  (`20260721000000`/`20260721010000`/`20260721020000`/`20260722000000` —
+  the IDOR-fix drop, the costing-rebuild phases, and the quotes portal
+  token) were renamed to their real remote version numbers
+  (`20260721174813`, `20260721175203`, `20260721183332`, `20260722183249`)
+  after byte-for-byte content verification. No SQL content changed.
 
-Until reconciled, treat `supabase list_migrations` (or `pg_proc`/`pg_policies`
-queried directly) as the source of truth for live schema state, not this
-folder.
+## Two intentional local-only entries (not drift)
+
+`20260605000000_multi_tenant.sql` and
+`20260605000001_multi_user_venue_sharing_v2.sql` are hand-authored,
+heavily-commented versions of what actually ran on prod as `multi_tenant`
+(remote version `20260605165655`) and `multi_user_venue_sharing_v2`
+(remote version `20260606065912`). Verified 2026-07-25: after stripping
+comments/whitespace/transaction wrappers, both are **character-for-character
+identical** to the applied SQL. Left as-is (not renamed) since they predate
+this reconciliation and are already the documented, referenced source in
+CLAUDE.md — renaming them is a safe future cleanup if full 1:1 tracking is
+ever wanted, not a correctness issue.
+
+`pulled_schema_audit.sql` (a 2026-06-15 reference snapshot, explicitly
+non-runnable) was moved to `supabase/docs/` — it never belonged in a folder
+`supabase db reset` replays.
+
+## Going forward
+
+Keep applying schema changes as migration files + `supabase db push` (or
+equivalent CLI flow) rather than the dashboard SQL editor directly — that's
+what caused both classes of drift above. If a dashboard/SQL-editor change to
+prod is ever unavoidable, capture it as a local migration file **immediately**
+using its real applied timestamp (check `supabase migration list --linked`),
+not a synthetic one.

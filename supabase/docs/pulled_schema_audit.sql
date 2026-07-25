@@ -10,7 +10,13 @@
 --
 -- DO NOT RUN against a fresh database — this is a reference snapshot, not an
 -- idempotent migration. To recreate the schema from scratch use the two
--- authored migration files in this directory instead.
+-- authored migration files in ../migrations/ instead
+-- (20260605000000_multi_tenant.sql, 20260605000001_multi_user_venue_sharing_v2.sql).
+--
+-- Moved out of supabase/migrations/ on 2026-07-25 — this file's own name
+-- doesn't match the "<timestamp>_name.sql" pattern (the CLI already skips it
+-- with a warning), and being a non-runnable reference doc, it doesn't belong
+-- in a folder `supabase db reset` replays.
 --
 -- Remote migration history on this date (13 applied migrations):
 --   20260515161154  20260515163237  20260517085423  20260517181024
