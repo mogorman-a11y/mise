@@ -6,6 +6,9 @@
 # macOS
 .DS_Store
 
+# Node dependencies — never commit these
+node_modules/
+
 # Vercel
 .vercel
 
