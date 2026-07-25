@@ -1,6 +1,7 @@
 # Environment variables — never commit these
 .env.local
 .env
+.env*
 
 # macOS
 .DS_Store
