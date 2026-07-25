@@ -11,6 +11,9 @@
 # Claude Code
 .claude/
 
+# Supabase CLI local cache/session state — churns on every CLI invocation
+supabase/.temp/
+
 # Business documents
 *.pdf
 
