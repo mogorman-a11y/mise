@@ -26,7 +26,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | File | Version | Where set |
 |---|---|---|
 | `js/modules/haccp.js` | `?v=71` | `app.html` script tag — table had drifted to a stale `?v=69`; corrected 2026-07-22 |
-| `js/modules/menus.js` | `?v=38` | `app.html` — this table had drifted to a stale `?v=30`; corrected 2026-07-22 against the actual `app.html` tag |
+| `js/modules/menus.js` | `?v=39` | `app.html` |
 | `js/modules/costing.js` | `?v=36` | `app.html` |
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
 | `js/modules/ai-estimate.js` | `?v=6` | `app.html` |
@@ -233,6 +233,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 ---
 
 ## Recent fixes (do not revert)
+
+### 2026-07-31 — menus.js v39: dish edit form closes itself on every click inside it
+`_dishRowHTML()`'s outer row `<div>` had an unconditional `onclick="editDish(id)"`, even while that same dish was already open for editing. None of the fields inside the open edit form (dish name input, category `<select>`, all 14 allergen checkboxes) called `event.stopPropagation()`, so every click inside the open form — most visibly, ticking an allergen box — bubbled up to the row and re-triggered `editDish(id)`. Since `editDish()` is a toggle keyed on `_editingDishId`, that second call took the closing branch and collapsed the form straight back to the read-only list. Reported by a trial user (M2 Catering) as: AI-imported dishes pre-tick the allergens it detected in the photo, but trying to tick one more allergen it missed closes the dish instead. Affects manually-added dishes identically — same render path, same bug, she just hit it via AI import first. The nearly-identical "Saved Menus" inline-edit UI already had both fixes applied; `_dishRowHTML`/`editDish` just hadn't received them. Fixed both ways, matching that sibling code: (1) the row's `onclick`/`cursor:pointer` is now conditional on `!isEditing`, so once the form is open the row itself is no longer clickable; (2) added `onclick="event.stopPropagation()"` to the `#dish-edit-<id>` wrapper so clicks inside the form can never reach the row regardless.
 
 ### v33 — tr-by dropdown empty
 `tr-by` and `ms-by` were missing from `populateHaccpSelects()`. Fixed by adding them. Chef profile name is prepended via `populateSelect()` for staff dropdowns.

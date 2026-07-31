@@ -753,7 +753,7 @@ function _dishRowHTML(d) {
     + '<div id="recipe-costing-body-'+d.id+'"><p style="font-size:12px;color:#A09890;padding:4px 0">Loading…</p></div>'
     + '</div>';
   var editForm = isEditing
-    ? '<div id="dish-edit-'+d.id+'" style="margin-top:10px;padding-top:10px;border-top:1px solid #D4C9B5">'
+    ? '<div id="dish-edit-'+d.id+'" onclick="event.stopPropagation()" style="margin-top:10px;padding-top:10px;border-top:1px solid #D4C9B5">'
       + '<input id="dish-edit-name-'+d.id+'" class="form-input" type="text" value="'+_esc(d.dish)+'" style="margin-bottom:8px" placeholder="Dish name">'
       + '<select id="dish-edit-cat-'+d.id+'" class="form-input" style="margin-bottom:8px">'+catOptions+'</select>'
       + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:10px">'
@@ -772,7 +772,7 @@ function _dishRowHTML(d) {
       + '</div>'
       + '</div>'
     : '';
-  return '<div onclick="editDish(\''+d.id+'\')" style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1C2B1E':'#E8E2D8')+';border-radius:10px;margin-bottom:8px;cursor:pointer">'
+  return '<div '+(isEditing?'':'onclick="editDish(\''+d.id+'\')" ')+'style="padding:10px 14px;background:#fff;border:1px solid '+(isEditing?'#1C2B1E':'#E8E2D8')+';border-radius:10px;margin-bottom:8px;'+(isEditing?'':'cursor:pointer')+'">'
     + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
     + '<div style="flex:1">'
     + '<div style="font-size:14px;font-weight:600;color:#1C2B1E">'+_esc(d.dish)+'</div>'
