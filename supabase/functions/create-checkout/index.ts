@@ -1,7 +1,13 @@
-// supabase/functions/create-checkout/index.ts v1
+// supabase/functions/create-checkout/index.ts v2
 // ─────────────────────────────────────────────
 // Creates a Stripe Checkout Session and returns { url }.
 // Called by js/core/subscription.js startCheckout().
+//
+// v2: carries over the user's existing trial_ends_at instead of granting a
+// fresh 14-day trial on every checkout — closes the stack-a-trial /
+// cancel-and-resubscribe loop. No trial_ends_at (or one too close to now)
+// means no Stripe trial at all: the card is charged immediately, which is
+// the deliberate failure mode (charging, not free access).
 //
 // Required Supabase edge function secrets:
 //   STRIPE_SECRET_KEY           — sk_live_... (or sk_test_... for testing)
@@ -73,11 +79,12 @@ Deno.serve(async (req) => {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('stripe_customer_id')
+    .select('stripe_customer_id, trial_ends_at')
     .eq('id', user.id)
     .single();
 
-  let customerId: string = (profile as { stripe_customer_id?: string } | null)?.stripe_customer_id || '';
+  const profileRow = profile as { stripe_customer_id?: string; trial_ends_at?: string } | null;
+  let customerId: string = profileRow?.stripe_customer_id || '';
 
   if (!customerId) {
     const customer = await stripe.customers.create({
@@ -94,16 +101,24 @@ Deno.serve(async (req) => {
   const metadata: Record<string, string> = { userId: user.id, plan };
   if (plan === 'starter' && starter_module) metadata.starter_module = starter_module;
 
+  // Carry over the signup trial. Never grant a second one.
+  // Stripe requires trial_end to be at least 48h in the future.
+  const MIN_LEAD_MS = 48 * 60 * 60 * 1000;
+  const trialEndsAt = profileRow?.trial_ends_at ? new Date(profileRow.trial_ends_at) : null;
+
+  const subscriptionData: Record<string, unknown> = { metadata };
+  if (trialEndsAt && trialEndsAt.getTime() - Date.now() >= MIN_LEAD_MS) {
+    subscriptionData.trial_end = Math.floor(trialEndsAt.getTime() / 1000);
+  }
+  // otherwise: no trial, card is charged at checkout
+
   const session = await stripe.checkout.sessions.create({
     customer:              customerId,
     payment_method_types:  ['card'],
     mode:                  'subscription',
     line_items:            [{ price: priceId, quantity: 1 }],
     allow_promotion_codes: true,
-    subscription_data: {
-      trial_period_days: 14,
-      metadata,
-    },
+    subscription_data:     subscriptionData,
     metadata,
     success_url: `${appUrl}/app?checkout=success`,
     cancel_url:  `${appUrl}/app?checkout=cancelled`,
