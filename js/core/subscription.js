@@ -1,4 +1,4 @@
-// js/core/subscription.js v3 — Veriqo unified subscription layer
+// js/core/subscription.js v4 — Veriqo unified subscription layer
 // Plans: null (trial), starter (HACCP), pro
 // Replaces: subscription.js v9, carte-subscription.js, yield-subscription.js
 
@@ -6,6 +6,17 @@ window.Mise = window.Mise || {};
 window.Mise.subscription = (function () {
 
   var _state = null; // { status, plan, starter_module, trial_ends_at, in_trial }
+
+  // ── hasAccess ─────────────────────────────────────────────
+  // Single source of truth for "is this subscription_status in good standing".
+  // 'trial' is the legacy in-app trial value (superseded by in_trial below,
+  // which also checks trial_ends_at); 'active'/'trialing' come from Stripe —
+  // trialing must be entitled or every Stripe-trial user is locked out the
+  // moment the webhook starts reporting real subscription state.
+  var _ENTITLED_STATUSES = { active: 1, trialing: 1, trial: 1 };
+  function hasAccess(status) {
+    return !!_ENTITLED_STATUSES[status];
+  }
 
   // ── check ─────────────────────────────────────────────────
   async function check(profile) {
@@ -58,11 +69,11 @@ window.Mise.subscription = (function () {
       if (_p.role === 'staff') return moduleName === 'haccp'; // staff: HACCP only
     }
     if (_state.in_trial) return true;
-    if (_state.plan === 'pro' && _state.status === 'active') return true;
-    if (_state.plan === 'starter' && _state.status === 'active') {
+    if (hasAccess(_state.status) && _state.plan === 'pro') return true;
+    if (hasAccess(_state.status) && _state.plan === 'starter') {
       return moduleName === 'haccp';
     }
-    return false; // expired, past_due, cancelled
+    return false; // expired, past_due, unpaid, cancelled/canceled
   }
 
   // ── startCheckout ─────────────────────────────────────────
@@ -115,6 +126,6 @@ window.Mise.subscription = (function () {
     app.insertAdjacentElement('afterbegin', banner);
   }
 
-  return { check, current, canAccess, startCheckout };
+  return { check, current, canAccess, startCheckout, hasAccess };
 
 })();

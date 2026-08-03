@@ -2674,7 +2674,10 @@ function renderCarteSubscriptionCard() {
   var planLabel = plan === 'suite' ? 'Carte + Veriqo Suite' : plan === 'carte' ? 'Menus' : plan === 'veriqo' ? 'Veriqo' : 'Free trial';
   var badge, body, actions;
 
-  if (status === 'active') {
+  // 'trialing' is a Stripe subscription trial (post-checkout) — treat like
+  // active here, not "inactive": trial_ends_at doesn't track this period, so
+  // there's no accurate day-count to show, and access is already granted.
+  if (status === 'active' || status === 'trialing') {
     badge = '<span style="display:inline-block;background:rgba(58,125,68,0.15);color:#3A7D44;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">ACTIVE</span>'
           + '<span style="display:inline-block;margin-left:6px;font-size:11px;color:#A09890">' + planLabel + '</span>';
     body  = '<div style="font-size:13px;color:#5A544E;margin-top:8px">Your subscription is active. Use the link below to cancel, update your payment method, or view invoices.</div>';

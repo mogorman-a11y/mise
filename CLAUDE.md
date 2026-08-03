@@ -26,7 +26,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | File | Version | Where set |
 |---|---|---|
 | `js/modules/haccp.js` | `?v=71` | `app.html` script tag — table had drifted to a stale `?v=69`; corrected 2026-07-22 |
-| `js/modules/menus.js` | `?v=39` | `app.html` |
+| `js/modules/menus.js` | `?v=40` | `app.html` — v40: `renderCarteSubscriptionCard()` treats `trialing` like `active` (see subscription fix below) |
 | `js/modules/costing.js` | `?v=36` | `app.html` |
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
 | `js/modules/ai-estimate.js` | `?v=6` | `app.html` |
@@ -42,7 +42,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | `js/core/pull-result.js` | `?v=2` | `app.html` |
 | `js/core/ai-other-costs-store.js` | `?v=2` | `app.html` |
 | `js/core/allergens.js` / `menu-dishes.js` / `gp-math.js` / `ai-job-shape.js` | `?v=1` each | `app.html` |
-| `js/core/subscription.js` | `?v=10` | `app.html` |
+| `js/core/subscription.js` | `?v=11` | `app.html` — v11: `hasAccess(status)` accepts `active`/`trialing`/`trial` (see below) |
 | Service worker cache | `veriqo-v125` | `sw.js` line 8 |
 
 Bumping `sw.js`'s cache name is **not required** for JS module changes (network-first, per rule 4) but this project has bumped it alongside every round of fixes in the 2026-07 critical-fixes pass anyway — harmless belt-and-braces, not a hard requirement.
@@ -233,6 +233,9 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 ---
 
 ## Recent fixes (do not revert)
+
+### 2026-08-03 — subscription gate: accept `trialing` (js/core/subscription.js v11, menus.js v40)
+`canAccess()`'s only path to entitlement for a `pro`/`starter` plan was `status === 'active'`. The Stripe webhook is being fixed (separately) to stop lying about `checkout.session.completed` always being `active` — it will start writing the subscription's real status, and a checkout with a trial attached comes back `trialing`. Without this fix, that change would have locked out every trialing user instantly. Added `hasAccess(status)` (accepts `active`, `trialing`, and the legacy `trial` value; everything else — `past_due`, `unpaid`, `cancelled`, `canceled`, `expired` — stays unentitled) and routed both `canAccess()` branches through it. Also fixed `menus.js`'s legacy `#carte-subscription-card` (`renderCarteSubscriptionCard()`) to show `trialing` as "ACTIVE" rather than "INACTIVE" — cosmetic only, `canAccess()` was the only thing actually gating access. **This must be live and verified before the webhook change ships** — deployment order is gate first, webhook second, always.
 
 ### 2026-07-31 — menus.js v39: dish edit form closes itself on every click inside it
 `_dishRowHTML()`'s outer row `<div>` had an unconditional `onclick="editDish(id)"`, even while that same dish was already open for editing. None of the fields inside the open edit form (dish name input, category `<select>`, all 14 allergen checkboxes) called `event.stopPropagation()`, so every click inside the open form — most visibly, ticking an allergen box — bubbled up to the row and re-triggered `editDish(id)`. Since `editDish()` is a toggle keyed on `_editingDishId`, that second call took the closing branch and collapsed the form straight back to the read-only list. Reported by a trial user (M2 Catering) as: AI-imported dishes pre-tick the allergens it detected in the photo, but trying to tick one more allergen it missed closes the dish instead. Affects manually-added dishes identically — same render path, same bug, she just hit it via AI import first. The nearly-identical "Saved Menus" inline-edit UI already had both fixes applied; `_dishRowHTML`/`editDish` just hadn't received them. Fixed both ways, matching that sibling code: (1) the row's `onclick`/`cursor:pointer` is now conditional on `!isEditing`, so once the form is open the row itself is no longer clickable; (2) added `onclick="event.stopPropagation()"` to the `#dish-edit-<id>` wrapper so clicks inside the form can never reach the row regardless.
