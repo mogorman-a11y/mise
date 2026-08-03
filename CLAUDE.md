@@ -26,7 +26,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | File | Version | Where set |
 |---|---|---|
 | `js/modules/haccp.js` | `?v=71` | `app.html` script tag — table had drifted to a stale `?v=69`; corrected 2026-07-22 |
-| `js/modules/menus.js` | `?v=40` | `app.html` — v40: `renderCarteSubscriptionCard()` treats `trialing` like `active` (see subscription fix below) |
+| `js/modules/menus.js` | `?v=41` | `app.html` — v41: `renderCarteSubscriptionCard()` now calls the shared `window.Mise.subscription.hasAccess()` helper instead of its own `status === 'active' \|\| status === 'trialing'` check (see subscription fix below) |
 | `js/modules/costing.js` | `?v=36` | `app.html` |
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
 | `js/modules/ai-estimate.js` | `?v=6` | `app.html` |
@@ -234,6 +234,14 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ## Recent fixes (do not revert)
 
+### 2026-08-03 — stripe-webhook v21: invoice.paid now refreshes current_period_end; subscription-status rendering unified
+Manual verification of the v20/v2 stripe-webhook/create-checkout changes (below) against live Stripe found one real gap and one near-miss worth recording:
+
+- **`invoice.paid` wasn't updating `current_period_end`** — only `customer.subscription.updated` did. Both fire when a trial converts to its first real charge, and Stripe doesn't guarantee delivery order, so `subscription_status` could flip to `active` next to a stale `current_period_end` from before the charge. Fixed: `invoice.paid` now retrieves the subscription (same pattern as `checkout.session.completed`) and passes `current_period_end` through `setStatusByCustomer`'s `extra` param.
+- **Subscription-status rendering existed independently in three places** (`app.html`'s `_renderSubscription()`, `menus.js`'s `renderCarteSubscriptionCard()` — both live — and `haccp.js`'s `renderSubscriptionCard()`, confirmed dead, targets a `#subscription-card` element that doesn't exist in `app.html`). Both live copies hardcoded their own `status === 'active'` check and would have shown "INACTIVE" for a `trialing` user despite `canAccess()` correctly granting them access — the exact same bug class as the collision table above, just for a status string instead of a function name. Fixed by routing both through `window.Mise.subscription.hasAccess(status)` instead of duplicating the entitled-status list a third time. **Ordering matters here**: `hasAccess()` also returns `true` for the legacy `'trial'` status, so both card functions check `in_trial`/`inTrial` (the version with the day-countdown) *before* falling through to `hasAccess()` — reversing that order would make a legacy trial user see a plain "ACTIVE" badge instead of their trial countdown.
+- Verified live via a throwaway account and a real (non-test-mode) Stripe event replay: trial carry-over, the no-trial/48h-minimum path, the `trialing`→access-granted and `past_due`→access-denied gate behavior, and the `stripe_events` idempotency guard (single row across 3 resends, zero profile writes on replay) all passed. `checkout.session.completed`'s real-status path (`mapStatus()` off a live `stripe.subscriptions.retrieve()`) remains unverified against an actual live event — none was available (the designated test customer had been deleted in Stripe, and the throwaway account never completed checkout by design) — but M2's 16 August charge only touches `customer.subscription.updated`/`invoice.paid`, not `checkout.session.completed`, so this doesn't block it.
+- **Heads up for the next real checkout**: UK card payments can require SCA (3-D Secure). If authentication doesn't resolve inline, Stripe can leave a new subscription in `incomplete` status. `mapStatus()` passes that through unchanged, and `hasAccess()` correctly does *not* treat it as entitled — so a customer could briefly be charged/challenged and see a paywall until `invoice.paid` lands and flips them to `active`. Self-corrects, not a defect, but worth recognising on sight rather than debugging live.
+
 ### 2026-08-03 — stripe-webhook v20 / create-checkout v2: stop reporting trials as paid, stop stacking trials
 Two release-blocking defects found while investigating whether a customer had actually paid: (1) `stripe-webhook`'s `checkout.session.completed` wrote `subscription_status: 'active'` unconditionally, even though `create-checkout` attaches a Stripe trial to every session — a completed checkout produced a `trialing` Stripe subscription and an `'active'` Supabase profile, with no way to tell a paying customer from a trialing one by querying the database; (2) `create-checkout` granted a fresh 14-day `trial_period_days` on every checkout with no check for a prior trial, so cancel-and-resubscribe (or signup → checkout) stacked trials indefinitely.
 
@@ -420,7 +428,7 @@ Added module-level `esc()` to haccp.js. Applied to `renderSettingsList`, `render
 - `kitchens` / `kitchen_members` — multi-venue (owner auto-created on signup)
 - `clients`, `dishes`, `menus`, `menu_dishes`, `jobs`, `mise_records`, `quotes`, `costings`, `invoices`, `payments`
 - Costing rebuild (additive, added 2026-07-21 — see Architecture Decisions.md): `ingredients`, `ingredient_supplier_aliases`, `ingredient_prices`, `dish_recipes`, `recipe_ingredients`, `job_cost_reconciliations`. All keyed off `dishes.id`/`jobs.id`, all RLS via the same `venue_rw` pattern. Backing JS is `js/modules/recipe-costing.js`.
-- `stripe_events` (added 2026-08-03): `(id, type, customer_id, payload, received_at)`, `id` = Stripe event id, primary key doubles as the idempotency guard in `stripe-webhook`. RLS enabled, no policies — service-role only, not readable via anon/authenticated.
+- `stripe_events` (added 2026-08-03): `(id, type, customer_id, payload, received_at)`, `id` = Stripe event id, primary key doubles as the idempotency guard in `stripe-webhook`. RLS enabled, no policies — service-role only, not readable via anon/authenticated. `pg_cron` job `purge-old-stripe-events` (daily, 04:00) deletes rows older than 90 days — this table stores full Stripe payloads including customer names/emails/addresses, so it isn't kept indefinitely.
 
 **RLS on haccp_records:**
 - INSERT/UPDATE require `venue_id = auth_venue_id()` (column default, auto-populated)

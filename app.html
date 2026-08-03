@@ -3195,7 +3195,7 @@ function vqIcon(name, size) {
 
 <script src="js/modules/dashboard.js?v=7"></script>
 <script src="js/modules/haccp.js?v=71"></script>
-<script src="js/modules/menus.js?v=40"></script>
+<script src="js/modules/menus.js?v=41"></script>
 <script src="js/modules/costing.js?v=36"></script>
 <script src="js/modules/ai-estimate.js?v=6"></script>
 <script src="js/modules/intake.js?v=1"></script>
@@ -3798,17 +3798,20 @@ function mailtoFreelancerLink() {
     var planLabel = state.plan === 'pro' ? 'Veriqo Pro' : state.plan === 'starter' ? 'Veriqo HACCP' : 'Free trial';
     var badge, body, actions;
 
-    if (state.status === 'active') {
+    // Check in_trial (legacy 'trial' status + unexpired trial_ends_at) before
+    // hasAccess(), which also treats 'trial' as entitled — otherwise a legacy
+    // trial user would show ACTIVE instead of the FREE TRIAL day-countdown.
+    if (state.in_trial) {
+      var daysLeft = state.trial_ends_at ? Math.max(0, Math.ceil((state.trial_ends_at - new Date()) / (1000*60*60*24))) : 0;
+      badge  = '<span style="display:inline-block;background:var(--vq-warn-bg);color:var(--vq-warn-text);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">FREE TRIAL</span>';
+      body   = '<div style="font-size:13px;color:var(--vq-muted);margin-top:8px">' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining. Subscribe to keep full access.</div>';
+      actions = _subscribeActions();
+    } else if (window.Mise.subscription.hasAccess(state.status)) {
       var modLabel = state.plan === 'starter' ? ' — HACCP only' : '';
       badge = '<span style="display:inline-block;background:var(--vq-ok-bg);color:var(--vq-ok-text);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">ACTIVE</span>'
             + '<span style="display:inline-block;margin-left:6px;font-size:11px;color:var(--vq-muted)">' + planLabel + modLabel + '</span>';
       body   = '<div style="font-size:13px;color:var(--vq-muted);margin-top:8px">Your subscription is active. Use the button below to manage billing or update your payment method.</div>';
       actions = '<button onclick="vqOpenPortal(this)" style="margin-top:14px;width:100%;padding:11px;background:var(--vq-green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Manage subscription →</button>';
-    } else if (state.in_trial) {
-      var daysLeft = state.trial_ends_at ? Math.max(0, Math.ceil((state.trial_ends_at - new Date()) / (1000*60*60*24))) : 0;
-      badge  = '<span style="display:inline-block;background:var(--vq-warn-bg);color:var(--vq-warn-text);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">FREE TRIAL</span>';
-      body   = '<div style="font-size:13px;color:var(--vq-muted);margin-top:8px">' + daysLeft + ' day' + (daysLeft !== 1 ? 's' : '') + ' remaining. Subscribe to keep full access.</div>';
-      actions = _subscribeActions();
     } else {
       badge  = '<span style="display:inline-block;background:var(--vq-fail-bg);color:var(--vq-fail-text);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">INACTIVE</span>';
       body   = '<div style="font-size:13px;color:var(--vq-muted);margin-top:8px">Subscribe to restore full access to Veriqo.</div>';

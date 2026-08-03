@@ -2674,15 +2674,10 @@ function renderCarteSubscriptionCard() {
   var planLabel = plan === 'suite' ? 'Carte + Veriqo Suite' : plan === 'carte' ? 'Menus' : plan === 'veriqo' ? 'Veriqo' : 'Free trial';
   var badge, body, actions;
 
-  // 'trialing' is a Stripe subscription trial (post-checkout) — treat like
-  // active here, not "inactive": trial_ends_at doesn't track this period, so
-  // there's no accurate day-count to show, and access is already granted.
-  if (status === 'active' || status === 'trialing') {
-    badge = '<span style="display:inline-block;background:rgba(58,125,68,0.15);color:#3A7D44;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">ACTIVE</span>'
-          + '<span style="display:inline-block;margin-left:6px;font-size:11px;color:#A09890">' + planLabel + '</span>';
-    body  = '<div style="font-size:13px;color:#5A544E;margin-top:8px">Your subscription is active. Use the link below to cancel, update your payment method, or view invoices.</div>';
-    actions = '<button onclick="openCartePortal(this)" style="margin-top:14px;width:100%;padding:11px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Manage subscription →</button>';
-  } else if (inTrial) {
+  // Check inTrial (legacy 'trial' status + unexpired trial_ends_at) before
+  // hasAccess(), which also treats 'trial' as entitled — otherwise a legacy
+  // trial user would show ACTIVE instead of the FREE TRIAL day-countdown.
+  if (inTrial) {
     var dayWord = daysLeft === 1 ? 'day' : 'days';
     badge  = '<span style="display:inline-block;background:rgba(45,122,58,0.12);color:#1C6B2A;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">FREE TRIAL</span>';
     body   = '<div style="font-size:13px;color:#5A544E;margin-top:8px">' + daysLeft + ' ' + dayWord + ' remaining. Subscribe to keep full access to Veriqo.</div>';
@@ -2690,6 +2685,11 @@ function renderCarteSubscriptionCard() {
       + '<button onclick="Mise.carteSubscription.startCheckout(\'carte\',\'monthly\')" style="flex:1;padding:11px;background:#fff;border:2px solid #D0C8BE;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#1C2B1E">£12/month</button>'
       + '<button onclick="Mise.carteSubscription.startCheckout(\'carte\',\'annual\')" style="flex:1;padding:11px;background:#2D7A3A;border:2px solid #2D7A3A;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:#fff">£120/year</button>'
       + '</div>';
+  } else if (window.Mise.subscription.hasAccess(status)) {
+    badge = '<span style="display:inline-block;background:rgba(58,125,68,0.15);color:#3A7D44;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">ACTIVE</span>'
+          + '<span style="display:inline-block;margin-left:6px;font-size:11px;color:#A09890">' + planLabel + '</span>';
+    body  = '<div style="font-size:13px;color:#5A544E;margin-top:8px">Your subscription is active. Use the link below to cancel, update your payment method, or view invoices.</div>';
+    actions = '<button onclick="openCartePortal(this)" style="margin-top:14px;width:100%;padding:11px;background:#2D7A3A;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Manage subscription →</button>';
   } else {
     var isExpiredTrial = status === 'trial';
     badge  = '<span style="display:inline-block;background:#fde8e8;color:#A32D2D;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:0.03em">' + (isExpiredTrial ? 'TRIAL ENDED' : 'INACTIVE') + '</span>';

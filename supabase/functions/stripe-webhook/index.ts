@@ -1,4 +1,4 @@
-// supabase/functions/stripe-webhook/index.ts v20
+// supabase/functions/stripe-webhook/index.ts v21
 // ────────────────────────────────────────────
 // Receives Stripe webhook events and updates Supabase.
 //
@@ -16,6 +16,11 @@
 // invoice Stripe issues at trial start doesn't flip a trialing user to active). Added
 // a stripe_events insert immediately after signature verification, doubling as an
 // idempotency guard against Stripe retries (primary-key conflict = duplicate, skip).
+//
+// v21: invoice.paid now also refreshes current_period_end (previously only
+// customer.subscription.updated did). Both fire on a trial's first real charge
+// and Stripe doesn't guarantee ordering, so active could otherwise land next to
+// a stale period end.
 
 import Stripe from 'https://esm.sh/stripe@13.11.0?target=deno&deno-std=0.132.0&no-check';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -254,7 +259,17 @@ Deno.serve(async (req) => {
       // Guard on a non-zero amount: Stripe issues a £0 invoice at trial start,
       // which must not flip a still-trialing user to active.
       if ((inv.amount_paid ?? 0) > 0) {
-        await setStatusByCustomer(inv.customer as string, 'active');
+        const extra: Record<string, unknown> = {};
+        const subId = typeof inv.subscription === 'string' ? inv.subscription : null;
+        if (subId) {
+          try {
+            const sub = await stripe.subscriptions.retrieve(subId);
+            extra.current_period_end = new Date(sub.current_period_end * 1000).toISOString();
+          } catch (e) {
+            console.warn('[Veriqo] invoice.paid: could not retrieve subscription for period end:', e);
+          }
+        }
+        await setStatusByCustomer(inv.customer as string, 'active', extra);
       }
       break;
     }
