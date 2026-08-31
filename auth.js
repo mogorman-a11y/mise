@@ -546,21 +546,27 @@ window.Mise.auth = (function () {
   }
 
   // ── logout ─────────────────────────────────────────────────────────────────
-  // Clears private cached data (HACCP/Menus/Costing records, settings, sync
-  // retry queue) so it can't be read by whoever uses this device next, while
-  // preserving device-level UI preferences (theme, last module, install
-  // banner dismissal) which aren't account-specific. Previously this only
-  // removed the Supabase auth token, leaving every other module's data
-  // sitting in localStorage indefinitely after sign-out.
+  // Clears the Supabase auth token AND every piece of private cached data
+  // (HACCP/Menus/Costing records + settings, one-pager positioning, sync
+  // retry queues in both localStorage and IndexedDB) so it can't be read by
+  // whoever uses this device next — while preserving device-level UI
+  // preferences (theme, accent, last module, install-banner dismissal) and
+  // the cookie/analytics consent choice, which are not account-specific.
   var _PRIVATE_KEY_PREFIXES = ['haccp_', 'mise_', 'yield_'];
-  var _PRIVATE_KEYS = ['veriqo_profile', 'veriqo_sync_retry_queue', 'vq_ai_other_costs'];
+  var _PRIVATE_KEYS = [
+    'veriqo_profile', 'veriqo_sync_retry_queue', 'vq_ai_other_costs',
+    'vq_positioning', 'vq_sync_queue', 'freelancer_name'
+  ];
+  // Never removed on logout (device preference / consent record, not data):
+  //   vq_theme, vq_accent, vq_last_module, vq_resume_module,
+  //   vq_mute_milestones, vq_sampleDayAnnounceShown,
+  //   veriqo_install_dismissed, carte_install_dismissed,
+  //   veriqo_cookie_consent_v1
 
-  async function logout() {
-    if (window.posthog) posthog.reset();
-    if (window.Mise && window.Mise.sync && window.Mise.sync.clearRetryQueue) {
-      try { window.Mise.sync.clearRetryQueue(); } catch(e) {}
-    }
-    try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(e) {}
+  // Wipes private cached data from this browser. Safe to call repeatedly and
+  // never throws — an IndexedDB failure is swallowed so sign-out always
+  // completes, online or offline. Exposed as Mise.auth.clearLocalData().
+  async function _clearPrivateLocalData() {
     try {
       Object.keys(localStorage).forEach(function(k) {
         var isAuthToken = k.startsWith('sb-') && k.endsWith('-auth-token');
@@ -569,9 +575,43 @@ window.Mise.auth = (function () {
         if (isAuthToken || isPrivatePrefixed || isPrivateKey) localStorage.removeItem(k);
       });
     } catch(e) {}
-    if (window.Mise && window.Mise.idbQueue) {
-      if (window.Mise.idbQueue.set) { try { await window.Mise.idbQueue.set([]); } catch(e) {} }
-      if (window.Mise.idbQueue.setCosting) { try { await window.Mise.idbQueue.setCosting([]); } catch(e) {} }
+    // Empty the offline sync/retry queues held in IndexedDB.
+    try {
+      if (window.Mise && window.Mise.idbQueue) {
+        if (window.Mise.idbQueue.set)        { try { await window.Mise.idbQueue.set([]); } catch(e) {} }
+        if (window.Mise.idbQueue.setCosting) { try { await window.Mise.idbQueue.setCosting([]); } catch(e) {} }
+      }
+    } catch(e) {}
+    // Belt-and-braces: drop the whole offline DB (completes once the app
+    // reloads and open handles close). Never blocks sign-out.
+    try { if (window.indexedDB && indexedDB.deleteDatabase) indexedDB.deleteDatabase('veriqo-sync'); } catch(e) {}
+  }
+
+  async function logout() {
+    try {
+      if (window.vqAnalytics && window.vqAnalytics.reset) window.vqAnalytics.reset();
+      else if (window.posthog && window.posthog.reset) window.posthog.reset();
+    } catch(e) {}
+    if (window.Mise && window.Mise.sync && window.Mise.sync.clearRetryQueue) {
+      try { window.Mise.sync.clearRetryQueue(); } catch(e) {}
+    }
+    try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(e) {}
+    await _clearPrivateLocalData();
+
+    // Tear down the service worker + its caches so no authenticated HTML/data
+    // is served to the next person on this device.
+    if ('serviceWorker' in navigator) {
+      try {
+        var regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(function(reg) { return reg.unregister(); }));
+      } catch(e) {}
+    }
+    if (window.caches) {
+      try {
+        var names = await caches.keys();
+        await Promise.all(names.filter(function(n) { return n.indexOf('veriqo-') === 0; })
+                               .map(function(n) { return caches.delete(n); }));
+      } catch(e) {}
     }
     window.location.reload();
   }
@@ -591,7 +631,11 @@ window.Mise.auth = (function () {
   async function onSignedIn(user) {
     hideAuthScreen();
     _injectAccountCard(user);
-    if (window.posthog) posthog.identify(user.id, { email: user.email });
+    // No-ops unless the user has opted in to analytics (see window.vqAnalytics).
+    try {
+      if (window.vqAnalytics && window.vqAnalytics.identify) window.vqAnalytics.identify(user.id, { email: user.email });
+      else if (window.posthog && window.posthog.identify) posthog.identify(user.id, { email: user.email });
+    } catch (e) {}
 
     // Self-heal: if signup's auth.signUp() succeeded but bootstrap_new_account()
     // never ran (e.g. dropped connection), this account has no profile row and
@@ -746,6 +790,6 @@ window.Mise.auth = (function () {
   }
 
   // Expose internal tab/form handlers so onclick attributes in injected HTML can call them
-  return { init, login, signup, loginGoogle, logout, resetPassword, _submitPasswordReset, _tab, _submit, _forgot, _google, _togglePw };
+  return { init, login, signup, loginGoogle, logout, resetPassword, clearLocalData: _clearPrivateLocalData, _submitPasswordReset, _tab, _submit, _forgot, _google, _togglePw };
 
 })();

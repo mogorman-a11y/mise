@@ -56,30 +56,137 @@
 @media (min-width: 768px) { body > .app > * .app { max-width: 100%; margin: 0; } }
 </style>
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-HJBTHP12Y8"></script>
+<!-- ═══════════════════════════════════════════════════════════════════
+     Analytics consent + loader (UK GDPR / PECR)
+     Non-essential analytics (Google Analytics 4, PostHog) do NOT load or
+     initialise until the user positively opts in via the consent banner.
+     The choice is stored locally in `veriqo_cookie_consent_v1` (itself
+     necessary storage, needs no prior consent). window.vqAnalytics is the
+     single entry point; window.vqTrack stays as a thin alias for the
+     existing module call sites.
+════════════════════════════════════════════════════════════════════ -->
+<!-- VQ-CONSENT-START -->
 <script>
+(function () {
+  var CONSENT_KEY = 'veriqo_cookie_consent_v1';
+  var GA_ID   = 'G-HJBTHP12Y8';
+  var PH_KEY  = 'phc_qVdQP5Cpu6RXBEwi6Me2mPWtJEFsVhArP9k4UhAtknQZ';
+  var PH_HOST = 'https://eu.i.posthog.com';
+
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  function gtag() { window.dataLayer.push(arguments); }
 
-  gtag('config', 'G-HJBTHP12Y8');
-</script>
+  function readConsent() {
+    try {
+      var raw = localStorage.getItem(CONSENT_KEY);
+      if (!raw) return null;
+      var v = JSON.parse(raw);
+      return (v && typeof v.analytics === 'boolean') ? v : null;
+    } catch (e) { return null; }
+  }
+  function writeConsent(analytics) {
+    try {
+      localStorage.setItem(CONSENT_KEY, JSON.stringify({
+        analytics: !!analytics,
+        updated_at: new Date().toISOString()
+      }));
+    } catch (e) {}
+  }
 
-<!-- PostHog analytics -->
-<script>
-  !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ir Sr init jr $r Ci qr Hr Dr capture calculateEventProperties Wr register register_once register_for_session unregister unregister_for_session Qr getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync tn identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty Jr Yr createPersonProfile setInternalOrTestUser Kr Pr nn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing zr debug ki Xr getPageViewId captureTraceFeedback captureTraceMetric Mr".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-  posthog.init('phc_qVdQP5Cpu6RXBEwi6Me2mPWtJEFsVhArP9k4UhAtknQZ', {
-    api_host: 'https://eu.i.posthog.com',
-    defaults: '2026-01-30',
-    person_profiles: 'identified_only',
-  });
-  // Safe, single-entry tracking helper used across all modules. Never throws,
-  // no-ops if PostHog hasn't loaded. Usage: vqTrack('quote_sent', { module:'costing' }).
-  window.vqTrack = function (event, props) {
-    try { if (window.posthog && window.posthog.capture) window.posthog.capture(event, props || {}); } catch (e) {}
+  var _gaLoaded = false, _phLoaded = false, _pendingIdentify = null;
+
+  function loadGA() {
+    if (_gaLoaded) return;
+    _gaLoaded = true;
+    try { window['ga-disable-' + GA_ID] = false; } catch (e) {}
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    (document.head || document.documentElement).appendChild(s);
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+  }
+
+  function loadPostHog() {
+    if (_phLoaded) return;
+    _phLoaded = true;
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="Ir Sr init jr $r Ci qr Hr Dr capture calculateEventProperties Wr register register_once register_for_session unregister unregister_for_session Qr getFeatureFlag getFeatureFlagPayload getFeatureFlagResult isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync tn identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty Jr Yr createPersonProfile setInternalOrTestUser Kr Pr nn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing zr debug ki Xr getPageViewId captureTraceFeedback captureTraceMetric Mr".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    try {
+      posthog.init(PH_KEY, {
+        api_host: PH_HOST,
+        defaults: '2026-01-30',
+        person_profiles: 'identified_only'
+      });
+      if (_pendingIdentify) {
+        posthog.identify(_pendingIdentify.id, _pendingIdentify.props);
+        _pendingIdentify = null;
+      }
+    } catch (e) {}
+  }
+
+  function enableAnalytics() { loadGA(); loadPostHog(); }
+
+  function disableAnalytics() {
+    try { window['ga-disable-' + GA_ID] = true; } catch (e) {}
+    try { if (window.posthog && window.posthog.opt_out_capturing) window.posthog.opt_out_capturing(); } catch (e) {}
+    try { if (window.posthog && window.posthog.reset) window.posthog.reset(); } catch (e) {}
+    // Best-effort removal of first-party analytics identifiers. Supabase
+    // auth/session storage is deliberately left untouched.
+    try {
+      var kill = /^(_ga($|_)|_gid$|_gat|__ph_|ph_)/;
+      document.cookie.split(';').forEach(function (c) {
+        var name = c.split('=')[0].trim();
+        if (!name || !kill.test(name)) return;
+        var tail = '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        document.cookie = name + tail;
+        document.cookie = name + tail + '; domain=' + location.hostname;
+        document.cookie = name + tail + '; domain=.' + location.hostname;
+      });
+      Object.keys(localStorage).forEach(function (k) {
+        if (k === 'posthog' || k.indexOf('ph_') === 0 || k.indexOf('__posthog') === 0) localStorage.removeItem(k);
+      });
+    } catch (e) {}
+  }
+
+  var vqAnalytics = {
+    CONSENT_KEY: CONSENT_KEY,
+    getConsent: readConsent,
+    hasDecision: function () { return readConsent() !== null; },
+    enabled: function () { var c = readConsent(); return !!(c && c.analytics); },
+    setConsent: function (analytics) {
+      writeConsent(analytics);
+      if (analytics) enableAnalytics(); else disableAnalytics();
+      try { document.dispatchEvent(new CustomEvent('vq-consent-change', { detail: { analytics: !!analytics } })); } catch (e) {}
+      if (typeof window.vqRenderConsentUI === 'function') window.vqRenderConsentUI();
+    },
+    capture: function (event, props) {
+      try {
+        if (vqAnalytics.enabled() && window.posthog && window.posthog.capture) window.posthog.capture(event, props || {});
+      } catch (e) {}
+    },
+    identify: function (id, props) {
+      if (!vqAnalytics.enabled()) return;
+      try {
+        if (window.posthog && window.posthog.identify) window.posthog.identify(id, props || {});
+        else _pendingIdentify = { id: id, props: props || {} };
+      } catch (e) {}
+    },
+    reset: function () {
+      try { if (window.posthog && window.posthog.reset) window.posthog.reset(); } catch (e) {}
+    }
   };
+  window.vqAnalytics = vqAnalytics;
+
+  // Back-compat: modules call window.vqTrack(event, props). Never throws;
+  // a complete no-op until analytics consent is granted.
+  window.vqTrack = function (event, props) { vqAnalytics.capture(event, props); };
+
+  // Boot: initialise ONLY if this browser has already opted in.
+  var c = readConsent();
+  if (c && c.analytics) enableAnalytics();
+})();
 </script>
+<!-- VQ-CONSENT-END -->
 <script>
   (function(){
     try {
@@ -2941,6 +3048,26 @@
         <button onclick="vqShowDeleteModal()" style="width:100%;margin-top:10px;padding:11px;background:none;color:var(--vq-muted);border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px">Delete account</button>
       </div>
 
+      <!-- Privacy & legal -->
+      <div style="background:var(--vq-surface);border:1px solid var(--vq-border);border-radius:14px;overflow:hidden;margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--vq-muted);text-transform:uppercase;letter-spacing:0.06em;padding:12px 16px 8px">Privacy &amp; legal</div>
+        <a href="/privacy" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-top:1px solid var(--vq-rule);text-decoration:none">
+          <span style="font-size:14px;color:var(--vq-ink)">Privacy Policy</span>
+          <span style="color:var(--vq-muted);font-size:16px">›</span>
+        </a>
+        <a href="/terms" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-top:1px solid var(--vq-rule);text-decoration:none">
+          <span style="font-size:14px;color:var(--vq-ink)">Terms of Service</span>
+          <span style="color:var(--vq-muted);font-size:16px">›</span>
+        </a>
+        <button type="button" onclick="window.vqOpenConsent()" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 16px;background:none;border:none;border-top:1px solid var(--vq-rule);font-family:inherit;cursor:pointer;text-align:left">
+          <span>
+            <span style="font-size:14px;color:var(--vq-ink);display:block">Cookie &amp; analytics preferences</span>
+            <span id="vq-consent-settings-status" style="font-size:12px;color:var(--vq-muted)"></span>
+          </span>
+          <span style="color:var(--vq-muted);font-size:16px">›</span>
+        </button>
+      </div>
+
       <!-- Module-specific settings links -->
       <div style="background:var(--vq-surface);border:1px solid var(--vq-border);border-radius:14px;overflow:hidden;margin-bottom:14px">
         <div style="font-size:11px;font-weight:700;color:var(--vq-muted);text-transform:uppercase;letter-spacing:0.06em;padding:12px 16px 8px">Module settings</div>
@@ -3052,11 +3179,11 @@
                 <div>💰 <strong>Costing data</strong> — quotes, invoices, and payments you create</div>
                 <div>🖼️ <strong>Logo</strong> — if you upload one, stored with your profile</div>
               </div>
-              <p style="margin-top:8px">We do <strong>not</strong> sell your data, use it for advertising, or share it with third parties except Supabase (our EU cloud database provider).</p>
+              <p style="margin-top:8px">We do <strong>not</strong> sell your data or use it for advertising. We use trusted service providers to run Veriqo — including cloud hosting and database, payments, email, optional analytics, and AI features. See the <a href="/privacy" target="_blank" rel="noopener" style="color:var(--vq-green);text-decoration:none;font-weight:600">Privacy Policy</a> for the full list and details.</p>
             </div>
             <div style="font-size:13px;font-weight:600;color:var(--vq-ink);margin-bottom:8px">How your data is stored</div>
             <div style="font-size:13px;color:var(--vq-muted);line-height:1.6;margin-bottom:14px">
-              <p style="margin-bottom:6px">Your data is stored on your device (browser local storage) and in our cloud database (Supabase, EU servers). Only you can access your records — we use row-level security so no other user can read your data.</p>
+              <p style="margin-bottom:6px">Your data is stored on your device (browser local storage) and in our cloud database (Supabase). Only you and people you invite to your account can access your records — we use row-level security so other users cannot read your data.</p>
               <p>To delete your account and all data, tap <strong>Delete account</strong> above, or email <a href="mailto:hello@getveriqo.co.uk" style="color:var(--vq-green);text-decoration:none;font-weight:600">hello@getveriqo.co.uk</a>.</p>
             </div>
             <div style="font-size:13px;font-weight:600;color:var(--vq-ink);margin-bottom:8px">Your rights (UK GDPR)</div>
@@ -3201,7 +3328,7 @@ function vqIcon(name, size) {
 <script src="js/modules/intake.js?v=1"></script>
 <script src="js/modules/lead-scripts.js?v=1"></script>
 
-<script src="auth.js?v=38"></script>
+<script src="auth.js?v=39"></script>
 <script src="js/core/idb-queue.js?v=2"></script>
 <script src="sync.js?v=21"></script>
 <script src="yield-sync.js?v=17"></script>
@@ -4018,6 +4145,13 @@ function mailtoFreelancerLink() {
   };
 
   window.vqSignOut = async function() {
+    // Single source of truth: Mise.auth.logout() clears the auth token, all
+    // private cached data (haccp_/mise_/yield_/positioning + IndexedDB
+    // queues), resets analytics, tears down the service worker + caches, and
+    // reloads. Fall back to a local-only sign-out only if it is unavailable.
+    if (window.Mise && window.Mise.auth && typeof window.Mise.auth.logout === 'function') {
+      return window.Mise.auth.logout();
+    }
     try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(e) {}
     try {
       Object.keys(localStorage)
@@ -4096,9 +4230,12 @@ function mailtoFreelancerLink() {
 
     // Clear local state then reload to auth screen
     try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(_) {}
+    if (window.Mise && window.Mise.auth && typeof window.Mise.auth.clearLocalData === 'function') {
+      try { await window.Mise.auth.clearLocalData(); } catch(_) {}
+    }
     try {
       Object.keys(localStorage)
-        .filter(function(k) { return k.startsWith('sb-') || k.startsWith('veriqo_') || k.startsWith('mise_') || k.startsWith('yield_'); })
+        .filter(function(k) { return k.startsWith('sb-') || k.startsWith('veriqo_') || k.startsWith('mise_') || k.startsWith('yield_') || k.startsWith('haccp_'); })
         .forEach(function(k) { localStorage.removeItem(k); });
     } catch(_) {}
     window.location.reload();
@@ -4346,5 +4483,49 @@ function vqGeneratePositioningPDF() {
 </div>
 
 <div id="vqPrintContainer" style="display:none"></div>
+
+<!-- ═══ Cookie & analytics consent banner ═══
+     Shown only until the user makes a choice. Neither option is preselected;
+     continued browsing is NOT treated as consent. Analytics stay off until
+     "Allow analytics" is chosen. Re-openable from Settings → Privacy & legal. -->
+<div id="vq-consent-banner" hidden role="dialog" aria-modal="false" aria-labelledby="vq-consent-title"
+  style="position:fixed;left:0;right:0;bottom:0;z-index:10000;background:var(--vq-surface,#fff);border-top:1px solid var(--vq-border,#e3e2dd);box-shadow:0 -6px 28px rgba(0,0,0,0.14);padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));font-family:inherit">
+  <div style="max-width:660px;margin:0 auto">
+    <div id="vq-consent-title" style="font-size:14px;font-weight:700;color:var(--vq-ink,#1b1b1b);margin-bottom:6px">Cookies &amp; similar technologies</div>
+    <p style="font-size:13px;line-height:1.55;color:var(--vq-muted,#666);margin:0 0 12px">
+      Veriqo uses necessary storage on your device to keep you signed in and let the app work offline &mdash; this is always on.
+      Optional analytics (Google Analytics and PostHog) help us understand how the app is used. They stay <strong>off</strong> until you choose &ldquo;Allow analytics&rdquo;, and you can change this any time in Settings.
+      <a href="/privacy" target="_blank" rel="noopener" style="color:var(--vq-green,#2D7A3A);font-weight:600;text-decoration:none">Privacy&nbsp;Policy</a>
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button type="button" onclick="window.vqAnalytics.setConsent(false)"
+        style="flex:1 1 150px;padding:11px 14px;background:none;border:1px solid var(--vq-border,#ccc);border-radius:8px;font-size:14px;font-weight:600;color:var(--vq-ink,#1b1b1b);cursor:pointer;font-family:inherit">Necessary only</button>
+      <button type="button" onclick="window.vqAnalytics.setConsent(true)"
+        style="flex:1 1 150px;padding:11px 14px;background:var(--vq-green,#2D7A3A);border:1px solid var(--vq-green,#2D7A3A);border-radius:8px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit">Allow analytics</button>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  // Renders banner visibility + the Settings status line from stored consent.
+  window.vqRenderConsentUI = function () {
+    var banner = document.getElementById('vq-consent-banner');
+    if (banner) banner.hidden = !!(window.vqAnalytics && window.vqAnalytics.hasDecision());
+    var status = document.getElementById('vq-consent-settings-status');
+    if (status && window.vqAnalytics) {
+      var c = window.vqAnalytics.getConsent();
+      status.textContent = !c
+        ? 'Not set — analytics are off'
+        : (c.analytics ? 'Analytics allowed' : 'Necessary only — analytics off');
+    }
+  };
+  window.vqOpenConsent = function () {
+    var b = document.getElementById('vq-consent-banner');
+    if (b) b.hidden = false;
+  };
+  if (document.readyState !== 'loading') window.vqRenderConsentUI();
+  else document.addEventListener('DOMContentLoaded', window.vqRenderConsentUI);
+})();
+</script>
 </body>
 </html>
