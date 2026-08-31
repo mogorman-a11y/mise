@@ -518,3 +518,96 @@ Every input has an explicit `<label for>`; grouped in `<fieldset>`/`<legend>`; `
 - `node --test tests/*.test.js` → **104 pass / 0 fail** (82 existing + 22 new).
 - 36 JSON-LD blocks valid; `sitemap.xml` well-formed; `vercel.json` valid; all internal links resolve; HTML tag-balance clean; every `<label for>` resolves to an `id`.
 - Fake-DOM smoke test of `js/pricing-calculator.js` wiring: example prefill renders (£641 / £80 per guest / 37.5% food cost / £128 contribution), VAT toggle reveals net + VAT + customer total, `margin = 100` shows the error state with `aria-invalid`. (A DOM test runner is deliberately not added to the repo — CLAUDE.md notes none is set up. Manual browser check still recommended: keyboard tab order, iOS no-zoom on inputs, 360 px layout, screen-reader announcement of the live region.)
+
+---
+
+## ACQUISITION ASSET: UK Food Temperature Guide (2026-08-31)
+
+A public, indexable food-safety reference — a bookmarkable table with a lightweight filter, plus supporting explainers. Safety-critical content, so accuracy is the first constraint.
+
+### Route
+
+`/food-temperature-guide-uk` → `/food-temperature-guide-uk.html`
+(added to `vercel.json` `routes`; top-level and keyword-exact, matching `/private-chef-pricing-calculator` and the product pages. No reason to nest under `/resources/`.)
+
+- **Files:** `food-temperature-guide-uk.html` (page — full reference table + prose server-rendered), `js/food-temperature-guide.js` (pure `rowMatches`/`filterRows` + progressive-enhancement DOM wiring, UMD), `tests/food-temperature-guide.test.js` (22 tests: filter logic + HTML content-regression guards).
+- Not in primary nav. Inbound links added from `/haccp` ("Related guides" + the temperature-threshold FAQ answer), the `/resources` card grid, `resources/do-private-chefs-need-haccp-uk`, `resources/what-eho-inspector-checks-private-chef`, and the printable `resources/haccp-temperature-log` (whose footer legend was also softened — "within 90 minutes" was presented as a PASS target; now "FSA guidance: within ~90 min").
+
+### SEO intent
+
+Primary: **food temperature guide UK**, **cooking temperature UK**, **food safety temperature chart UK**, **fridge temperature UK food business**, **hot holding temperature UK**, **reheating temperature UK**, **cooling food safely UK**, **food transport temperature UK**, **HACCP temperature guide**, **private chef temperature log**.
+- `<title>` "Food Temperature Guide UK | HACCP Temperatures | Veriqo"; unique meta description; canonical; OG + Twitter `summary_large_image` (`og-image.png`).
+- Schema: `WebPage` (`lastReviewed: 2026-08-31`, `isPartOf` WebSite, `about` = Food safety / HACCP / Food temperature control), `BreadcrumbList`, `FAQPage` (9 Q&As mirrored from the visible FAQ). **No** `MedicalWebPage`/regulatory schema (does not genuinely apply), **no** `SoftwareApplication` (it is a reference, not a tool), no ratings.
+
+### Source methodology
+
+Every safety-related figure on the page is traceable to a UK primary source, linked in a "Sources & guidance" section with descriptive anchors: FSA Safer Food Better Business, FSA business-guidance hub, FSA chilling guidance, FSA cooking guidance, GOV.UK food-business responsibilities, `legislation.gov.uk` for the Food Safety and Hygiene (England) Regulations 2013, the Food Safety (Temperature Control) Regulations 1995 (Scotland), and the Quick-frozen Foodstuffs (England) Regulations 2007, plus Food Standards Scotland. No blogs or secondary aggregators are cited. A prominent disclaimer states it is **not legal advice**, that rules differ by UK nation, and that Veriqo is **not a government scheme** and does not by itself make a business compliant.
+
+### Legal / guidance / default distinction
+
+Three labelled tags, each with a text explanation (colour is never the only signal), defined in a legend above the table:
+
+| Tag | Meaning | Examples on the page |
+|---|---|---|
+| **Legal requirement** | Set in UK regulations | 8°C cold-holding max & 63°C hot-holding min (E/W/NI 2013 Regs + equivalents; Scotland 1995 Regs); the 2-hour-below-63°C and 4-hour-above-8°C single-period exceptions (E/W/NI); Scotland reheating **82°C**; −18°C for quick-frozen foods |
+| **FSA guidance / recommendation** | Official advice or a recommended target, not the only lawful method | 5°C chilled operating target; cooking reference combinations (70°C/2min, 75°C/30s, 80°C/6s, 60°C/45min); a single 75°C core check as a practical proxy; reheating to 75°C / "piping hot" in E/W/NI; cool "as fast as possible, ≈90 min" (explicitly **not** a fixed legal time); the 8–63°C danger zone |
+| **Veriqo default** | An app threshold, adjustable in Settings, **not a legal threshold** | cooking/reheat fail < 75°C; fridge warn > 5°C / fail > 8°C; freezer warn > −18°C / fail > −15°C; cold transport warn > 5°C / fail > 8°C; hot transport warn < 70°C / fail < 63°C — also listed together in a distinct "Veriqo app defaults" box |
+
+The page explicitly says there is **no single cooking temperature fixed in law** for England, Wales and Northern Ireland, and **no single cooling time fixed in UK food hygiene law**.
+
+### Interactive filter (progressive enhancement)
+
+Full `<table>` (semantic: `<caption>`, `<thead>` `<th scope="col">`, `<tbody>` `<th scope="row">` on the first cell, wrapped in a keyboard-focusable `overflow-x:auto` region). Filter bar (`hidden` in HTML, revealed by JS) = category toggle buttons with `aria-pressed` + a `type="search"` input. `js/food-temperature-guide.js` toggles `row.hidden` via the pure `rowMatches(row, {category, query})` (category match AND every query term present in the row text or its `data-keywords`). A `role="status" aria-live="polite"` line reports "Showing N of M entries". With JS off: filter bar stays hidden, `<noscript>` explains, full table shown. All SEO-critical text is in the HTML.
+
+### Internal links added
+
+`vercel.json` (+route), `sitemap.xml` (+url), `haccp.html` (Related guides + FAQ answer), `resources.html` (+card), `resources/do-private-chefs-need-haccp-uk.html` (further reading), `resources/what-eho-inspector-checks-private-chef.html` (further reading), `resources/haccp-temperature-log.html` (footer legend link + wording softened). The guide links out to `/haccp`, `/resources/haccp-temperature-log`, `/resources/do-private-chefs-need-haccp-uk`, `/resources/what-eho-inspector-checks-private-chef`, `/resources`.
+
+### Tests added (`tests/food-temperature-guide.test.js`, 22)
+
+- Filter logic: category `all`/specific/case-insensitive, single/multi-term query (AND), `data-keywords` search, empty query, `null` args safe, `filterRows` subset.
+- **Content-regression guards on the HTML** (dangerous-regression protection): asserts the page never matches `/must reach 75°C/`, `/75°C is (the legal|a legal requirement)/`, `/legal minimum (of|is) 75/`; asserts it *does* contain "no single cooking temperature fixed/set in law" + the equivalence combinations; asserts the 5°C-recommendation vs 8°C-legal-maximum distinction is present and 5°C is never called the legal maximum; asserts 63°C is stated as a legal minimum; asserts cooling is guidance not an invented fixed legal limit; asserts the Scotland 82°C difference is present; asserts "Veriqo default" is labelled "not a legal threshold" / "Product setting, not law"; asserts no "guarantees compliance" / "government-certified"; asserts the FSA/legislation.gov.uk/FSS source links exist; asserts schema is exactly WebPage + BreadcrumbList + FAQPage with no ratings; asserts the table row count matches the announced count and header cells carry `scope`.
+
+### Privacy / performance
+
+Runs entirely client-side. `js/food-temperature-guide.js` makes no network calls, no analytics, no storage — filter/search terms never leave the browser. No inline script on the page. No external libraries; the reference works immediately (and fully without JS).
+
+### Evidence-led food-safety review (2026-08-31)
+
+A second review verified every materially safety-critical claim against current primary sources (live-fetched). Changes made:
+
+| # | Claim before | Claim now | Primary source |
+|---|---|---|---|
+| 1 | Cooling: table + prose said **"FSA guidance is ≈90 minutes"** and "within about 90 minutes" is SFBB guidance | **"As quickly as possible, then refrigerate."** Prose/table add: "Current FSA / GOV.UK guidance describes getting cooked food into the fridge within one to two hours." The "90 minutes" figure is removed from every public page. | [GOV.UK / FSA — How to chill, freeze and defrost food safely](https://www.gov.uk/government/publications/how-to-chill-freeze-and-defrost-food-safely/how-to-chill-freeze-and-defrost-food-safely) — "cool cooked food at room temperature and place in the fridge within one to two hours". No "90 minutes" wording in current FSA guidance. |
+| 2 | Legend: **"Legal requirement — set out in UK regulations. Breaking it is an offence."** | **"Legal requirement — a requirement arising from food law. Specific exemptions, tolerances or statutory defences may apply."** | [Food Safety and Hygiene (England) Regs 2013, Sch 4](https://www.legislation.gov.uk/uksi/2013/2996/schedule/4/made) — the 8°C/63°C offences carry explicit statutory defences (manufacturer-specified temperature, four-hour and two-hour single periods, unavoidable reason such as equipment breakdown). |
+| 3 | Hot transport: **"63°C or above … Same basis as hot holding"** tagged *Legal requirement* | **"Where food is transported hot and kept under hot-holding control, keep it above 63°C. An equally valid approach is to transport it chilled (8°C or below) and reheat it fully on site. Transport itself is covered by the general duty to keep food safe, not a separate transport thermometer law."** Tag changed to *FSA guidance*. | 2013 Regs Sch 4 para 6 frames the 63°C offence around food kept below 63°C at *food premises*; transport is governed by the general temperature-control / food-safety duty. Applying 63°C in hot transit is the recommended control, not a distinct statutory transport threshold. |
+| 4 | Record retention: **"the FSA suggests keeping food safety records for at least three months, and allergen-related records for longer"** (guide + FAQ + 4 resource articles) | **"Keep records long enough to show your food-safety controls are being followed and to meet any specific legal, customer or business requirements that apply to you; there is no single retention period set in the general food hygiene regulations. Allergen information must be accurate, provided in writing where appropriate, and kept up to date."** | [GOV.UK / FSA — Managing food safety](https://www.gov.uk/government/publications/managing-food-safety); [FSA — HACCP-based procedures (Ch 4.2)](https://www.food.gov.uk/business-guidance/chapter-42-haccp-based-procedures) — no universal retention period in the hygiene regs; records must be kept up to date and available for inspection; sector rules may add requirements. [SFBB](https://www.gov.uk/government/publications/safer-food-better-business-sfbb): "Store all your completed diary pages safely until your next visit from a local authority food safety officer." |
+| 5 | High-risk cooking: **"Cook right through. No pink meat, juices run clear. Probe the thickest part."** | **"Control by time and temperature: cook right through and check the centre or thickest part with a probe, avoiding bone. Visual signs — no pink meat, juices running clear — are a secondary check for when you cannot probe, not a substitute for the temperature/time control."** | [GOV.UK / FSA — Cooking your food](https://www.gov.uk/government/publications/cooking-your-food/cooking-your-food) presents visual cues explicitly as the fallback "If you don't have a food thermometer". For a HACCP reference, time/temperature is the control. |
+| 6 | Scotland reheating cited to the **Food Safety (Temperature Control) Regs 1995** | Cited to the **Food Hygiene (Scotland) Regulations 2006, Sch 4** (still 82°C, with the "deterioration of its qualities" defence). Scotland cold-holding row re-pointed to the 2006 regs. | [The Food Hygiene (Scotland) Regulations 2006, Sch 4 para 3](https://www.legislation.gov.uk/ssi/2006/3/schedule/4/made) — "raised to a temperature of not less than 82°C"; quality defence. |
+| 7 | Sources linked to `food.gov.uk/business-guidance/*` and `food.gov.uk/safety-hygiene/*` | All safety-critical claims now link **direct to gov.uk / legislation.gov.uk / foodstandards.gov.scot**. | Live-checked: `food.gov.uk/business-guidance/safer-food-better-business-sfbb`, `/safety-hygiene/chilling` and `/safety-hygiene/cooking-your-food` now **301-redirect to `gov.uk/government/publications/…`** — the FSA guidance content has moved to GOV.UK. |
+| — | Cooking equivalents row listed 70/2min + three others | Added **65°C for 10 minutes** so all five FSA combinations appear in the table (they were already in the explainer). | GOV.UK / FSA — Cooking your food (verbatim: "60°C for 45 minutes, 65°C for 10 minutes, 70°C for 2 minutes, 75°C for 30 seconds, 80°C for 6 seconds"). |
+| — | Freezer row: "recommended and widely required standard … must be kept at −18°C" | "recommended standard … for commercially quick-frozen foods, −18°C is set by the Quick-frozen Foodstuffs Regulations … for other frozen food it is guidance". Tag: legal status **only** for quick-frozen-food-legislation foods. | [Quick-frozen Foodstuffs (England) Regs 2007](https://www.legislation.gov.uk/uksi/2007/191/contents). |
+
+**Kept as verified (with qualification):** the five FSA cooking combinations; 5°C recommended chilled target; 8°C cold-holding legal maximum (E/W/NI) with the four-hour display exception and statutory defences; 63°C hot-holding with the two-hour single period and defences; Scotland's 82°C reheating rule and its quality defence; −18°C for quick-frozen foods; every "Veriqo default" row labelled a product default, not law.
+
+Resource copy also amended for the same reasons: `resources/haccp-temperature-log.html` (printable legend — "within ~90 min" → "then refrigerate"), `resources/do-private-chefs-need-haccp-uk.html` (cooling + "how long to keep records" callout), `resources/what-eho-inspector-checks-private-chef.html` (two cooling lines + two three-month lines), `resources/private-chef-allergen-management-guide.html` (three-month allergen-retention sentence).
+
+**Out of scope (authenticated app, not touched):** `app.html` and `event.html` contain in-app cooling copy using "90 minutes" as a *target* with "maximum 2 hours (UK FSA guidance)" — this is Veriqo's documented in-product HACCP methodology, framed as a target not a legal PASS line, and changing authenticated behaviour is outside this task. Flag for a future in-app review. (`haccp-app PC.html` is a gitignored retired variant, not served.)
+
+### Facts requiring periodic review (UK guidance can change)
+
+1. **The FSA→GOV.UK migration** — `food.gov.uk/business-guidance/*` and `/safety-hygiene/*` now 301 to `gov.uk/government/publications/*`. The guide links the gov.uk targets directly; re-check these annually as GOV.UK can re-slug. `legislation.gov.uk` SI URLs are permanent.
+2. **Cooling** — current FSA/gov.uk wording is "as quickly as possible" / "into the fridge within one to two hours". No "90 minutes" and no universal statutory cooling time. Keep it that way unless a future primary FSA source reintroduces a specific figure.
+3. **Record retention** — no single period in the general hygiene regulations. Do not reintroduce "three months" as a universal requirement; sector-specific or customer requirements may still apply.
+4. **Scotland reheating = 82°C** — Food Hygiene (Scotland) Regulations 2006, Sch 4 para 3, with the "deterioration of its qualities" defence. Re-verify against Food Standards Scotland if the Scottish regs are consolidated.
+5. **Time-limited exceptions & defences** — 2 hours below 63°C (hot), 4 hours above 8°C (cold display), single period, E/W/NI, plus the manufacturer-temperature and unavoidable-reason defences. Confirm the hours and the Scottish position (link FSS).
+6. **8°C / 63°C statutory figures** — Food Safety and Hygiene (England) Regs 2013 Sch 4 and devolved equivalents; Food Hygiene (Scotland) Regs 2006 for Scotland.
+7. **−18°C** — legal only for foods within the quick-frozen-food legislation (England SI 2007/191, devolved equivalents); guidance otherwise.
+8. **`lastReviewed` schema + on-page "Last reviewed" date** — update on every re-check.
+
+### Verification
+
+- `node --test tests/*.test.js` → **130 pass / 0 fail** (126 + 4 new content-regression guards for this review).
+- 39 JSON-LD blocks valid; `sitemap.xml` well-formed; `vercel.json` valid; all internal links resolve; HTML tag-balance clean on the guide and all four amended articles.
+- New guards assert: the "90 minutes" cooling figure never reappears (and the supported "one to two hours" phrasing is present); no blanket three-month HACCP retention; no universal "allergen records kept longer"; the legend acknowledges exemptions/tolerances/defences; hot-transport wording does not overstate 63°C as a separate transport law; sources are gov.uk / legislation.gov.uk / FSS (incl. the Scotland 2006 regs) and not secondary hospitality sites.
+- Fake-DOM smoke test of `js/food-temperature-guide.js` (unchanged): filter bar un-hides on init, category filters rows, search narrows, `role="status"` updates, empty-result message toggles. Manual browser check still recommended: 360px table scroll, `aria-pressed` visibility, keyboard operation, external source links open.
