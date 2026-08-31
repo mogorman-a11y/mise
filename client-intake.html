@@ -144,6 +144,15 @@ textarea.form-input{resize:none;min-height:80px;line-height:1.5}
       </div>
     </div>
 
+    <div class="form-card" style="margin-top:12px">
+      <div class="form-card-title">How your information is used</div>
+      <div style="font-size:13px;color:#6B6459;line-height:1.6">
+        <p style="margin:0 0 8px"><span class="pn-biz">The chef or business</span> who sent you this form is collecting these details to respond to your enquiry and to plan food and dietary requirements for your booking. They decide how your information is used and kept.</p>
+        <p style="margin:0 0 8px">Veriqo provides the software used to collect and store this form. The information you enter may include allergy or dietary information — please share only what is relevant to this booking.</p>
+        <p style="margin:0">Questions about your information, or requests to change or remove it, should normally go to <span class="pn-biz">the chef or business</span> you are dealing with. Veriqo's <a href="/privacy" target="_blank" rel="noopener" style="color:#1C6B33;font-weight:600">Privacy Policy</a> explains how the software handles data.</p>
+      </div>
+    </div>
+
     <button class="btn-submit" id="fi-submit" onclick="submitIntakeForm()">Send my details</button>
     <div class="required-note">* Required fields</div>
     <div class="powered">Powered by <strong>Carte</strong> · Private chef business management</div>
@@ -215,6 +224,11 @@ function renderBranding(cfg) {
     + '</div>'
     + '<div class="top-badge">Carte</div>'
     + '</div>';
+
+  // Name the controller (the chef/business) in the point-of-collection notice.
+  Array.prototype.forEach.call(document.querySelectorAll('.pn-biz'), function (el) {
+    el.textContent = businessName;
+  });
 
   var label = cfg.label;
   document.getElementById('intro-title').textContent = label ? label : 'Your details';
