@@ -443,3 +443,78 @@ Run against the **preview deployment** (Vercel route behaviour can't be fully ex
 4. `curl -sI https://<preview>/` → **200**, body has no `noindex`; `/haccp`, `/menus`, `/costing`, `/prep-lists`, `/resources`, `/resources/<any-guide>`, `/about`, `/about/michael-ogorman`, `/contact` → **200**.
 5. Then the browser + Search Console / Bing checks already listed under §3 and "Manual browser checks before merge".
 6. Still outstanding from earlier sections (unchanged): Privacy/Terms/Cookie pages, the `veriqo.co.uk` apex 301, GSC/Bing verification, and the AI-crawler policy decision.
+
+---
+
+## ACQUISITION ASSET: Private Chef Pricing Calculator (2026-08-31)
+
+A free, public, indexable calculator — an SEO acquisition asset that also feeds Costing.
+
+### Route
+
+`/private-chef-pricing-calculator` → `/private-chef-pricing-calculator.html`
+(added to `vercel.json` `routes`; top-level, keyword-exact, consistent with `/haccp` / `/costing`. No reason to nest under `/resources/` — a flat path matches the head query "private chef pricing calculator" better and the existing top-level pattern.)
+
+- **Files:** `private-chef-pricing-calculator.html` (page), `js/pricing-calculator.js` (pure math + browser wiring, UMD like `js/core/gp-math.js`), `tests/pricing-calculator.test.js` (22 tests).
+- Not added to the primary nav (would clutter). Linked from `/costing` "Related guides", the `/resources` card grid, and a contextual callout inside `/resources/how-to-price-a-bespoke-dinner-party` (Step 5).
+
+### SEO target
+
+Primary: **private chef pricing calculator**, **private chef cost calculator**, **private dining pricing calculator**, **chef costing calculator**.
+Secondary / supporting content: **how much should a private chef charge**, **private chef pricing UK**, **private chef food cost percentage**, **private chef profit margin**, **margin vs markup**.
+
+- `<title>` "Private Chef Pricing Calculator UK | Veriqo"; unique meta description; canonical; OG + Twitter `summary_large_image` with `icons/og-image.png`.
+- Schema (all JSON-LD, validated): `WebApplication` (`isAccessibleForFree: true`, `offers` price 0 GBP, `provider` → Veriqo, `browserRequirements`), `FAQPage` (7 Q&As mirrored from the visible FAQ), `BreadcrumbList` (Home / Resources / Calculator). `WebPage` was considered but omitted as duplicative — this mirrors the product pages' `SoftwareApplication` + `FAQPage` + `BreadcrumbList` set. No ratings/reviews.
+- In `sitemap.xml` at priority 0.8, `changefreq` monthly.
+
+### Calculation methodology
+
+All figures computed at full float precision; only display is rounded (whole £ for money, 1 dp for percentages). Rows can therefore differ by ~£1 from their parts — noted on the page.
+
+```
+directCosts       = ingredientCost + travelCost + staffCost + otherCosts
+ownerHours        = prepHours + serviceHours + adminHours
+ownerLabour       = ownerHours × hourlyRate
+costBeforeProfit  = directCosts + ownerLabour
+sellingPriceNet   = costBeforeProfit ÷ (1 − targetMargin)      ← margin, NOT markup
+                    (£400 @ 20% → £400 ÷ 0.8 = £500, not £480)
+pricePerGuest     = sellingPriceNet ÷ guests
+foodCostPct       = ingredientCost ÷ sellingPriceNet × 100     (of NET price)
+grossContribution = sellingPriceNet − costBeforeProfit         (= sellingPriceNet × margin)
+revenuePerOwnerHour = sellingPriceNet ÷ ownerHours             (null when ownerHours = 0)
+impliedMarkupPct  = margin ÷ (1 − margin) × 100
+VAT (only if "VAT registered" ticked; rate editable, defaults 20):
+  vat            = sellingPriceNet × vatRate
+  customerTotal  = sellingPriceNet + vat
+```
+
+Guards / validation: `guests` clamped to ≥ 1 (no divide-by-zero); costs, hours, rate clamped to ≥ 0; negative margin clamped to 0; **margin ≥ 100% is rejected** (`{ ok: false, error: 'margin_too_high' }`) — never Infinity/NaN; non-numeric input coerces to its fallback. `computePricing({})` and garbage input never throw.
+
+Terminology on the page is deliberate: **margin** (share of selling price) vs **markup** (share of cost) are both shown and explained; the profit figure is labelled **"Contribution before general overheads & tax"**, never "your profit". The page states the output is a planning estimate, not a legally correct price, a standard UK rate, or a guarantee of profit/income.
+
+### Internal-link changes
+
+| File | Change |
+|---|---|
+| `vercel.json` | + route `/private-chef-pricing-calculator` |
+| `sitemap.xml` | + `<url>` for the calculator |
+| `costing.html` | "Related guides" → added "Private chef pricing calculator" as the first item |
+| `resources.html` | + article-card "Private Chef Pricing Calculator" (tag "Free Tool · Pricing", "Open calculator →") next to the pricing article |
+| `resources/how-to-price-a-bespoke-dinner-party.html` | + `.callout` after the Step 5 margin formula linking to the calculator with a descriptive anchor |
+| calculator page | links out to `/costing` (CTA), `/resources/how-to-price-a-bespoke-dinner-party`, `/resources` |
+
+### Privacy behaviour
+
+- Runs **entirely client-side**. `js/pricing-calculator.js` makes **no network calls** and there is **no inline script** on the page.
+- **No analytics** of any kind on this page (marketing pages carry no GTM/PostHog; none was added). No event ever contains entered cost/pricing values.
+- No `localStorage` / cookies — inputs are not persisted anywhere; a refresh returns the example prefill. Stated on the page ("runs entirely in your browser; nothing you enter is sent anywhere").
+
+### Accessibility
+
+Every input has an explicit `<label for>`; grouped in `<fieldset>`/`<legend>`; `£`/`%` affixes are `aria-hidden` with the unit repeated in the label text. Results headline is a small `aria-live="polite" aria-atomic="true"` region (concise announcement on change); the detailed `<dl>` updates silently but is navigable. Margin error uses `role="alert"` + `aria-invalid` on the field; the message is text, not colour. `:focus-visible` outlines throughout. Layout is single-column below 860px and the input grid collapses to one column below 420px (usable at 360px). `<noscript>` points to the written-out method.
+
+### Verification
+
+- `node --test tests/*.test.js` → **104 pass / 0 fail** (82 existing + 22 new).
+- 36 JSON-LD blocks valid; `sitemap.xml` well-formed; `vercel.json` valid; all internal links resolve; HTML tag-balance clean; every `<label for>` resolves to an `id`.
+- Fake-DOM smoke test of `js/pricing-calculator.js` wiring: example prefill renders (£641 / £80 per guest / 37.5% food cost / £128 contribution), VAT toggle reveals net + VAT + customer total, `margin = 100` shows the error state with `aria-invalid`. (A DOM test runner is deliberately not added to the repo — CLAUDE.md notes none is set up. Manual browser check still recommended: keyboard tab order, iOS no-zoom on inputs, 360 px layout, screen-reader announcement of the live region.)

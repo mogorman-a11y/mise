@@ -31,6 +31,7 @@
     { "src": "/about", "dest": "/about.html" },
     { "src": "/about/(.*)", "dest": "/about/$1.html" },
     { "src": "/contact", "dest": "/contact.html" },
+    { "src": "/private-chef-pricing-calculator", "dest": "/private-chef-pricing-calculator.html" },
     { "src": "/mise", "status": 301, "dest": "/app" },
     { "src": "/yield", "status": 301, "dest": "/app" },
     { "src": "/app", "dest": "/app.html" },
