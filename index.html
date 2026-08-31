@@ -3,15 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Veriqo — Kitchen management for private chefs</title>
-  <meta name="description" content="Veriqo is kitchen management for UK private chefs — HACCP records, menus and bookings, and job costing in one app. EHO-ready, compliant, and profitable. Try free." />
+  <title>Private Chef Software UK | HACCP, Menus &amp; Costing | Veriqo</title>
+  <meta name="description" content="Run your private chef business from one app. HACCP records, bookings, menus, job costing, quotes, invoices and payments. 14-day free trial." />
   <link rel="canonical" href="https://getveriqo.co.uk/" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://getveriqo.co.uk/" />
-  <meta property="og:title" content="Veriqo — Kitchen Management for Private Chefs" />
-  <meta property="og:description" content="HACCP, menus and costing built for the way private chefs actually work. Compliant, organised, profitable — in one app." />
+  <meta property="og:title" content="Private Chef Software UK | HACCP, Menus &amp; Costing | Veriqo" />
+  <meta property="og:description" content="Private chef business software combining HACCP records, bookings, menus, costing, quotes, invoices and payments — one connected app built for UK private chefs." />
   <meta property="og:image" content="https://getveriqo.co.uk/icons/og-image.png" />
+  <meta property="og:site_name" content="Veriqo" />
   <meta property="og:locale" content="en_GB" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Private Chef Software UK | HACCP, Menus &amp; Costing | Veriqo" />
+  <meta name="twitter:description" content="One connected app for UK private chefs: HACCP, bookings, menus, costing, quotes, invoices and payments." />
+  <meta name="twitter:image" content="https://getveriqo.co.uk/icons/og-image.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700;1,900&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
@@ -19,28 +24,57 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://getveriqo.co.uk/#organization",
+    "name": "Veriqo",
+    "legalName": "Side Order Catering Ltd",
+    "url": "https://getveriqo.co.uk/",
+    "logo": "https://getveriqo.co.uk/icons/icon-512.png",
+    "description": "Veriqo is UK private-chef business software combining HACCP records, bookings, menus, costing, quotes, invoices, payments and prep lists.",
+    "email": "hello@getveriqo.co.uk",
+    "founder": { "@type": "Person", "name": "Michael O'Gorman" },
+    "areaServed": "GB",
+    "sameAs": ["https://www.sideordercatering.co.uk"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
     "@type": "SoftwareApplication",
+    "@id": "https://getveriqo.co.uk/#software",
     "name": "Veriqo",
     "url": "https://getveriqo.co.uk/",
-    "description": "Kitchen management app for UK private chefs — HACCP records, menus and bookings, and job costing in one place. EHO-ready exports.",
+    "description": "Veriqo is UK private-chef business software combining HACCP records, bookings, menus, costing, quotes, invoices, payments and prep lists. EHO-ready exports.",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web, iOS, Android",
-    "offers": {
-      "@type": "Offer",
-      "price": "7.00",
-      "priceCurrency": "GBP",
-      "priceSpecification": { "@type": "RecurringChargeSpecification", "billingDuration": "P1M" }
-    },
-    "publisher": { "@type": "Organization", "name": "Mise Labs", "url": "https://getveriqo.co.uk" }
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Starter",
+        "price": "7.00",
+        "priceCurrency": "GBP",
+        "priceSpecification": { "@type": "RecurringChargeSpecification", "billingDuration": "P1M" }
+      },
+      {
+        "@type": "Offer",
+        "name": "Pro",
+        "price": "15.00",
+        "priceCurrency": "GBP",
+        "priceSpecification": { "@type": "RecurringChargeSpecification", "billingDuration": "P1M" }
+      }
+    ],
+    "publisher": { "@id": "https://getveriqo.co.uk/#organization" },
+    "provider": { "@id": "https://getveriqo.co.uk/#organization" }
   }
   </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": "https://getveriqo.co.uk/#website",
     "name": "Veriqo",
     "url": "https://getveriqo.co.uk/",
-    "publisher": { "@type": "Organization", "name": "Mise Labs", "url": "https://getveriqo.co.uk" }
+    "publisher": { "@id": "https://getveriqo.co.uk/#organization" }
   }
   </script>
 
@@ -575,9 +609,9 @@
 <nav>
   <div class="container">
     <div class="nav-inner">
-      <a href="#" class="nav-logo">
+      <a href="/" class="nav-logo" aria-label="Veriqo home">
         <div class="nav-logo-mark">
-          <svg viewBox="0 0 16 16" fill="white"><path d="M8 1L2 4v4c0 3.3 2.6 5.9 6 6.9C11.4 13.9 14 11.3 14 8V4L8 1z"/></svg>
+          <svg viewBox="0 0 16 16" fill="white" aria-hidden="true"><path d="M8 1L2 4v4c0 3.3 2.6 5.9 6 6.9C11.4 13.9 14 11.3 14 8V4L8 1z"/></svg>
         </div>
         Veriqo
       </a>
@@ -600,7 +634,7 @@
   <div class="hero-inner container">
     <div class="hero-eyebrow reveal d1">
       <div class="hero-pip"></div>
-      <span class="hero-eyebrow-text">Kitchen management · UK private chefs</span>
+      <span class="hero-eyebrow-text">Private chef business software</span>
     </div>
     <h1 class="hero-hl">
       <span class="reveal d2">Three questions.</span>
@@ -608,7 +642,7 @@
     </h1>
     <div class="hero-bottom">
       <div class="hero-copy">
-        <p class="hero-sub reveal d4">Am I compliant? Am I organised? Am I profitable? Veriqo answers all three — HACCP, menus, and costing built for the way private chefs actually work.</p>
+        <p class="hero-sub reveal d4">Am I compliant? Am I organised? Am I profitable? HACCP, bookings, menus, costing, quotes and payments — one connected app built for UK private chefs.</p>
         <div class="hero-actions reveal d5">
           <a href="https://getveriqo.co.uk/app" class="btn-primary">
             Start free trial
@@ -652,7 +686,7 @@
       <div class="trust-item"><svg viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3"/></svg>iPhone &amp; Android</div>
       <div class="trust-item"><svg viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3"/></svg>Works offline</div>
       <div class="trust-item"><svg viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3"/></svg>Encrypted cloud backup</div>
-      <div class="trust-item"><svg viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3"/></svg>UK Food Safety Act compliant</div>
+      <div class="trust-item"><svg viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3"/></svg>Designed around UK food-safety requirements</div>
       <div class="trust-item"><svg viewBox="0 0 13 13"><polyline points="2,7 5,10 11,3"/></svg>No platform fees</div>
     </div>
   </div>
@@ -667,7 +701,7 @@
         <div class="mod-cell-num">HACCP · 01</div>
         <div class="mod-cell-icon"><div class="ico-wrap ico-wrap-md"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5 3.6 9.3 8 10.3 4.4-1 8-5.3 8-10.3V6L12 2z"/><polyline points="9,12 11,14 15,10"/></svg></div></div>
         <div class="mod-cell-name">HACCP</div>
-        <div class="mod-cell-tag">Every compliance record you're legally required to keep — date-stamped, exportable, EHO-ready.</div>
+        <div class="mod-cell-tag">The everyday food-safety records private chefs need to demonstrate due diligence — date-stamped, exportable, EHO-ready.</div>
         <ul class="mod-feats"><li>Fridge &amp; freezer temperature logs</li><li>Cooking &amp; cooling records</li><li>Allergen declarations</li><li>Cleaning checklists</li><li>Pest control &amp; illness logs</li><li>Delivery temperature checks</li></ul>
       </div>
       <div class="mod-cell sr td-2">
@@ -869,7 +903,7 @@
             <div class="hp-alert">
               <span class="hp-alert-name">Chicken</span>
               <span class="hp-alert-badge">Failed</span>
-              <div class="hp-alert-detail">10:58 — 72°C — must reach 75°C minimum</div>
+              <div class="hp-alert-detail">10:58 — 72°C — below 75°C check</div>
             </div>
             <div class="hp-grid">
               <div class="hp-tile"><div class="hp-tile-top"><span class="hp-tile-emoji">☀️</span><span class="hp-tile-badge ok">1</span></div><div class="hp-tile-name">Opening checks</div><div class="hp-tile-sub ok-text">1 record — all OK</div></div>
@@ -955,16 +989,16 @@
 <footer>
   <div class="container">
     <div class="foot-inner">
-      <div class="foot-brand">Veriqo — a Mise Labs product by Side Order Catering</div>
+      <div class="foot-brand">Veriqo — private chef business software by Side Order Catering Ltd</div>
       <div class="foot-links">
         <a href="https://getveriqo.co.uk/app">App</a>
-        <a href="https://getveriqo.co.uk/veriqo">Features</a>
         <a href="/haccp">HACCP</a>
         <a href="/menus">Menus</a>
         <a href="/costing">Costing</a>
         <a href="/prep-lists">Prep Lists</a>
-        <a href="https://cheftoceo.co.uk">Chef to CEO</a>
-        <a href="mailto:hello@getveriqo.co.uk">Contact</a>
+        <a href="/resources">Resources</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
       </div>
     </div>
     <div class="foot-legal">© 2026 Side Order Catering Ltd · hello@getveriqo.co.uk</div>

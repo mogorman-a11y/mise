@@ -15,8 +15,11 @@
     { "src": "**", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/.*\\.md", "status": 404 },
+    { "src": "/.*\\.code-workspace", "status": 404 },
     { "src": "/api/(.*)", "dest": "/api/$1.js" },
-    { "src": "/veriqo", "dest": "/veriqo-landing.html" },
+    { "src": "/veriqo", "status": 301, "dest": "/" },
+    { "src": "/veriqo-landing.html", "status": 301, "dest": "/" },
     { "src": "/carte", "status": 301, "dest": "/app" },
     { "src": "/yield-info", "status": 301, "dest": "/app" },
     { "src": "/resources", "dest": "/resources.html" },
@@ -25,6 +28,9 @@
     { "src": "/costing", "dest": "/costing.html" },
     { "src": "/prep-lists", "dest": "/prep-lists.html" },
     { "src": "/resources/(.*)", "dest": "/resources/$1.html" },
+    { "src": "/about", "dest": "/about.html" },
+    { "src": "/about/(.*)", "dest": "/about/$1.html" },
+    { "src": "/contact", "dest": "/contact.html" },
     { "src": "/mise", "status": 301, "dest": "/app" },
     { "src": "/yield", "status": 301, "dest": "/app" },
     { "src": "/app", "dest": "/app.html" },
