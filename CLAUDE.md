@@ -505,24 +505,32 @@ Static content pages at `/resources/{slug}` → `/resources/{slug}.html` (alread
 ## Vercel routing (`vercel.json`)
 
 ```
-/app           → app.html
-/veriqo        → veriqo-landing.html   (canonical tag points to "/" — see note below)
-/haccp         → haccp.html
-/menus         → menus.html
-/costing       → costing.html
-/prep-lists    → prep-lists.html
-/resources     → resources.html
-/resources/*   → resources/*.html
-/mise          → 301 /app
-/yield         → 301 /app
-/carte         → 301 /app   (retired 2026-07-13 — was carte-landing.html)
-/yield-info    → 301 /app   (retired 2026-07-13 — was yield-info.html)
-/api/*         → api/*.js
+*.md                 → 404   (block internal docs — CLAUDE.md, SEO_IMPLEMENTATION.md, README_DRIFT.md, etc.)
+*.code-workspace     → 404   (block internal editor files)
+/app                 → app.html
+/veriqo              → 301 /   (was veriqo-landing.html; near-dup of homepage, 301'd 2026-08-31 — see note below)
+/veriqo-landing.html → 301 /
+/haccp               → haccp.html
+/menus               → menus.html
+/costing             → costing.html
+/prep-lists          → prep-lists.html
+/resources           → resources.html
+/resources/*         → resources/*.html
+/about               → about.html
+/about/*             → about/*.html
+/contact             → contact.html
+/mise                → 301 /app
+/yield               → 301 /app
+/carte               → 301 /app   (retired 2026-07-13 — was carte-landing.html)
+/yield-info          → 301 /app   (retired 2026-07-13 — was yield-info.html)
+/api/*               → api/*.js
 ```
 
 **Do not re-add `/carte` or `/yield-info` as live pages.** Both were standalone marketing pages for the pre-unification Carte and Yield products (retired 2026-05-17), still showing the old £12/mo price and separate branding months after the merge. Retired to 301s on 2026-07-13. `carte-landing.html`, `yield-info.html`, `app-legacy.html`, and `mise-manifest.json` were deleted the same day — nothing routes to or links them.
 
-`veriqo-landing.html` (`/veriqo`) is a near-duplicate of the homepage (same `<title>`, near-identical hero) with zero schema of its own. Rather than remove it, it now has `<link rel="canonical" href="https://getveriqo.co.uk/">` so it doesn't compete with `/` in search. It's excluded from `sitemap.xml` for the same reason — don't add it back.
+`veriqo-landing.html` (`/veriqo`) is a near-duplicate of the homepage (same `<title>`, near-identical hero) with zero schema of its own. It was orphaned from site navigation in the 2026-08-31 SEO pass, and both `/veriqo` and the raw `/veriqo-landing.html` now **301 to `/`** (query strings pass through). The file stays on disk but is unreachable via routing. It's still absent from `sitemap.xml` — don't add it back, and don't restore the old rewrite.
+
+**Internal docs are not publicly served:** `vercel.json` routes return `404` for any `*.md` or `*.code-workspace` path (this config uses the legacy `routes` array, which is mutually exclusive with the modern `redirects`/`headers` keys, so blocking is done with `{ "src": "/.*\\.md", "status": 404 }` rather than a `headers` rule). This is intentional — `CLAUDE.md`, `SEO_IMPLEMENTATION.md`, `VERIQO_AUDIT_*.md`, `supabase/migrations/README_DRIFT.md` must not be fetchable. Public content is `.html` / `.txt` / `.xml` / `.json` and is unaffected. If a genuinely public `.md` is ever needed, convert it to `.html` instead of loosening the rule.
 
 ---
 

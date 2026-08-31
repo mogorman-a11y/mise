@@ -1,4 +1,69 @@
+# robots.txt — getveriqo.co.uk
+#
+# Public marketing + resources are fully crawlable. This file is advisory,
+# not access control — private data is protected by authentication and by
+# per-page <meta name="robots"> directives, not by the rules below.
+#
+# The authenticated app (/app) is served with
+#   <meta name="robots" content="noindex, follow">
+# and is deliberately NOT disallowed here, so crawlers can fetch it and see
+# that directive. Do not add "Disallow: /app".
+#
+# robots.txt groups are not additive: a crawler obeys only its single most
+# specific matching User-agent group. Every group below therefore repeats
+# "Disallow: /api/" so no crawler is accidentally granted /api/ crawling
+# just because it has a named group.
+
 User-agent: *
 Allow: /
+Disallow: /api/
+
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+
+# ── AI answer engines / model crawlers ─────────────────────────────────────
+# Decision (2026-08-31): ALLOWED. Veriqo wants to be described and cited
+# accurately by AI search. These groups do not restrict anything the default
+# "User-agent: *" group above wouldn't already allow — they are an explicit,
+# documented statement of intent. To reverse for any crawler, change its
+# "Allow: /" to "Disallow: /".
+# See SEO_IMPLEMENTATION.md § PRE_MERGE_REVIEW for the commercial/privacy notes.
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+
+User-agent: Claude-Web
+Allow: /
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /api/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /api/
 
 Sitemap: https://getveriqo.co.uk/sitemap.xml

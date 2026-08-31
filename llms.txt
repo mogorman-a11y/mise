@@ -1,38 +1,40 @@
 # Veriqo
 
-Veriqo is a kitchen management app for private chefs and mobile caterers in the UK — HACCP food safety records, bookings and menus, and job costing in one place.
+Veriqo is UK private-chef business software combining HACCP records, bookings, menus, costing, quotes, invoices, payments and prep lists in one connected app. It is built for private chefs and mobile caterers who work in clients' kitchens rather than a fixed restaurant.
 
 - Homepage: https://getveriqo.co.uk
 - App: https://getveriqo.co.uk/app
-- Operated by: Side Order Catering
-- Contact: hello@getveriqo.co.uk
+- About: https://getveriqo.co.uk/about
+- Contact: https://getveriqo.co.uk/contact  (hello@getveriqo.co.uk)
+- Operated by: Side Order Catering Ltd (United Kingdom)
+- Founder / author of guides: Michael O'Gorman, MIH — professional chef — https://getveriqo.co.uk/about/michael-ogorman
 
 ## Modules
 
-Veriqo is one app made up of four connected modules, sharing a single dish library and job record:
+Veriqo is one app made up of connected modules that share a single dish library and job record:
 
 ### HACCP — https://getveriqo.co.uk/haccp
-Digital food safety records to meet UK food hygiene law. Fridge and freezer temperature logs, cooking/cooling/reheating records, delivery and transport temperature logs, cleaning and disinfection records, opening and closing checklists, allergen declarations, pest control logs, staff illness and injury records, staff credentials and certificate tracking with 90-day expiry warnings, approved supplier register. EHO-ready PDF exports.
+Digital food-safety records for UK private chefs. Fridge and freezer temperature logs, cooking/cooling/reheating records, delivery and transport temperature logs, cleaning and disinfection records, opening and closing checklists, allergen declarations, pest control logs, staff illness and injury records, staff credential and certificate tracking with expiry warnings, approved supplier register. EHO-ready PDF and CSV exports. Default thresholds are based on Food Standards Agency guidance and can be adjusted; for example the cooking check defaults to 75°C as an operational limit, and FSA guidance also recognises equivalent time/temperature combinations (such as 70°C for 2 minutes).
 
 ### Menus — https://getveriqo.co.uk/menus
-Booking and menu management. Job and client records, dish library (name, course, description, allergens, prep tasks), client dietary and allergen tracking, job notes and transport log. Shared dish library feeds HACCP, Costing, and Prep Lists.
+Private chef booking and menu management. Job and client records, dish library (name, course, description, allergens, prep tasks), client dietary and allergen tracking, job notes and transport log. The shared dish library feeds HACCP, Costing and Prep Lists.
 
 ### Costing — https://getveriqo.co.uk/costing
-Job costing, quotes and invoices. Ingredient costing per dish, margin calculator, professional quote generation, invoicing from completed jobs, job profitability tracking, ingredient yield tracking.
+Private chef job costing, quotes and invoices. Ingredient costing per dish, margin calculator, professional quote generation, invoicing from completed jobs, job profitability tracking, ingredient yield tracking, and card payments via Stripe with funds paid directly to the chef.
 
 ### Prep Lists — https://getveriqo.co.uk/prep-lists
-Auto-generated prep lists from the Menus dish library, split into prep-ahead and finishing tasks, grouped by course, tickable from a phone in the kitchen. Works offline.
+Prep lists auto-generated from the Menus dish library, split into prep-ahead and finishing tasks, grouped by course, tickable from a phone in the kitchen. Works offline.
 
 ## Pricing
 
-- **Starter — £7/month**: HACCP module only (food safety records, allergen records, EHO-ready exports).
-- **Pro — £15/month**: Everything in Starter, plus Menus, Costing, and Prep Lists, with data shared across all modules.
+- Starter — £7/month: HACCP module only (food-safety records, allergen records, EHO-ready exports).
+- Pro — £15/month: Everything in Starter, plus Menus, Costing and Prep Lists, with data shared across all modules.
 - 14-day free trial, no credit card required, cancel any time.
 
-Veriqo is designed to meet the record-keeping requirements of the UK Food Safety Act 1990 and the Food Standards Agency's Safer Food Better Business guidance for caterers.
+Veriqo is designed around UK food-safety requirements, including the record-keeping expectations of the Food Standards Agency's Safer Food, Better Business guidance for caterers. It is not a certification and does not guarantee compliance on its own.
 
 ## Guides
 
-Practical articles for private chefs at https://getveriqo.co.uk/resources, covering HACCP compliance, EHO inspections, allergen management, food business registration, and pricing.
+Practical, chef-written guides for private chefs at https://getveriqo.co.uk/resources — covering HACCP compliance, EHO inspections, allergen management, food business registration, and pricing and profit. Written by Michael O'Gorman, MIH.
 
 Veriqo is installable as a Progressive Web App (PWA) on iPhone and Android.
