@@ -50,7 +50,6 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --green: #2D7A3A; --green-pale: #f2faf4; --green-dim: #dff0e3;
-      --amber-pale: #fdf6e9; --amber-line: #e4b95d;
       --ink: #0e1210; --ink-2: #353a32; --ink-3: #737870; --rule: #d4d9d1;
       --white: #fdfdf8; --cream: #f6f6f0;
       --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -89,9 +88,6 @@
     @media (max-width: 560px) { .toc ol { columns: 1; } }
     .callout { background: var(--green-pale); border-left: 3px solid var(--green); border-radius: 0 8px 8px 0; padding: 1.1rem 1.4rem; margin: 1.5rem 0; font-size: .95rem; }
     .callout p:last-child { margin-bottom: 0; }
-    .review-flag { background: var(--amber-pale); border-left: 3px solid var(--amber-line); border-radius: 0 8px 8px 0; padding: 1.1rem 1.4rem; margin: 1.5rem 0; font-size: .9rem; color: var(--ink-2); }
-    .review-flag p:last-child { margin-bottom: 0; }
-    .review-flag strong { color: var(--ink); }
     footer { border-top: 1px solid var(--rule); padding: 2rem var(--gutter); font-size: .8rem; color: var(--ink-3); max-width: var(--max); margin: 0 auto; }
     footer a { color: var(--ink-3); text-decoration: underline; }
     footer .foot-company { margin-bottom: .6rem; }
@@ -220,11 +216,10 @@
   <p>Subscriptions renew automatically for a further period of the same length (monthly or annual) until cancelled. Each renewal is charged to your payment method at the start of the new period at the then-current price for your plan.</p>
 
   <h2 id="cancellation">12. Cancellation</h2>
-  <p>You can cancel at any time through the Stripe customer portal, which you can open from Settings in the app. Cancellation stops future renewals. Unless the law requires otherwise, your paid access normally continues until the end of the billing period you have already paid for, and is not renewed after that.</p>
-  <div class="review-flag"><p><strong>For owner / legal review:</strong> consumer cancellation rights can differ depending on whether the customer contracts as an individual consumer or in the course of a business, including any statutory right to cancel a distance contract. The wording in this section and in section 13 should be reviewed against the Consumer Rights Act 2015 and the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013 before launch.</p></div>
+  <p>You can cancel at any time through the Stripe customer portal, which you can open from Settings in the app. Cancellation stops future renewals. Unless the law requires otherwise, your paid access normally continues until the end of the billing period you have already paid for, and is not renewed after that. Any statutory cancellation rights you have as a consumer are unaffected — see section 24.</p>
 
   <h2 id="refunds">13. Refunds</h2>
-  <p>Payments are generally non-refundable, except where a refund is required by law or where we expressly agree to one. Cancelling stops future charges but does not, by itself, entitle you to a refund of amounts already paid for the current period.</p>
+  <p>Payments are generally non-refundable, except where required by law or where we expressly agree otherwise. Cancelling stops future charges but does not, by itself, entitle you to a refund of amounts already paid for the current period. Any refund rights you have under law as a consumer are unaffected.</p>
 
   <h2 id="failed-payment">14. Failed payments and suspension</h2>
   <p>If a subscription payment fails or remains unpaid, your access to paid features may be limited or suspended until payment is made, consistent with how the product actually behaves. We may retry payment and contact you about it. If the account remains unpaid, we may downgrade or close it.</p>
@@ -280,9 +275,10 @@
     <li>we are not liable for loss of profit, loss of business, loss of goodwill, loss of anticipated savings, or for any indirect or consequential loss;</li>
     <li>we are not liable for loss or corruption of data to the extent it results from your failure to keep your own copies or exports of information you need;</li>
     <li>we are not liable for any regulatory action, penalty, or loss arising from your food-safety practices, the accuracy of the information you record, or the decisions you take following a warning or a failed check;</li>
-    <li>our total liability to you arising out of or in connection with the service in any 12-month period is limited to the total amount you paid us for the service in that period.</li>
+    <li>our total liability to you arising out of or in connection with the service is limited, in aggregate, to the total fees you paid to Veriqo for the service during the 12 months before the event giving rise to the claim.</li>
   </ul>
-  <div class="review-flag"><p><strong>For owner / legal review:</strong> the proposed liability cap (fees paid in the preceding 12 months) and the exclusions above are a moderate SaaS position and must be reviewed by the owner and a legal adviser before launch, including whether a different cap or carve-outs are appropriate and how the cap interacts with consumer customers.</p></div>
+  <!-- Owner/legal review recommended before material pricing or customer-type changes. -->
+  <p>Nothing in this section limits or excludes any liability listed in the first paragraph of this section, or any other liability that cannot lawfully be limited or excluded.</p>
 
   <h2 id="consumers">24. Consumer rights and business users</h2>
   <p>Veriqo is marketed to chefs and catering businesses, and most customers use it in the course of a business. If you deal with us wholly or mainly as an individual consumer, you have statutory rights that these terms do not affect, including under the Consumer Rights Act 2015 and, where they apply, the Consumer Contracts (Information, Cancellation and Additional Charges) Regulations 2013. Where these terms would give you less than those statutory rights, the statutory rights apply.</p>

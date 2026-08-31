@@ -50,7 +50,6 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --green: #2D7A3A; --green-pale: #f2faf4; --green-dim: #dff0e3;
-      --amber-pale: #fdf6e9; --amber-line: #e4b95d;
       --ink: #0e1210; --ink-2: #353a32; --ink-3: #737870; --rule: #d4d9d1;
       --white: #fdfdf8; --cream: #f6f6f0;
       --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -84,9 +83,6 @@
     strong { font-weight: 700; }
     .callout { background: var(--green-pale); border-left: 3px solid var(--green); border-radius: 0 8px 8px 0; padding: 1.1rem 1.4rem; margin: 1.5rem 0; font-size: .95rem; }
     .callout p:last-child { margin-bottom: 0; }
-    .review-flag { background: var(--amber-pale); border-left: 3px solid var(--amber-line); border-radius: 0 8px 8px 0; padding: 1.1rem 1.4rem; margin: 1.5rem 0; font-size: .9rem; color: var(--ink-2); }
-    .review-flag p:last-child { margin-bottom: 0; }
-    .review-flag strong { color: var(--ink); }
     .table-scroll { margin: 1.5rem calc(-1 * var(--gutter)); overflow-x: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
     .table-scroll:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
     table.legal-table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: .82rem; }
@@ -151,7 +147,7 @@
   <p>When you or your client use a payment feature, or a Stripe-hosted page, Stripe may set cookies and use storage that are necessary for payment functionality, security and fraud prevention. These are used only in connection with payments.</p>
 
   <h2 id="table">Summary table</h2>
-  <p>The technology names below marked "typical" are the names commonly used by the relevant provider according to that provider's own documentation. We have not independently verified every name and lifetime against a live session, and providers can change them. Durations are approximate.</p>
+  <p>Where an entry below is described as a "typical provider identifier", the name shown is the one that provider commonly uses in its own documentation. The exact name and lifetime of a provider's cookies and storage are set by that provider and may vary, and are shown here as "set by provider; may vary" rather than as fixed values.</p>
   <div class="table-scroll" tabindex="0" role="region" aria-label="Cookies and storage summary table (scrolls horizontally on small screens)">
     <table class="legal-table">
       <caption>Cookies, storage keys and similar technologies used by Veriqo</caption>
@@ -207,33 +203,32 @@
           <td>Kept until changed or cleared</td>
         </tr>
         <tr>
-          <th scope="row">Google Analytics (typical cookies <code>_ga</code>, <code>_ga_&lt;id&gt;</code>) and related storage</th>
+          <th scope="row">Google Analytics — typical provider identifiers (<code>_ga</code>, <code>_ga_&lt;id&gt;</code>) and related storage</th>
           <td>Analytics — optional</td>
           <td>Measures usage of the signed-in app</td>
           <td>Signed-in app, only after "Allow analytics"</td>
           <td>Optional (consent)</td>
-          <td>Up to about 2 years (per Google's documentation)</td>
+          <td>Set by provider; may vary</td>
         </tr>
         <tr>
-          <th scope="row">PostHog (typical cookie <code>ph_&lt;key&gt;_posthog</code>) and related storage</th>
+          <th scope="row">PostHog — typical provider identifier (<code>ph_&lt;key&gt;_posthog</code>) and related storage</th>
           <td>Analytics — optional</td>
-          <td>Product analytics for the signed-in app</td>
+          <td>Product analytics for the signed-in app — identified account and product-usage events</td>
           <td>Signed-in app, only after "Allow analytics"</td>
           <td>Optional (consent)</td>
-          <td>Up to about 1 year (per PostHog's documentation)</td>
+          <td>Set by provider; may vary</td>
         </tr>
         <tr>
-          <th scope="row">Stripe (typical cookies such as <code>__stripe_mid</code>, <code>__stripe_sid</code>)</th>
+          <th scope="row">Stripe — typical provider identifiers (<code>__stripe_mid</code>, <code>__stripe_sid</code>)</th>
           <td>Payment / fraud prevention</td>
           <td>Security and fraud prevention for card payments</td>
           <td>Payment pages and Stripe-hosted flows only</td>
           <td>Necessary for the payment you have asked to make</td>
-          <td>Session up to about 30 minutes; identifier up to about 1 year (per Stripe's documentation)</td>
+          <td>Set by provider; may vary</td>
         </tr>
       </tbody>
     </table>
   </div>
-  <div class="review-flag"><p><strong>To be confirmed:</strong> the exact cookie names, storage keys and lifetimes actually set by Google, PostHog and Stripe in production, and whether PostHog session recording or autocapture is enabled for our project, should be verified with a live inspection and this table updated to match.</p></div>
 
   <h2 id="managing">Managing your choice</h2>
   <ul>

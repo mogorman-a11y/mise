@@ -50,7 +50,6 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --green: #2D7A3A; --green-pale: #f2faf4; --green-dim: #dff0e3;
-      --amber-pale: #fdf6e9; --amber-line: #e4b95d;
       --ink: #0e1210; --ink-2: #353a32; --ink-3: #737870; --rule: #d4d9d1;
       --white: #fdfdf8; --cream: #f6f6f0;
       --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -89,9 +88,6 @@
     @media (max-width: 560px) { .toc ol { columns: 1; } }
     .callout { background: var(--green-pale); border-left: 3px solid var(--green); border-radius: 0 8px 8px 0; padding: 1.1rem 1.4rem; margin: 1.5rem 0; font-size: .95rem; }
     .callout p:last-child { margin-bottom: 0; }
-    .review-flag { background: var(--amber-pale); border-left: 3px solid var(--amber-line); border-radius: 0 8px 8px 0; padding: 1.1rem 1.4rem; margin: 1.5rem 0; font-size: .9rem; color: var(--ink-2); }
-    .review-flag p:last-child { margin-bottom: 0; }
-    .review-flag strong { color: var(--ink); }
     .table-scroll { margin: 1.5rem calc(-1 * var(--gutter)); overflow-x: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
     .table-scroll:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
     table.legal-table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .85rem; }
@@ -168,8 +164,7 @@
     <li><strong>Website:</strong> <a href="https://getveriqo.co.uk/">https://getveriqo.co.uk</a></li>
     <li><strong>Contact for privacy questions:</strong> <a href="mailto:hello@getveriqo.co.uk">hello@getveriqo.co.uk</a></li>
   </ul>
-  <p>For the personal information described in this policy where we act as controller, Side Order Catering Ltd is the controller.</p>
-  <p>We are confirming our registration position with the Information Commissioner's Office (ICO). Where a registration reference is required and confirmed, it will be published here.</p>
+  <p>For the personal information described in this policy where we act as controller, Side Order Catering Ltd is the controller. You can raise a concern with us at any time using the details above, and you also have the right to complain to the Information Commissioner's Office (ICO) — see section 19.</p>
 
   <h2 id="when-applies">2. When this policy applies</h2>
   <p>This policy applies to personal information we handle as <strong>controller</strong> — that is, where we decide why and how it is processed. This mainly covers:</p>
@@ -279,8 +274,7 @@
   <h2 id="ai">9. How AI features process information</h2>
   <p>Veriqo has optional AI-assisted features, such as importing a menu from a photo or text, scanning a receipt or label, drafting a short business bio, and generating cost estimates. These features only run when you choose to use them.</p>
   <p>When you use one, the content you submit for that task (for example a menu photo, a receipt image, or the text you provide) is sent to <strong>OpenAI</strong> to generate the result, and the result is returned to Veriqo.</p>
-  <p>Based on OpenAI's published API data-usage terms, content submitted through the OpenAI API is <strong>not used to train OpenAI's models</strong>, and OpenAI retains API content only for a limited period for abuse monitoring before deleting it, unless it is required to keep it for legal reasons. We recommend not entering information into AI features that is not needed for the task.</p>
-  <div class="review-flag"><p><strong>To be confirmed:</strong> the exact OpenAI data-processing terms, retention period and transfer safeguards that apply to our account should be verified against OpenAI's current official documentation and recorded.</p></div>
+  <p>According to OpenAI's published API data-use terms, inputs and outputs sent to the OpenAI API are <strong>not used to train OpenAI's models by default</strong>. OpenAI keeps limited logs of API activity for abuse monitoring and security; how long that data is kept depends on the API endpoint used and the account settings that apply. We recommend not entering information into AI features that is not needed for the task.</p>
 
   <h2 id="sharing">10. Who we share information with</h2>
   <p>We use a small number of trusted service providers to run Veriqo. They process information on our behalf (or, where they are independent controllers, under their own terms) and only for the purposes below.</p>
@@ -305,9 +299,8 @@
   <p><strong>We do not sell personal information</strong>, and we do not use it for third-party advertising.</p>
 
   <h2 id="international">11. International processing and transfers</h2>
-  <p>Our service providers may process information in the United Kingdom, the European Economic Area and other countries, including the United States.</p>
-  <p>Where personal information is transferred outside the UK, we rely on UK "adequacy" regulations where they apply to the destination, or on appropriate safeguards such as the ICO's International Data Transfer Agreement (IDTA) or the UK Addendum to the EU Standard Contractual Clauses, together with any additional measures needed. We do not claim that a particular mechanism covers a particular provider unless we have confirmed it.</p>
-  <div class="review-flag"><p><strong>To be confirmed:</strong> the specific transfer mechanism relied on for each provider (Supabase, Vercel, Stripe, Resend, OpenAI, Google, PostHog), and the region in which our Supabase project stores data, are being verified operationally and this section will be updated to reflect that.</p></div>
+  <p>Some of our service providers may process personal information outside the United Kingdom, including in the European Economic Area and other countries.</p>
+  <p>Where UK data-protection law requires safeguards for an international transfer, we use or require an appropriate lawful transfer mechanism, which may include UK adequacy regulations, the UK's International Data Transfer Agreement or the UK Addendum to the EU Standard Contractual Clauses, as applicable.</p>
 
   <h2 id="retention">12. How long information is kept</h2>
   <p>We keep personal information for as long as reasonably necessary for the purposes described in this policy, including providing the service, maintaining appropriate business and financial records, resolving disputes, enforcing our agreements and meeting legal obligations. In practice:</p>
@@ -315,9 +308,8 @@
     <li><strong>Business records you enter</strong> (HACCP logs, bookings, clients, menus, costings, quotes, invoices) are kept while your account is active. We do not apply a separate Veriqo deletion schedule to them — they are yours to keep, edit or delete.</li>
     <li><strong>Payment-provider event records</strong> received from Stripe are deleted after 90 days.</li>
     <li><strong>Account deletion:</strong> when you complete the self-service deletion process, active-account data is designed to be deleted — including database records, your authentication account, and files you own in storage — and any active subscription is cancelled. This is subject to provider backups, information we must keep to meet legal obligations, and records we may legitimately need to retain (for example billing and accounting records, and records relating to a dispute).</li>
-    <li><strong>Backups and provider logs:</strong> our providers keep backups and operational logs for limited periods according to their own retention cycles. We cannot guarantee immediate erasure from every backup system; backups are overwritten or expire in the normal course.</li>
+    <li><strong>Backups and provider logs:</strong> some service providers keep security logs, backups or recovery copies for limited periods under their own retention schedules. Information in those systems may therefore remain for a short period after deletion from the live Veriqo service, before being overwritten or deleted through the provider's normal retention cycle. We cannot guarantee immediate erasure from every backup system.</li>
   </ul>
-  <div class="review-flag"><p><strong>To be confirmed:</strong> exact backup retention windows and provider log-retention periods should be established with each provider and reflected here.</p></div>
 
   <h2 id="security">13. Security</h2>
   <p>We take appropriate technical and organisational measures to protect personal information, including:</p>
@@ -341,7 +333,6 @@
     <li>Every marketing email contains an unsubscribe link, and you can also email us to opt out.</li>
     <li>Unsubscribing from marketing does not stop service-critical emails.</li>
   </ul>
-  <div class="review-flag"><p><strong>To be confirmed:</strong> whether the PECR "soft opt-in" is available for existing customers depends on how their email address was obtained and whether an opt-out opportunity was given at that time. This should be reviewed before relying on it.</p></div>
 
   <h2 id="rights">16. Your data-protection rights</h2>
   <p>Under UK data-protection law you have the right to:</p>

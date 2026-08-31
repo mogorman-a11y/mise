@@ -95,19 +95,61 @@ test('company identity is present and correct on every legal page', () => {
   }
 });
 
-test('no invented ICO registration number or VAT number is shown', () => {
+test('no ICO number, no VAT number, and no ICO registration-status statement', () => {
   for (const [f, html] of Object.entries(ALL)) {
     assert.ok(!/ICO registration (number|reference)[^.]{0,40}\b[A-Z]{1,2}\d{6,}\b/i.test(html), `${f} must not show an ICO number`);
     assert.ok(!/VAT (registration )?(number|no)\b/i.test(html), `${f} must not show a VAT number`);
   }
-  // privacy policy addresses the ICO registration position in neutral terms,
-  // without a number and without claiming an application has been submitted
-  assert.match(PRIVACY, /registration position with the Information Commissioner's Office/i);
-  assert.match(PRIVACY, /Where a registration reference is required and confirmed, it will be published here/i);
+  // the Privacy Policy must NOT carry any ICO registration-status wording
+  assert.ok(!/registration position with the Information Commissioner/i.test(PRIVACY), 'no "registration position" status line');
+  assert.ok(!/Where a registration reference is required and confirmed/i.test(PRIVACY));
+  assert.ok(!/we are (completing|confirming) our registration/i.test(PRIVACY), 'no "confirming/completing our registration"');
+  assert.ok(!/registration is being completed/i.test(PRIVACY));
   assert.ok(!/(we have|have)\s+(submitted|made|filed|lodged)\s+(an?\s+)?(ICO\s+)?(registration\s+)?application/i.test(PRIVACY),
     'must not claim an ICO registration application has been submitted');
-  assert.ok(!/we are completing our registration/i.test(PRIVACY),
-    'must not imply registration is in progress without evidence');
+  // the ICO complaint route must still be present
+  assert.match(PRIVACY, /Information Commissioner's Office \(ICO\)/);
+  assert.match(PRIVACY, /right to complain to the Information Commissioner's Office/i);
+  assert.match(PRIVACY, /ico\.org\.uk\/make-a-complaint/);
+});
+
+test('legal pages contain no visible drafting / review / "to be confirmed" language', () => {
+  const banned = [
+    /to be confirmed/i,
+    /for owner\s*\/\s*legal review/i,
+    /owner\s*\/\s*legal review recommended/i,
+    /\bowner review\b/i,
+    /must be reviewed by (the owner|a legal adviser)/i,
+    /should be reviewed by a legal adviser/i,
+    /reviewed by (the owner and )?a legal adviser before launch/i,
+    /being verified operationally/i,
+    /being verified and this/i,
+    /are being verified/i,
+    /being reviewed before/i,
+    /registration position/i,
+    /registration is being completed/i,
+    /application submitted/i,
+    /before launch/i,
+    /before relying on it/i,
+    /should be verified with a live inspection/i,
+    /this section will be updated/i,
+    /this table updated to match/i,
+    /verified against .{0,60}current official documentation/i,
+    /drafting note/i,
+    /\bplaceholder\b/i,
+    /class="review-flag"/,
+  ];
+  for (const [f, html] of Object.entries(ALL)) {
+    // strip HTML comments — the single intentional internal comment in terms.html
+    // is allowed (it never renders to users)
+    const visible = html.replace(/<!--[\s\S]*?-->/g, '');
+    for (const re of banned) {
+      assert.ok(!re.test(visible), `${f} still contains drafting language matching ${re}`);
+    }
+  }
+  // the one permitted internal comment, and only as an HTML comment
+  assert.match(TERMS, /<!--\s*Owner\/legal review recommended before material pricing or customer-type changes\.\s*-->/);
+  assert.ok(!/Owner\/legal review recommended/.test(TERMS.replace(/<!--[\s\S]*?-->/g, '')), 'the review note must not be visible outside an HTML comment');
 });
 
 // ─── Privacy Policy substance ──────────────────────────────────────────────
@@ -145,22 +187,31 @@ test('privacy policy: analytics are explicitly optional / consent-based, never "
   assert.match(PRIVACY, /Analytics are never required to use the service|not required to use the service/i);
 });
 
-test('privacy policy: no claim that all data stays in the UK or EU/EEA', () => {
+test('privacy policy: no claim that all data stays in the UK or EU/EEA; transfer safeguards retained; no unsupported Supabase region', () => {
   for (const [f, html] of Object.entries(ALL)) {
     assert.ok(!/all (your )?(data|information|personal data) (is|are|remains|stays)[^.]{0,40}\b(in the UK|within the UK|in the EU|within the EU|in the EEA|within the EEA)/i.test(html), `${f} over-claims data location`);
     assert.ok(!/EU servers/i.test(html), `${f} "EU servers" regression`);
     assert.ok(!/except Supabase/i.test(html), `${f} "except Supabase" regression`);
+    assert.ok(!/Supabase[^.]{0,40}\b(region|data ?cent(re|er)|hosted in|located in|stores data in)\b/i.test(html), `${f} makes an unsupported Supabase location claim`);
   }
-  assert.match(PRIVACY, /United Kingdom, the European Economic Area and other countries|UK, the European Economic Area and other countries/i);
+  // may-process-outside-UK statement retained
+  assert.match(PRIVACY, /outside the United Kingdom, including in the European Economic Area and other countries/i);
+  // international-transfer safeguards retained
+  assert.match(PRIVACY, /appropriate lawful transfer mechanism/i);
+  assert.match(PRIVACY, /UK adequacy regulations/i);
+  assert.match(PRIVACY, /International Data Transfer Agreement/i);
+  assert.match(PRIVACY, /UK Addendum to the EU Standard Contractual Clauses/i);
 });
 
-test('privacy policy: OpenAI training claim is qualified, not asserted as fact without a source', () => {
-  // If it says OpenAI does not train on API data, it must attribute that to OpenAI's own terms.
+test('privacy policy: OpenAI wording is cautious and attributed, no exact retention promise', () => {
+  // the training claim, if made, is attributed to OpenAI's own terms and qualified "by default"
   if (/not used to train OpenAI's models/i.test(PRIVACY)) {
-    assert.match(PRIVACY, /Based on OpenAI's published API data-usage terms|according to OpenAI/i);
+    assert.match(PRIVACY, /According to OpenAI's published API data-use terms|Based on OpenAI's published API data-use terms/i);
+    assert.match(PRIVACY, /not used to train OpenAI's models by default/i);
   }
-  // and it must flag that the exact terms still need verifying
-  assert.match(PRIVACY, /verified against OpenAI's current official documentation|To be confirmed/i);
+  // no fixed retention duration is promised
+  assert.ok(!/OpenAI (retains|keeps)[^.]{0,60}\b(30 days|thirty days|\d+ days)\b/i.test(PRIVACY), 'no fixed OpenAI retention duration');
+  assert.match(PRIVACY, /depends on the (API )?endpoint used and the account settings/i);
 });
 
 test('privacy policy has a scannable lawful-basis table with real Article 6 bases', () => {
@@ -228,16 +279,19 @@ test('terms link to and incorporate the Data Processing Terms', () => {
   assert.match(TERMS, /form part of these terms|forms part of these terms/i);
 });
 
-test('terms: subscriptions renew automatically, cancel via Stripe portal, access to period end, no invented refund promise', () => {
+test('terms: subscriptions renew automatically, cancel via Stripe portal, access to period end, conservative refund wording, statutory rights preserved', () => {
   assert.match(TERMS, /renew automatically/i);
   assert.match(TERMS, /Stripe customer portal/i);
   assert.match(TERMS, /end of the (billing period|current paid billing period)/i);
-  assert.match(TERMS, /generally non-refundable/i);
+  assert.match(TERMS, /generally non-refundable, except where required by law or where we expressly agree otherwise/i);
   assert.ok(!/full refund|money-back guarantee|refund within \d+ days/i.test(TERMS), 'no invented refund promise');
-  // consumer-status caveat is flagged for review
+  assert.ok(!/every (Veriqo )?(user|customer) is a business/i.test(TERMS), 'does not declare all users are businesses');
+  assert.ok(!/14[- ]day (right to cancel|cooling[- ]off|refund)/i.test(TERMS), 'no invented blanket 14-day entitlement');
+  // consumer / statutory-rights qualification retained
   assert.match(TERMS, /Consumer Rights Act 2015/);
   assert.match(TERMS, /Consumer Contracts \(Information, Cancellation and Additional Charges\) Regulations 2013/);
-  assert.match(TERMS, /owner \/ legal review|owner\/legal review|legal review/i);
+  assert.match(TERMS, /statutory rights that these terms do not affect/i);
+  assert.match(TERMS, /statutory (cancellation|refund) rights you have (as a consumer )?are unaffected/i);
 });
 
 test('terms: failed-payment wording has no invented fixed grace period', () => {
@@ -262,7 +316,7 @@ test('terms: no SLA / uptime guarantee, no "uninterrupted or error-free" promise
   assert.match(TERMS, /not (promise|guarantee) that the service will be uninterrupted/i);
 });
 
-test('terms: liability does NOT attempt to exclude death / personal injury negligence, fraud, or non-excludable liability', () => {
+test('terms: liability keeps the non-excludable carve-out first, keeps the 12-month-fees cap, and the cap does not bite on non-excludable liability', () => {
   assert.match(TERMS, /Nothing in these terms limits or excludes our liability for/i);
   assert.match(TERMS, /death or personal injury caused by (our )?negligence/i);
   assert.match(TERMS, /fraud or fraudulent misrepresentation/i);
@@ -270,9 +324,12 @@ test('terms: liability does NOT attempt to exclude death / personal injury negli
   // dangerous phrasing guard: must not purport to exclude the above
   assert.ok(!/exclude[s]? all liability, including for death or personal injury/i.test(TERMS));
   assert.ok(!/in no event (shall|will) we be liable for anything/i.test(TERMS));
-  // a proposed cap exists and is flagged for review
-  assert.match(TERMS, /limited to the total amount you paid us/i);
-  assert.match(TERMS, /For owner \/ legal review/i);
+  // aggregate cap = fees paid in the 12 months before the event giving rise to the claim
+  assert.match(TERMS, /limited, in aggregate, to the total fees you paid to Veriqo for the service during the 12 months before the event giving rise to the claim/i);
+  // the cap explicitly does not apply to the non-excludable carve-out
+  assert.match(TERMS, /Nothing in this section limits or excludes any liability listed in the first paragraph of this section/i);
+  // no indemnity was added
+  assert.ok(!/\byou (shall |will |agree to )?indemnif(y|ies)\b/i.test(TERMS), 'no customer indemnity');
 });
 
 test('terms: governing law is England and Wales; eligibility is 18+', () => {
@@ -338,18 +395,31 @@ test('cookies page: marketing site has no analytics; app analytics are off until
   assert.ok(!/analytics are (necessary|required)/i.test(COOKIES));
 });
 
-test('cookies page has a readable table with the required columns and does not over-assert cookie names', () => {
+test('cookies page has a readable table with the required columns and does not over-assert cookie names or lifetimes', () => {
   assert.match(COOKIES, /<table class="legal-table">/);
   for (const col of ['Category', 'Purpose', 'Where used', 'Required or optional', 'Typical duration']) {
     assert.ok(COOKIES.includes(col), `cookies table column ${col}`);
   }
   assert.match(COOKIES, /class="table-scroll"[^>]*role="region"/);
-  // typical / unverified names are labelled as such
-  assert.match(COOKIES, /typical/i);
-  assert.match(COOKIES, /not independently verified|To be confirmed/i);
+  // provider identifiers are labelled "typical provider identifier(s)", not stated as certain
+  assert.match(COOKIES, /typical provider identifier/i);
+  // provider-controlled durations are shown as such, not as fixed values
+  assert.match(COOKIES, /Set by provider; may vary/);
+  assert.ok(!/Up to about (1|2|one|two) year/i.test(COOKIES), 'no asserted exact provider lifetime');
+  assert.ok(!/Session up to about 30 minutes/i.test(COOKIES), 'no asserted exact Stripe session lifetime');
   assert.match(COOKIES, /Stripe/);
   assert.match(COOKIES, /veriqo_cookie_consent_v1/);
   assert.match(COOKIES, /veriqo-sync/);
+});
+
+test('cookies page: PostHog described only by what is known; no session-recording claim either way', () => {
+  // known: loaded only after consent; identified account / product-usage events
+  assert.match(COOKIES, /PostHog[\s\S]{0,200}only after "Allow analytics"|only after you choose "Allow analytics"[\s\S]{0,200}PostHog|Optional analytics[\s\S]{0,200}PostHog/i);
+  assert.match(COOKIES, /identified account and product-usage events/i);
+  // must NOT claim session recording is used, nor that it is disabled
+  assert.ok(!/session recording (is|are) (used|enabled|on)/i.test(COOKIES), 'no claim session recording is used');
+  assert.ok(!/session recording (is|are) (not used|disabled|off|turned off)/i.test(COOKIES), 'no claim session recording is disabled');
+  assert.ok(!/session[- ]replay|session recording cookie|recording identifier/i.test(COOKIES), 'no session-recording features listed');
 });
 
 // ─── Wiring: footers, settings, client intake ─────────────────────────────
@@ -410,4 +480,36 @@ test('vercel.json blocks *.sql with a 404, before /api and any rewrite', () => {
   assert.ok(idx < apiIdx, '*.sql rule must be evaluated before /api');
   // it must be a hard block, not a robots.txt discouragement
   assert.ok(!/Disallow:.*\.sql/i.test(read('robots.txt')), 'sql must be blocked by routing, not robots.txt');
+});
+
+// ─── Internal production checklist ────────────────────────────────────────
+
+test('LEGAL_PRODUCTION_CHECKLIST.md exists, is internal-only, and lists the open operational actions', () => {
+  assert.ok(fs.existsSync(path.join(ROOT, 'LEGAL_PRODUCTION_CHECKLIST.md')), 'checklist file missing');
+  const md = read('LEGAL_PRODUCTION_CHECKLIST.md');
+  // covered by the existing *.md 404 route -> not publicly served
+  const vj = JSON.parse(VERCEL);
+  const mdRule = vj.routes.find((r) => r.src === '/.*\\.md' && r.status === 404);
+  assert.ok(mdRule, 'the *.md 404 route that hides this file must exist');
+  // it is not linked from any legal page or the app
+  for (const html of [...Object.values(ALL), APP]) {
+    assert.ok(!/LEGAL_PRODUCTION_CHECKLIST/i.test(html), 'internal checklist must not be linked anywhere');
+  }
+  // contains the required open items
+  for (const item of [
+    /ICO data-protection fee/i,
+    /Supabase project region/i,
+    /transfer mechanism/i,
+    /PostHog project settings/i,
+    /backup .* retention|retention .* backup/i,
+    /OpenAI account/i,
+    /haccp-photos/i,
+    /real-browser consent QA|real browser consent/i,
+    /disposable-account delete test/i,
+    /[Rr]e-review[\s\S]{0,140}material product change/i,
+  ]) {
+    assert.match(md, item, `checklist missing action: ${item}`);
+  }
+  // must not contain secrets / keys
+  assert.ok(!/(sk-[a-zA-Z0-9]{10,}|SERVICE_ROLE|BEGIN (RSA )?PRIVATE KEY|password\s*[:=]\s*\S)/i.test(md), 'checklist must not contain secrets');
 });
