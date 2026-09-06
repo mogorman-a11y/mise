@@ -31,7 +31,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
 | `js/modules/ai-estimate.js` | `?v=6` | `app.html` |
 | `js/modules/prep.js` | `?v=9` | `app.html` |
-| `js/modules/dashboard.js` | `?v=6` | `app.html` |
+| `js/modules/dashboard.js` | `?v=8` | `app.html` — v8: event-led redesign (next-booking + preparation-progress hierarchy, business-actions list, contextual HACCP, secondary module summaries, a11y pass). `css/dashboard.css` → `?v=4`. Adds `window.vqDash*` nav helpers; `#module-dashboard` opts out of the `.module-panel` width cap. |
 | `js/modules/intake.js` | `?v=1` | `app.html` |
 | `js/modules/lead-scripts.js` | `?v=1` | `app.html` |
 | `js/modules/team.js` | `?v=2` | `app.html` |
@@ -560,7 +560,7 @@ js/
     costing.js         (v32)
     recipe-costing.js  (v3)   ← Costing rebuild Phases 2-4: recipe entry in dish editor, menu/job derived cost, actual-cost reconciliation. Supabase-only, no localStorage — same pattern as prep.js.
     ai-estimate.js  (v6)   ← AI Estimate screen, inside Costing module
-    dashboard.js    (v6)
+    dashboard.js    (v8)
     intake.js       (v1)   ← intake form / event templates
     lead-scripts.js (v1)   ← sales script modal
     team.js         (v2)
