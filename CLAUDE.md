@@ -37,7 +37,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | `js/modules/team.js` | `?v=2` | `app.html` |
 | `auth.js` | `?v=39` | `app.html` — Settings sign-out now uses the complete shared logout path and clears stale private caches |
 | `yield-sync.js` (root) | `?v=17` | `app.html` |
-| `sync.js` | `?v=22` | `app.html` — rehydrates HACCP defaults after loading partial legacy cloud settings |
+| `sync.js` | `?v=23` | `app.html` — rehydrates partial cloud settings, retries failed saves, and keeps renderer errors separate from sync results |
 | `js/core/idb-queue.js` | `?v=2` | `app.html` |
 | `js/core/pull-result.js` | `?v=2` | `app.html` |
 | `js/core/ai-other-costs-store.js` | `?v=2` | `app.html` |
