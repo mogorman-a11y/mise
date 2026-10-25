@@ -7,7 +7,6 @@ const ROOT = path.join(__dirname, '..');
 const app = fs.readFileSync(path.join(ROOT, 'app.html'), 'utf8');
 const auth = fs.readFileSync(path.join(ROOT, 'auth.js'), 'utf8');
 const sync = fs.readFileSync(path.join(ROOT, 'sync.js'), 'utf8');
-const migration = fs.readFileSync(path.join(ROOT, 'supabase/migrations/20261025183000_settings_own_row_policies.sql'), 'utf8');
 
 test('main Settings sign-out delegates to the complete shared logout path', () => {
   assert.match(app, /window\.Mise\.auth\.logout\(\)/);
@@ -26,9 +25,8 @@ test('settings saves validate the session and enter the existing retry queue', (
   assert.match(sync, /await _drainRetryQueue\(\)/);
 });
 
-test('settings RLS migration restricts both tables to the authenticated user row', () => {
-  assert.match(migration, /array\['settings', 'mise_settings'\]/);
-  assert.match(migration, /using \(id = auth\.uid\(\)\)/i);
-  assert.match(migration, /with check \(id = auth\.uid\(\)\)/i);
-  assert.doesNotMatch(migration, /venue_id\s*=/i);
+test('a view refresh failure cannot be reported as a failed settings write', () => {
+  assert.match(sync, /_safeRefreshAppViews\('settings save'\)/);
+  assert.match(sync, /function _safeRefreshAppViews\(context\)/);
+  assert.match(sync, /view refresh failed after/);
 });

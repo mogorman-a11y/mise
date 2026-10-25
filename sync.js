@@ -47,7 +47,7 @@ window.Mise.sync = (function () {
       ]);
       await _pullSharedJobs(userId);
       _applyProfileToSettings();
-      _refreshAppViews();
+      _safeRefreshAppViews('full sync');
       await _drainRetryQueue();
       console.log('[Veriqo sync] ✓ full sync complete');
     } catch (err) {
@@ -363,7 +363,7 @@ window.Mise.sync = (function () {
 
     _saveRetryQueue(legacyRemaining.concat(entityRemaining));
     if (legacyRemaining.length === 0 && entityRemaining.length === 0 && q.length > 0) {
-      _refreshAppViews();
+      _safeRefreshAppViews('retry recovery');
       if (typeof toast === 'function') toast('Sync recovered — all pending records saved');
     }
   }
@@ -421,7 +421,7 @@ window.Mise.sync = (function () {
       var result = await _coreSaveSettings(payload);
       if (!result.ok) throw result.error;
       console.log('[Veriqo sync] ✓ settings saved (' + settingsModule + ')');
-      _refreshAppViews();
+      _safeRefreshAppViews('settings save');
       return { ok: true };
     } catch (err) {
       var message = (err && err.message) || String(err);
@@ -740,6 +740,14 @@ window.Mise.sync = (function () {
     if (typeof renderMiseSections === 'function') renderMiseSections();
     if (typeof updateNextJobBanner === 'function') updateNextJobBanner();
     document.dispatchEvent(new CustomEvent('vq:sync-complete'));
+  }
+
+  // A renderer failure must never turn a successful database write into a
+  // misleading sync error. Refresh is best-effort; the saved data remains the
+  // source of truth and the next navigation/reload will render it again.
+  function _safeRefreshAppViews(context) {
+    try { _refreshAppViews(); }
+    catch (err) { console.warn('[Veriqo sync] view refresh failed after ' + context + ':', err && err.message ? err.message : err); }
   }
 
   // ── refreshSharedJobs ──────────────────────────────────────────────────────
