@@ -271,10 +271,19 @@ function saveHaccpSettings() {
   if (window.Mise && window.Mise.sync) Mise.sync.saveSettings(settings);
 }
 
+// Older or partially-written cloud settings can be missing one of the list
+// fields. Keep every list consumer safe without discarding any valid values.
+function _haccpSettingsList(listKey) {
+  if (!Array.isArray(settings[listKey])) {
+    settings[listKey] = DEFAULTS[listKey] ? DEFAULTS[listKey].slice() : [];
+  }
+  return settings[listKey];
+}
+
 function populateSelect(elId, listKey) {
   var el=document.getElementById(elId); if(!el)return;
   var val=el.value;
-  var items = settings[listKey].slice();
+  var items = _haccpSettingsList(listKey).slice();
   if(listKey==='staff'){
     var profileName = window.Mise && window.Mise.profile && window.Mise.profile.chef_name;
     if(profileName && items.indexOf(profileName)===-1) items.unshift(profileName);
@@ -355,7 +364,8 @@ function renderChecklists() {
 
 function renderSettingsList(listKey, containerId) {
   var c=document.getElementById(containerId);
-  var items=settings[listKey]; var defs=DEFAULTS[listKey];
+  if(!c)return;
+  var items=_haccpSettingsList(listKey); var defs=DEFAULTS[listKey]||[];
   if(!items.length){c.innerHTML='<div class="empty">No items.</div>';return;}
   c.innerHTML=items.map(function(item,i){
     var isDef=defs.indexOf(item)!==-1;
@@ -446,13 +456,15 @@ function renderAllSettingsLists() {
 function addItem(listKey,inputId,containerId) {
   var input=document.getElementById(inputId); var val=input.value.trim();
   if(!val){_haccpToast('Please enter a value',false);return;}
-  if(settings[listKey].indexOf(val)!==-1){_haccpToast('Already in the list','warn');return;}
-  settings[listKey].push(val); saveHaccpSettings(); input.value='';
+  var items=_haccpSettingsList(listKey);
+  if(items.indexOf(val)!==-1){_haccpToast('Already in the list','warn');return;}
+  items.push(val); saveHaccpSettings(); input.value='';
   renderSettingsList(listKey,containerId); populateHaccpSelects(); _haccpToast('Added: '+val);
 }
 function removeItem(listKey,idx,containerId) {
-  var item=settings[listKey][idx]; settings[listKey].splice(idx,1);
-  if(!settings[listKey].length) settings[listKey]=DEFAULTS[listKey].slice();
+  var items=_haccpSettingsList(listKey);
+  var item=items[idx]; items.splice(idx,1);
+  if(!items.length) settings[listKey]=(DEFAULTS[listKey]||[]).slice();
   saveHaccpSettings(); renderSettingsList(listKey,containerId); populateHaccpSelects(); _haccpToast('Removed: '+item);
 }
 
