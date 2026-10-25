@@ -553,7 +553,10 @@ window.Mise.auth = (function () {
   // removed the Supabase auth token, leaving every other module's data
   // sitting in localStorage indefinitely after sign-out.
   var _PRIVATE_KEY_PREFIXES = ['haccp_', 'mise_', 'yield_'];
-  var _PRIVATE_KEYS = ['veriqo_profile', 'veriqo_sync_retry_queue', 'vq_ai_other_costs'];
+  var _PRIVATE_KEYS = [
+    'veriqo_profile', 'veriqo_sync_retry_queue', 'vq_ai_other_costs',
+    'vq_positioning', 'vq_sync_queue', 'freelancer_name'
+  ];
 
   async function logout() {
     if (window.posthog) posthog.reset();
@@ -572,6 +575,19 @@ window.Mise.auth = (function () {
     if (window.Mise && window.Mise.idbQueue) {
       if (window.Mise.idbQueue.set) { try { await window.Mise.idbQueue.set([]); } catch(e) {} }
       if (window.Mise.idbQueue.setCosting) { try { await window.Mise.idbQueue.setCosting([]); } catch(e) {} }
+    }
+    try { if (window.indexedDB && indexedDB.deleteDatabase) indexedDB.deleteDatabase('veriqo-sync'); } catch(e) {}
+    if ('serviceWorker' in navigator) {
+      try {
+        var regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(function(reg) { return reg.unregister(); }));
+      } catch(e) {}
+    }
+    if (window.caches) {
+      try {
+        var names = await caches.keys();
+        await Promise.all(names.filter(function(name) { return name.indexOf('veriqo-') === 0; }).map(function(name) { return caches.delete(name); }));
+      } catch(e) {}
     }
     window.location.reload();
   }

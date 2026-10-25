@@ -2838,6 +2838,18 @@
         </div>
       </div>
 
+      <!-- HACCP staff names — shared with HACCP > Settings > Cooked food -->
+      <div style="background:var(--vq-surface);border:1px solid var(--vq-border);border-radius:14px;padding:18px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--vq-ink);letter-spacing:-0.1px">HACCP staff names</div>
+        <div style="font-size:12px;color:var(--vq-muted);line-height:1.5;margin:4px 0 12px">Names used in HACCP logging dropdowns. This does not give anyone account access.</div>
+        <div id="vq-haccp-staff-list"></div>
+        <div class="add-row" style="margin-top:8px">
+          <input type="text" id="vq-add-haccp-staff" placeholder="Add staff member name"
+            onkeydown="if(event.key==='Enter')addItem('staff','vq-add-haccp-staff','vq-haccp-staff-list')">
+          <button class="btn-add" onclick="addItem('staff','vq-add-haccp-staff','vq-haccp-staff-list')">Add</button>
+        </div>
+      </div>
+
       <!-- Team Management (owner/admin only — hidden for staff by team.js) -->
       <div id="vq-team-card" style="display:none;background:var(--vq-surface);border:1px solid var(--vq-border);border-radius:14px;padding:18px;margin-bottom:14px">
 
@@ -3199,7 +3211,7 @@ function vqIcon(name, size) {
 <script src="js/modules/intake.js?v=1"></script>
 <script src="js/modules/lead-scripts.js?v=1"></script>
 
-<script src="auth.js?v=38"></script>
+<script src="auth.js?v=39"></script>
 <script src="js/core/idb-queue.js?v=2"></script>
 <script src="sync.js?v=22"></script>
 <script src="yield-sync.js?v=17"></script>
@@ -3880,6 +3892,7 @@ function mailtoFreelancerLink() {
       _renderDarkModeToggle();
       _renderAccentPicker();
       _renderMilestonesToggle();
+      if (typeof renderSettingsList === 'function') renderSettingsList('staff', 'vq-haccp-staff-list');
       if (typeof window.vqTeamInit === 'function') window.vqTeamInit();
     }
   };
@@ -4016,6 +4029,11 @@ function mailtoFreelancerLink() {
   };
 
   window.vqSignOut = async function() {
+    // Use the shared logout path so cached profile and module data cannot make
+    // an expired session look signed in after the auth token has been removed.
+    if (window.Mise && window.Mise.auth && typeof window.Mise.auth.logout === 'function') {
+      return window.Mise.auth.logout();
+    }
     try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch(e) {}
     try {
       Object.keys(localStorage)

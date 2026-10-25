@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const ROOT = path.join(__dirname, '..');
 const haccpSource = fs.readFileSync(path.join(ROOT, 'js/modules/haccp.js'), 'utf8');
 const syncSource = fs.readFileSync(path.join(ROOT, 'sync.js'), 'utf8');
+const appHtml = fs.readFileSync(path.join(ROOT, 'app.html'), 'utf8');
 
 function sourceFunction(source, name) {
   const start = source.indexOf('function ' + name + '(');
@@ -58,4 +59,10 @@ test('cloud HACCP settings are rehydrated after a partial row is applied', () =>
   const hydrateAt = pullSource.indexOf("loadHaccpSettings()");
   assert.ok(storeAt >= 0, 'cloud settings should be stored locally');
   assert.ok(hydrateAt > storeAt, 'normal defaults should be restored after the cloud row is stored');
+});
+
+test('main Settings edits the same HACCP staff list', () => {
+  assert.match(appHtml, /id="vq-haccp-staff-list"/);
+  assert.match(appHtml, /addItem\('staff','vq-add-haccp-staff','vq-haccp-staff-list'\)/);
+  assert.match(appHtml, /renderSettingsList\('staff', 'vq-haccp-staff-list'\)/);
 });

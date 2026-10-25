@@ -48,6 +48,7 @@ window.Mise.sync = (function () {
       await _pullSharedJobs(userId);
       _applyProfileToSettings();
       _refreshAppViews();
+      await _drainRetryQueue();
       console.log('[Veriqo sync] ✓ full sync complete');
     } catch (err) {
       console.error('[Veriqo sync] loadAll error:', err.message || err);
@@ -261,6 +262,26 @@ window.Mise.sync = (function () {
     return r.error ? { ok: false, error: r.error } : { ok: true };
   }
 
+  async function _coreSaveSettings(payload) {
+    var table = payload.module === 'menus' ? 'mise_settings' : 'settings';
+    var r = await supabaseClient.from(table).upsert({
+      id: _userId,
+      config: payload.config,
+      updated_at: new Date().toISOString()
+    });
+    if (r.error) return { ok: false, error: r.error };
+    var storageKey = payload.module === 'menus' ? 'mise_settings' : 'haccp_settings';
+    try { localStorage.setItem(storageKey, JSON.stringify(payload.config)); } catch(e) {}
+    if (payload.module === 'menus' && typeof mSettings !== 'undefined') {
+      Object.keys(mSettings).forEach(function(k) { delete mSettings[k]; });
+      Object.assign(mSettings, payload.config);
+    } else if (payload.module !== 'menus' && typeof settings !== 'undefined') {
+      Object.keys(settings).forEach(function(k) { delete settings[k]; });
+      Object.assign(settings, payload.config);
+    }
+    return { ok: true, data: r.data };
+  }
+
   // ── importMenu ─────────────────────────────────────────────────────────────
   // Atomic AI-menu-import: upserts every new dish, upserts the menu, and
   // replaces its menu_dishes relationships in ONE Postgres transaction via
@@ -281,7 +302,8 @@ window.Mise.sync = (function () {
     menu:   { save: function(p){ return _coreSaveMenu(p); },   delete: function(p){ return _coreDeleteMenu(p.id); } },
     job:    { save: function(p){ return _coreSaveJob(p); },    delete: function(p){ return _coreDeleteJob(p.id); } },
     client: { save: function(p){ return _coreSaveClient(p); }, delete: function(p){ return _coreDeleteClient(p.id); } },
-    menuImport: { save: function(p){ return _coreImportMenu(p); } }
+    menuImport: { save: function(p){ return _coreImportMenu(p); } },
+    settings: { save: function(p){ return _coreSaveSettings(p); } }
   };
 
   var importMenu = _entityWrapper('menuImport', 'save', _coreImportMenu, null, function(p){ return p.menu && p.menu.name; });
@@ -341,6 +363,7 @@ window.Mise.sync = (function () {
 
     _saveRetryQueue(legacyRemaining.concat(entityRemaining));
     if (legacyRemaining.length === 0 && entityRemaining.length === 0 && q.length > 0) {
+      _refreshAppViews();
       if (typeof toast === 'function') toast('Sync recovered — all pending records saved');
     }
   }
@@ -378,20 +401,41 @@ window.Mise.sync = (function () {
   // module: 'haccp' (default) → settings table
   //         'menus'            → mise_settings table
   async function saveSettings(settingsObj, module) {
-    if (!_userId) { console.warn('[Veriqo sync] saveSettings skipped — not signed in'); return; }
-    var table = module === 'menus' ? 'mise_settings' : 'settings';
+    var settingsModule = module === 'menus' ? 'menus' : 'haccp';
+    var configSnapshot;
+    try { configSnapshot = JSON.parse(JSON.stringify(settingsObj)); }
+    catch(e) { configSnapshot = Object.assign({}, settingsObj); }
+    var payload = { module: settingsModule, config: configSnapshot };
+    if (!_userId) {
+      console.warn('[Veriqo sync] saveSettings skipped — not signed in');
+      if (typeof toast === 'function') toast('Sign in to sync — settings are saved on this device', 'err');
+      return { ok: false, sessionExpired: true, queued: false };
+    }
     try {
-      var r = await supabaseClient.from(table).upsert({
-        id: _userId,
-        config: settingsObj,
-        updated_at: new Date().toISOString()
-      });
-      if (r.error) throw r.error;
-      console.log('[Veriqo sync] ✓ settings saved (' + (module || 'haccp') + ')');
+      var sessionResult = await supabaseClient.auth.getSession();
+      if (sessionResult.error || !sessionResult.data || !sessionResult.data.session) {
+        var sessionError = sessionResult.error || new Error('Session expired');
+        sessionError.sessionExpired = true;
+        throw sessionError;
+      }
+      var result = await _coreSaveSettings(payload);
+      if (!result.ok) throw result.error;
+      console.log('[Veriqo sync] ✓ settings saved (' + settingsModule + ')');
       _refreshAppViews();
+      return { ok: true };
     } catch (err) {
-      console.error('[Veriqo sync] saveSettings failed (' + (module || 'haccp') + '):', err.message || err);
-      if (typeof toast === 'function') toast('Sync error — settings saved locally only', 'err');
+      var message = (err && err.message) || String(err);
+      var status = err && err.status;
+      var code = err && err.code;
+      var sessionExpired = !!(err && err.sessionExpired) || status === 401 || code === 'PGRST301' || /jwt|session|token/i.test(message);
+      console.error('[Veriqo sync] saveSettings failed (' + settingsModule + '):', code || status || '', message);
+      _enqueueEntityRetry('settings', 'save', payload, { idempotencyKey: 'settings:save:' + settingsModule });
+      if (typeof toast === 'function') {
+        toast(sessionExpired
+          ? 'Session expired — sign in again. Settings are saved on this device.'
+          : 'Sync issue — settings saved on this device and will retry automatically', 'err');
+      }
+      return { ok: false, error: err, sessionExpired: sessionExpired, queued: true };
     }
   }
 
