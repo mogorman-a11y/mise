@@ -25,7 +25,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=71` | `app.html` script tag — table had drifted to a stale `?v=69`; corrected 2026-07-22 |
+| `js/modules/haccp.js` | `?v=72` | `app.html` — safely restores missing legacy HACCP list settings before staff/fridge/supplier controls use them |
 | `js/modules/menus.js` | `?v=41` | `app.html` — v41: `renderCarteSubscriptionCard()` now calls the shared `window.Mise.subscription.hasAccess()` helper instead of its own `status === 'active' \|\| status === 'trialing'` check (see subscription fix below) |
 | `js/modules/costing.js` | `?v=36` | `app.html` |
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
@@ -37,7 +37,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | `js/modules/team.js` | `?v=2` | `app.html` |
 | `auth.js` | `?v=38` | `app.html` |
 | `yield-sync.js` (root) | `?v=17` | `app.html` |
-| `sync.js` | `?v=20` | `app.html` |
+| `sync.js` | `?v=22` | `app.html` — rehydrates HACCP defaults after loading partial legacy cloud settings |
 | `js/core/idb-queue.js` | `?v=2` | `app.html` |
 | `js/core/pull-result.js` | `?v=2` | `app.html` |
 | `js/core/ai-other-costs-store.js` | `?v=2` | `app.html` |
@@ -554,7 +554,7 @@ js/
     ai-other-costs-store.js    ← AI Estimate's per-user, per-job "other costs" draft store
     yield-sync.js              ← DEAD, unreferenced duplicate — do not load or edit
   modules/
-    haccp.js           (v69)
+    haccp.js           (v72)
     menus.js           (v30)
     prep.js            (v9)
     costing.js         (v32)

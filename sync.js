@@ -523,6 +523,10 @@ window.Mise.sync = (function () {
         Object.keys(settings).forEach(function (k) { delete settings[k]; });
         Object.assign(settings, _cloud);
         try { localStorage.setItem('haccp_settings', JSON.stringify(_cloud)); } catch (e) {}
+        // A legacy/partial cloud row may omit newer HACCP fields such as
+        // `staff`. Re-run the normal hydrator so defaults are restored before
+        // any settings UI or record dropdown reads those lists.
+        if (typeof loadHaccpSettings === 'function') loadHaccpSettings();
       } else if (isMesonlyData) {
         console.warn('[Veriqo sync] HACCP settings row contains Menus data — skipping to preserve local defaults');
       }
