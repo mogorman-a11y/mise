@@ -378,22 +378,35 @@ window.Mise.sync = (function () {
   // module: 'haccp' (default) → haccp_records table
   //         'menus'            → mise_records table
   async function saveDay(dateStr, recordsArray, module) {
-    if (!_userId) { console.warn('[Veriqo sync] saveDay skipped — not signed in'); return; }
+    var recordsSnapshot = Array.isArray(recordsArray) ? recordsArray.slice() : [];
+    if (!_userId) {
+      try {
+        var sessionResult = await supabaseClient.auth.getSession();
+        var session = sessionResult && sessionResult.data && sessionResult.data.session;
+        if (session && session.user) _userId = session.user.id;
+      } catch (e) {}
+    }
+    if (!_userId) {
+      console.warn('[Veriqo sync] saveDay deferred — no signed-in session; data remains on this device');
+      return { ok: false, localOnly: true, sessionExpired: true };
+    }
     var table = module === 'menus' ? 'mise_records' : 'haccp_records';
     var conflict = module === 'menus' ? 'user_id,date' : 'user_id,date';
     try {
       var r = await supabaseClient.from(table).upsert({
         user_id: _userId,
         date: dateStr,
-        records: recordsArray
+        records: recordsSnapshot
       }, { onConflict: conflict });
       if (r.error) throw r.error;
       console.log('[Veriqo sync] ✓ day saved (' + (module || 'haccp') + '):', dateStr);
-      _refreshAppViews();
+      _safeRefreshAppViews('day save');
+      return { ok: true };
     } catch (err) {
       console.error('[Veriqo sync] saveDay failed (' + (module || 'haccp') + '):', err.message || err);
       if (typeof toast === 'function') toast('Sync error — data saved locally, will retry when online', 'err');
-      _enqueueRetry({ dateStr: dateStr, records: recordsArray, module: module || 'haccp' });
+      _enqueueRetry({ dateStr: dateStr, records: recordsSnapshot, module: module || 'haccp', userScope: _userId });
+      return { ok: false, error: err, queued: true };
     }
   }
 
@@ -483,6 +496,14 @@ window.Mise.sync = (function () {
   }
 
   // ── _pullHaccpRecords ──────────────────────────────────────────────────────
+  function _isHaccpDayStorageKey(k) {
+    return /^haccp_\d{4}-\d{2}-\d{2}$/.test(k || '');
+  }
+
+  function _recordArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
   async function _pullHaccpRecords(userId) {
     var result = await supabaseClient
       .from('haccp_records')
@@ -497,17 +518,18 @@ window.Mise.sync = (function () {
     // saveDay hasn't finished writing to Supabase yet when a visibility-change
     // pull fires and would otherwise overwrite the just-saved local data.
     var localTodayRaw = localStorage.getItem('haccp_' + today);
-    var localTodayRecs = localTodayRaw ? JSON.parse(localTodayRaw) : [];
+    var localTodayRecs = [];
+    try { localTodayRecs = _recordArray(localTodayRaw ? JSON.parse(localTodayRaw) : []); } catch (e) {}
     Object.keys(localStorage)
-      .filter(function (k) {
-        return k.startsWith('haccp_') && k !== 'haccp_settings' && k !== 'haccp_credentials' && k !== 'haccp_suppliers';
-      })
+      .filter(_isHaccpDayStorageKey)
       .forEach(function (k) { localStorage.removeItem(k); });
     result.data.forEach(function (row) {
-      try { localStorage.setItem('haccp_' + row.date, JSON.stringify(row.records)); } catch (e) {}
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.date || '')) return;
+      try { localStorage.setItem('haccp_' + row.date, JSON.stringify(_recordArray(row.records))); } catch (e) {}
     });
     var todayRow = result.data.find(function (r) { return r.date === today; });
-    var remoteLen = todayRow ? todayRow.records.length : 0;
+    var todayRemoteRecs = todayRow ? _recordArray(todayRow.records) : [];
+    var remoteLen = todayRemoteRecs.length;
     // If local has more records than remote, local data is ahead of Supabase —
     // keep it and re-save so Supabase catches up.
     if (localTodayRecs.length > remoteLen) {
@@ -521,7 +543,7 @@ window.Mise.sync = (function () {
     } else {
       if (typeof records !== 'undefined' && !window._haccpDemoMode) {
         records.length = 0;
-        if (todayRow) todayRow.records.forEach(function (r) { records.push(r); });
+        todayRemoteRecs.forEach(function (r) { records.push(r); });
       }
     }
   }

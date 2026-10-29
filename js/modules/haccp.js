@@ -489,13 +489,14 @@ function saveHaccpToday() {
     posthog.capture('record_added', { type: last.type, status: last.status });
   }
 }
-function loadHaccpToday() { try { var r=localStorage.getItem('haccp_'+todayStr()); records=r?JSON.parse(r):[]; } catch(e){ records=[]; } }
+function loadHaccpToday() { try { var r=localStorage.getItem('haccp_'+todayStr()); var parsed=r?JSON.parse(r):[]; records=Array.isArray(parsed)?parsed:[]; } catch(e){ records=[]; } }
+function _haccpIsDayKey(k) { return /^haccp_\d{4}-\d{2}-\d{2}$/.test(k || ''); }
 function getAllDays() {
   var days=[];
-  try { for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(k&&k.indexOf('haccp_')===0&&k!=='haccp_settings'&&k!=='haccp_suppliers'&&k!=='haccp_credentials'){ days.push(k.replace('haccp_','')); } } } catch(e){}
+  try { for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(_haccpIsDayKey(k)){ days.push(k.slice(6)); } } } catch(e){}
   return days.sort().reverse();
 }
-function _haccpGetDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); return r?JSON.parse(r):[]; } catch(e){ return []; } }
+function _haccpGetDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); var parsed=r?JSON.parse(r):[]; return Array.isArray(parsed)?parsed:[]; } catch(e){ return []; } }
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
