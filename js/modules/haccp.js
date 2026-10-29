@@ -294,12 +294,12 @@ function populateSelect(elId, listKey) {
 var _HACCP_ACTOR_SELECTS=['fridge-by','cook-chef','cool-by','reheat-chef','del-by','clean-by','probe-by','pest-by','illness-by','opening-by','closing-by','crosscontam-by','tr-by','ms-by','inc-by'];
 function _activeHaccpLogger() {
   var saved='';
-  try { saved=sessionStorage.getItem('veriqo_active_haccp_logger')||''; } catch(e) {}
+  try { saved=sessionStorage.getItem('veriqo_active_haccp_logger_v2')||''; } catch(e) {}
   return saved || (window.Mise&&window.Mise.profile&&window.Mise.profile.chef_name) || _haccpSettingsList('staff')[0] || '';
 }
-function setHaccpActiveLogger(name) {
+function setHaccpActiveLogger(name, persist) {
   if(!name)return;
-  try { sessionStorage.setItem('veriqo_active_haccp_logger',name); } catch(e) {}
+  if(persist!==false){try { sessionStorage.setItem('veriqo_active_haccp_logger_v2',name); } catch(e) {}}
   _HACCP_ACTOR_SELECTS.forEach(function(id){var el=document.getElementById(id);if(el&&Array.from(el.options).some(function(o){return o.value===name;}))el.value=name;});
   var picker=document.getElementById('haccp-active-logger'); if(picker)picker.value=name;
 }
@@ -310,7 +310,7 @@ function populateHaccpSelects() {
   });
   populateSelect('clean-task','cleaningTasks');
   populateSelect('haccp-active-logger','staff');
-  setHaccpActiveLogger(_activeHaccpLogger());
+  setHaccpActiveLogger(_activeHaccpLogger(),false);
   // Populate food library datalist — combines HACCP items + Menus saved dishes
   var dl = document.getElementById('food-library-list');
   if(dl) {

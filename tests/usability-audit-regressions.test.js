@@ -25,7 +25,7 @@ test('cooling uses a non-destructive start and complete workflow', () => {
 
 test('one active logger controls HACCP actor fields without changing staff subjects', () => {
   assert.match(html, /id="haccp-active-logger"/);
-  assert.match(haccp, /veriqo_active_haccp_logger/);
+  assert.match(haccp, /veriqo_active_haccp_logger_v2/);
   assert.doesNotMatch(haccp.match(/var _HACCP_ACTOR_SELECTS=\[[^;]+/)[0], /illness-staff/);
 });
 
