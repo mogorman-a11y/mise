@@ -199,7 +199,6 @@ var DEFAULT_THRESHOLDS = {
   'cooking-warn':  80,  'cooking-fail':  75,
   'reheat-warn':   80,  'reheat-fail':   75,
   'cooling-warn':   5,  'cooling-fail':   8,
-  'delivery-warn':  5,  'delivery-fail':  8,
   'chilled-warn':   5,  'chilled-fail':   8,
   'frozen-warn':  -18,  'frozen-fail':  -15
 };
@@ -866,8 +865,6 @@ function viewPhoto(src) {
 }
 function logDelivery() {
   var supplier=document.getElementById('del-supplier').value;
-  var tempRaw=document.getElementById('del-temp').value;
-  var temp=tempRaw!==''?parseFloat(tempRaw):null;
   var time=document.getElementById('del-time').value;
   var invoice=document.getElementById('del-invoice').value.trim();
   var by=document.getElementById('del-by').value;
@@ -879,22 +876,18 @@ function logDelivery() {
   var notes=document.getElementById('del-notes').value;
   var photoImg=document.getElementById('del-photo-img');
   var photo=photoImg.src&&photoImg.src!==window.location.href?photoImg.src:'';
-  // Delivery temp is optional — you may log chilled/frozen only. Only reject if
-  // a value was entered but isn't a valid number.
-  if(tempRaw!==''&&isNaN(temp)){_haccpToast('Please enter a valid delivery temperature',false);return;}
   var cF=chilledCond==='Rejected'||(chilledTemp!==''&&parseFloat(chilledTemp)>T('chilled-fail'));
   var cW=chilledCond==='Issues noted'||(chilledTemp!==''&&parseFloat(chilledTemp)>T('chilled-warn'));
   var fF=frozenCond==='Rejected'||(frozenTemp!==''&&parseFloat(frozenTemp)>T('frozen-fail'));
   var fW=frozenCond==='Issues noted'||(frozenTemp!==''&&parseFloat(frozenTemp)>T('frozen-warn'));
   var status,msg;
   if(condition==='Rejected'||cF||fF){status='fail';msg='One or more items failed';}
-  else if(temp!==null&&temp>T('delivery-fail')){status='fail';msg=temp+'°C — above safe temp ('+T('delivery-fail')+'°C)';}
-  else if((temp!==null&&temp>T('delivery-warn'))||condition==='Minor issues noted'||cW||fW){status='warn';msg=temp!==null?(temp+'°C — issues noted'):'Issues noted';}
-  else{status='ok';msg=temp!==null?(temp+'°C — '+condition):condition;}
-  _pushRecord({type:'delivery',supplier:supplier,temp:temp,time:time,invoice:invoice,by:by,condition:condition,chilledTemp:chilledTemp,chilledCond:chilledCond,frozenTemp:frozenTemp,frozenCond:frozenCond,notes:notes,photo:photo,status:status,msg:msg});
+  else if(condition==='Minor issues noted'||cW||fW){status='warn';msg='Issues noted';}
+  else{status='ok';msg=condition;}
+  _pushRecord({type:'delivery',supplier:supplier,time:time,invoice:invoice,by:by,condition:condition,chilledTemp:chilledTemp,chilledCond:chilledCond,frozenTemp:frozenTemp,frozenCond:frozenCond,notes:notes,photo:photo,status:status,msg:msg});
   saveHaccpToday();
   showNudge('delivery_logged');
-  document.getElementById('del-temp').value=''; document.getElementById('del-invoice').value=''; document.getElementById('del-notes').value='';
+  document.getElementById('del-invoice').value=''; document.getElementById('del-notes').value='';
   document.getElementById('del-chilled-temp').value=''; document.getElementById('del-chilled-cond').selectedIndex=0;
   document.getElementById('del-frozen-temp').value=''; document.getElementById('del-frozen-cond').selectedIndex=0;
   document.getElementById('del-time').value=now(); clearPhoto();
@@ -4398,8 +4391,6 @@ var THRESHOLD_BOUNDS = {
   'reheat-fail':   { min: 63,  max: 90  },
   'cooling-warn':  { min: 0,   max: 21  },
   'cooling-fail':  { min: 0,   max: 21  },
-  'delivery-warn': { min: 0,   max: 8   },
-  'delivery-fail': { min: 0,   max: 8   },
   'chilled-warn':  { min: 0,   max: 8   },
   'chilled-fail':  { min: 0,   max: 8   },
   'frozen-warn':   { min: -25, max: -10 },
