@@ -61,8 +61,8 @@ test('cloud HACCP settings are rehydrated after a partial row is applied', () =>
   assert.ok(hydrateAt > storeAt, 'normal defaults should be restored after the cloud row is stored');
 });
 
-test('main Settings edits the same HACCP staff list', () => {
-  assert.match(appHtml, /id="vq-haccp-staff-list"/);
-  assert.match(appHtml, /addItem\('staff','vq-add-haccp-staff','vq-haccp-staff-list'\)/);
-  assert.match(appHtml, /renderSettingsList\('staff', 'vq-haccp-staff-list'\)/);
+test('main Settings links to the single HACCP staff editor', () => {
+  assert.doesNotMatch(appHtml, /id="vq-haccp-staff-list"/);
+  assert.match(appHtml, /Manage HACCP staff names/);
+  assert.match(appHtml, /haccpTab\('settings'\)/);
 });

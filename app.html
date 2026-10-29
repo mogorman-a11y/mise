@@ -169,6 +169,10 @@
       <div class="vq-module-greeting-biz" id="haccp-greeting-biz"></div>
     </div>
     <div id="allergen-conflict-banner-home" style="display:none;background:#fde8e8;border:1px solid #f5c6c6;border-radius:8px;padding:12px 14px;margin-bottom:12px;color:#A32D2D;font-weight:600;font-size:14px;line-height:1.5"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;background:var(--vq-surface);border:1px solid var(--vq-border);border-radius:10px">
+      <label for="haccp-active-logger" style="font-size:13px;font-weight:700;color:var(--vq-ink);white-space:nowrap">Logging as</label>
+      <select class="form-input" id="haccp-active-logger" onchange="setHaccpActiveLogger(this.value)" style="margin:0"></select>
+    </div>
     <!-- INSTALL BANNER — shown when not yet saved as an app -->
     <div id="install-banner" style="display:none;background:#f0f8f1;border:1px solid #b8dfbf;border-radius:10px;padding:12px 14px;margin-bottom:16px;align-items:flex-start;gap:10px">
       <span style="flex-shrink:0;color:#2D7A3A"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span>
@@ -334,16 +338,12 @@
   <!-- COOLING -->
   <div id="tab-cooling" class="section">
     <div class="card">
-      <div class="card-title">Log cooling record <button class="info-icon" onclick="showTooltip(this,'Hot food must cool from 60°C to below 8°C within 90 minutes. Use a blast chiller or ice bath. Log start and end temperatures as evidence.');event.stopPropagation()">i</button></div>
+      <div class="card-title">Start cooling <button class="info-icon" onclick="showTooltip(this,'Hot food must cool from 60°C to below 8°C within 90 minutes. Use a blast chiller or ice bath. Log start and end temperatures as evidence.');event.stopPropagation()">i</button></div>
       <div class="info-box">Hot food (above 60°C) must cool to below 8°C as quickly as possible — target under 90 minutes, maximum 2 hours (UK FSA guidance). Log start and end times to track duration.</div>
       <div class="form-group"><label class="form-label">Food item</label><input class="form-input" type="text" id="cool-food" list="food-library-list" placeholder="e.g. Chicken stock"></div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Start temp (°C)</label><input class="form-input" type="number" inputmode="decimal" id="cool-start-temp" placeholder="e.g. 65" step="0.1"></div>
         <div class="form-group"><label class="form-label">Start time</label><input class="form-input" type="time" id="cool-start-time"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">End temp (°C)</label><input class="form-input" type="number" inputmode="decimal" id="cool-end-temp" placeholder="e.g. 6" step="0.1"></div>
-        <div class="form-group"><label class="form-label">End time</label><input class="form-input" type="time" id="cool-end-time"></div>
       </div>
       <div class="form-group"><label class="form-label">Method used</label>
         <select class="form-input" id="cool-method">
@@ -351,7 +351,19 @@
         </select>
       </div>
       <div class="form-group"><label class="form-label">Checked by</label><select class="form-input" id="cool-by"></select></div>
-      <button class="btn-primary" onclick="logCooling()">Save cooling record</button>
+      <button class="btn-primary" onclick="startCoolingRecord()">Start cooling timer</button>
+    </div>
+    <div class="divider">Currently cooling</div>
+    <div id="cooling-pending"><div class="empty">Nothing is currently cooling.</div></div>
+    <div id="cooling-complete-card" class="card" style="display:none">
+      <div class="card-title">Complete cooling</div>
+      <div id="cooling-complete-summary" class="info-box"></div>
+      <input type="hidden" id="cool-pending-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">End temp (°C)</label><input class="form-input" type="number" inputmode="decimal" id="cool-end-temp" placeholder="e.g. 6" step="0.1"></div>
+        <div class="form-group"><label class="form-label">End time</label><input class="form-input" type="time" id="cool-end-time"></div>
+      </div>
+      <button class="btn-primary" onclick="completeCoolingRecord()">Complete cooling record</button>
     </div>
     <div class="divider">Today's cooling records</div>
     <div id="cooling-log"><div class="empty">No cooling records yet — log food that needs to cool safely from hot to chilled.</div></div>
@@ -444,9 +456,8 @@
         <div class="form-group"><label class="form-label">Reading in ice water (°C)</label><input class="form-input" type="number" inputmode="decimal" id="probe-reading" placeholder="e.g. 0.2" step="0.1"></div>
         <div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" id="probe-date"></div>
       </div>
-      <div class="form-group"><label class="form-label">Result</label>
-        <select class="form-input" id="probe-result"><option>Pass — within 1°C of 0°C</option><option>Fail — probe replaced</option><option>Fail — probe sent for calibration</option></select>
-      </div>
+      <div class="form-group"><label class="form-label">Result</label><div id="probe-result-preview" class="info-box">Enter a reading — Veriqo will calculate pass or fail.</div></div>
+      <div class="form-group" id="probe-action-group" style="display:none"><label class="form-label">Corrective action (required when failed)</label><select class="form-input" id="probe-action"><option value="">Select action…</option><option>Probe replaced</option><option>Probe sent for calibration</option><option>Probe removed from use</option></select></div>
       <div class="form-group"><label class="form-label">Checked by</label><select class="form-input" id="probe-by"></select></div>
       <button class="btn-primary" onclick="logProbe()">Save calibration record</button>
     </div>
@@ -572,7 +583,8 @@
       <div class="card-title">Allergen log</div>
       <div class="info-box">Record allergens present in each dish and obtain client confirmation. The 14 major allergens are listed below.</div>
       <div class="form-group"><label class="form-label">Client / event</label><input class="form-input" type="text" id="al-client" placeholder="e.g. Henderson dinner"></div>
-      <div class="form-group"><label class="form-label">Dish / menu item</label><input class="form-input" type="text" id="al-dish" placeholder="e.g. Roast chicken with cream sauce"></div>
+      <div id="allergen-job-source" class="info-box" style="display:none"></div>
+      <div class="form-group"><label class="form-label">Dish / menu item</label><input class="form-input" type="text" id="al-dish" list="allergen-dish-list" oninput="applyKnownDishAllergens(this.value)" placeholder="e.g. Roast chicken with cream sauce"><datalist id="allergen-dish-list"></datalist></div>
       <div class="form-group"><label class="form-label">Allergens present in this dish <span style="color:#A32D2D;font-weight:700">(tick all that apply — required for conflict detection)</span></label>
         <div id="allergen-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"></div>
       </div>
@@ -589,7 +601,7 @@
     </div>
     <div class="divider">Client dietary requirements</div>
     <div class="card">
-      <div class="info-box">Add each guest and tick their allergens. A warning will appear if a logged dish contains one of their allergens.</div>
+      <div class="info-box">Guests from today’s booking appear automatically. Add a guest here only when they are not already on the booking.</div>
       <div class="form-group"><label class="form-label">Guest name</label><input class="form-input" type="text" id="ga-name" placeholder="e.g. Table 3 — Mrs Henderson"></div>
       <div class="form-group"><label class="form-label">Allergens to avoid</label>
         <div id="ga-allergen-checks" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px"></div>
@@ -753,8 +765,7 @@
       <div class="form-group"><label class="form-label">Action taken</label>
         <textarea class="form-input" id="inc-action" rows="2" placeholder="What did you do to resolve or manage the incident?" style="resize:vertical;min-height:54px"></textarea>
       </div>
-      <div class="form-group"><label class="form-label">Reported by</label>
-        <input class="form-input" type="text" id="inc-by" placeholder="Name of person reporting"></div>
+      <div class="form-group"><label class="form-label">Reported by</label><select class="form-input" id="inc-by"></select></div>
       <div class="form-group">
         <label class="form-label">Photos (optional) — add multiple, e.g. discarded food, equipment fault</label>
         <input type="file" id="inc-photo" accept="image/*" capture="environment" style="display:none" onchange="addIncidentPhoto(this)">
@@ -1327,7 +1338,8 @@
               <option value="">Select client…</option>
             </select>
           </div>
-          <input class="form-input" id="job-client-manual" placeholder="Or type client name" style="margin-top:6px">
+          <label class="form-label" for="job-client-manual" style="margin-top:8px">Or add a new client name</label>
+          <input class="form-input" id="job-client-manual" placeholder="Type client name">
         </div>
         <div class="form-group">
           <label class="form-label">Location / address</label>
@@ -1368,10 +1380,7 @@
           <button type="button" onclick="openJobMenuBuilder('log')" style="background:rgba(45,122,58,0.08);border:1px dashed #2D7A3A;color:#2D7A3A;width:100%;padding:12px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:14px;margin-top:6px;-webkit-tap-highlight-color:transparent">+ Attach or Build a Menu</button>
         </div>
         <button type="button" onclick="openSaveTemplateModal('form')" style="width:100%;margin-bottom:8px;padding:10px;background:none;color:#2D7A3A;border:1px solid rgba(45,122,58,0.4);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save as template</button>
-        <div style="display:flex;gap:8px;margin-top:4px">
-          <button class="btn-primary" style="flex:1;margin-top:0" onclick="logJob()">Save Booking</button>
-          <button onclick="toggleNewJobForm()" style="flex:0 0 auto;padding:12px 16px;background:#f5f4f0;color:#1C2B1E;border:1px solid #2D7A3A;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit">Cancel</button>
-        </div>
+        <button class="btn-primary" style="margin-top:4px" onclick="logJob()">Save Booking</button>
       </div>
 
       <div id="jobs-upcoming"></div>
@@ -1888,15 +1897,24 @@
         <div class="card-title">Menu Costing</div>
 
         <div class="form-group">
+          <label class="form-label">Use an existing booking (optional)</label>
+          <select class="form-input" id="costing-job-select" onchange="prefillCostingFromJob(this.value)"><option value="">Choose a booking…</option></select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">Job Name</label>
           <input class="form-input" id="costing-job-name" placeholder="e.g. Smith Wedding">
         </div>
 
+        <div class="form-group">
+          <label class="form-label">Covers</label>
+          <input class="form-input" id="costing-covers" type="number" placeholder="25">
+        </div>
+
+        <details style="margin:4px 0 14px;border:1px solid var(--vq-border);border-radius:10px;padding:10px 12px">
+          <summary style="cursor:pointer;font-weight:700;color:var(--vq-ink)">Cost assumptions</summary>
+          <div style="font-size:12px;color:var(--vq-muted);margin:8px 0 12px;line-height:1.5">Review these defaults for each job. They affect the suggested price.</div>
         <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Covers</label>
-            <input class="form-input" id="costing-covers" type="number" placeholder="25">
-          </div>
           <div class="form-group">
             <label class="form-label">Wastage % <span class="tip-icon" onclick="toggleTip('tip-wastage')" title="Tap for info">ℹ</span></label>
             <div id="tip-wastage" class="tip-box">Industry standard is 10–15% depending on prep complexity. Use 10% for batch cooking, 15% for pastry or whole fish, up to 20% for high-trim produce.</div>
@@ -1931,6 +1949,7 @@
           <div id="tip-overhead" class="tip-box">Add your monthly fixed costs (insurance, van tax, subscriptions, accountant) and divide by your average number of jobs per month. This spreads the cost fairly across every job.</div>
           <input class="form-input" id="costing-overhead" type="number" value="80">
         </div>
+        </details>
 
         <!-- INGREDIENT ROWS -->
         <div class="form-group">
@@ -2832,16 +2851,11 @@
         </div>
       </div>
 
-      <!-- HACCP staff names — shared with HACCP > Settings > Cooked food -->
+      <!-- HACCP staff names are managed in one place to avoid conflicting edits -->
       <div style="background:var(--vq-surface);border:1px solid var(--vq-border);border-radius:14px;padding:18px;margin-bottom:14px">
         <div style="font-size:13px;font-weight:700;color:var(--vq-ink);letter-spacing:-0.1px">HACCP staff names</div>
-        <div style="font-size:12px;color:var(--vq-muted);line-height:1.5;margin:4px 0 12px">Names used in HACCP logging dropdowns. This does not give anyone account access.</div>
-        <div id="vq-haccp-staff-list"></div>
-        <div class="add-row" style="margin-top:8px">
-          <input type="text" id="vq-add-haccp-staff" placeholder="Add staff member name"
-            onkeydown="if(event.key==='Enter')addItem('staff','vq-add-haccp-staff','vq-haccp-staff-list')">
-          <button class="btn-add" onclick="addItem('staff','vq-add-haccp-staff','vq-haccp-staff-list')">Add</button>
-        </div>
+        <div style="font-size:12px;color:var(--vq-muted);line-height:1.5;margin:4px 0 12px">Names used in food-safety records are managed in HACCP Settings so there is one definitive list.</div>
+        <button onclick="showModule('haccp');setTimeout(function(){haccpTab('settings');},120)" style="width:100%;padding:11px;background:none;color:var(--vq-green);border:1px solid var(--vq-green);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Manage HACCP staff names</button>
       </div>
 
       <!-- Team Management (owner/admin only — hidden for staff by team.js) -->
@@ -3197,10 +3211,10 @@ function vqIcon(name, size) {
 <script src="js/core/ai-job-shape.js?v=1"></script>
 <script src="js/core/ai-other-costs-store.js?v=2"></script>
 
-<script src="js/modules/dashboard.js?v=8"></script>
-<script src="js/modules/haccp.js?v=74"></script>
-<script src="js/modules/menus.js?v=41"></script>
-<script src="js/modules/costing.js?v=36"></script>
+<script src="js/modules/dashboard.js?v=9"></script>
+<script src="js/modules/haccp.js?v=75"></script>
+<script src="js/modules/menus.js?v=42"></script>
+<script src="js/modules/costing.js?v=37"></script>
 <script src="js/modules/ai-estimate.js?v=6"></script>
 <script src="js/modules/intake.js?v=1"></script>
 <script src="js/modules/lead-scripts.js?v=1"></script>
@@ -3886,7 +3900,6 @@ function mailtoFreelancerLink() {
       _renderDarkModeToggle();
       _renderAccentPicker();
       _renderMilestonesToggle();
-      if (typeof renderSettingsList === 'function') renderSettingsList('staff', 'vq-haccp-staff-list');
       if (typeof window.vqTeamInit === 'function') window.vqTeamInit();
     }
   };

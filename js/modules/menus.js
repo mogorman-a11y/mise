@@ -2873,7 +2873,7 @@ window.addEventListener('beforeinstallprompt', function(e){
   e.preventDefault(); _carteInstallPrompt = e; _showCarteBanner('android');
 });
 function _showCarteBanner(type){
-  if(localStorage.getItem('carte_install_dismissed')) return;
+  if(localStorage.getItem('veriqo_install_dismissed')) return;
   if(window.matchMedia('(display-mode: standalone)').matches) return;
   if(window.navigator.standalone) return;
   var banner = document.getElementById('menus-install-banner');
@@ -2897,7 +2897,7 @@ function _triggerCarteInstall(){
 function dismissMenusBanner(){
   var el = document.getElementById('menus-install-banner');
   if(el) el.style.display = 'none';
-  try { localStorage.setItem('carte_install_dismissed','1'); } catch(e){}
+  try { localStorage.setItem('veriqo_install_dismissed','1'); } catch(e){}
 }
 (function(){
   var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;

@@ -607,7 +607,7 @@ window.modules.dashboard = (function () {
       body = '<div class="dbx-clear">' + _ico('check-circle', 18) +
         (fresh
           ? '<span>Nothing outstanding — no unsent quotes, overdue invoices or bookings missing details.</span>'
-          : '<span>Nothing outstanding in your saved data. Open Costing to sync the latest quotes and invoices.</span>') +
+          : '<span>Nothing outstanding. Saved bookings, quotes and invoices sync automatically.</span>') +
         '</div>';
     } else {
       body = '<ul class="dbx-attn-list">' + items.map(function (it) {

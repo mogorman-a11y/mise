@@ -90,8 +90,24 @@
       else if (screenId === 'quotes') renderQuotes();
       else if (screenId === 'invoices') renderInvoices();
       else if (screenId === 'jobs') renderJobs();
-      else if (screenId === 'costing') renderSavedCostings();
+      else if (screenId === 'costing') { _mergeMenusJobs(); renderCostingJobOptions(); renderSavedCostings(); }
       else if (screenId === 'ai-estimate' && typeof loadAIJobs === 'function') loadAIJobs();
+    }
+
+    function renderCostingJobOptions() {
+      const select=document.getElementById('costing-job-select'); if(!select)return;
+      const current=select.value;
+      const sorted=yJobs.slice().sort((a,b)=>String(getJobDate(a)).localeCompare(String(getJobDate(b))));
+      select.innerHTML='<option value="">Choose a booking…</option>'+sorted.map(j=>'<option value="'+_costingEsc(j.id)+'">'+_costingEsc(getJobClient(j)||j.jobName||'Unnamed booking')+(getJobDate(j)?' — '+_costingEsc(getJobDate(j)):'')+'</option>').join('');
+      if(sorted.some(j=>String(j.id)===String(current)))select.value=current;
+    }
+
+    function prefillCostingFromJob(jobId) {
+      if(!jobId)return;
+      const job=yJobs.find(j=>String(j.id)===String(jobId)); if(!job)return;
+      const name=getJobClient(job)||job.jobName||'';
+      document.getElementById('costing-job-name').value=name+(getJobType(job)?' — '+getJobType(job):'');
+      const covers=getJobCovers(job); if(covers)document.getElementById('costing-covers').value=covers;
     }
 
     function showSettingsTab(tabId) {

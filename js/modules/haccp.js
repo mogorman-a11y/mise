@@ -291,12 +291,26 @@ function populateSelect(elId, listKey) {
   items.forEach(function(v){ var o=document.createElement('option'); o.textContent=v; el.appendChild(o); });
   if(val) el.value=val;
 }
+var _HACCP_ACTOR_SELECTS=['fridge-by','cook-chef','cool-by','reheat-chef','del-by','clean-by','probe-by','pest-by','illness-by','opening-by','closing-by','crosscontam-by','tr-by','ms-by','inc-by'];
+function _activeHaccpLogger() {
+  var saved='';
+  try { saved=sessionStorage.getItem('veriqo_active_haccp_logger')||''; } catch(e) {}
+  return saved || (window.Mise&&window.Mise.profile&&window.Mise.profile.chef_name) || _haccpSettingsList('staff')[0] || '';
+}
+function setHaccpActiveLogger(name) {
+  if(!name)return;
+  try { sessionStorage.setItem('veriqo_active_haccp_logger',name); } catch(e) {}
+  _HACCP_ACTOR_SELECTS.forEach(function(id){var el=document.getElementById(id);if(el&&Array.from(el.options).some(function(o){return o.value===name;}))el.value=name;});
+  var picker=document.getElementById('haccp-active-logger'); if(picker)picker.value=name;
+}
 function populateHaccpSelects() {
-  ['fridge-unit','fridge-by','cook-chef','cool-by','reheat-chef','del-supplier','del-by','clean-by','probe-by','pest-by','illness-staff','illness-by','opening-by','closing-by','crosscontam-by','tr-by','ms-by'].forEach(function(id){
+  ['fridge-unit','fridge-by','cook-chef','cool-by','reheat-chef','del-supplier','del-by','clean-by','probe-by','pest-by','illness-staff','illness-by','opening-by','closing-by','crosscontam-by','tr-by','ms-by','inc-by'].forEach(function(id){
     var key = (id==='fridge-unit') ? 'fridgeUnits' : (id==='del-supplier') ? 'suppliers' : (id==='clean-task') ? 'cleaningTasks' : 'staff';
     populateSelect(id, key);
   });
   populateSelect('clean-task','cleaningTasks');
+  populateSelect('haccp-active-logger','staff');
+  setHaccpActiveLogger(_activeHaccpLogger());
   // Populate food library datalist — combines HACCP items + Menus saved dishes
   var dl = document.getElementById('food-library-list');
   if(dl) {
@@ -499,7 +513,7 @@ function _haccpGetDayRecords(d) { try { var r=localStorage.getItem('haccp_'+d); 
 function saveSuppliers(list) { try { localStorage.setItem('haccp_suppliers',JSON.stringify(list)); } catch(e){} }
 function loadSuppliers() { try { var r=localStorage.getItem('haccp_suppliers'); return r?JSON.parse(r):[]; } catch(e){ return []; } }
 
-var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Customer jobs',kitchenassess:'Kitchen assessment',allergen:'Allergen log',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',incident:'Incident log',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
+var titles={home:'Kitchen HACCP',opening:'Opening checks',closing:'Closing checks',crosscontam:'Cross-contamination',fridge:'Fridge temps',cooking:'Cooked food',cooling:'Cooling records',reheating:'Reheating records',delivery:'Deliveries',cleaning:'Cleaning',probe:'Probe calibration',pest:'Pest control',illness:'Staff illness',suppliers:'Approved suppliers',records:'Records',settings:'Settings',job:'Menus',customers:'Customer jobs',kitchenassess:'Kitchen assessment',allergen:'Allergen log',foodlibrary:'Food library',transport:'Transport temps',mobileset:'Mobile setup',credentials:'My credentials',incident:'Incident log',help:'Help & support',legal:'Privacy & legal',inspector:'Inspection Ready'};
 
 var _homeScrollPos = 0;
 
@@ -577,7 +591,8 @@ function haccpTab(name) {
   if(name==='credentials') renderCredentials();
   if(name==='inspector') renderInspector();
   if(PC_TYPES.indexOf(name)!==-1 && name!=='credentials') renderSection_PC(name);
-  if(name==='allergen') { renderAllergenChecks(); renderGuestAllergenChecks(); renderAllergenGuests(); }
+  if(name==='allergen') { renderAllergenChecks(); renderGuestAllergenChecks(); populateAllergenJobData(); renderAllergenGuests(); }
+  if(name==='cooling') renderPendingCooling();
   if(name==='incident') { var _itf=document.getElementById('inc-time'); if(_itf&&!_itf.value) _itf.value=_incidentNowLocal(); }
   // Auto-fill client/location from today's booking — only when field is empty
   if (name === 'kitchenassess' || name === 'transport' || name === 'allergen') {
@@ -657,7 +672,7 @@ function renderChecklistLog(type) {
   var recs=records.filter(function(r){return r.type===type;});
   var c=document.getElementById(type+'-log');
   if(!recs.length){c.innerHTML='<div class="empty">Not signed off yet today — complete the checklist above and save.</div>';return;}
-  c.innerHTML=recs.slice().reverse().map(function(r){
+  c.innerHTML='<div class="info-box" style="margin-bottom:10px">Today’s check is complete. Saving the checklist again will create a separate repeat check.</div>'+recs.slice().reverse().map(function(r){
     var detail=r.unchecked&&r.unchecked.length?'<div class="log-time" style="color:#A32D2D">Not confirmed: '+r.unchecked.map(esc).join(', ')+'</div>':'';
     return '<div class="log-row"><div style="flex:1"><div class="log-name">'+esc(r.by||'')+'</div><div class="log-time">'+r.time+' — '+r.msg+'</div>'+detail+'</div>'+statusBadge(r.status)+'</div>';
   }).join('');
@@ -783,14 +798,33 @@ function _timeDiffMinutes(startHHMM, endHHMM) {
 }
 
 function logCooling() {
-  var food=document.getElementById('cool-food').value.trim();
-  var startTemp=parseFloat(document.getElementById('cool-start-temp').value);
-  var startTime=document.getElementById('cool-start-time').value;
+  completeCoolingRecord();
+}
+function _pendingCoolingRecords(){try{var x=JSON.parse(localStorage.getItem('haccp_cooling_pending')||'[]');return Array.isArray(x)?x:[];}catch(e){return[];}}
+function _savePendingCooling(list){try{localStorage.setItem('haccp_cooling_pending',JSON.stringify(list));}catch(e){_haccpToast('Could not save the active cooling timer',false);}}
+function startCoolingRecord(){
+  var food=document.getElementById('cool-food').value.trim(), startTemp=parseFloat(document.getElementById('cool-start-temp').value), startTime=document.getElementById('cool-start-time').value;
+  if(!food){_haccpToast('Please enter a food item',false);return;}
+  if(isNaN(startTemp)){_haccpToast('Please enter a start temperature',false);return;}
+  if(!startTime){_haccpToast('Please enter a start time',false);return;}
+  var list=_pendingCoolingRecords(); list.push({id:'cool-'+Date.now(),food:food,startTemp:startTemp,startTime:startTime,method:document.getElementById('cool-method').value,by:document.getElementById('cool-by').value,createdAt:new Date().toISOString()}); _savePendingCooling(list);
+  document.getElementById('cool-food').value='';document.getElementById('cool-start-temp').value='';document.getElementById('cool-start-time').value=now();renderPendingCooling();_haccpToast('Cooling timer started — '+food);
+}
+function renderPendingCooling(){
+  var c=document.getElementById('cooling-pending');if(!c)return;var list=_pendingCoolingRecords();
+  c.innerHTML=list.length?list.map(function(p){return '<div class="log-row"><div style="flex:1"><div class="log-name">'+esc(p.food)+'</div><div class="log-time">'+esc(p.startTemp)+'°C at '+esc(p.startTime)+' · '+esc(p.method)+'</div></div><button class="btn-secondary" style="width:auto;margin:0;padding:8px 12px" onclick="selectPendingCooling(\''+esc(p.id)+'\')">Complete</button></div>';}).join(''):'<div class="empty">Nothing is currently cooling.</div>';
+}
+function selectPendingCooling(id){var p=_pendingCoolingRecords().find(function(x){return x.id===id;});if(!p)return;document.getElementById('cool-pending-id').value=id;document.getElementById('cooling-complete-summary').textContent=p.food+' started at '+p.startTime+' ('+p.startTemp+'°C)';document.getElementById('cool-end-time').value=now();document.getElementById('cool-end-temp').value='';document.getElementById('cooling-complete-card').style.display='block';document.getElementById('cool-end-temp').focus();}
+function completeCoolingRecord() {
+  var pendingId=document.getElementById('cool-pending-id').value;var list=_pendingCoolingRecords();var pending=list.find(function(x){return x.id===pendingId;});
+  if(!pending){_haccpToast('Choose an active cooling item first',false);return;}
+  var food=pending.food;
+  var startTemp=pending.startTemp;
+  var startTime=pending.startTime;
   var endTemp=parseFloat(document.getElementById('cool-end-temp').value);
   var endTime=document.getElementById('cool-end-time').value;
-  var method=document.getElementById('cool-method').value;
-  var by=document.getElementById('cool-by').value;
-  if(!food){_haccpToast('Please enter a food item',false);return;}
+  var method=pending.method;
+  var by=pending.by;
   if(isNaN(endTemp)){_haccpToast('Please enter an end temperature',false);return;}
   if(!startTime){_haccpToast('Please enter a start time',false);return;}
   if(!endTime){_haccpToast('Please enter an end time',false);return;}
@@ -823,8 +857,8 @@ function logCooling() {
 
   _pushRecord({type:'cooling',food:food,startTemp:startTemp,startTime:startTime,endTemp:endTemp,endTime:endTime,durationMins:durationMins,method:method,by:by,time:startTime,status:status,msg:msg});
   saveHaccpToday();
-  document.getElementById('cool-food').value=''; document.getElementById('cool-start-temp').value=''; document.getElementById('cool-end-temp').value='';
-  document.getElementById('cool-start-time').value=now(); document.getElementById('cool-end-time').value=now();
+  _savePendingCooling(list.filter(function(x){return x.id!==pendingId;}));
+  document.getElementById('cool-end-temp').value=''; document.getElementById('cool-pending-id').value=''; document.getElementById('cooling-complete-card').style.display='none'; renderPendingCooling();
   renderSection('cooling'); updateHaccpDashboard();
   if(status==='ok')_haccpToast('Saved — '+food+': '+msg); else if(status==='warn')_haccpToast('Warning — '+food+': '+msg,'warn'); else _haccpToast('Alert — '+food+': '+msg,false);
 }
@@ -914,16 +948,20 @@ function logProbe() {
   var id=document.getElementById('probe-id').value.trim()||'Probe';
   var reading=parseFloat(document.getElementById('probe-reading').value);
   var date=document.getElementById('probe-date').value;
-  var result=document.getElementById('probe-result').value;
+  var passed=Math.abs(reading)<=1;
+  var action=document.getElementById('probe-action').value;
+  if(!passed&&!action){_haccpToast('Select the corrective action taken',false);return;}
+  var result=passed?'Pass — within 1°C of 0°C':'Fail — '+action.toLowerCase();
   var by=document.getElementById('probe-by').value;
   if(isNaN(reading)){_haccpToast('Please enter a reading',false);return;}
   var status=result.indexOf('Pass')===0?'ok':'fail';
   var msg=result+' ('+reading+'°C)';
   _pushRecord({type:'probe',probeId:id,reading:reading,date:date,result:result,by:by,time:now(),status:status,msg:msg});
-  saveHaccpToday(); document.getElementById('probe-reading').value=''; document.getElementById('probe-id').value='';
+  saveHaccpToday(); document.getElementById('probe-reading').value=''; document.getElementById('probe-id').value=''; document.getElementById('probe-action').value=''; updateProbeResultPreview();
   renderSection('probe'); updateHaccpDashboard();
   if(status==='ok')_haccpToast('Saved — '+id+' passed'); else _haccpToast('Alert — '+id+' failed',false);
 }
+function updateProbeResultPreview(){var el=document.getElementById('probe-reading'),out=document.getElementById('probe-result-preview'),group=document.getElementById('probe-action-group');if(!el||!out||!group)return;var v=parseFloat(el.value);if(isNaN(v)){out.textContent='Enter a reading — Veriqo will calculate pass or fail.';out.style.color='';group.style.display='none';return;}var pass=Math.abs(v)<=1;out.textContent=pass?'Pass — reading is within ±1°C of 0°C':'Fail — reading is outside ±1°C of 0°C';out.style.color=pass?'#2D7A3A':'#A32D2D';group.style.display=pass?'none':'block';}
 
 // --- PEST ---
 function logPest() {
@@ -1049,6 +1087,8 @@ function captureIncidentLocation() {
 document.addEventListener('DOMContentLoaded', function() {
   var tf = document.getElementById('inc-time');
   if (tf) tf.value = _incidentNowLocal();
+  var probeReading=document.getElementById('probe-reading');
+  if(probeReading)probeReading.addEventListener('input',updateProbeResultPreview);
 });
 
 // --- SUPPLIERS ---
@@ -1099,7 +1139,8 @@ function renderSection(type) {
       if(details.length) extra+='<div class="log-time">'+details.join(' · ')+'</div>';
       if(r.photo && /^data:image\//.test(r.photo)) extra+='<div style="margin-top:6px"><img src="'+r.photo+'" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e5e4de;cursor:pointer" onclick="viewPhoto(this.src)"/></div>';
     }
-    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+esc(r.time||'')+' — '+esc(r.msg||'')+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
+    var summary=(r.type==='delivery'&&(r.chilledTemp!==''||r.frozenTemp!==''))?(r.condition||r.msg||'Delivery checked'):(r.msg||'');
+    return '<div class="log-row" style="align-items:flex-start"><div style="flex:1"><div class="log-name">'+label+'</div><div class="log-time">'+esc(r.time||'')+' — '+esc(summary)+'</div>'+extra+'</div>'+statusBadge(r.status)+'</div>';
   }).join('');
 }
 
@@ -1771,6 +1812,16 @@ function renderAllergenChecks() {
       '<input type="checkbox" id="'+id+'" style="width:16px;height:16px;accent-color:#1a1a18"> '+a+'</label>';
   }).join('');
 }
+function populateAllergenJobData(){
+  var dl=document.getElementById('allergen-dish-list'),banner=document.getElementById('allergen-job-source');if(!dl)return;
+  var map={},names=[];
+  if(_haccpActiveJob&&Array.isArray(_haccpActiveJob.menus))_haccpActiveJob.menus.forEach(function(m){(window.Veriqo.resolveMenuDishes(m,null)||[]).forEach(function(d){if(!d||!d.dish)return;if(names.indexOf(d.dish)===-1)names.push(d.dish);map[d.dish]=(d.allergens||[]).map(window.Veriqo.normalizeAllergen);});});
+  if(window.mSettings&&Array.isArray(window.mSettings.savedDishes))window.mSettings.savedDishes.forEach(function(d){if(d&&d.dish&&names.indexOf(d.dish)===-1){names.push(d.dish);map[d.dish]=d.allergens||[];}});
+  dl.innerHTML=names.map(function(n){return '<option value="'+esc(n)+'"></option>';}).join('');dl._allergenMap=map;
+  var job=_haccpActiveJob;
+  if(banner){banner.style.display=job?'block':'none';banner.textContent=job?'Using today’s booking: '+(job.client||job.client_name||'Unnamed booking')+'. Choose a menu dish to fill its saved allergens.':'';}
+}
+function applyKnownDishAllergens(name){var dl=document.getElementById('allergen-dish-list'),map=dl&&dl._allergenMap;if(!map||!Object.prototype.hasOwnProperty.call(map,name))return;var allergens=map[name]||[];ALLERGENS_14.forEach(function(a){var el=document.getElementById('al-'+a.replace(/\s/g,'_'));if(el)el.checked=allergens.indexOf(a)!==-1;});}
 
 // --- MENU LIBRARY ---
 
