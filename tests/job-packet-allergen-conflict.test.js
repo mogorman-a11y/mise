@@ -26,6 +26,7 @@ const SOURCE = extractFunctions(HACCP_JS, [
   '_getJobDishAllergenMap',
   '_checkImmediateConflict',
   '_checkCookingConflict',
+  '_haccpTrackMutation',
   '_pushRecord',
 ]);
 
@@ -60,6 +61,8 @@ function makeContext(localStorageContents) {
     records: [],
     settings: { allergenGuests: [] },
     _haccpActiveJob: null,
+    _demoMode: false,
+    _haccpEditingCustomer: false,
     localStorage: makeLocalStorage(localStorageContents),
     window: {
       Veriqo: {

@@ -496,11 +496,6 @@ function saveHaccpToday() {
   try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){ console.error('[HACCP] localStorage write failed:', e); _haccpToast('Storage error — check phone storage space', false); }
   // Cloud sync — pass snapshot so in-flight mutations don't corrupt the payload
   if (window.Mise && window.Mise.sync) Mise.sync.saveDay(_today, records.slice());
-  // Track the most recently added record type
-  if(window.posthog && records.length) {
-    var last = records[records.length - 1];
-    posthog.capture('record_added', { type: last.type, status: last.status });
-  }
 }
 function loadHaccpToday() { try { var r=localStorage.getItem('haccp_'+todayStr()); var parsed=r?JSON.parse(r):[]; records=Array.isArray(parsed)?parsed:[]; } catch(e){ records=[]; } }
 function _haccpIsDayKey(k) { return /^haccp_\d{4}-\d{2}-\d{2}$/.test(k || ''); }
@@ -2390,6 +2385,8 @@ function custGetAllDishes() {
   return all;
 }
 
+var _haccpEditingCustomer = false;
+
 function custEditJob(recIdx) {
   var r = records[recIdx];
   if (!r || r.type !== 'job') return;
@@ -2455,6 +2452,8 @@ function custEditJob(recIdx) {
   custRenderAddedMenus();
   custCheckConflicts();
 
+  // This removal is preparation for an edit, not a user deletion.
+  _haccpEditingCustomer = true;
   // Remove the old record so it gets re-saved cleanly
   records.splice(recIdx, 1);
   saveHaccpToday();
@@ -2844,6 +2843,7 @@ function logHaccpAllergen() {
   if (_editingAllergenIdx !== null) {
     rec.time = records[_editingAllergenIdx].time;
     records[_editingAllergenIdx] = rec;
+    _haccpTrackMutation('record_edited', rec);
     _editingAllergenIdx = null;
     var btn = document.getElementById('al-save-btn');
     if (btn) btn.textContent = 'Save allergen record';
@@ -2872,8 +2872,10 @@ function editHaccpAllergen(recIdx) {
 }
 
 function deleteHaccpAllergen(recIdx) {
+  if (!records[recIdx] || records[recIdx].type !== 'allergen') return;
   if (!confirm('Delete this allergen record?')) return;
-  records.splice(recIdx, 1);
+  var removedRecord = records.splice(recIdx, 1)[0];
+  _haccpTrackMutation('record_deleted', removedRecord);
   if (_editingAllergenIdx === recIdx) { _editingAllergenIdx = null; var btn=document.getElementById('al-save-btn'); if(btn) btn.textContent='Save allergen record'; }
   saveHaccpToday();
   renderSection_PC('allergen'); renderAllergenGuests(); updateHaccpDashboard();
@@ -4557,9 +4559,19 @@ function _checkCookingConflict(foodName) {
   if (conflicts.length) _haccpToast('⚠ ALLERGEN CONFLICT — ' + conflicts.join(' | '), false);
 }
 
+function _haccpTrackMutation(event, rec) {
+  if (_demoMode || !rec) return;
+  try {
+    if (window.vqTrack) window.vqTrack(event, { module: 'haccp', type: rec.type, status: rec.status, tracking_version: 2, source: 'browser' });
+  } catch (e) { /* Analytics must never interrupt a record save. */ }
+}
+
 function _pushRecord(rec) {
   if (_haccpActiveJob) rec.jobId = _haccpActiveJob.id;
   records.push(rec);
+  var editingCustomer = rec.type === 'job' && _haccpEditingCustomer;
+  _haccpTrackMutation(editingCustomer ? 'record_edited' : 'record_added', rec);
+  if (editingCustomer) _haccpEditingCustomer = false;
 }
 
 // --- INIT ---

@@ -25,7 +25,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=72` | `app.html` — safely restores missing legacy HACCP list settings before staff/fridge/supplier controls use them |
+| `js/modules/haccp.js` | `?v=77` | `app.html` — safely restores missing legacy HACCP list settings before staff/fridge/supplier controls use them |
 | `js/modules/menus.js` | `?v=41` | `app.html` — v41: `renderCarteSubscriptionCard()` now calls the shared `window.Mise.subscription.hasAccess()` helper instead of its own `status === 'active' \|\| status === 'trialing'` check (see subscription fix below) |
 | `js/modules/costing.js` | `?v=36` | `app.html` |
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
@@ -231,6 +231,15 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 `menus.js` loads after `haccp.js` (and `costing.js` loads after both) in app.html. Any function defined in more than one of these files: **whichever module loads last silently wins** — the other module's calls to that name run the wrong implementation with no error, which is exactly how the five bugs above went undetected. Keep HACCP-specific functions prefixed with `_haccp`, Costing-specific ones prefixed with `_costing`, if they'd otherwise share a name with a menus.js (or another module's) function. Before adding any new top-level `function name(...)` to haccp.js or costing.js, grep the other module-level `js/modules/*.js` files for that exact name first.
 
 ---
+
+## Product analytics (2026-11-08)
+
+- Migration `20261108192524_veriqo_product_analytics.sql` adds a private transactional outbox for `signup_completed` (non-anonymous, non-invited Auth account creation), `job_created`, and `dish_created` (confirmed database INSERTs). No client duplication of these events.
+- Private `veriqo_analytics.config` stores the existing project token and EU capture host, configured separately at deployment. No service-role key or personal API key is required. The token is the same public ingestion token as the app.
+- `veriqo-posthog-outbox` runs every minute through existing pg_cron/pg_net. It retries failed/missing HTTP responses with stable event UUIDs, timestamps and user IDs for deduplication. Delivered entries expire after 30 days; failed entries remain for investigation. Nothing is backfilled.
+- `signup_completed` means Auth account creation, not email confirmation or onboarding. Job/dish events use the authenticated actor where available, falling back to the record owner for server writes. Properties contain entity IDs and source/version, never names, emails or record contents.
+- HACCP v77 emits `record_added` only from `_pushRecord`; allergen edits/deletes and saved customer edits use `record_edited`/`record_deleted`. No analytics from the shared persistence helper or demo mode. `tracking_version: 2` distinguishes corrected events from historical inflated counts. Browser events describe user mutations, not confirmed cloud persistence.
+- Emergency disable: `select cron.unschedule('veriqo-posthog-outbox')`; remove the three named analytics triggers to stop queuing. Never delete customer data to disable tracking.
 
 ## Recent fixes (do not revert)
 
