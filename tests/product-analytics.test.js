@@ -7,7 +7,7 @@ const file = path.join(__dirname, '../js/modules/haccp.js');
 function harness() {
   const events = [];
   const context = { records: [], _demoMode: false, _haccpActiveJob: null,
-    _haccpEditingCustomer: false, _editingAllergenIdx: null,
+    _haccpEditingCustomer: false, _editingAllergenIdx: null, _haccpSavedDay: '', _haccpSavedRecords: [],
     window: { vqTrack: (event, props) => events.push({event, props}) },
     localStorage: { setItem() {} }, todayStr: () => '2026-11-08', console,
     confirm: () => true, renderSection_PC() {}, renderAllergenGuests() {}, updateHaccpDashboard() {} };

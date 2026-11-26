@@ -221,7 +221,7 @@ window.Mise.auth = (function () {
       if (!_signedIn) { hideAuthScreen(); showAuthScreen(); }
     }
 
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         if (!_showingResetForm) { _showingResetForm = true; _showPasswordResetForm(); }
         return;
@@ -233,8 +233,16 @@ window.Mise.auth = (function () {
       if (session && !_signedIn && !_showingResetForm) {
         _confirm();
         _signedIn = true;
-        if (_isEmailConfirm) await _showEmailConfirmed();
-        await onSignedIn(session.user);
+        // Supabase holds the auth lock while this callback runs.
+        setTimeout(async function() {
+          try {
+            if (!_signedIn) return;
+            if (_isEmailConfirm) await _showEmailConfirmed();
+            await onSignedIn(session.user);
+          } catch (err) {
+            console.warn('[Veriqo] sign-in setup failed:', err);
+          }
+        }, 0);
       }
       // Do NOT call _noSession() here on null session — INITIAL_SESSION fires null during
       // the token-refresh cycle, before TOKEN_REFRESHED fires with the new session.
@@ -559,6 +567,8 @@ window.Mise.auth = (function () {
   ];
 
   async function logout() {
+    if (window.Mise.sync && typeof window.Mise.sync.hasPendingHaccp === 'function' && window.Mise.sync.hasPendingHaccp() &&
+        !window.confirm('Some HACCP changes are saved on this device only. Signing out removes them from this device. Export them from Records first, or cancel and wait for sync. Sign out anyway?')) return;
     if (window.posthog) posthog.reset();
     if (window.Mise && window.Mise.sync && window.Mise.sync.clearRetryQueue) {
       try { window.Mise.sync.clearRetryQueue(); } catch(e) {}
@@ -605,6 +615,7 @@ window.Mise.auth = (function () {
 
   // ── internal: onSignedIn ───────────────────────────────────────────────────
   async function onSignedIn(user) {
+    if (window.Mise.sync && typeof window.Mise.sync.setHaccpUser === 'function') window.Mise.sync.setHaccpUser(user.id);
     hideAuthScreen();
     _injectAccountCard(user);
     if (window.posthog) posthog.identify(user.id, { email: user.email });

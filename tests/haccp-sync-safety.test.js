@@ -69,3 +69,114 @@ test('day saves recover an auth-initialisation race and use an immutable snapsho
   assert.match(syncSource, /recordsSnapshot = Array\.isArray\(recordsArray\) \? recordsArray\.slice\(\) : \[\]/);
   assert.match(syncSource, /_safeRefreshAppViews\('day save'\)/);
 });
+
+function syncHarness(state, localStorage = {}) {
+  const status = {};
+  Object.defineProperties(localStorage, {
+    getItem: { value(key) { return this[key] ?? null; }, configurable: true },
+    setItem: { value(key, value) { this[key] = String(value); }, configurable: true },
+    removeItem: { value(key) { delete this[key]; }, configurable: true }
+  });
+  const client = {
+    auth: { async getSession() { return { data: { session: { user: { id: state.user } } } }; } },
+    from(table) {
+      const filters = {};
+      return {
+        select() { return this; },
+        eq(key, value) { filters[key] = value; return this; },
+        async maybeSingle() {
+          return { data: state.rows.has(filters.date) ? { records: state.rows.get(filters.date) } : null };
+        },
+        async single() { return { data: null }; },
+        async order() {
+          return { data: table === 'haccp_records'
+            ? Array.from(state.rows, ([date, records]) => ({ date, records })) : [] };
+        }
+      };
+    },
+    async rpc(name, args) {
+      assert.equal(name, 'haccp_compare_and_save_day');
+      assert.equal(args.p_user_id, state.user);
+      if (state.offline) return { error: new Error('Offline') };
+      if (state.beforeWrite) await state.beforeWrite(args);
+      const current = state.rows.get(args.p_date);
+      if (JSON.stringify(current ?? null) !== JSON.stringify(args.p_expected)) return { data: false };
+      state.rows.set(args.p_date, JSON.parse(JSON.stringify(args.p_records)));
+      if (state.lostAck) return { error: new Error('Response lost') };
+      return { data: true };
+    }
+  };
+  const context = {
+    localStorage, supabaseClient: client,
+    window: { addEventListener() {} },
+    document: {
+      getElementById(id) { return id === 'haccp-sync-status' ? status : null; },
+      addEventListener() {}, dispatchEvent() {}
+    },
+    CustomEvent: class {},
+    console: { log() {}, warn() {}, error(err) { assert.fail(err); } }
+  };
+  vm.runInNewContext(syncSource, context);
+  return { sync: context.window.Mise.sync, localStorage, status };
+}
+
+test('offline checks survive a later-day reload and sync once after reconnect', async () => {
+  const day = '2026-11-25';
+  const check = { syncId: 'phone-a', type: 'opening' };
+  const state = { user: 'swanspool', rows: new Map(), offline: true };
+  const phone = syncHarness(state);
+  phone.sync.setHaccpUser(state.user);
+  assert.equal(phone.sync.saveHaccpChanges(day, [], [check]), true);
+  await phone.sync.loadAll(state.user);
+  assert.equal(phone.sync.hasPendingHaccp(), true);
+  assert.match(phone.status.textContent, /waiting to sync/);
+  assert.deepEqual(JSON.parse(phone.localStorage['haccp_' + day]), [check]);
+  assert.equal(state.rows.has(day), false);
+
+  const restarted = syncHarness(state, phone.localStorage);
+  state.offline = false;
+  await restarted.sync.loadAll(state.user);
+  assert.equal(restarted.sync.hasPendingHaccp(), false);
+  assert.deepEqual(state.rows.get(day), [check]);
+  assert.match(restarted.status.textContent, /records synced/);
+
+  const laptop = syncHarness(state);
+  await laptop.sync.loadAll(state.user);
+  assert.deepEqual(JSON.parse(laptop.localStorage['haccp_' + day]), [check]);
+});
+
+test('a concurrent update and a lost acknowledgement preserve both checks without duplicates', async () => {
+  const day = '2026-11-25';
+  const phoneCheck = { syncId: 'phone-a', type: 'fridge' };
+  const laptopCheck = { syncId: 'laptop-a', type: 'opening' };
+  const state = { user: 'swanspool', rows: new Map(), lostAck: true };
+  state.beforeWrite = () => {
+    state.rows.set(day, [laptopCheck]);
+    state.beforeWrite = null;
+  };
+  const phone = syncHarness(state);
+  phone.sync.setHaccpUser(state.user);
+  phone.sync.saveHaccpChanges(day, [], [phoneCheck]);
+  await phone.sync.loadAll(state.user);
+  assert.deepEqual(state.rows.get(day), [laptopCheck, phoneCheck]);
+  assert.equal(phone.sync.hasPendingHaccp(), false);
+});
+
+test('a removed check does not delete another device’s additions, and the outbox stays account-scoped', async () => {
+  const day = '2026-11-25';
+  const old = { type: 'allergen', dish: 'Soup' };
+  const otherCheck = { syncId: 'laptop-a', type: 'opening' };
+  const state = { user: 'swanspool', rows: new Map([[day, [otherCheck, { dish: 'Soup', type: 'allergen' }]]]), offline: true };
+  const phone = syncHarness(state);
+  phone.sync.setHaccpUser('swanspool');
+  phone.sync.saveHaccpChanges(day, [old], []);
+  await phone.sync.loadAll('swanspool');
+  assert.equal(phone.sync.hasPendingHaccp(), true);
+  state.user = 'another-user';
+  state.offline = false;
+  await phone.sync.loadAll('another-user');
+  assert.equal(state.rows.get(day).length, 2);
+  state.user = 'swanspool';
+  await phone.sync.loadAll('swanspool');
+  assert.deepEqual(state.rows.get(day), [otherCheck]);
+});

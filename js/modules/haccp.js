@@ -489,15 +489,31 @@ document.getElementById('header-date').textContent = _haccpFmtDate();
 ['fridge-time','cook-time','cool-start-time','cool-end-time','reheat-time','del-time','clean-time'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=now(); });
 ['probe-date','pest-date','illness-date'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=todayStr(); });
 
+var _haccpSavedDay = '';
+var _haccpSavedRecords = [];
+
 function saveHaccpToday() {
-  // Sample-day demo mode: never persist demo records to localStorage or Supabase
   if (_demoMode) return;
-  var _today = todayStr();
-  try { localStorage.setItem('haccp_'+_today,JSON.stringify(records)); } catch(e){ console.error('[HACCP] localStorage write failed:', e); _haccpToast('Storage error — check phone storage space', false); }
-  // Cloud sync — pass snapshot so in-flight mutations don't corrupt the payload
-  if (window.Mise && window.Mise.sync) Mise.sync.saveDay(_today, records.slice());
+  var day = todayStr();
+  var previous = _haccpSavedDay === day ? _haccpSavedRecords : [];
+  var sync = window.Mise && window.Mise.sync;
+  var queued = sync && typeof sync.saveHaccpChanges === 'function' && sync.saveHaccpChanges(day, previous, records);
+  try {
+    localStorage.setItem('haccp_' + day, JSON.stringify(records));
+  } catch (err) {
+    if (!queued) _haccpToast('Check could not be saved. Keep this screen open and export your records.', false);
+  }
+  _haccpSavedDay = day;
+  _haccpSavedRecords = JSON.parse(JSON.stringify(records));
 }
-function loadHaccpToday() { try { var r=localStorage.getItem('haccp_'+todayStr()); var parsed=r?JSON.parse(r):[]; records=Array.isArray(parsed)?parsed:[]; } catch(e){ records=[]; } }
+
+function loadHaccpToday() {
+  if (window._haccpDemoMode) return;
+  _haccpSavedDay = todayStr();
+  records = _haccpGetDayRecords(_haccpSavedDay);
+  _haccpSavedRecords = JSON.parse(JSON.stringify(records));
+}
+
 function _haccpIsDayKey(k) { return /^haccp_\d{4}-\d{2}-\d{2}$/.test(k || ''); }
 function getAllDays() {
   var days=[];
@@ -576,7 +592,11 @@ function haccpTab(name) {
   document.getElementById('back-btn').style.display=name==='home'?'none':'block';
   var sub=document.getElementById('haccp-header-sub');
   if(sub) sub.textContent=name==='home'?'HACCP':(titles[name]||name);
-  if(name==='records')     renderRecords();
+  if(name==='records') {
+    renderRecords();
+    var sync = window.Mise && window.Mise.sync;
+    if (sync && typeof sync.refreshHaccpRecords === 'function') sync.refreshHaccpRecords();
+  }
   if(name==='settings')    { renderAllSettingsLists(); renderSubscriptionCard(); renderRemindersCard(); renderSetupBanner(); syncTileToggles(); loadEmailPreferences(); }
   if(name==='suppliers')   renderSuppliersLog();
   if(name==='foodlibrary') renderFoodLibraryTab();
@@ -616,7 +636,7 @@ function haccpTab(name) {
 
 function _haccpToast(msg,ok) {
   var t=document.getElementById('toast');
-  t.textContent=msg;
+  t.textContent=msg.replace(/^Saved — /, 'Saved on this device — ');
   t.style.background=ok===false?'#A32D2D':(ok==='warn'?'#854F0B':'#2D7A3A');
   t.style.color=ok===false?'#FCEBEB':(ok==='warn'?'#FAEEDA':'#EAF3DE');
   t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2800);
@@ -1524,11 +1544,17 @@ function buildDayBlock(dateStr,recs,isToday) {
 
 function renderRecords() {
   var c=document.getElementById('records-list');
-  var allDays=getAllDays().filter(function(d){return d!==TODAY;});
-  var html=buildDayBlock(TODAY,records,true);
+  var today = todayStr();
+  var openDays = Array.from(c.querySelectorAll('.day-block-body.open')).map(function(el) { return el.id; });
+  var allDays=getAllDays().filter(function(d){return d!==today;});
+  var html=buildDayBlock(today,records,true);
   if(allDays.length){html+='<div class="divider">Previous days</div>';html+=allDays.map(function(d){return buildDayBlock(d,_haccpGetDayRecords(d),false);}).join('');}
   c.innerHTML=html;
-  var chev=document.getElementById('chevron-'+TODAY); if(chev)chev.textContent='⌄';
+  var chev=document.getElementById('chevron-'+today); if(chev)chev.textContent='⌄';
+  openDays.forEach(function(id) {
+    var day = document.getElementById(id);
+    if (day && !day.classList.contains('open')) toggleDay(id);
+  });
 }
 
 function toggleDay(id) {
@@ -1537,7 +1563,7 @@ function toggleDay(id) {
   else{el.classList.add('open');if(chev)chev.textContent='⌄';}
 }
 
-function exportDay(dateStr) { var recs=dateStr===TODAY?records:_haccpGetDayRecords(dateStr); buildExport(_haccpFmtDate(dateStr),recs,'haccp-log-'+dateStr+'.txt'); }
+function exportDay(dateStr) { var recs=dateStr===todayStr()?records:_haccpGetDayRecords(dateStr); buildExport(_haccpFmtDate(dateStr),recs,'haccp-log-'+dateStr+'.txt'); }
 
 function buildExport(dateLabel,recs,filename) {
   var header='HACCP Daily Log — '+dateLabel+'\n'+'='.repeat(40)+'\n\n';
@@ -2842,6 +2868,7 @@ function logHaccpAllergen() {
   var rec = {type:'allergen', client:client, dish:dish, allergens:present, confirmed:confirmed, notes:notes, time:now(), status:status, msg:msg};
   if (_editingAllergenIdx !== null) {
     rec.time = records[_editingAllergenIdx].time;
+    rec.syncId = records[_editingAllergenIdx].syncId;
     records[_editingAllergenIdx] = rec;
     _haccpTrackMutation('record_edited', rec);
     _editingAllergenIdx = null;
@@ -4567,6 +4594,9 @@ function _haccpTrackMutation(event, rec) {
 }
 
 function _pushRecord(rec) {
+  if (!_demoMode && _haccpSavedDay && _haccpSavedDay !== todayStr()) loadHaccpToday();
+  if (!rec.syncId) rec.syncId = window.crypto && window.crypto.randomUUID
+    ? window.crypto.randomUUID() : 'rec_' + Date.now() + '_' + Math.random().toString(36).slice(2);
   if (_haccpActiveJob) rec.jobId = _haccpActiveJob.id;
   records.push(rec);
   var editingCustomer = rec.type === 'job' && _haccpEditingCustomer;

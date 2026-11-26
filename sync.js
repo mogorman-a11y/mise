@@ -8,6 +8,12 @@ window.Mise.sync = (function () {
 
   var _userId = null;
   var _visibilityBound = false;
+  var _haccpUser = null;
+  var _haccpWork = Promise.resolve();
+  var _haccpChecked = false;
+  var _haccpLocalOnly = new Set();
+  var _haccpPendingTime = 0;
+  var _HACCP_PENDING = 'haccp_pending_';
 
   function _resolveProfile() {
     if (window.Mise && window.Mise.profile) return window.Mise.profile;
@@ -35,10 +41,11 @@ window.Mise.sync = (function () {
   // ── loadAll ────────────────────────────────────────────────────────────────
   async function loadAll(userId) {
     _userId = userId;
+    setHaccpUser(userId);
     console.log('[Veriqo sync] loadAll — userId:', userId);
     try {
       await Promise.all([
-        _pullHaccpRecords(userId),
+        _syncHaccp(userId, true),
         _pullMiseRecords(userId)
       ]);
       await Promise.all([
@@ -59,7 +66,7 @@ window.Mise.sync = (function () {
       document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible' && _userId) {
           _drainRetryQueue().catch(function(){});
-          Promise.all([_pullHaccpRecords(_userId), _pullMiseRecords(_userId)])
+          Promise.all([_syncHaccp(_userId, true), _pullMiseRecords(_userId)])
             .then(function() { return Promise.all([_pullHaccpSettings(_userId), _pullMiseSettings(_userId)]); })
             .then(function() { return _pullSharedJobs(_userId); })
             .then(_refreshAppViews)
@@ -70,9 +77,9 @@ window.Mise.sync = (function () {
   }
 
   // ── Retry queue ────────────────────────────────────────────────────────────
-  // Two item shapes share one localStorage array:
-  //  - legacy day-record items: {dateStr, module, records, retries, ts}
-  //    (saveDay/saveSettings — unchanged from before this refactor)
+  // Menus and generic entities share one localStorage array:
+  //  - legacy menu day-record snapshots: {dateStr, module, records, retries, ts}
+  //    (older HACCP snapshots migrate to the HACCP outbox when their owner signs in)
   //  - generic entity items: {id, userScope, entityType, operation, payload,
   //    createdAt, attemptCount, lastError, idempotencyKey, dependencyIds}
   //    (saveDish/deleteDish/saveMenu/deleteMenu/saveJob/deleteJob/
@@ -314,15 +321,17 @@ window.Mise.sync = (function () {
     if (!q.length) return;
     var now = Date.now();
 
-    var legacy = q.filter(function(x){ return x.dateStr !== undefined; })
-                  .filter(function(x){ return (now - x.ts) < _MAX_AGE_MS && x.retries < _MAX_RETRIES; });
+    var legacy = q.filter(function(x){ return x.dateStr !== undefined && x.module === 'menus'; })
+                  .filter(function(x){ return x.userScope === _userId && (now - x.ts) < _MAX_AGE_MS && x.retries < _MAX_RETRIES; });
+    // Keep any HACCP item here if the HACCP outbox could not take it yet.
+    var hadLegacyHaccp = q.some(function(x){ return x.dateStr !== undefined && x.module !== 'menus'; });
     var entity = q.filter(function(x){ return x.dateStr === undefined; })
                   .filter(function(x){ return (now - x.createdAt) < _MAX_AGE_MS && x.attemptCount < _MAX_RETRIES && x.userScope === _userId; });
 
     var legacyRemaining = [];
     for (var i = 0; i < legacy.length; i++) {
       var item = legacy[i];
-      var table = item.module === 'menus' ? 'mise_records' : 'haccp_records';
+      var table = 'mise_records';
       try {
         var r = await supabaseClient.from(table).upsert({
           user_id: _userId, date: item.dateStr, records: item.records
@@ -361,8 +370,9 @@ window.Mise.sync = (function () {
       }
     }
 
-    _saveRetryQueue(legacyRemaining.concat(entityRemaining));
-    if (legacyRemaining.length === 0 && entityRemaining.length === 0 && q.length > 0) {
+    _saveRetryQueue(legacyRemaining.concat(entityRemaining,
+      _loadRetryQueue().filter(function(x){ return x.dateStr !== undefined && x.module !== 'menus'; })));
+    if (!hadLegacyHaccp && !legacyRemaining.length && !entityRemaining.length && q.length > 0) {
       _safeRefreshAppViews('retry recovery');
       if (typeof toast === 'function') toast('Sync recovered — all pending records saved');
     }
@@ -371,13 +381,14 @@ window.Mise.sync = (function () {
   if (typeof window !== 'undefined') {
     window.addEventListener('online', function () {
       if (_userId) _drainRetryQueue().catch(function(){});
+      refreshHaccpRecords();
     });
   }
 
   // ── saveDay ────────────────────────────────────────────────────────────────
-  // module: 'haccp' (default) → haccp_records table
-  //         'menus'            → mise_records table
+  // Menu day snapshots use the legacy retry path. HACCP uses saveHaccpChanges.
   async function saveDay(dateStr, recordsArray, module) {
+    if (module !== 'menus') return { ok: false };
     var recordsSnapshot = Array.isArray(recordsArray) ? recordsArray.slice() : [];
     if (!_userId) {
       try {
@@ -390,14 +401,13 @@ window.Mise.sync = (function () {
       console.warn('[Veriqo sync] saveDay deferred — no signed-in session; data remains on this device');
       return { ok: false, localOnly: true, sessionExpired: true };
     }
-    var table = module === 'menus' ? 'mise_records' : 'haccp_records';
-    var conflict = module === 'menus' ? 'user_id,date' : 'user_id,date';
+    var table = 'mise_records';
     try {
       var r = await supabaseClient.from(table).upsert({
         user_id: _userId,
         date: dateStr,
         records: recordsSnapshot
-      }, { onConflict: conflict });
+      }, { onConflict: 'user_id,date' });
       if (r.error) throw r.error;
       console.log('[Veriqo sync] ✓ day saved (' + (module || 'haccp') + '):', dateStr);
       _safeRefreshAppViews('day save');
@@ -504,48 +514,208 @@ window.Mise.sync = (function () {
     return Array.isArray(value) ? value : [];
   }
 
-  async function _pullHaccpRecords(userId) {
-    var result = await supabaseClient
-      .from('haccp_records')
-      .select('date, records')
-      .eq('user_id', userId)
-      .order('date', { ascending: false });
-    if (result.error) throw result.error;
-    if (!result.data) return;
-    console.log('[Veriqo sync] _pullHaccpRecords: got', result.data.length, 'rows');
-    var today = new Date().toISOString().slice(0, 10);
-    // Snapshot local today records before wiping — guard against race where
-    // saveDay hasn't finished writing to Supabase yet when a visibility-change
-    // pull fires and would otherwise overwrite the just-saved local data.
-    var localTodayRaw = localStorage.getItem('haccp_' + today);
-    var localTodayRecs = [];
-    try { localTodayRecs = _recordArray(localTodayRaw ? JSON.parse(localTodayRaw) : []); } catch (e) {}
-    Object.keys(localStorage)
-      .filter(_isHaccpDayStorageKey)
-      .forEach(function (k) { localStorage.removeItem(k); });
-    result.data.forEach(function (row) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(row.date || '')) return;
-      try { localStorage.setItem('haccp_' + row.date, JSON.stringify(_recordArray(row.records))); } catch (e) {}
+  function setHaccpUser(userId) {
+    if (userId === _haccpUser) return;
+    _haccpUser = userId;
+    _haccpChecked = false;
+    _haccpLocalOnly.clear();
+    _updateHaccpSyncStatus();
+  }
+
+  function _readHaccpPending(userId) {
+    if (!userId) return [];
+    var prefix = _HACCP_PENDING + userId + '_';
+    return Object.keys(localStorage).filter(function(key) {
+      return key.indexOf(prefix) === 0;
+    }).flatMap(function(key) {
+      try { return [Object.assign(JSON.parse(localStorage.getItem(key)), { key: key })]; }
+      catch (err) { return []; }
+    }).sort(function(a, b) { return a.time - b.time || a.key.localeCompare(b.key); });
+  }
+
+  function hasPendingHaccp() {
+    return _haccpLocalOnly.size > 0 || _readHaccpPending(_haccpUser).length > 0 ||
+      _loadRetryQueue().some(function(item) {
+        return item.dateStr && item.module !== 'menus' && item.userScope === _haccpUser;
+      });
+  }
+
+  function _updateHaccpSyncStatus() {
+    var el = document.getElementById('haccp-sync-status');
+    if (!el) return;
+    var pending = _readHaccpPending(_haccpUser);
+    el.textContent = _haccpLocalOnly.size ? 'Some checks are saved on this device only. Keep an export from Records.'
+      : pending.length ? 'HACCP changes waiting to sync.'
+      : _haccpChecked ? 'HACCP records synced.' : '';
+    el.hidden = !el.textContent;
+  }
+
+  // JSONB may return an object with keys in a different order.
+  function _haccpRecordKey(value) {
+    return JSON.stringify(value, function(key, item) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
+      return Object.fromEntries(Object.keys(item).sort().map(function(name) {
+        return [name, item[name]];
+      }));
     });
-    var todayRow = result.data.find(function (r) { return r.date === today; });
-    var todayRemoteRecs = todayRow ? _recordArray(todayRow.records) : [];
-    var remoteLen = todayRemoteRecs.length;
-    // If local has more records than remote, local data is ahead of Supabase —
-    // keep it and re-save so Supabase catches up.
-    if (localTodayRecs.length > remoteLen) {
-      try { localStorage.setItem('haccp_' + today, JSON.stringify(localTodayRecs)); } catch (e) {}
-      if (typeof records !== 'undefined' && !window._haccpDemoMode) {
-        records.length = 0;
-        localTodayRecs.forEach(function (r) { records.push(r); });
-      }
-      // Re-push local-ahead data to Supabase so it catches up
-      supabaseClient.from('haccp_records').upsert({ user_id: userId, date: today, records: localTodayRecs }, { onConflict: 'user_id,date' }).then(function(r){ if(!r.error) console.log('[Veriqo sync] ✓ re-synced local-ahead today records'); });
-    } else {
-      if (typeof records !== 'undefined' && !window._haccpDemoMode) {
-        records.length = 0;
-        todayRemoteRecs.forEach(function (r) { records.push(r); });
+  }
+
+  function _haccpDifference(records, baseline) {
+    var counts = new Map();
+    baseline.forEach(function(record) {
+      var key = _haccpRecordKey(record);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return records.filter(function(record) {
+      var key = _haccpRecordKey(record);
+      var count = counts.get(key);
+      if (!count) return true;
+      counts.set(key, count - 1);
+      return false;
+    });
+  }
+
+  function _applyHaccpChange(records, change) {
+    var retained = _haccpDifference(records, change.removed);
+    return retained.concat(_haccpDifference(change.added, retained));
+  }
+
+  function _saveHaccpPending(userId, id, change) {
+    localStorage.setItem(_HACCP_PENDING + userId + '_' + id, JSON.stringify(change));
+  }
+
+  function saveHaccpChanges(date, previous, next) {
+    var added = _haccpDifference(next, previous);
+    var removed = _haccpDifference(previous, next);
+    if (!added.length && !removed.length) return true;
+    if (_haccpUser) {
+      try {
+        _haccpPendingTime = Math.max(Date.now(), _haccpPendingTime + 1);
+        _saveHaccpPending(_haccpUser, _genId(), { date: date, added: added, removed: removed, time: _haccpPendingTime });
+        _updateHaccpSyncStatus();
+        _syncHaccp(_haccpUser, false).then(function() {
+          _safeRefreshAppViews('HACCP save');
+        }).catch(function() {});
+        return true;
+      } catch (err) {
+        console.warn('[Veriqo sync] Could not queue HACCP changes:', err);
       }
     }
+    _haccpLocalOnly.add(date);
+    _updateHaccpSyncStatus();
+    return false;
+  }
+
+  function _migrateHaccpRetries(userId) {
+    var queue = _loadRetryQueue();
+    var retained = queue.filter(function(item) {
+      if (item.dateStr === undefined || item.module === 'menus' || item.userScope !== userId) return true;
+      try {
+        // Old snapshots do not describe deletions. Keep their records without
+        // using the snapshot to replace a day from another device.
+        _saveHaccpPending(userId, 'legacy_' + item.ts + '_' + item.dateStr, {
+          date: item.dateStr, added: _recordArray(item.records), removed: [], time: item.ts
+        });
+        return false;
+      } catch (err) {
+        return true;
+      }
+    });
+    if (retained.length !== queue.length) _saveRetryQueue(retained);
+  }
+
+  async function _writeHaccpChange(userId, change) {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      var current = await supabaseClient.from('haccp_records').select('records')
+        .eq('user_id', userId).eq('date', change.date).maybeSingle();
+      if (current.error) throw current.error;
+      var original = current.data ? current.data.records : null;
+      var merged = _applyHaccpChange(_recordArray(original), change);
+      if (current.data && _haccpRecordKey(original) === _haccpRecordKey(merged)) return merged;
+      var result = await supabaseClient.rpc('haccp_compare_and_save_day', {
+        p_user_id: userId, p_date: change.date, p_exists: Boolean(current.data),
+        p_expected: original, p_records: merged
+      });
+      if (result.error) throw result.error;
+      if (result.data === true) return merged;
+    }
+    throw new Error('HACCP records changed on another device');
+  }
+
+  function _cacheHaccpDay(date, remote, pending) {
+    if (_haccpLocalOnly.has(date)) return;
+    var merged = pending.filter(function(item) { return item.date === date; })
+      .reduce(_applyHaccpChange, _recordArray(remote));
+    localStorage.setItem('haccp_' + date, JSON.stringify(merged));
+  }
+
+  async function _flushHaccpPending(userId) {
+    var blocked = new Set();
+    for (var change of _readHaccpPending(userId)) {
+      if (userId !== _haccpUser) return;
+      if (blocked.has(change.date) || !localStorage.getItem(change.key)) continue;
+      try {
+        var saved = await _writeHaccpChange(userId, change);
+        if (userId !== _haccpUser) return;
+        var remaining = _readHaccpPending(userId).filter(function(item) { return item.key !== change.key; });
+        _cacheHaccpDay(change.date, saved, remaining);
+        localStorage.removeItem(change.key);
+        _haccpChecked = true;
+      } catch (err) {
+        blocked.add(change.date);
+        console.warn('[Veriqo sync] HACCP changes still pending:', err.message || err);
+      }
+    }
+  }
+
+  async function _pullHaccpRecords(userId) {
+    var result = await supabaseClient.from('haccp_records').select('date, records')
+      .eq('user_id', userId).order('date', { ascending: false });
+    if (result.error) throw result.error;
+    if (!result.data || userId !== _haccpUser) return;
+    var pending = _readHaccpPending(userId);
+    var remote = new Map(result.data.filter(function(row) {
+      return _isHaccpDayStorageKey('haccp_' + row.date);
+    }).map(function(row) { return [row.date, row.records]; }));
+    var dates = new Set(Array.from(remote.keys()).concat(pending.map(function(item) { return item.date; })));
+
+    // Preserve local-only checks if the queue could not be written.
+    Object.keys(localStorage).filter(_isHaccpDayStorageKey).forEach(function(key) {
+      var date = key.slice(6);
+      if (!dates.has(date) && !_haccpLocalOnly.has(date)) localStorage.removeItem(key);
+    });
+    dates.forEach(function(date) { _cacheHaccpDay(date, remote.get(date), pending); });
+    _haccpChecked = true;
+  }
+
+  function _syncHaccp(userId, pull) {
+    var work = _haccpWork.then(async function() {
+      if (!userId || userId !== _haccpUser) return;
+      var session = await supabaseClient.auth.getSession();
+      if (session.error || session.data.session?.user.id !== userId) return;
+      var sync = async function() {
+        if (userId !== _haccpUser) return;
+        _migrateHaccpRetries(userId);
+        await _flushHaccpPending(userId);
+        if (pull) await _pullHaccpRecords(userId);
+      };
+      if (typeof navigator !== 'undefined' && navigator.locks) {
+        await navigator.locks.request('veriqo-haccp-' + userId, sync);
+      } else {
+        await sync();
+      }
+    }).finally(_updateHaccpSyncStatus);
+    _haccpWork = work.catch(function() {});
+    return work;
+  }
+
+  function refreshHaccpRecords() {
+    if (!_haccpUser) return;
+    return _syncHaccp(_haccpUser, true).then(function() {
+      _safeRefreshAppViews('HACCP records');
+    }).catch(function(err) {
+      console.warn('[Veriqo sync] Could not refresh HACCP records:', err.message || err);
+    });
   }
 
   // ── _pullMiseRecords ───────────────────────────────────────────────────────
@@ -759,6 +929,8 @@ window.Mise.sync = (function () {
     if (typeof updateHaccpDashboard === 'function') updateHaccpDashboard();
     if (typeof syncTileToggles === 'function') syncTileToggles();
     if (typeof renderHaccpSections === 'function') renderHaccpSections();
+    var haccpRecordTab = document.getElementById('tab-records');
+    if (haccpRecordTab && haccpRecordTab.classList.contains('active') && typeof renderRecords === 'function') renderRecords();
     if (typeof renderMiseSections === 'function') renderMiseSections();
     if (typeof updateNextJobBanner === 'function') updateNextJobBanner();
     document.dispatchEvent(new CustomEvent('vq:sync-complete'));
@@ -792,7 +964,7 @@ window.Mise.sync = (function () {
 
   return {
     loadAll,
-    saveDay, saveSettings,
+    saveDay, saveSettings, saveHaccpChanges, setHaccpUser, hasPendingHaccp, refreshHaccpRecords,
     saveDish, deleteDish,
     saveMenu, deleteMenu, deleteSuiteMenu, deleteSuiteDish,
     saveJob, deleteJob,
