@@ -10,7 +10,7 @@ const sync = fs.readFileSync(path.join(ROOT, 'sync.js'), 'utf8');
 
 test('main Settings sign-out delegates to the complete shared logout path', () => {
   assert.match(app, /window\.Mise\.auth\.logout\(\)/);
-  assert.match(app, /auth\.js\?v=39/);
+  assert.match(app, /auth\.js\?v=40/);
   assert.match(auth, /'veriqo_profile'/);
   assert.match(auth, /'vq_positioning'/);
   assert.match(auth, /getRegistrations\(\)/);

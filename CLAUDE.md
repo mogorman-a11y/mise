@@ -25,7 +25,7 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 
 | File | Version | Where set |
 |---|---|---|
-| `js/modules/haccp.js` | `?v=77` | `app.html` — safely restores missing legacy HACCP list settings before staff/fridge/supplier controls use them |
+| `js/modules/haccp.js` | `?v=78` | `app.html` — shows local save and cloud sync status separately |
 | `js/modules/menus.js` | `?v=41` | `app.html` — v41: `renderCarteSubscriptionCard()` now calls the shared `window.Mise.subscription.hasAccess()` helper instead of its own `status === 'active' \|\| status === 'trialing'` check (see subscription fix below) |
 | `js/modules/costing.js` | `?v=36` | `app.html` |
 | `js/modules/recipe-costing.js` | `?v=3` | `app.html` — new 2026-07-21, Costing rebuild Phases 2–4 (recipe entry, menu/job derived costing, actual-cost reconciliation) |
@@ -35,9 +35,9 @@ Source of truth is always `app.html`'s own `<script src>` tags — this table ca
 | `js/modules/intake.js` | `?v=1` | `app.html` |
 | `js/modules/lead-scripts.js` | `?v=1` | `app.html` |
 | `js/modules/team.js` | `?v=2` | `app.html` |
-| `auth.js` | `?v=39` | `app.html` — Settings sign-out now uses the complete shared logout path and clears stale private caches |
+| `auth.js` | `?v=40` | `app.html` — defers sign-in setup outside the auth callback and warns before discarding pending checks |
 | `yield-sync.js` (root) | `?v=17` | `app.html` |
-| `sync.js` | `?v=23` | `app.html` — rehydrates partial cloud settings, retries failed saves, and keeps renderer errors separate from sync results |
+| `sync.js` | `?v=25` | `app.html` — preserves HACCP changes across dates and merges concurrent changes |
 | `js/core/idb-queue.js` | `?v=2` | `app.html` |
 | `js/core/pull-result.js` | `?v=2` | `app.html` |
 | `js/core/ai-other-costs-store.js` | `?v=2` | `app.html` |
@@ -197,7 +197,7 @@ These types use `renderSection_PC()`, NOT `renderSection()`. Getting this wrong 
 
 ### Save flow
 1. `records.push({type, ...})` — add to in-memory array
-2. `saveHaccpToday()` — write to localStorage + call `Mise.sync.saveDay(_today, records.slice())`
+2. `saveHaccpToday()` — persist the difference from the last rendered/saved day in the account-scoped local outbox, then update the local day cache
 3. `renderSection_PC(type)` or `renderSection(type)` — update log list in current tab
 4. `updateHaccpDashboard()` — update tile badges on home screen
 
@@ -461,13 +461,7 @@ Added module-level `esc()` to haccp.js. Applied to `renderSettingsList`, `render
 - INSERT/UPDATE require `venue_id = auth_venue_id()` (column default, auto-populated)
 - Unique index: `(user_id, date)`
 
-**Upsert pattern:**
-```javascript
-supabaseClient.from('haccp_records').upsert(
-  { user_id: uid, date: dateStr, records: recordsArray },
-  { onConflict: 'user_id,date' }
-)
-```
+**Day write:** The browser reads the cloud day, applies the pending additions and removals, then calls `haccp_compare_and_save_day`. The invoker-scoped RPC writes only if the prior cloud day still matches, so concurrent changes cause a re-read instead of replacing another device's updates. Pending changes survive date rollover and are removed only after acknowledgement. Downloads apply pending changes before updating the cache, and retries run at sign-in, on reconnection, when reopening the app, and when opening Records. Deploy the RPC migration before the versioned client.
 
 ### RLS claims gotcha — JWT `venue_id`/`user_role` can go stale
 

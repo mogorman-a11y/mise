@@ -61,6 +61,7 @@ function makeContext(localStorageContents) {
     records: [],
     settings: { allergenGuests: [] },
     _haccpActiveJob: null,
+    _haccpSavedDay: '',
     _demoMode: false,
     _haccpEditingCustomer: false,
     localStorage: makeLocalStorage(localStorageContents),
